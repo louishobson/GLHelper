@@ -79,26 +79,23 @@ public:
         : id { -1 }
     {}
 
-    /* copy constructor
+    /* default copy constructor
      *
      * no need for a move constructor, as only has to copy id
      */
-    glh_object ( const glh_object& other )
-        : id { other.id }
-    {}
 
     /* default copy assignment operator
      *
      * will replace id with the id of the other class
      * the object referenced by this class will NOT be destroyed
      */
-    glh_object& operator= ( const glh_object& other ) = default;
 
-    /* virtual destructor
+    /* pure virtual destructor
      *
      * virtual in preparation for polymorphism
+     * pure as does not yet know how to destroy the object
      */
-    virtual ~glh_object ();
+    virtual ~glh_object () = 0;
 
 
 
@@ -109,7 +106,7 @@ public:
      * 
      * return: boolean representing validity
      */
-    virtual bool is_valid ();
+    virtual bool is_valid () { return ( id >= 0 ); }
 
     /* virtual not operator
      *
@@ -118,12 +115,12 @@ public:
      * 
      * return: boolean representing invalidity
      */
-    virtual bool operator! ();
+    virtual bool operator! () { return !is_valid (); }
 
-    /* abstract virtual destroy
+    /* pure virtual delete
      *
      * destroys the object, at least setting id to -1
-     * although multiple calls to this function are valid, only the first has effect
+     * although multiple calls to this function are valid, only the first should have effect
      */
     virtual void destroy () = 0;
 
