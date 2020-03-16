@@ -90,12 +90,11 @@ public:
      * the object referenced by this class will NOT be destroyed
      */
 
-    /* pure virtual destructor
+    /* virtual destructor
      *
      * virtual in preparation for polymorphism
-     * pure as does not yet know how to destroy the object
      */
-    virtual ~glh_object () = 0;
+    virtual ~glh_object () {}
 
 
 
@@ -106,7 +105,7 @@ public:
      * 
      * return: boolean representing validity
      */
-    virtual bool is_valid () { return ( id >= 0 ); }
+    virtual bool is_valid () const { return ( id >= 0 ); }
 
     /* virtual not operator
      *
@@ -115,9 +114,9 @@ public:
      * 
      * return: boolean representing invalidity
      */
-    virtual bool operator! () { return !is_valid (); }
+    virtual bool operator! () const { return !is_valid (); }
 
-    /* pure virtual delete
+    /* pure virtual destroy
      *
      * destroys the object, at least setting id to -1
      * although multiple calls to this function are valid, only the first should have effect
