@@ -97,6 +97,7 @@ private:
      * string containing description of the exception
      */
     const char * _what; 
+    
 };
 
 
