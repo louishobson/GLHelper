@@ -70,7 +70,7 @@ class glh::glh_exception : public std::exception
 
     /* zero-parameter constructor
      *
-     * sets _what to NULL
+     * creates an exception with no description (by setting _what to NULL)
      */
     glh_exception ()
         : _what { NULL }
@@ -78,7 +78,12 @@ class glh::glh_exception : public std::exception
 
     /* default copy constructor */
     /* default asignment operator */
-    /* default destructor */
+    
+    /* virtual default destructor
+     *
+     * virtual in preparation for polymorphism
+     */
+    virtual ~glh_exception () {}
 
     
 
