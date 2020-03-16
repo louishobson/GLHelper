@@ -55,14 +55,6 @@ class glh::object
 {
 public:
 
-    /* int id
-     *
-     * the OpenGL id of the class
-     */
-    int id;
-
-
-
     /* full constructor
      *
      * _id: the id of the object
@@ -98,6 +90,12 @@ public:
 
 
 
+    /* internal_id
+     *
+     * returns the internal id of the object
+     */
+    int internal_id () const { return id; }
+
     /* virtual is_valid
      *
      * determines if the object is valid (id >= 0)
@@ -122,6 +120,16 @@ public:
      * although multiple calls to this function are valid, only the first should have effect
      */
     virtual void destroy () = 0;
+
+
+
+protected:
+
+    /* int id
+     *
+     * the OpenGL id of the class
+     */
+    int id;
 
 };
 
