@@ -71,10 +71,7 @@ public:
         : id { -1 }
     {}
 
-    /* default copy constructor
-     *
-     * no need for a move constructor, as only has to copy id
-     */
+    /* default copy constructor */
 
     /* default copy assignment operator
      *
@@ -113,6 +110,16 @@ public:
      * return: boolean representing invalidity
      */
     virtual bool operator! () const { return !is_valid (); }
+
+    /* virtual comparison operators
+     *
+     * determines if two objects are equal by comparing ids
+     * may be overloaded to add more parameters to equality
+     * 
+     * return: boolean representing equality
+     */
+    virtual bool operator== ( const object& other ) const { return ( id == other.id ); }
+    virtual bool operator!= ( const object& other ) const { return ( id != other.id ); }
 
     /* pure virtual destroy
      *
