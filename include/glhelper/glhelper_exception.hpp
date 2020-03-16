@@ -6,7 +6,7 @@
  * 
  * src/glhelper_exception.hpp
  * 
- * defines the basis for exception handling for the library
+ * declares the basis for exception handling for the library
  * 
  */
 
