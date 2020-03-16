@@ -94,7 +94,7 @@ public:
      *
      * returns the internal id of the object
      */
-    int internal_id () const { return id; }
+    const int& internal_id () const { return id; }
 
     /* virtual is_valid
      *
