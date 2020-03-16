@@ -36,11 +36,11 @@
 
 namespace glh
 {
-    /* class glh_object
+    /* class object
      *
      * abstract base class to represent any OpenGL object
      */
-    class glh_object;
+    class object;
 }
 
 
@@ -51,7 +51,7 @@ namespace glh
  *
  * abstract base class to represent any OpenGL object
  */
-class glh::glh_object
+class glh::object
 {
 public:
 
@@ -67,7 +67,7 @@ public:
      *
      * _id: the id of the object
      */
-    explicit glh_object ( const int _id )
+    explicit object ( const int _id )
         : id { _id }
     {}
 
@@ -75,7 +75,7 @@ public:
      *
      * in this case, id is initialised to -1
      */
-    explicit glh_object ()
+    explicit object ()
         : id { -1 }
     {}
 
@@ -94,7 +94,7 @@ public:
      *
      * virtual in preparation for polymorphism
      */
-    virtual ~glh_object () {}
+    virtual ~object () {}
 
 
 
