@@ -84,8 +84,10 @@ public:
     /* load_to_window
      *
      * win: window to load OpenGL to
+     * 
+     * return: true for success, false for failure
      */
-    void load_to_window ( const window& win );
+    bool load_to_window ( const window& win );
 
     /* is_window_loaded
      *
@@ -136,6 +138,7 @@ public:
     {}
 
     /* default everything else and inherits what () function */
+
 };
 
 
