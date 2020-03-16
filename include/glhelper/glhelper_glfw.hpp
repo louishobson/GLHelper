@@ -128,6 +128,7 @@ public:
      * return: boolean representing equality
      */
     bool operator== ( const window& other ) const { return ( winptr == other.internal_ptr () ); }
+    bool operator!= ( const window& other ) const { return ( winptr != other.internal_ptr () ); }
 
 
 
