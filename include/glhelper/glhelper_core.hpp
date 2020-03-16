@@ -34,28 +34,24 @@
 
 /* NAMESPACE FORWARD DECLARATIONS */
 
-/* namespace glh
- *
- * encapsulates all glhelper structures and functions
- */
 namespace glh
 {
-    /* class glh_object_t
+    /* class glh_object
      *
      * abstract base class to represent any OpenGL object
      */
-    class glh_object_t;
+    class glh_object;
 }
 
 
 
 /* FULL DECLARATIONS */
 
-/* class glh_object_t
+/* class glh_object
  *
  * abstract base class to represent any OpenGL object
  */
-class glh::glh_object_t
+class glh::glh_object
 {
 public:
 
@@ -71,7 +67,7 @@ public:
      *
      * _id: the id of the object
      */
-    explicit glh_object_t ( const int _id )
+    explicit glh_object ( const int _id )
         : id { _id }
     {}
 
@@ -79,7 +75,7 @@ public:
      *
      * in this case, id is initialised to -1
      */
-    explicit glh_object_t ()
+    explicit glh_object ()
         : id { -1 }
     {}
 
@@ -87,7 +83,7 @@ public:
      *
      * no need for a move constructor, as only has to copy id
      */
-    glh_object_t ( const glh_object_t& other )
+    glh_object ( const glh_object& other )
         : id { other.id }
     {}
 
@@ -96,13 +92,13 @@ public:
      * will replace id with the id of the other class
      * the object referenced by this class will NOT be destroyed
      */
-    glh_object_t& operator= ( const glh_object_t& other ) = default;
+    glh_object& operator= ( const glh_object& other ) = default;
 
     /* virtual destructor
      *
      * virtual in preparation for polymorphism
      */
-    virtual ~glh_object_t ();
+    virtual ~glh_object ();
 
 
 
