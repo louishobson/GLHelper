@@ -63,13 +63,8 @@ class glh::glad_loader
 {
 public:    
 
-    /* constructor
-     *
-     * creates an inactivated instance of glad
-     */
-    explicit glad_loader ()
-        : active_window { NULL }
-    {}
+    /* deleted constructor */
+    explicit glad_loader () = delete;
 
     /* deleted copy constructor */
     glad_loader ( const glad_loader& other ) = delete;
@@ -85,7 +80,7 @@ public:
      *
      * loads glad to the current context
      */
-    void load ();
+    static void load ();
 
     /* is_window_loaded
      *
@@ -95,7 +90,7 @@ public:
      * 
      * return: boolean representing if is currently loaded
      */
-    bool is_window_loaded ( const window& win ) const { return ( win.internal_ptr () == active_window ); }
+    static bool is_window_loaded ( const window& win ) { return ( win.internal_ptr () == active_window ); }
 
 
 
@@ -105,9 +100,9 @@ private:
      *
      * a pointer to the currently active window
      */
-    const GLFWwindow * active_window;
+    static const GLFWwindow * active_window;
 
-} glad;
+};
 
 
 
