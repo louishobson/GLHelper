@@ -84,10 +84,8 @@ public:
     /* load
      *
      * loads glad to the current context
-     * 
-     * return: true for success, false for failure
      */
-    bool load ();
+    void load ();
 
     /* is_window_loaded
      *
@@ -113,7 +111,7 @@ private:
 
 
 
-/* class glad_exception : [glh::]exception
+/* class glad_exception : exception
  *
  * for exceptions related to glad
  */

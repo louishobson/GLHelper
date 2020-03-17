@@ -27,7 +27,7 @@
  * 
  * return: true for success, false for failure
  */
-bool glh::glad_loader::load ()
+void glh::glad_loader::load ()
 {
     /* get the window from the current context */
     GLFWwindow * win = glfwGetCurrentContext ();
@@ -36,7 +36,7 @@ bool glh::glad_loader::load ()
     throw glad_exception { "GLH ERROR: tried to load GLAD with no context set" };
 
     /* if window is already loaded, return true without reloading glad */
-    if ( win == active_window ) return true;
+    if ( win == active_window ) return;
 
     /* activate glad to current context */
     if ( !gladLoadGLLoader ( ( GLADloadproc ) glfwGetProcAddress ) )
@@ -47,7 +47,4 @@ bool glh::glad_loader::load ()
 
     /* set new active window */
     active_window = win;
-
-    /* return true for success */
-    return true;
 }
