@@ -12,7 +12,7 @@
  * on first window object creation, glfw is initialised
  * when there are no window objects left, glfw is terminated implicitly
  * 
- * windows are also automatically destroyed when the LAST window object referring to it is destroyed
+ * windows are also automatically destroyed on object destruction
  * 
  */
 
@@ -29,6 +29,7 @@
 /* include core headers */
 #include <iostream>
 #include <string>
+#include <functional>
 
 /* include memory for shared_ptr */
 #include <memory>
@@ -102,11 +103,17 @@ public:
      */
     explicit window ( GLFWwindow * _winptr );
 
-    /* copy constructor
+    /* deleted copy constructor
      *
-     * creates a duplicate handle on the same window
+     * copying a window makes no logical sense
      */
-    window ( window& other );
+    window ( const window& other ) = delete;
+
+    /* move constructor
+     *
+     * moving does make sense, for example returning from functions
+     */
+    window ( window&& other );
 
     /* deleted copy assignment operater
      *
@@ -114,7 +121,8 @@ public:
      */
     window& operator= ( const window& other ) = delete;
 
-    /* default destructor */
+    /* destructor */
+    ~window ();
 
 
 
@@ -175,11 +183,21 @@ public:
 
 private:
 
-    /* std::shared_ptr<GLFWwindow> winptr
+    /* struct __window_deleter
+     *
+     * functor for deleting the smart pointer
+     */
+    struct __window_deleter 
+    { 
+        /* caller operator overload */
+        void operator() ( GLFWwindow * win );
+    };
+
+    /* std::unique_ptr<GLFWwindow> winptr
      *
      * pointer to the glfw window object
      */
-    std::shared_ptr<GLFWwindow> winptr;
+    std::unique_ptr<GLFWwindow, __window_deleter> winptr;
 
     /* static int object_count
      *
@@ -206,12 +224,6 @@ private:
      * makes the window current
      */
     void make_current ();
-
-    /* __shared_deleter
-     *
-     * deleter for the shared pointer
-     */
-    static void __shared_deleter ( GLFWwindow * win );
 
 };
 

@@ -27,13 +27,13 @@
  * glad will be implicity loaded to the window's context
  */
 glh::window::window ( const std::string& title, const int width, const int height )
-    : winptr { nullptr }
+    : winptr {}
 {
     /* register object */
     register_object ();
 
     /* create window */
-    winptr.reset ( glfwCreateWindow ( width, height, title.c_str (), NULL, NULL ), __shared_deleter );
+    winptr.reset ( glfwCreateWindow ( width, height, title.c_str (), NULL, NULL ) );
 
     /* check success */
     if ( !winptr )
@@ -63,7 +63,7 @@ glh::window::window ( const std::string& title, const int width, const int heigh
  * _winptr: pointer to GLFWwindow
  */
 glh::window::window ( GLFWwindow * _winptr )
-    : winptr { _winptr, __shared_deleter }
+    : winptr { _winptr }
 {
     /* register object */
     register_object ();
@@ -80,9 +80,9 @@ glh::window::window ( GLFWwindow * _winptr )
  *
  * creates a duplicate handle on the same window
  */
-glh::window::window ( window& other )
+glh::window::window ( window&& other )
     /* allocate winptr with deleter */
-    : winptr { other.internal_ptr (), __shared_deleter }
+    : winptr { other.internal_ptr () }
 {
     /* register object */
     register_object ();
@@ -95,7 +95,25 @@ glh::window::window ( window& other )
     }
 }
 
+/* destructor */
+glh::window::~window ()
+{
+    /* reset winptr */
+    winptr.reset ();
 
+    /* unregister object */
+    unregister_object ();
+}
+
+
+
+/* static int object_count
+ *
+ * static integer, keeping track of how many objects are currently in existance
+ * is used to know when to initialise or terminate glfw
+ * automatically initialised to 0
+ */
+int glh::window::object_count = 0;
 
 /* register_object
  *
@@ -104,7 +122,7 @@ glh::window::window ( window& other )
 void glh::window::register_object ()
 {
     /* increment object count and initialise glfw if was zero */
-    if ( glh::window::object_count++ == 0 ) 
+    if ( object_count++ == 0 ) 
     {
         /* init glfw */
         glfwInit ();
@@ -122,7 +140,7 @@ void glh::window::register_object ()
 void glh::window::unregister_object ()
 {
     /* decrement object count and terminate glfw if is now zero */
-    if ( --glh::window::object_count == 0 ) 
+    if ( --object_count == 0 ) 
     {
         /* terminate glfw */
         glfwTerminate ();
@@ -135,19 +153,19 @@ void glh::window::unregister_object ()
  */
 void glh::window::make_current () 
 { 
-    glfwMakeContextCurrent ( winptr.get () ); 
-    glad_loader::load (); 
+    /* make the context current */
+    glfwMakeContextCurrent ( winptr.get () );
+    /* tell the glad loader to load to the current context */
+    glad_loader::load ();
 }
 
-/* __shared_deleter
+/* struct __window_deleter
  *
- * deleter for the shared pointer
+ * functor for deleting the smart pointer
  */
-void glh::window::__shared_deleter ( GLFWwindow * win ) 
-{ 
-    /* destroy the window */
+/* caller operator overload */
+void glh::window::__window_deleter::operator() ( GLFWwindow * win )
+{
+    /* if win is non-NULL, destroy the window */
     if ( win ) glfwDestroyWindow ( win );
-
-    /* unregister object */
-    unregister_object ();
 }
