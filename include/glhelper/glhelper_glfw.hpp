@@ -48,6 +48,9 @@
 
 namespace glh
 {
+    /* glad_loader due to circular dependancy */
+    class glad_loader;
+     
     /* class window
      *
      * stores a handle on a glfw window object
@@ -103,7 +106,7 @@ public:
      *
      * creates a duplicate handle on the same window
      */
-    window ( const window& other );
+    window ( window& other );
 
     /* deleted copy assignment operater
      *
@@ -111,8 +114,7 @@ public:
      */
     window& operator= ( const window& other ) = delete;
 
-    /* destructor */
-    ~window ();
+    /* default destructor */
 
 
 
@@ -191,19 +193,25 @@ private:
      *
      * increment object_count and initialise glfw if necessary
      */
-    void register_object ();
+    static void register_object ();
 
     /* unregister_object
      *
      * decrement object_count and terminate glfw if necessary
      */
-    void unregister_object ();
+    static void unregister_object ();
 
     /* make_current
      *
      * makes the window current
      */
-    void make_current () { glfwMakeContextCurrent ( winptr.get () ); glad_loader::load (); }
+    void make_current ();
+
+    /* __shared_deleter
+     *
+     * deleter for the shared pointer
+     */
+    static void __shared_deleter ( GLFWwindow * win );
 
 };
 
