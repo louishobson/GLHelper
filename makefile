@@ -5,8 +5,8 @@
 # COMMANDS AND FLAGS
 
 # gcc setup
-CC=gcc
-CFLAGS=-O3 -std=c99 -Iinclude -static
+CC=g++
+CFLAGS=-O3 -std=c++14 -Iinclude -static
 
 # g++ setup
 CPP=g++
