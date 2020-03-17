@@ -128,7 +128,7 @@ private:
      *
      * a pointer to the currently active window
      */
-    GLFWwindow * active_window;
+    const GLFWwindow * active_window;
 
 } glad;
 
