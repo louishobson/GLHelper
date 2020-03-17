@@ -34,27 +34,6 @@
 
 
 
-/* MACROS */
-
-/* GLH_ERROR_HANDLE_GLAD_LOAD_ON_EMPTY_CONTEXT
- *
- * error handle for when glad is loaded with no OpenGL context set
- */
-#ifndef GLH_ERROR_HANDLE_GLAD_LOAD_ON_EMPTY_CONTEXT
-#define GLH_ERROR_HANDLE_GLAD_LOAD_ON_EMPTY_CONTEXT 3
-#endif
-
-/* GLH_ERROR_HANDLE_GLAD_LOAD_FAILURE
- *
- * error handle for when glad loading fails
- */
-#ifndef GLH_ERROR_HANDLE_GLAD_LOAD_FAILURE
-#define GLH_ERROR_HANDLE_GLAD_LOAD_FAILURE 3
-#endif
-
-
-
-
 /* NAMESPACE FORWARD DECLARATIONS */
 
 namespace glh
