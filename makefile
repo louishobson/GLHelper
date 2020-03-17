@@ -47,3 +47,4 @@ glad: src/glad/glad.o
 # compile glhelper to a library
 glhelper: src/glhelper/glhelper.a
 src/glhelper/glhelper.a: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o
+	$(AR) $(ARFLAGS) $@ $^
