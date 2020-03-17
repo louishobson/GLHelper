@@ -33,7 +33,7 @@ void glh::glad_loader::load ()
     GLFWwindow * win = glfwGetCurrentContext ();
 
     /* produce error if no context set */
-    throw glad_exception { "GLH ERROR: tried to load GLAD with no context set" };
+    if ( !win ) throw glad_exception { "GLH ERROR: tried to load GLAD with no context set" };
 
     /* if window is already loaded, return true without reloading glad */
     if ( win == active_window ) return;
@@ -61,3 +61,11 @@ bool glh::glad_loader::is_window_loaded ( const window& win )
 { 
     return ( win.internal_ptr () == active_window ); 
 }
+
+
+
+/* GLFWwindow * active_window
+ *
+ * a pointer to the currently active window
+ */
+const GLFWwindow * glh::glad_loader::active_window = NULL;
