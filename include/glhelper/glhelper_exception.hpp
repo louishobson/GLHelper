@@ -70,7 +70,7 @@
     if ( __handle == 0 ) {} else \
     if ( __handle == 1 ) std::cerr << "GLH WARN: " << __msg << std::endl; else \
     if ( __handle == 2 ) { std::cerr << "GLH ERROR: " << __msg << std::endl; return __rt; } else \
-    if ( __handle == 3 ) throw new __type { __msg };
+    if ( __handle == 3 ) throw __type { __msg };
 #endif
 
 
