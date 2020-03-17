@@ -4,7 +4,7 @@
  * Distributed under MIT licence as a part of the GLHelper C++ library.
  * For details, see: https://github.com/louishobson/GLHelper/blob/master/LICENSE
  * 
- * src/glhelper_exception.hpp
+ * include/glhelper/glhelper_exception.hpp
  * 
  * declares the basis for exception handling for the library
  * 

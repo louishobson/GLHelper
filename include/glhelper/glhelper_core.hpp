@@ -4,7 +4,7 @@
  * Distributed under MIT licence as a part of the GLHelper C++ library.
  * For details, see: https://github.com/louishobson/GLHelper/blob/master/LICENSE
  * 
- * src/glhelper_core.hpp
+ * include/glhelper/glhelper_core.hpp
  * 
  * core header for glhelper library
  * sets up OpenGL headers and defines core base classes
