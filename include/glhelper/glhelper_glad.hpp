@@ -38,6 +38,9 @@
 
 namespace glh
 {
+    /* forward declaration of window due to circular dependancy */
+    class window;
+
     /* class glad_loader, object glad
      *
      * controls glad
@@ -90,7 +93,7 @@ public:
      * 
      * return: boolean representing if is currently loaded
      */
-    static bool is_window_loaded ( const window& win ) { return ( win.internal_ptr () == active_window ); }
+    static bool is_window_loaded ( const window& win );
 
 
 
