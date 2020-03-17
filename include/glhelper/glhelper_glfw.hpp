@@ -202,10 +202,8 @@ private:
     /* make_current
      *
      * makes the window current
-     * 
-     * return: true for success, false for failure
      */
-    bool make_current () { glfwMakeContextCurrent ( winptr.get () ); glad.load (); }
+    void make_current () { glfwMakeContextCurrent ( winptr.get () ); glad_loader::load (); }
 
 };
 
