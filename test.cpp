@@ -16,6 +16,8 @@
 
 /* include core headers */
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 /* include glhelper.hpp */
 #include <glhelper/glhelper.hpp>
@@ -26,6 +28,17 @@
 
 int main ()
 {
-    std::cout << "hello world\n" << std::endl;
+    glh::window win1
+    { 
+        []()
+        {
+            glh::window win2 { "Test window 1", 600, 500 };
+            glh::window win3 { "Test window 2", 600, 500 };
+            return win3;
+        } ()
+    };
+
+    std::this_thread::sleep_for ( std::chrono::seconds ( 5 ) );
+
     return 0;
 }
