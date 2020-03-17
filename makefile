@@ -48,3 +48,9 @@ glad: src/glad/glad.o
 glhelper: src/glhelper/glhelper.a
 src/glhelper/glhelper.a: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o
 	$(AR) $(ARFLAGS) $@ $^
+
+# test
+#
+# test source
+test: test.o src/glhelper/glhelper.a src/glad/glad.o
+	$(CPP) -ldl -lGL -lglfw -lm -o $@ $^
