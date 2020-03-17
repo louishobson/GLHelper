@@ -128,7 +128,7 @@ private:
      * 
      * return: the target it is bound to
      */
-    GLenum bind () const { glBindBuffer ( type (), id ); }
+    GLenum bind () const { glBindBuffer ( type (), id ); return type (); }
 
     /* unbind
      *
@@ -136,7 +136,7 @@ private:
      * 
      * return: the target just unbound
      */
-    GLenum unbind () const { glBindBuffer ( type (), id ); }
+    GLenum unbind () const { glBindBuffer ( type (), id ); return type (); }
 
 };
 

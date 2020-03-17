@@ -63,7 +63,7 @@ void glh::buffer::buffer_data ( const size_t size, const void * data, const GLen
 void glh::buffer::destroy ()
 {
     /* destroy buffer */
-    if ( id >= 0 ) glDeleteBuffers ( 1, ( unsigned * ) id );
+    if ( id >= 0 ) glDeleteBuffers ( 1, ( unsigned * ) &id );
     
     /* set id to -1 */
     id = -1;
