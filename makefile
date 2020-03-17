@@ -1,7 +1,5 @@
 #!/bin/make
 
-#!/bin/make
-
 # COMMANDS AND FLAGS
 
 # gcc setup
@@ -46,7 +44,7 @@ glad: src/glad/glad.o
 #
 # compile glhelper to a library
 glhelper: src/glhelper/glhelper.a
-src/glhelper/glhelper.a: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o
+src/glhelper/glhelper.a: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o src/glhelper/glhelper_buff.o
 	$(AR) $(ARFLAGS) $@ $^
 
 # test
