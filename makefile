@@ -8,6 +8,10 @@
 CC=gcc
 CFLAGS=-O3 -std=c99 -Iinclude -static
 
+# g++ setup
+CPP=g++
+CPPFLAGS=-O3 -std=c++14 -Iinclude -static
+
 # ar setup
 AR=ar
 ARFLAGS=-rc
@@ -37,3 +41,9 @@ clean:
 #
 # purely compile glad source
 glad: src/glad/glad.o
+
+# glhelper
+#
+# compile glhelper to a library
+glhelper: src/glhelper/glhelper.a
+src/glhelper/glhelper.a: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o
