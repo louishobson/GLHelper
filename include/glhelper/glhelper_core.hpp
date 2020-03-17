@@ -71,13 +71,20 @@ public:
         : id { -1 }
     {}
 
-    /* default copy constructor */
-
-    /* default copy assignment operator
+    /* deleted copy constructor
      *
-     * will replace id with the id of the other class
-     * the object referenced by this class will NOT be destroyed
+     * it makes no sense to copy an object
      */
+    object ( const object& other ) = delete;
+
+    /* default move constructor */
+    object ( object&& other ) = default;
+
+    /* deleted copy assignment operator
+     *
+     * it makes no sense to assign the object after comstruction
+     */
+    object& operator= ( const object& other ) = delete;
 
     /* virtual destructor
      *
