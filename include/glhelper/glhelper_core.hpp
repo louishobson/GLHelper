@@ -36,11 +36,11 @@
 
 namespace glh
 {
-    /* class glh_object
+    /* class object
      *
      * abstract base class to represent any OpenGL object
      */
-    class glh_object;
+    class object;
 }
 
 
@@ -51,23 +51,15 @@ namespace glh
  *
  * abstract base class to represent any OpenGL object
  */
-class glh::glh_object
+class glh::object
 {
 public:
-
-    /* int id
-     *
-     * the OpenGL id of the class
-     */
-    int id;
-
-
 
     /* full constructor
      *
      * _id: the id of the object
      */
-    explicit glh_object ( const int _id )
+    explicit object ( const int _id )
         : id { _id }
     {}
 
@@ -75,14 +67,11 @@ public:
      *
      * in this case, id is initialised to -1
      */
-    explicit glh_object ()
+    explicit object ()
         : id { -1 }
     {}
 
-    /* default copy constructor
-     *
-     * no need for a move constructor, as only has to copy id
-     */
+    /* default copy constructor */
 
     /* default copy assignment operator
      *
@@ -94,9 +83,15 @@ public:
      *
      * virtual in preparation for polymorphism
      */
-    virtual ~glh_object () {}
+    virtual ~object () {}
 
 
+
+    /* internal_id
+     *
+     * returns the internal id of the object
+     */
+    const int& internal_id () const { return id; }
 
     /* virtual is_valid
      *
@@ -116,12 +111,32 @@ public:
      */
     virtual bool operator! () const { return !is_valid (); }
 
+    /* virtual comparison operators
+     *
+     * determines if two objects are equal by comparing ids
+     * may be overloaded to add more parameters to equality
+     * 
+     * return: boolean representing equality
+     */
+    virtual bool operator== ( const object& other ) const { return ( id == other.id ); }
+    virtual bool operator!= ( const object& other ) const { return ( id != other.id ); }
+
     /* pure virtual destroy
      *
      * destroys the object, at least setting id to -1
      * although multiple calls to this function are valid, only the first should have effect
      */
     virtual void destroy () = 0;
+
+
+
+protected:
+
+    /* int id
+     *
+     * the OpenGL id of the class
+     */
+    int id;
 
 };
 

@@ -6,7 +6,7 @@
  * 
  * src/glhelper_exception.hpp
  * 
- * defines the basis for exception handling for the library
+ * declares the basis for exception handling for the library
  * 
  */
 
@@ -35,36 +35,30 @@
 
 namespace glh
 {
-    /* class glh_exception : std::exception
+    /* class exception : std::exception
      *
      * base class for exceptions in glh
      */
-    class glh_exception;
+    class exception;
 }
 
 
 
 /* FULL DECLARATIONS */
 
-/* class glh_exception : std::exception
+/* class exception : std::exception
  *
  * base class for exceptions in glh
  */
-class glh::glh_exception : public std::exception
+class glh::exception : public std::exception
 {
-    /* _what
-     *
-     * string containing description of the exception
-     */
-    const char * _what; 
-
-
+public:
     
     /* full constructor
      *
      * __what: description of the exception
      */
-    glh_exception ( const char * __what )
+    explicit exception ( const char * __what )
         : _what { __what }
     {}
 
@@ -72,7 +66,7 @@ class glh::glh_exception : public std::exception
      *
      * creates an exception with no description (by setting _what to NULL)
      */
-    glh_exception ()
+    explicit exception ()
         : _what { NULL }
     {}
 
@@ -83,7 +77,7 @@ class glh::glh_exception : public std::exception
      *
      * virtual in preparation for polymorphism
      */
-    virtual ~glh_exception () {}
+    virtual ~exception () {}
 
     
 
@@ -94,6 +88,15 @@ class glh::glh_exception : public std::exception
      * return: _what
      */
     virtual const char * what () const throw () { return _what; }
+
+
+private:
+
+    /* const char * _what
+     *
+     * string containing description of the exception
+     */
+    const char * _what; 
 
 };
 
