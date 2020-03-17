@@ -77,7 +77,7 @@ public:
      * creates a working glfw window
      * glad will be implicity loaded to the window's context
      */
-    window ();
+    explicit window ();
 
     /* from pointer constructor
      *
@@ -85,7 +85,7 @@ public:
      * 
      * _winptr: pointer to GLFWwindow
      */
-    window ( GLFWwindow * _winptr );
+    explicit window ( GLFWwindow * _winptr );
 
     /* copy constructor
      *
@@ -106,20 +106,20 @@ public:
 
     /* make_current
      *
-     * makes the window be currently loaded into the OpenGL context
-     * synonymous to glh::glad.load_to_window ( object )
+     * makes the window current
      * 
      * return: true for success, false for failure
      */
-    bool make_current () { return glad.load_to_window ( * this ); }
+    bool make_current () { glfwMakeContextCurrent ( internal_ptr () ); glad.load (); }
 
     /* internal_ptr
      *
-     * returns a reference to the shared pointer storing the GLFWwindow pointer
+     * returns the pointer to the GLFWwindow held by winptr
      * 
-     * return: reference to winptr
+     * return: pointer held by winptr
      */
-    const std::shared_ptr<GLFWwindow>& internal_ptr () const { return winptr; }
+    const GLFWwindow * internal_ptr () const { return winptr.get (); }
+    GLFWwindow * internal_ptr () { return winptr.get (); }
 
     /* comparison operators
      *
