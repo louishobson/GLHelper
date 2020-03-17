@@ -113,7 +113,7 @@ public:
      *
      * moving does make sense, for example returning from functions
      */
-    window ( window&& other );
+    window ( window&& other ) = default;
 
     /* deleted copy assignment operater
      *

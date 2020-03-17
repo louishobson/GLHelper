@@ -76,25 +76,6 @@ glh::window::window ( GLFWwindow * _winptr )
     }    
 }
 
-/* copy constructor
- *
- * creates a duplicate handle on the same window
- */
-glh::window::window ( window&& other )
-    /* allocate winptr with deleter */
-    : winptr { other.internal_ptr () }
-{
-    /* register object */
-    register_object ();
-
-    /* check window */
-    if ( !winptr )
-    {
-        /* window is invalid, so produce exception */
-        throw glfw_exception { "GLH ERROR: failed to copy valid GLFW window" };
-    }
-}
-
 /* destructor */
 glh::window::~window ()
 {
