@@ -34,6 +34,27 @@
 
 
 
+/* MACROS */
+
+/* GLH_ERROR_HANDLE_GLAD_LOAD_ON_EMPTY_CONTEXT
+ *
+ * error handle for when glad is loaded with no OpenGL context set
+ */
+#ifndef GLH_ERROR_HANDLE_GLAD_LOAD_ON_EMPTY_CONTEXT
+#define GLH_ERROR_HANDLE_GLAD_LOAD_ON_EMPTY_CONTEXT 3
+#endif
+
+/* GLH_ERROR_HANDLE_GLAD_LOAD_FAILURE
+ *
+ * error handle for when glad loading fails
+ */
+#ifndef GLH_ERROR_HANDLE_GLAD_LOAD_FAILURE
+#define GLH_ERROR_HANDLE_GLAD_LOAD_FAILURE 3
+#endif
+
+
+
+
 /* NAMESPACE FORWARD DECLARATIONS */
 
 namespace glh
@@ -81,13 +102,13 @@ public:
 
 
 
-    /* load_to_window
+    /* load
      *
-     * win: window to load OpenGL to
+     * loads glad to the current context
      * 
      * return: true for success, false for failure
      */
-    bool load_to_window ( const window& win );
+    bool load ();
 
     /* is_window_loaded
      *
@@ -97,17 +118,17 @@ public:
      * 
      * return: boolean representing if is currently loaded
      */
-    bool is_window_loaded ( const window& win ) const { return ( win == active_window ); }
+    bool is_window_loaded ( const window& win ) const { return ( win.internal_ptr () == active_window ); }
 
 
 
 private:
 
-    /* window active_window
+    /* GLFWwindow * active_window
      *
-     * a copy of the handle of the currently loaded window
+     * a pointer to the currently active window
      */
-    window active_window;
+    GLFWwindow * active_window;
 
 } glad;
 
