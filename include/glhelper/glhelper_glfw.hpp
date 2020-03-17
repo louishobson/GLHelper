@@ -28,6 +28,7 @@
 
 /* include core headers */
 #include <iostream>
+#include <string>
 
 /* include memory for shared_ptr */
 #include <memory>
@@ -72,12 +73,23 @@ class glh::window
 {
 public:
 
-    /* constructor
+    /* full constructor
      *
      * creates a working glfw window
      * glad will be implicity loaded to the window's context
+     * 
+     * title: the title of the window
+     * width/height: the width and height of the window
      */
-    explicit window ();
+    explicit window ( const std::string& title, const int width, const int height );
+
+    /* zero-parameter constructor
+     *
+     * creates a glfw window based on defaults
+     */
+    explicit window ()
+        : window { "New window", 600, 400 }
+    {}
 
     /* from pointer constructor
      *
@@ -104,13 +116,49 @@ public:
 
 
 
-    /* make_current
+    /* comparison operators
      *
-     * makes the window current
+     * determines if two window objects refer to the same window
      * 
-     * return: true for success, false for failure
+     * return: boolean representing equality
      */
-    bool make_current () { glfwMakeContextCurrent ( internal_ptr () ); glad.load (); }
+    bool operator== ( const window& other ) const { return ( winptr.get () == other.internal_ptr () ); }
+    bool operator!= ( const window& other ) const { return ( winptr.get () != other.internal_ptr () ); }
+
+
+
+    /* set_window_size
+     *
+     * set the size of the window
+     * 
+     * width/height: width and height of the window
+     */
+    void set_window_size ( const int width, const int height ) { glfwSetWindowSize ( winptr.get (), width, height ); }
+
+    /* set_viewport_size
+     *
+     * set the size of the viewport
+     *
+     * width/height: width and height of the viewport
+     */
+    void set_viewport_size ( const int width, const int height ) { make_current (); glViewport ( 0, 0, width, height ); }
+
+    /* swap_buffers
+     *
+     * swap the GLFW buffers
+     */
+    void swap_buffers () { glfwSwapBuffers ( winptr.get () ); }
+
+    /* clear
+     *
+     * clears the window
+     *
+     * r,g,b,a: rgba values of the clear colour
+     */
+    void clear ( const float r, const float g, const float b, const float a ) { make_current (); glClearColor ( r, g, b, a ); glClear ( GL_COLOR_BUFFER_BIT ); }
+
+
+
 
     /* internal_ptr
      *
@@ -120,15 +168,6 @@ public:
      */
     const GLFWwindow * internal_ptr () const { return winptr.get (); }
     GLFWwindow * internal_ptr () { return winptr.get (); }
-
-    /* comparison operators
-     *
-     * determines if two window objects refer to the same window
-     * 
-     * return: boolean representing equality
-     */
-    bool operator== ( const window& other ) const { return ( winptr == other.internal_ptr () ); }
-    bool operator!= ( const window& other ) const { return ( winptr != other.internal_ptr () ); }
 
 
 
@@ -147,6 +186,56 @@ private:
      * automatically initialised to 0
      */
     static int object_count;
+
+    /* register_object
+     *
+     * increment object_count and initialise glfw if necessary
+     */
+    void register_object ();
+
+    /* unregister_object
+     *
+     * decrement object_count and terminate glfw if necessary
+     */
+    void unregister_object ();
+
+    /* make_current
+     *
+     * makes the window current
+     * 
+     * return: true for success, false for failure
+     */
+    bool make_current () { glfwMakeContextCurrent ( winptr.get () ); glad.load (); }
+
+};
+
+
+
+/* class glfw_exception : exception
+ *
+ * for exceptions related to glfw
+ */
+class glh::glfw_exception : public exception
+{
+public:
+
+    /* full constructor
+     *
+     * __what: description of the exception
+     */
+    explicit glfw_exception ( const char * __what )
+        : exception ( __what )
+    {}
+
+    /* zero-parameter constructor
+     *
+     * construct glad_exception with no descrption
+     */
+    explicit glfw_exception ()
+        : exception { NULL }
+    {}
+
+    /* default everything else and inherits what () function */
 
 };
 
