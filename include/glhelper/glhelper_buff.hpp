@@ -44,6 +44,18 @@ namespace glh
      */
     class buffer;
 
+    /* class vbo : buffer
+     *
+     * vertex buffer object
+     */
+    class vbo;
+
+    /* class ebo : buffer
+     *
+     * element buffer object
+     */
+    class ebo;
+
     /* class buffer_exception : exception
      *
      * for exceptions related to buffers
@@ -92,11 +104,11 @@ public:
 
 
 
-    /* pure virtual type
+    /* pure virtual target
      *
-     * get the type of the buffer
+     * get the target of the buffer
      */
-    virtual GLenum type () const = 0;
+    virtual GLenum target () const = 0;
 
     /* buffer_data
      *
@@ -108,19 +120,19 @@ public:
      *
      * clear the data from the buffer
      */
-    void clear_data () { buffer_data ( 0, NULL, GL_STATIC_DRAW ); }
+    void clear_data ();
 
 
 
-    /* virtual destroy
+    /* destroy
      *
      * destroys the object, setting id to -1
      */
-    virtual void destroy () override;
+    void destroy () override final;
 
 
 
-private:
+protected:
 
     /* bind
      *
@@ -128,7 +140,7 @@ private:
      * 
      * return: the target it is bound to
      */
-    GLenum bind () const { glBindBuffer ( type (), id ); return type (); }
+    GLenum bind () const { glBindBuffer ( target (), id ); return target (); }
 
     /* unbind
      *
@@ -136,7 +148,91 @@ private:
      * 
      * return: the target just unbound
      */
-    GLenum unbind () const { glBindBuffer ( type (), id ); return type (); }
+    GLenum unbind () const { glBindBuffer ( target (), 0 ); return target (); }
+
+};
+
+/* class vbo : buffer
+ *
+ * vertex buffer object
+ */
+class glh::vbo : buffer 
+{
+public:
+
+    /* default constructor
+     *
+     * generates the buffer
+     */
+    explicit vbo () = default;
+
+    /* deleted copy constructor
+     *
+     * it makes no sense to copy a buffer
+     */
+    vbo ( const vbo& other ) = delete;
+
+    /* default move constructor */
+    vbo ( vbo&& other ) = default;
+
+    /* deleted copy assignment operator
+     *
+     * it makes no sense to assign the buffer after comstruction
+     */
+    vbo& operator= ( const vbo& other ) = delete;
+
+    /* default destructor */
+    ~vbo () = default;
+
+
+
+    /* target 
+     *
+     * return: GLenum for the target of the buffer
+     */
+    GLenum target () const override final { return GL_ARRAY_BUFFER; }
+
+};
+
+/* class ebo : buffer
+ *
+ * element buffer object
+ */
+class glh::ebo : buffer 
+{
+public:
+
+    /* default constructor
+     *
+     * generates the buffer
+     */
+    explicit ebo () = default;
+
+    /* deleted copy constructor
+     *
+     * it makes no sense to copy a buffer
+     */
+    ebo ( const ebo& other ) = delete;
+
+    /* default move constructor */
+    ebo ( ebo&& other ) = default;
+
+    /* deleted copy assignment operator
+     *
+     * it makes no sense to assign the buffer after comstruction
+     */
+    ebo& operator= ( const ebo& other ) = delete;
+
+    /* default destructor */
+    ~ebo () = default;
+
+
+
+    /* target 
+     *
+     * return: GLenum for the target of the buffer
+     */
+    GLenum target () const override final { return GL_ELEMENT_ARRAY_BUFFER; }
 
 };
 

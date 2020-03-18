@@ -39,7 +39,7 @@ glh::buffer::buffer ()
 glh::buffer::~buffer ()
 {
     /* destroy buffer */
-    if ( id >= 0 ) glDeleteBuffers ( 1, ( unsigned * ) &id );
+    destroy ();
 }
 
 /* buffer_data
@@ -51,10 +51,25 @@ void glh::buffer::buffer_data ( const size_t size, const void * data, const GLen
     /* bind the buffer */
     bind ();
     /* buffer data */
-    glBufferData ( type (), size, data, usage );
+    glBufferData ( target (), size, data, usage );
     /* unbind the buffer */
     unbind ();
 }
+
+/* clear_data
+ *
+ * clear the data from the buffer
+ */
+void glh::buffer::clear_data ()
+{
+    /* bind the buffer */
+    bind ();
+    /* empty buffer data */
+    glBufferData ( target (), 0, NULL, GL_STATIC_DRAW );
+    /* unbind the buffer */
+    unbind ();
+}
+
 
 /* virtual destroy
  *
