@@ -43,6 +43,9 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
+/* include glhelper_buff.hpp */
+#include <glhelper/glhelper_buff.hpp>
+
 
 
 /* NAMESPACE FORWARD DECLARATIONS */
@@ -109,7 +112,7 @@ public:
      */
     window ( const window& other ) = delete;
 
-    /* move constructor
+    /* default move constructor
      *
      * moving does make sense, for example returning from functions
      */
