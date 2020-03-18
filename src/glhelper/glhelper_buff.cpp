@@ -45,9 +45,13 @@ glh::buffer::~buffer ()
 /* buffer_data
  *
  * buffer data into the buffer
+ * 
+ * size: size of data in bytes
+ * data: pointer to data
+ * usage: the storage method for the data
  */
 void glh::buffer::buffer_data ( const size_t size, const void * data, const GLenum usage ) 
-{ 
+{
     /* bind the buffer */
     bind ();
     /* buffer data */
@@ -70,7 +74,6 @@ void glh::buffer::clear_data ()
     unbind ();
 }
 
-
 /* virtual destroy
  *
  * destroys the object, setting id to -1
@@ -78,8 +81,44 @@ void glh::buffer::clear_data ()
 void glh::buffer::destroy ()
 {
     /* destroy buffer */
-    if ( id >= 0 ) glDeleteBuffers ( 1, ( unsigned * ) &id );
+    if ( is_valid () ) glDeleteBuffers ( 1, ( unsigned * ) &id );
     
     /* set id to -1 */
     id = -1;
+}
+
+/* bind
+ *
+ * bind the buffer
+ * 
+ * return: the target it is bound to
+ */
+GLenum glh::buffer::bind () const 
+{ 
+    /* check object is valid */
+    if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid buffer object" };
+    
+    /* bind the buffer */
+    glBindBuffer ( target (), id );
+
+    /* return the target */
+    return target ();
+}
+
+/* unbind
+ *
+ * unbind the buffer's target
+ * 
+ * return: the target just unbound
+ */
+GLenum glh::buffer::unbind () const
+{ 
+    /* check object is valid */
+    if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid buffer object" };
+    
+    /* bind the buffer */
+    glBindBuffer ( target (), 0 );
+
+    /* return the target */
+    return target ();
 }
