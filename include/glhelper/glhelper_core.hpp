@@ -90,7 +90,7 @@ public:
      *
      * virtual in preparation for polymorphism
      */
-    virtual ~object () {}
+    virtual ~object () { id = -1; }
 
 
 
