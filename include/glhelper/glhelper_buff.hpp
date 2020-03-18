@@ -111,8 +111,10 @@ public:
     virtual GLenum target () const = 0;
 
     /* buffer_data
-     *
-     * buffer data into the buffer
+     * 
+     * size: size of data in bytes
+     * data: pointer to data
+     * usage: the storage method for the data
      */
     void buffer_data ( const size_t size, const void * data, const GLenum usage );
 
@@ -140,7 +142,7 @@ protected:
      * 
      * return: the target it is bound to
      */
-    GLenum bind () const { glBindBuffer ( target (), id ); return target (); }
+    GLenum bind () const;
 
     /* unbind
      *
@@ -148,7 +150,7 @@ protected:
      * 
      * return: the target just unbound
      */
-    GLenum unbind () const { glBindBuffer ( target (), 0 ); return target (); }
+    GLenum unbind () const;
 
 };
 
@@ -156,7 +158,7 @@ protected:
  *
  * vertex buffer object
  */
-class glh::vbo : buffer 
+class glh::vbo : public buffer 
 {
 public:
 
@@ -198,7 +200,7 @@ public:
  *
  * element buffer object
  */
-class glh::ebo : buffer 
+class glh::ebo : public buffer 
 {
 public:
 
