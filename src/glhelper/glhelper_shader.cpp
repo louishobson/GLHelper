@@ -67,9 +67,100 @@ glh::shader::shader ( const GLenum _target, const std::string& _path )
  */
 void glh::shader::destroy ()
 {
-    /* delete the shader */
-    glDeleteShader ( id );
+    /* if is valid */
+    if ( is_valid () )
+    {
+        /* destroy and set id to 0 */
+        glDeleteShader ( id );
+        id = 0;
+    }   
+}
 
-    /* set id to 0 */
-    id = 0;
+
+
+/* PROGRAM IMPLEMENTATION */
+
+/* three-shader constructor
+ *
+ * link all three shaders into a program
+ * NOTE: the shader program remains valid even when linked shaders are destroyed
+ */
+glh::program::program ( const vshader& vs, const gshader& gs, const fshader& fs )
+{
+    /* generate program */
+    id = glCreateProgram ();
+
+    /* attach shaders */
+    glAttachShader ( id, vs.internal_id () );
+    glAttachShader ( id, gs.internal_id () );
+    glAttachShader ( id, fs.internal_id () );
+
+    /* link the program */
+    glLinkProgram ( id );
+
+    /* check linking success */
+    int link_success;
+    glGetProgramiv ( id, GL_LINK_STATUS, &link_success );
+    if ( !link_success )
+    {
+        /* linking failed
+         * first get log info */
+        char link_log [ GLH_SHADER_LOG_SIZE ];
+        glGetProgramInfoLog ( id, GLH_SHADER_LOG_SIZE, NULL, link_log );
+        /* print log info to stderr */
+        std::cerr << link_log;
+        /* destroy the program and throw */
+        destroy ();
+        throw shader_exception { "program linking failed" };
+    }
+}
+
+/* two-shader constructor
+ *
+ * link vertex and fragment shaders into a program
+ * uses the default geometry shader
+ * NOTE: the shader program remains valid even when linked shaders are destroyed
+ */
+glh::program::program ( const vshader& vs, const fshader& fs )
+{
+    /* generate program */
+    id = glCreateProgram ();
+
+    /* attach shaders */
+    glAttachShader ( id, vs.internal_id () );
+    glAttachShader ( id, fs.internal_id () );
+
+    /* link the program */
+    glLinkProgram ( id );
+
+    /* check linking success */
+    int link_success;
+    glGetProgramiv ( id, GL_LINK_STATUS, &link_success );
+    if ( !link_success )
+    {
+        /* linking failed
+         * first get log info */
+        char link_log [ GLH_SHADER_LOG_SIZE ];
+        glGetProgramInfoLog ( id, GLH_SHADER_LOG_SIZE, NULL, link_log );
+        /* print log info to stderr */
+        std::cerr << link_log;
+        /* destroy the program and throw */
+        destroy ();
+        throw shader_exception { "program linking failed" };
+    }
+}
+
+/* destroy
+ *
+ * destroys the shader program, setting id to 0
+ */
+void glh::program::destroy ()
+{
+    /* if is valid */
+    if ( is_valid () )
+    {
+        /* destroy and set id to 0 */
+        glDeleteProgram ( id );
+        id = 0;
+    }    
 }

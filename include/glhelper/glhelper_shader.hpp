@@ -284,7 +284,7 @@ public:
 
     /* destroy
      *
-     * destroys the shader program
+     * destroys the shader program, setting id to 0
      */
     void destroy () override final;
 
@@ -296,7 +296,7 @@ private:
      *
      * use the shader program for the following OpenGL function calls
      */
-    void use () const;
+    void use () const { glUseProgram ( id ); }
 
 };
 
