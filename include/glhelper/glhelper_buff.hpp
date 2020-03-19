@@ -38,6 +38,12 @@
 
 namespace glh
 {
+    /* class window
+     *
+     * forward declaration to allow vao to make friend
+     */
+    class window;
+
     /* class buffer : object
      *
      * base class for storing a buffer
@@ -288,6 +294,13 @@ public:
  */
 class glh::vao : public object
 {
+
+    /* window is a friend of vao
+     *
+     * this is so that the window can bind the vao
+     */
+    friend class window;
+
 public:
 
     /* constructor
