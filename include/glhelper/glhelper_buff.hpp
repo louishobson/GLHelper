@@ -97,6 +97,19 @@ public:
      */
     explicit buffer ( const GLenum _target );
 
+    /* construct and immediately buffer data
+     *
+     * generates a buffer and immediately buffers data
+     * 
+     * _target: the target for the buffer
+     * size: size of data in bytes
+     * data: pointer to data
+     * usage: the storage method for the data
+     */
+    explicit buffer ( const GLenum _target, const size_t size, const void * data, const GLenum usage )
+        : buffer { _target }
+    { buffer_data ( size, data, usage ); }
+
     /* deleted zero-parameter constructor */
     explicit buffer () = delete;
 
@@ -189,6 +202,18 @@ public:
         : buffer { GL_ARRAY_BUFFER }
     {}
 
+    /* construct and immediately buffer data
+     *
+     * generates a buffer and immediately buffers data
+     * 
+     * size: size of data in bytes
+     * data: pointer to data
+     * usage: the storage method for the data
+     */
+    explicit vbo ( const size_t size, const void * data, const GLenum usage )
+        : buffer { GL_ARRAY_BUFFER, size, data, usage }
+    {}
+
     /* deleted copy constructor
      *
      * it makes no sense to copy a buffer
@@ -223,6 +248,18 @@ public:
      */
     explicit ebo ()
         : buffer { GL_ELEMENT_ARRAY_BUFFER }
+    {}
+
+    /* construct and immediately buffer data
+     *
+     * generates a buffer and immediately buffers data
+     * 
+     * size: size of data in bytes
+     * data: pointer to data
+     * usage: the storage method for the data
+     */
+    explicit ebo ( const size_t size, const void * data, const GLenum usage )
+        : buffer { GL_ARRAY_BUFFER, size, data, usage }
     {}
 
     /* deleted copy constructor
