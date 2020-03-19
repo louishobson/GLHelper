@@ -87,6 +87,9 @@ void glh::shader::destroy ()
  */
 glh::program::program ( const vshader& vs, const gshader& gs, const fshader& fs )
 {
+    /* check shaders are valid */
+    if ( !vs.is_valid () || gs.is_valid () || !fs.is_valid () ) throw shader_exception { "cannot create shader program from invalid shaders" };
+
     /* generate program */
     id = glCreateProgram ();
 
@@ -123,6 +126,9 @@ glh::program::program ( const vshader& vs, const gshader& gs, const fshader& fs 
  */
 glh::program::program ( const vshader& vs, const fshader& fs )
 {
+    /* check shaders are valid */
+    if ( !vs.is_valid () || !fs.is_valid () ) throw shader_exception { "cannot create shader program from invalid shaders" };
+
     /* generate program */
     id = glCreateProgram ();
 
@@ -163,4 +169,17 @@ void glh::program::destroy ()
         glDeleteProgram ( id );
         id = 0;
     }    
+}
+
+/* use
+ *
+ * use the shader program for the following OpenGL function calls
+ */
+void glh::program::use () const
+{ 
+    /* if program is not valid, throw error */
+    if ( !is_valid () ) throw shader_exception { "cannot use invalid shader program" };
+
+    /* use program */
+    glUseProgram ( id );
 }

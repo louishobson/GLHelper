@@ -296,7 +296,7 @@ private:
      *
      * use the shader program for the following OpenGL function calls
      */
-    void use () const { glUseProgram ( id ); }
+    void use () const;
 
 };
 
