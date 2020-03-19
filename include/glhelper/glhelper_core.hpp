@@ -65,10 +65,10 @@ public:
 
     /* zero-parameter constructor
      *
-     * in this case, id is initialised to -1
+     * in this case, id is initialised to 0
      */
     explicit object ()
-        : id { -1 }
+        : id { 0 }
     {}
 
     /* deleted copy constructor
@@ -90,7 +90,7 @@ public:
      *
      * virtual in preparation for polymorphism
      */
-    virtual ~object () { id = -1; }
+    virtual ~object () { id = 0; }
 
 
 
@@ -102,12 +102,12 @@ public:
 
     /* virtual is_valid
      *
-     * determines if the object is valid (id >= 0)
+     * determines if the object is valid (id > 0)
      * may be overloaded when derived to add more parameters to validity
      * 
      * return: boolean representing validity
      */
-    virtual bool is_valid () const { return ( id >= 0 ); }
+    virtual bool is_valid () const { return ( id > 0 ); }
 
     /* virtual not operator
      *
@@ -143,7 +143,7 @@ protected:
      *
      * the OpenGL id of the class
      */
-    GLint id;
+    GLuint id;
 
 };
 
