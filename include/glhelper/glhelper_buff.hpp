@@ -114,7 +114,7 @@ public:
      *
      * virtual in preparation for polymorphism
      */
-    virtual ~buffer ();
+    virtual ~buffer () { destroy (); }
 
 
 
@@ -136,7 +136,7 @@ public:
 
     /* destroy
      *
-     * destroys the object, setting id to -1
+     * destroys the object, setting id to 0
      */
     void destroy () override final;
 
@@ -264,11 +264,11 @@ class glh::vao : public object
 {
 public:
 
-    /* default constructor
+    /* constructor
      *
      * creates a vertex array object without any vbo or ebo bound
      */
-    explicit vao () = default;
+    explicit vao ();
 
     /* deleted copy constructor */
     vao ( const vao& other ) = delete;
@@ -280,7 +280,7 @@ public:
     vao& operator= ( const vao& other ) = delete;
 
     /* destructor */
-    ~vao ();
+    ~vao () { destroy (); }
 
 
 
@@ -299,6 +299,22 @@ public:
      */
     void set_vertex_attrib ( const GLuint attrib, const vbo& buff, const GLint size, const GLenum type, const GLboolean norm, const GLsizei stride, const GLvoid * offset );
 
+    /* enable_vertex_attrib
+     *
+     * enable a vertex attribute
+     * 
+     * attrib: the attribute to configure (>=0)
+     */
+    void enable_vertex_attrib ( const GLuint attrib );
+
+    /* disable_vertex_attrib
+     *
+     * disable a vertex attribute
+     * 
+     * attrib: the attribute to configure (>=0)
+     */
+    void disable_vertex_attrib ( const GLuint attrib );
+
     /* bind_ebo
      *
      * binds an element buffer object to the vao
@@ -306,6 +322,14 @@ public:
      * buff: the ebo to bind
      */
     void bind_ebo ( const ebo& buff );
+
+
+
+    /* destroy
+     *
+     * destroys the object, setting id to 0
+     */
+    void destroy () override final;
 
 
 

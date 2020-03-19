@@ -26,21 +26,12 @@
  * generates a buffer
  */
 glh::buffer::buffer ()
-    : object { -1 }
 {
     /* allocate the buffer */
     glGenBuffers ( 1, ( unsigned * ) &id );
 }
 
-/* virtual destructor
- *
- * virtual in preparation for polymorphism
- */
-glh::buffer::~buffer ()
-{
-    /* destroy buffer */
-    destroy ();
-}
+
 
 /* buffer_data
  *
@@ -74,18 +65,22 @@ void glh::buffer::clear_data ()
     unbind ();
 }
 
-/* virtual destroy
+
+
+/* destroy
  *
- * destroys the object, setting id to -1
+ * destroys the object, setting id to 0
  */
 void glh::buffer::destroy ()
 {
     /* destroy buffer */
-    if ( is_valid () ) glDeleteBuffers ( 1, ( unsigned * ) &id );
+    if ( is_valid () ) glDeleteBuffers ( 1, &id );
     
-    /* set id to -1 */
-    id = -1;
+    /* set id to 0 */
+    id = 0;
 }
+
+
 
 /* bind
  *
@@ -121,4 +116,137 @@ GLenum glh::buffer::unbind () const
 
     /* return the target */
     return target ();
+}
+
+
+
+/* VAO IMPLEMENTATION */
+
+/* constructor
+ *
+ * creates a vertex array object without any vbo or ebo bound
+ */
+glh::vao::vao ()
+{
+    /* generate vao */
+    glGenVertexArrays ( 1, &id );
+}
+
+
+
+/* set_vertex_attrib
+ *
+ * configures a vertex attribute of the vao
+ * also implicitly enables the vertex attribute
+ * 
+ * attrib: the attribute to configure (>=0)
+ * buff: the vertex buffer object to bind to the attribute
+ * size: components per vertex (1, 2, 3 or 4)
+ * type: the type of each component of each vertex
+ * norm: boolean as to whether to normalise the vertex data
+ * stride: offset between consecutive vertices in bytes
+ * offset: the offset from the start of the vertex data in bytes
+ */
+void glh::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, const GLint size, const GLenum type, const GLboolean norm, const GLsizei stride, const GLvoid * offset )
+{
+    /* bind vao */
+    bind ();
+    /* bind vbo */
+    buff.bind ();
+
+    /* set attribute pointer */
+    glVertexAttribPointer ( attrib, size, type, norm, stride, offset );
+    /* enable attribute */
+    glEnableVertexAttribArray ( attrib );
+
+    /* unbind vao */
+    unbind ();
+    /* unbind vbo */
+    buff.unbind ();
+}
+
+/* enable_vertex_attrib
+ *
+ * enable a vertex attribute
+ * 
+ * attrib: the attribute to configure (>=0)
+ */
+void glh::vao::enable_vertex_attrib ( const GLuint attrib )
+{
+    /* bind vao, enable, unbind */
+    bind ();
+    glEnableVertexAttribArray ( attrib );
+    unbind ();
+}
+
+/* disable_vertex_attrib
+ *
+ * disable a vertex attribute
+ * 
+ * attrib: the attribute to configure (>=0)
+ */
+void glh::vao::disable_vertex_attrib ( const GLuint attrib )
+{
+    /* bind vao, disable, unbind */
+    bind ();
+    glDisableVertexAttribArray ( attrib );
+    unbind ();
+}
+
+/* bind_ebo
+ *
+ * binds an element buffer object to the vao
+ *
+ * buff: the ebo to bind
+ */
+void glh::vao::bind_ebo ( const ebo& buff )
+{
+    /* bind vao, then ebo */
+    bind ();
+    buff.bind ();
+
+    /* unbind vao, then ebo */
+    unbind ();
+    buff.unbind ();
+}
+
+
+
+/* destroy
+ *
+ * destroys the object, setting id to 0
+ */
+void glh::vao::destroy ()
+{
+    /* if object is valid */
+    if ( is_valid () )
+    {
+        /* delete vao */
+        glDeleteVertexArrays ( 1, &id );
+
+        /* set id to 0 */
+        id = 0;
+    }
+}
+
+
+
+/* bind
+ *
+ * bind the vertex array object
+ */
+void glh::vao::bind ()
+{
+    /* bind the vao */
+    glBindVertexArray ( id );
+}
+
+/* unbind
+ *
+ * unbind the vertex array object
+ */
+void glh::vao::unbind ()
+{
+    /* bind the vao */
+    glBindVertexArray ( 0 );
 }
