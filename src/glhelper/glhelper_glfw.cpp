@@ -27,7 +27,6 @@
  * glad will be implicity loaded to the window's context
  */
 glh::window::window ( const std::string& title, const int width, const int height )
-    : winptr {}
 {
     /* register object */
     register_object ();
