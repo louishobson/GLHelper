@@ -22,6 +22,7 @@
 
 /* include core headers */
 #include <iostream>
+#include <string>
 
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
@@ -121,17 +122,15 @@ public:
      *
      * __what: description of the exception
      */
-    explicit glad_exception ( const char * __what )
+    explicit glad_exception ( const std::string& __what )
         : exception ( __what )
     {}
 
-    /* zero-parameter constructor
+    /* default zero-parameter constructor
      *
      * construct glad_exception with no descrption
      */
-    explicit glad_exception ()
-        : exception { NULL }
-    {}
+    explicit glad_exception () = default;
 
     /* default everything else and inherits what () function */
 

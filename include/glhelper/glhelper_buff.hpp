@@ -22,6 +22,7 @@
 
 /* include core headers */
 #include <iostream>
+#include <string>
 
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
@@ -192,6 +193,8 @@ protected:
 
 };
 
+
+
 /* class vbo : buffer
  *
  * vertex buffer object
@@ -240,6 +243,8 @@ public:
 
 };
 
+
+
 /* class ebo : buffer
  *
  * element buffer object
@@ -287,6 +292,8 @@ public:
     ~ebo () = default;
 
 };
+
+
 
 /* class vao : object
  *
@@ -388,6 +395,8 @@ private:
 
 };
 
+
+
 /* class buffer_exception : exception
  *
  * for exceptions related to buffers
@@ -400,17 +409,15 @@ public:
      *
      * __what: description of the exception
      */
-    explicit buffer_exception ( const char * __what )
+    explicit buffer_exception ( const std::string& __what )
         : exception ( __what )
     {}
 
-    /* zero-parameter constructor
+    /* default zero-parameter constructor
      *
-     * construct glad_exception with no descrption
+     * construct buffer_exception with no descrption
      */
-    explicit buffer_exception ()
-        : exception { NULL }
-    {}
+    explicit buffer_exception () = default;
 
     /* default everything else and inherits what () function */
 

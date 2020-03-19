@@ -29,7 +29,6 @@
 /* include core headers */
 #include <iostream>
 #include <string>
-#include <functional>
 
 /* include memory for shared_ptr */
 #include <memory>
@@ -244,17 +243,15 @@ public:
      *
      * __what: description of the exception
      */
-    explicit glfw_exception ( const char * __what )
+    explicit glfw_exception ( const std::string& __what )
         : exception ( __what )
     {}
 
-    /* zero-parameter constructor
+    /* default zero-parameter constructor
      *
-     * construct glad_exception with no descrption
+     * construct glfw_exception with no descrption
      */
-    explicit glfw_exception ()
-        : exception { NULL }
-    {}
+    explicit glfw_exception () = default;
 
     /* default everything else and inherits what () function */
 

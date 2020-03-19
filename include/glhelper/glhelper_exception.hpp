@@ -22,6 +22,7 @@
 
 /* include core headers */
 #include <iostream>
+#include <string>
 
 /* include exception */
 #include <exception>
