@@ -328,13 +328,13 @@ private:
      *
      * bind the vertex array object
      */
-    void bind ();
+    void bind () const;
 
     /* unbind
      *
      * unbind the vertex array object
      */
-    void unbind ();
+    void unbind () const;
 
 };
 
