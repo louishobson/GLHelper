@@ -31,7 +31,7 @@ glh::shader::shader ( const GLenum _target, const std::string& _path )
     /* throw exception for failure */
     if ( !shader_file ) throw shader_exception { "could not open shader file" };
     /* otherwise read shader as string */
-    shader_file >> source;
+    source.assign ( std::istreambuf_iterator<char> ( shader_file ), std::istreambuf_iterator<char> () );
     /* close the file */
     shader_file.close ();
     /* throw exception if shader source is empty */
