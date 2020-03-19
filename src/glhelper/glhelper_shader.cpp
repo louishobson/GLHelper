@@ -48,12 +48,28 @@ glh::shader::shader ( const GLenum _target, const std::string& _path )
     glGetShaderiv ( id, GL_COMPILE_STATUS, &comp_success );
     if ( !comp_success ) 
     {
-        /* compilation failed, so throw exception */
+        /* compilation failed
+         * first get log info */
         char comp_log [ GLH_SHADER_LOG_SIZE ];
         glGetShaderInfoLog ( id, GLH_SHADER_LOG_SIZE, NULL, comp_log );
+        /* print log info to stderr */
+        std::cerr << comp_log;
+        /* destroy the shader and throw */
         destroy ();
-        throw 
+        throw shader_exception { "shader compilation failed" };
     }
+}
 
-    
+/* destroy
+ *
+ * destroys the shader, setting its id to 0
+ * any program using this shader will still function
+ */
+void glh::shader::destroy ()
+{
+    /* delete the shader */
+    glDeleteShader ( id );
+
+    /* set id to 0 */
+    id = 0;
 }
