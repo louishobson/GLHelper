@@ -80,7 +80,7 @@ namespace glh
 class glh::buffer : public object
 {
 
-    /* vao if a friend of a buffer object
+    /* vao is a friend of a buffer object
      *
      * this allows the vao to access the bind functions
      * this in turn allows for the vao to bind to a vbp/ebo
