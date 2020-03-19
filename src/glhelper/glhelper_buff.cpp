@@ -25,7 +25,8 @@
  *
  * generates a buffer
  */
-glh::buffer::buffer ()
+glh::buffer::buffer ( const GLenum _target )
+    : target { _target }
 {
     /* allocate the buffer */
     glGenBuffers ( 1, ( unsigned * ) &id );
@@ -46,7 +47,7 @@ void glh::buffer::buffer_data ( const size_t size, const void * data, const GLen
     /* bind the buffer */
     bind ();
     /* buffer data */
-    glBufferData ( target (), size, data, usage );
+    glBufferData ( target, size, data, usage );
     /* unbind the buffer */
     unbind ();
 }
@@ -60,7 +61,7 @@ void glh::buffer::clear_data ()
     /* bind the buffer */
     bind ();
     /* empty buffer data */
-    glBufferData ( target (), 0, NULL, GL_STATIC_DRAW );
+    glBufferData ( target, 0, NULL, GL_STATIC_DRAW );
     /* unbind the buffer */
     unbind ();
 }
@@ -94,10 +95,10 @@ GLenum glh::buffer::bind () const
     if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid buffer object" };
     
     /* bind the buffer */
-    glBindBuffer ( target (), id );
+    glBindBuffer ( target, id );
 
     /* return the target */
-    return target ();
+    return target;
 }
 
 /* unbind
@@ -112,10 +113,10 @@ GLenum glh::buffer::unbind () const
     if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid buffer object" };
     
     /* bind the buffer */
-    glBindBuffer ( target (), 0 );
+    glBindBuffer ( target, 0 );
 
     /* return the target */
-    return target ();
+    return target;
 }
 
 

@@ -92,8 +92,13 @@ public:
     /* constructor
      *
      * generates a buffer
+     * 
+     * _target: the target for the buffer
      */
-    explicit buffer ();
+    explicit buffer ( const GLenum _target );
+
+    /* deleted zero-parameter constructor */
+    explicit buffer () = delete;
 
     /* deleted copy constructor
      *
@@ -144,11 +149,11 @@ public:
 
 protected:
 
-    /* pure virtual target
+    /* GLenum target
      *
-     * get the target of the buffer
+     * the target to bind the buffer to
      */
-    virtual GLenum target () const = 0;
+    const GLenum target;
 
     /* bind
      *
@@ -176,11 +181,13 @@ class glh::vbo : public buffer
 {
 public:
 
-    /* default constructor
+    /* constructor
      *
      * generates the buffer
      */
-    explicit vbo () = default;
+    explicit vbo ()
+        : buffer { GL_ARRAY_BUFFER }
+    {}
 
     /* deleted copy constructor
      *
@@ -200,16 +207,6 @@ public:
     /* default destructor */
     ~vbo () = default;
 
-
-
-protected:
-
-    /* target 
-     *
-     * return: GLenum for the target of the buffer
-     */
-    GLenum target () const override final { return GL_ARRAY_BUFFER; }
-
 };
 
 /* class ebo : buffer
@@ -220,11 +217,13 @@ class glh::ebo : public buffer
 {
 public:
 
-    /* default constructor
+    /* constructor
      *
      * generates the buffer
      */
-    explicit ebo () = default;
+    explicit ebo ()
+        : buffer { GL_ELEMENT_ARRAY_BUFFER }
+    {}
 
     /* deleted copy constructor
      *
@@ -243,16 +242,6 @@ public:
 
     /* default destructor */
     ~ebo () = default;
-
-
-
-protected:
-
-    /* target 
-     *
-     * return: GLenum for the target of the buffer
-     */
-    GLenum target () const override final { return GL_ELEMENT_ARRAY_BUFFER; }
 
 };
 
