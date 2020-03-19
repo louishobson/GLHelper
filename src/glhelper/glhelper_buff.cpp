@@ -237,6 +237,9 @@ void glh::vao::destroy ()
  */
 void glh::vao::bind ()
 {
+    /* check object is valid */
+    if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid vertex array object" };
+
     /* bind the vao */
     glBindVertexArray ( id );
 }
@@ -247,6 +250,9 @@ void glh::vao::bind ()
  */
 void glh::vao::unbind ()
 {
+    /* check object is valid */
+    if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid vertex array object" };
+
     /* bind the vao */
     glBindVertexArray ( 0 );
 }
