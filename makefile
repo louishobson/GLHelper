@@ -1,12 +1,10 @@
 #!/bin/make
 
-#!/bin/make
-
 # COMMANDS AND FLAGS
 
 # gcc setup
-CC=gcc
-CFLAGS=-O3 -std=c99 -Iinclude -static
+CC=g++
+CFLAGS=-O3 -std=c++14 -Iinclude -static
 
 # g++ setup
 CPP=g++
@@ -46,7 +44,7 @@ glad: src/glad/glad.o
 #
 # compile glhelper to a library
 glhelper: src/glhelper/glhelper.a
-src/glhelper/glhelper.a: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o
+src/glhelper/glhelper.a: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o src/glhelper/glhelper_buff.o
 	$(AR) $(ARFLAGS) $@ $^
 
 # test

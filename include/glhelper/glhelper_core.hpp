@@ -4,7 +4,7 @@
  * Distributed under MIT licence as a part of the GLHelper C++ library.
  * For details, see: https://github.com/louishobson/GLHelper/blob/master/LICENSE
  * 
- * src/glhelper_core.hpp
+ * include/glhelper/glhelper_core.hpp
  * 
  * core header for glhelper library
  * sets up OpenGL headers and defines core base classes
@@ -59,31 +59,38 @@ public:
      *
      * _id: the id of the object
      */
-    explicit object ( const int _id )
+    explicit object ( const GLuint _id )
         : id { _id }
     {}
 
     /* zero-parameter constructor
      *
-     * in this case, id is initialised to -1
+     * in this case, id is initialised to 0
      */
     explicit object ()
-        : id { -1 }
+        : id { 0 }
     {}
 
-    /* default copy constructor */
-
-    /* default copy assignment operator
+    /* deleted copy constructor
      *
-     * will replace id with the id of the other class
-     * the object referenced by this class will NOT be destroyed
+     * it makes no sense to copy an object
      */
+    object ( const object& other ) = delete;
+
+    /* default move constructor */
+    object ( object&& other ) = default;
+
+    /* deleted copy assignment operator
+     *
+     * it makes no sense to assign the object after comstruction
+     */
+    object& operator= ( const object& other ) = delete;
 
     /* virtual destructor
      *
      * virtual in preparation for polymorphism
      */
-    virtual ~object () {}
+    virtual ~object () { id = 0; }
 
 
 
@@ -91,16 +98,16 @@ public:
      *
      * returns the internal id of the object
      */
-    const int& internal_id () const { return id; }
+    const GLuint& internal_id () const { return id; }
 
     /* virtual is_valid
      *
-     * determines if the object is valid (id >= 0)
+     * determines if the object is valid (id > 0)
      * may be overloaded when derived to add more parameters to validity
      * 
      * return: boolean representing validity
      */
-    virtual bool is_valid () const { return ( id >= 0 ); }
+    virtual bool is_valid () const { return ( id > 0 ); }
 
     /* virtual not operator
      *
@@ -132,11 +139,11 @@ public:
 
 protected:
 
-    /* int id
+    /* GLint id
      *
      * the OpenGL id of the class
      */
-    int id;
+    GLuint id;
 
 };
 

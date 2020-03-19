@@ -4,7 +4,7 @@
  * Distributed under MIT licence as a part of the GLHelper C++ library.
  * For details, see: https://github.com/louishobson/GLHelper/blob/master/LICENSE
  * 
- * src/glhelper_glad.hpp
+ * include/glhelper/glhelper_glad.hpp
  * 
  * declares glad-handling constructs
  * 

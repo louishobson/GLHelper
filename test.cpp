@@ -38,6 +38,17 @@ int main ()
         } ()
     };
 
+    unsigned vdata []
+    {
+        0.0f, 0.5f, 0.0f,
+        -0.5f, -0.5f, 0.0f,
+        0.5f, -0.5f, 0.0f
+    };
+    
+    glh::vbo vbo;
+    vbo.buffer_data ( sizeof ( vdata ), vdata, GL_STATIC_DRAW );
+
+
     std::this_thread::sleep_for ( std::chrono::seconds ( 5 ) );
 
     return 0;

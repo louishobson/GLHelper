@@ -4,7 +4,7 @@
  * Distributed under MIT licence as a part of the GLHelper C++ library.
  * For details, see: https://github.com/louishobson/GLHelper/blob/master/LICENSE
  * 
- * src/glhelper_glfw.cpp
+ * src/glhelper/glhelper_glfw.cpp
  * 
  * implementation of src/glhelper_glfw.hpp
  *
@@ -74,25 +74,6 @@ glh::window::window ( GLFWwindow * _winptr )
         /* window is invalid, so produce exception */
         throw glfw_exception { "GLH ERROR: failed to copy valid GLFW window" };
     }    
-}
-
-/* copy constructor
- *
- * creates a duplicate handle on the same window
- */
-glh::window::window ( window&& other )
-    /* allocate winptr with deleter */
-    : winptr { other.internal_ptr () }
-{
-    /* register object */
-    register_object ();
-
-    /* check window */
-    if ( !winptr )
-    {
-        /* window is invalid, so produce exception */
-        throw glfw_exception { "GLH ERROR: failed to copy valid GLFW window" };
-    }
 }
 
 /* destructor */
