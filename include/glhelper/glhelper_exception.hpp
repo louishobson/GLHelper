@@ -58,17 +58,15 @@ public:
      *
      * __what: description of the exception
      */
-    explicit exception ( const char * __what )
+    explicit exception ( const std::string& __what )
         : _what { __what }
     {}
 
-    /* zero-parameter constructor
+    /* default zero-parameter constructor
      *
      * creates an exception with no description (by setting _what to NULL)
      */
-    explicit exception ()
-        : _what { NULL }
-    {}
+    explicit exception () = default;
 
     /* default copy constructor */
     /* default asignment operator */
@@ -87,16 +85,16 @@ public:
      * 
      * return: _what
      */
-    virtual const char * what () const throw () { return _what; }
+    virtual const char * what () const throw () { return _what.c_str (); }
 
 
 private:
 
-    /* const char * _what
+    /* std::string _what
      *
      * string containing description of the exception
      */
-    const char * _what; 
+    const std::string _what; 
 
 };
 
