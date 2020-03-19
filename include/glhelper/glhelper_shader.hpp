@@ -115,6 +115,11 @@ public:
 
 
 
+    /* destroy
+     *
+     * destroys the shader, setting its id to 0
+     * any program using this shader will still function
+     */
     void destroy () override final;
 
 
