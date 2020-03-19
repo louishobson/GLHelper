@@ -59,7 +59,7 @@ public:
      *
      * _id: the id of the object
      */
-    explicit object ( const int _id )
+    explicit object ( const GLint _id )
         : id { _id }
     {}
 
@@ -98,7 +98,7 @@ public:
      *
      * returns the internal id of the object
      */
-    const int& internal_id () const { return id; }
+    const GLint& internal_id () const { return id; }
 
     /* virtual is_valid
      *
@@ -139,11 +139,11 @@ public:
 
 protected:
 
-    /* int id
+    /* GLint id
      *
      * the OpenGL id of the class
      */
-    int id;
+    GLint id;
 
 };
 
