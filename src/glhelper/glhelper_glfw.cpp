@@ -21,18 +21,21 @@
 
 /* WINDOW IMPLEMENTATION */
 
+/* CONSTRUCTORS AND DESTRUCTORS */
+
 /* constructor
  *
  * creates a working glfw window
  * glad will be implicity loaded to the window's context
  */
 glh::window::window ( const std::string& title, const int width, const int height )
+    : managed { true }
 {
     /* register object */
     register_object ();
 
     /* create window */
-    winptr.reset ( glfwCreateWindow ( width, height, title.c_str (), NULL, NULL ) );
+    winptr = glfwCreateWindow ( width, height, title.c_str (), NULL, NULL );
 
     /* check success */
     if ( !winptr )
@@ -56,13 +59,15 @@ glh::window::window ( const std::string& title, const int width, const int heigh
 }
 
 /* from pointer constructor
- *
- * constructs from pointer to already configured GLFWwindow
- * 
- * _winptr: pointer to GLFWwindow
- */
-glh::window::window ( GLFWwindow * _winptr )
+     *
+     * constructs from pointer to already configured GLFWwindow
+     * 
+     * _winptr: pointer to GLFWwindow
+     * _managed: whether the window should be deleted on destruction of the object (defaults to true)
+     */
+glh::window::window ( GLFWwindow * _winptr, const bool _managed )
     : winptr { _winptr }
+    , managed { _managed }
 {
     /* register object */
     register_object ();
@@ -78,14 +83,101 @@ glh::window::window ( GLFWwindow * _winptr )
 /* destructor */
 glh::window::~window ()
 {
-    /* reset winptr */
-    winptr.reset ();
+    /* if managed, destroy window */
+    if ( managed ) glfwDestroyWindow ( winptr );
 
     /* unregister object */
     unregister_object ();
 }
 
 
+
+/* WINDOW CONTROLLING METHODS */
+
+/* set_window_size
+ *
+ * set the size of the window
+ * 
+ * width/height: width and height of the window
+ */
+void glh::window::set_window_size ( const int width, const int height ) 
+{
+    /* set the window size */ 
+    glfwSetWindowSize ( winptr, width, height ); 
+}
+
+/* set_viewport_size
+ *
+ * set the size of the viewport
+ *
+ * width/height: width and height of the viewport
+ */
+void glh::window::set_viewport_size ( const int width, const int height ) 
+{ 
+    /* make window current */
+    make_current (); 
+    /* set the viewport size */
+    glViewport ( 0, 0, width, height ); 
+}
+
+
+
+/* CALLBACK SETTING METHODS */
+
+/* set_window_size_callback
+ *
+ * set the callback for window resizing
+ * 
+ * callback: the callback to run on window resize event
+ */
+void glh::window::set_window_size_callback ( const window_size_callback_t& callback )
+{
+    /* remove callback */
+    glfwSetWindowSizeCallback ( winptr, NULL );
+    window_size_callback = nullptr;
+
+    /* if callback is invalid (e.g. nullptr), return */
+    if ( !callback ) return;
+
+    /* set callback attribute */
+    window_size_callback = callback;
+
+    /* set the callback */
+    glfwSetWindowSizeCallback ( winptr, * window_size_callback.target<__window_size_callback_internal_t *> () );
+}
+
+
+
+/* DRAWING METHODS */
+
+/* swap_buffers
+ *
+ * swap the GLFW buffers
+ */
+void glh::window::swap_buffers () 
+{ 
+    /* swap the buffers */
+    glfwSwapBuffers ( winptr ); 
+}
+
+/* clear
+ *
+ * clears the window
+ *
+ * r,g,b,a: rgba values of the clear colour
+ */
+void glh::window::clear ( const float r, const float g, const float b, const float a ) 
+{
+    /* make window current */
+    make_current (); 
+    /* set the clear colour and clear */
+    glClearColor ( r, g, b, a ); 
+    glClear ( GL_COLOR_BUFFER_BIT );
+}
+
+
+
+/* WINDOW OBJECT LIFETIME MANAGEMENT */
 
 /* static int object_count
  *
@@ -127,6 +219,10 @@ void glh::window::unregister_object ()
     }
 }
 
+
+
+/* OPENGL WINDOW MANAGEMENT */
+
 /* make_current
  *
  * makes the window current
@@ -134,18 +230,7 @@ void glh::window::unregister_object ()
 void glh::window::make_current () 
 { 
     /* make the context current */
-    glfwMakeContextCurrent ( winptr.get () );
+    glfwMakeContextCurrent ( winptr );
     /* tell the glad loader to load to the current context */
     glad_loader::load ();
-}
-
-/* struct __window_deleter
- *
- * functor for deleting the smart pointer
- */
-/* caller operator overload */
-void glh::window::__window_deleter::operator() ( GLFWwindow * win )
-{
-    /* if win is non-NULL, destroy the window */
-    if ( win ) glfwDestroyWindow ( win );
 }

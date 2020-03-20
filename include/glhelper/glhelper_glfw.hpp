@@ -27,6 +27,7 @@
 /* INCLUDES */
 
 /* include core headers */
+#include <functional>
 #include <iostream>
 #include <string>
 
@@ -79,6 +80,8 @@ class glh::window
 {
 public:
 
+    /* CONSTRUCTORS AND DESTRUCTORS */
+
     /* full constructor
      *
      * creates a working glfw window
@@ -102,8 +105,9 @@ public:
      * constructs from pointer to already configured GLFWwindow
      * 
      * _winptr: pointer to GLFWwindow
+     * _managed: whether the window should be deleted on destruction of the object (defaults to false)
      */
-    explicit window ( GLFWwindow * _winptr );
+    explicit window ( GLFWwindow * _winptr, const bool _managed = false );
 
     /* deleted copy constructor
      *
@@ -128,16 +132,20 @@ public:
 
 
 
+    /* OPERATORS */
+
     /* comparison operators
      *
      * determines if two window objects refer to the same window
      * 
      * return: boolean representing equality
      */
-    bool operator== ( const window& other ) const { return ( winptr.get () == other.internal_ptr () ); }
-    bool operator!= ( const window& other ) const { return ( winptr.get () != other.internal_ptr () ); }
+    bool operator== ( const window& other ) const { return ( winptr == other.internal_ptr () ); }
+    bool operator!= ( const window& other ) const { return ( winptr != other.internal_ptr () ); }
 
 
+
+    /* WINDOW CONTROLLING METHODS */
 
     /* set_window_size
      *
@@ -145,7 +153,7 @@ public:
      * 
      * width/height: width and height of the window
      */
-    void set_window_size ( const int width, const int height ) { glfwSetWindowSize ( winptr.get (), width, height ); }
+    void set_window_size ( const int width, const int height );
 
     /* set_viewport_size
      *
@@ -153,13 +161,41 @@ public:
      *
      * width/height: width and height of the viewport
      */
-    void set_viewport_size ( const int width, const int height ) { make_current (); glViewport ( 0, 0, width, height ); }
+    void set_viewport_size ( const int width, const int height );
+
+
+
+    /* CALLBACK TYPEDEFS */
+
+    /* window_size_callback_t
+     *
+     * the callback type for window a window resize event
+     * 
+     * window&: reference to the window which was resized
+     * int,int: with, height
+     */
+    typedef void ( __window_size_callback_internal_t ) ( GLFWwindow *, int, int );
+    typedef std::function<void ( GLFWwindow *, int, int )> window_size_callback_t;
+
+    /* CALLBACK SETTING METHODS */
+
+    /* set_window_size_callback
+     *
+     * set the callback for window resizing
+     * 
+     * callback: the callback to run on window resize event, or nullptr to remove the callback
+     */
+    void set_window_size_callback ( const window_size_callback_t& callback );
+
+
+
+    /* DRAWING METHODS */
 
     /* swap_buffers
      *
      * swap the GLFW buffers
      */
-    void swap_buffers () { glfwSwapBuffers ( winptr.get () ); }
+    void swap_buffers ();
 
     /* clear
      *
@@ -167,10 +203,11 @@ public:
      *
      * r,g,b,a: rgba values of the clear colour
      */
-    void clear ( const float r, const float g, const float b, const float a ) { make_current (); glClearColor ( r, g, b, a ); glClear ( GL_COLOR_BUFFER_BIT ); }
+    void clear ( const float r, const float g, const float b, const float a );
 
 
 
+    /* INTERNAL DATA GETTING METHODS */
 
     /* internal_ptr
      *
@@ -178,28 +215,37 @@ public:
      * 
      * return: pointer held by winptr
      */
-    const GLFWwindow * internal_ptr () const { return winptr.get (); }
-    GLFWwindow * internal_ptr () { return winptr.get (); }
+    const GLFWwindow * internal_ptr () const { return winptr; }
+    GLFWwindow * internal_ptr () { return winptr; }
 
 
 
 private:
 
-    /* struct __window_deleter
-     *
-     * functor for deleting the smart pointer
-     */
-    struct __window_deleter 
-    { 
-        /* caller operator overload */
-        void operator() ( GLFWwindow * win );
-    };
+    /* CALLBACK STORAGE */
 
-    /* std::unique_ptr<GLFWwindow> winptr
+    /* window_resize_callback
+     *
+     * callback for window resizing
+     */
+    window_size_callback_t window_size_callback;
+
+
+
+    /* WINDOW OBJECT LIFETIME MANAGEMENT */
+
+    /* GLFWwindow * winptr
      *
      * pointer to the glfw window object
      */
-    std::unique_ptr<GLFWwindow, __window_deleter> winptr;
+    GLFWwindow * winptr;
+
+    /* const bool managed
+     *
+     * whether the window should be destroyed on object destruction
+     * defaults to true
+     */
+    const bool managed;
 
     /* static int object_count
      *
@@ -220,6 +266,10 @@ private:
      * decrement object_count and terminate glfw if necessary
      */
     static void unregister_object ();
+
+
+
+    /* OPENGL WINDOW MANAGEMENT */
 
     /* make_current
      *
