@@ -42,7 +42,7 @@ glh::buffer::buffer ( const GLenum _target )
  * data: pointer to data
  * usage: the storage method for the data
  */
-void glh::buffer::buffer_data ( const size_t size, const void * data, const GLenum usage ) 
+void glh::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage ) 
 {
     /* bind the buffer */
     bind ();

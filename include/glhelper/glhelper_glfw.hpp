@@ -265,7 +265,7 @@ public:
      * type: the type of the data in the ebo
      * start_index: the start index of the elements
      */
-    void draw_elements ( const vao& _vao, const program& _program, const GLenum mode, const GLint count, const GLenum type, const void * start_index );
+    void draw_elements ( const vao& _vao, const program& _program, const GLenum mode, const GLint count, const GLenum type, const GLvoid * start_index );
 
     /* swap_buffers
      *
@@ -279,7 +279,7 @@ public:
      *
      * r,g,b,a: rgba values of the clear colour
      */
-    void clear ( const float r, const float g, const float b, const float a );
+    void clear ( const GLfloat r, const GLfloat g, const GLfloat b, const GLfloat a );
 
 
 
