@@ -27,9 +27,9 @@
 /* INCLUDES */
 
 /* include core headers */
+#include <functional>
 #include <iostream>
 #include <string>
-#include <functional>
 
 /* include memory for shared_ptr */
 #include <memory>
@@ -46,12 +46,27 @@
 /* include glhelper_buff.hpp */
 #include <glhelper/glhelper_buff.hpp>
 
+/* include glhelper_shader.hpp */
+#include <glhelper/glhelper_shader.hpp>
+
 
 
 /* NAMESPACE FORWARD DECLARATIONS */
 
 namespace glh
 {
+    /* class vao
+     *
+     * forward declaration for use by window class
+     */
+    class vao;
+
+    /* class program
+     *
+     * forward declaration for use by window class
+     */
+    class program;
+
     /* glad_loader due to circular dependancy */
     class glad_loader;
      
@@ -80,6 +95,8 @@ class glh::window
 {
 public:
 
+    /* CONSTRUCTORS AND DESTRUCTORS */
+
     /* full constructor
      *
      * creates a working glfw window
@@ -103,8 +120,9 @@ public:
      * constructs from pointer to already configured GLFWwindow
      * 
      * _winptr: pointer to GLFWwindow
+     * _managed: whether the window should be deleted on destruction of the object (defaults to false)
      */
-    explicit window ( GLFWwindow * _winptr );
+    explicit window ( GLFWwindow * _winptr, const bool _managed = false );
 
     /* deleted copy constructor
      *
@@ -129,16 +147,20 @@ public:
 
 
 
+    /* OPERATORS */
+
     /* comparison operators
      *
      * determines if two window objects refer to the same window
      * 
      * return: boolean representing equality
      */
-    bool operator== ( const window& other ) const { return ( winptr.get () == other.internal_ptr () ); }
-    bool operator!= ( const window& other ) const { return ( winptr.get () != other.internal_ptr () ); }
+    bool operator== ( const window& other ) const { return ( winptr == other.internal_ptr () ); }
+    bool operator!= ( const window& other ) const { return ( winptr != other.internal_ptr () ); }
 
 
+
+    /* WINDOW CONTROLLING METHODS */
 
     /* set_window_size
      *
@@ -146,7 +168,7 @@ public:
      * 
      * width/height: width and height of the window
      */
-    void set_window_size ( const int width, const int height ) { glfwSetWindowSize ( winptr.get (), width, height ); }
+    void set_window_size ( const int width, const int height );
 
     /* set_viewport_size
      *
@@ -154,13 +176,102 @@ public:
      *
      * width/height: width and height of the viewport
      */
-    void set_viewport_size ( const int width, const int height ) { make_current (); glViewport ( 0, 0, width, height ); }
+    void set_viewport_size ( const int width, const int height );
+
+
+
+    /* CALLBACK TYPEDEFS */
+
+    /* window_size_callback_t
+     *
+     * the callback type for window a window resize event
+     * 
+     * window&: reference to the window which was resized
+     * int,int: with, height
+     */
+    typedef void ( __window_size_callback_internal_t ) ( GLFWwindow *, int, int );
+    typedef std::function<void ( GLFWwindow *, int, int )> window_size_callback_t;
+
+
+
+    /* CALLBACK SETTING METHODS */
+
+    /* set_window_size_callback
+     *
+     * set the callback for window resizing
+     * 
+     * callback: the callback to run on window resize event, or nullptr to remove the callback
+     */
+    void set_window_size_callback ( const window_size_callback_t& callback );
+
+
+
+
+    /* EVENT CONTROL */
+
+    /* poll_events
+     *
+     * run any callbacks set for events which have occured since the last poll
+     * immediately return even if no events have occured
+     */
+    void poll_events ();
+
+    /* wait_events
+     *
+     * wait for at least one event to have occured since the last poll, and run associated callbacks
+     * if an event has already occured, this function returns immediately
+     * 
+     * timeout: seconds to wait for events before returning (or 0 for infinite timeout)
+     */
+    void wait_events ( const double timeout );
+
+    /* should_close
+     *
+     * return: boolean as to whether the window should close or not
+     */
+    bool should_close ();
+
+    /* set_should close 
+     *
+     * set close flag on window
+     */
+    void set_should_close ();
+
+
+
+    /* DRAWING METHODS */
+
+    /* draw_arrays
+     *
+     * draw vertices straight from a vbo (via a vao)
+     * all ebo data is ignored
+     * 
+     * _vao: the vao to draw from
+     * _program: shader program to use to draw the vertices
+     * mode: the primative to render
+     * start_index: the start index of the buffered data
+     * count: number of vertices to draw
+     */
+    void draw_arrays ( const vao& _vao, const program& _program, const GLenum mode, const GLint start_index, const GLsizei count );
+
+    /* draw_elements
+     *
+     * draw vertices from an ebo (via a vao)
+     * 
+     * _vao: the vao to draw from
+     * _program: shader program to use to draw the vertices
+     * mode: the primative to render
+     * count: number of vertices to draw
+     * type: the type of the data in the ebo
+     * start_index: the start index of the elements
+     */
+    void draw_elements ( const vao& _vao, const program& _program, const GLenum mode, const GLint count, const GLenum type, const void * start_index );
 
     /* swap_buffers
      *
      * swap the GLFW buffers
      */
-    void swap_buffers () { glfwSwapBuffers ( winptr.get () ); }
+    void swap_buffers ();
 
     /* clear
      *
@@ -168,10 +279,11 @@ public:
      *
      * r,g,b,a: rgba values of the clear colour
      */
-    void clear ( const float r, const float g, const float b, const float a ) { make_current (); glClearColor ( r, g, b, a ); glClear ( GL_COLOR_BUFFER_BIT ); }
+    void clear ( const float r, const float g, const float b, const float a );
 
 
 
+    /* INTERNAL DATA GETTING METHODS */
 
     /* internal_ptr
      *
@@ -179,28 +291,37 @@ public:
      * 
      * return: pointer held by winptr
      */
-    const GLFWwindow * internal_ptr () const { return winptr.get (); }
-    GLFWwindow * internal_ptr () { return winptr.get (); }
+    const GLFWwindow * internal_ptr () const { return winptr; }
+    GLFWwindow * internal_ptr () { return winptr; }
 
 
 
 private:
 
-    /* struct __window_deleter
-     *
-     * functor for deleting the smart pointer
-     */
-    struct __window_deleter 
-    { 
-        /* caller operator overload */
-        void operator() ( GLFWwindow * win );
-    };
+    /* CALLBACK STORAGE */
 
-    /* std::unique_ptr<GLFWwindow> winptr
+    /* window_resize_callback
+     *
+     * callback for window resizing
+     */
+    window_size_callback_t window_size_callback;
+
+
+
+    /* WINDOW OBJECT LIFETIME MANAGEMENT */
+
+    /* GLFWwindow * winptr
      *
      * pointer to the glfw window object
      */
-    std::unique_ptr<GLFWwindow, __window_deleter> winptr;
+    GLFWwindow * winptr;
+
+    /* const bool managed
+     *
+     * whether the window should be destroyed on object destruction
+     * defaults to true
+     */
+    const bool managed;
 
     /* static int object_count
      *
@@ -221,6 +342,10 @@ private:
      * decrement object_count and terminate glfw if necessary
      */
     static void unregister_object ();
+
+
+
+    /* OPENGL WINDOW MANAGEMENT */
 
     /* make_current
      *
@@ -244,17 +369,15 @@ public:
      *
      * __what: description of the exception
      */
-    explicit glfw_exception ( const char * __what )
+    explicit glfw_exception ( const std::string& __what )
         : exception ( __what )
     {}
 
-    /* zero-parameter constructor
+    /* default zero-parameter constructor
      *
-     * construct glad_exception with no descrption
+     * construct glfw_exception with no descrption
      */
-    explicit glfw_exception ()
-        : exception { NULL }
-    {}
+    explicit glfw_exception () = default;
 
     /* default everything else and inherits what () function */
 

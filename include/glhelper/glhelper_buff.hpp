@@ -22,6 +22,7 @@
 
 /* include core headers */
 #include <iostream>
+#include <string>
 
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
@@ -38,6 +39,12 @@
 
 namespace glh
 {
+    /* class window
+     *
+     * forward declaration to allow vao to make friend
+     */
+    class window;
+
     /* class buffer : object
      *
      * base class for storing a buffer
@@ -80,7 +87,7 @@ namespace glh
 class glh::buffer : public object
 {
 
-    /* vao if a friend of a buffer object
+    /* vao is a friend of a buffer object
      *
      * this allows the vao to access the bind functions
      * this in turn allows for the vao to bind to a vbp/ebo
@@ -92,8 +99,26 @@ public:
     /* constructor
      *
      * generates a buffer
+     * 
+     * _target: the target for the buffer
      */
-    explicit buffer ();
+    explicit buffer ( const GLenum _target );
+
+    /* construct and immediately buffer data
+     *
+     * generates a buffer and immediately buffers data
+     * 
+     * _target: the target for the buffer
+     * size: size of data in bytes
+     * data: pointer to data
+     * usage: the storage method for the data
+     */
+    explicit buffer ( const GLenum _target, const size_t size, const void * data, const GLenum usage )
+        : buffer { _target }
+    { buffer_data ( size, data, usage ); }
+
+    /* deleted zero-parameter constructor */
+    explicit buffer () = delete;
 
     /* deleted copy constructor
      *
@@ -144,11 +169,11 @@ public:
 
 protected:
 
-    /* pure virtual target
+    /* GLenum target
      *
-     * get the target of the buffer
+     * the target to bind the buffer to
      */
-    virtual GLenum target () const = 0;
+    const GLenum target;
 
     /* bind
      *
@@ -168,6 +193,8 @@ protected:
 
 };
 
+
+
 /* class vbo : buffer
  *
  * vertex buffer object
@@ -176,11 +203,25 @@ class glh::vbo : public buffer
 {
 public:
 
-    /* default constructor
+    /* constructor
      *
      * generates the buffer
      */
-    explicit vbo () = default;
+    explicit vbo ()
+        : buffer { GL_ARRAY_BUFFER }
+    {}
+
+    /* construct and immediately buffer data
+     *
+     * generates a buffer and immediately buffers data
+     * 
+     * size: size of data in bytes
+     * data: pointer to data
+     * usage: the storage method for the data
+     */
+    explicit vbo ( const size_t size, const void * data, const GLenum usage )
+        : buffer { GL_ARRAY_BUFFER, size, data, usage }
+    {}
 
     /* deleted copy constructor
      *
@@ -200,17 +241,9 @@ public:
     /* default destructor */
     ~vbo () = default;
 
-
-
-protected:
-
-    /* target 
-     *
-     * return: GLenum for the target of the buffer
-     */
-    GLenum target () const override final { return GL_ARRAY_BUFFER; }
-
 };
+
+
 
 /* class ebo : buffer
  *
@@ -220,11 +253,25 @@ class glh::ebo : public buffer
 {
 public:
 
-    /* default constructor
+    /* constructor
      *
      * generates the buffer
      */
-    explicit ebo () = default;
+    explicit ebo ()
+        : buffer { GL_ELEMENT_ARRAY_BUFFER }
+    {}
+
+    /* construct and immediately buffer data
+     *
+     * generates a buffer and immediately buffers data
+     * 
+     * size: size of data in bytes
+     * data: pointer to data
+     * usage: the storage method for the data
+     */
+    explicit ebo ( const size_t size, const void * data, const GLenum usage )
+        : buffer { GL_ELEMENT_ARRAY_BUFFER, size, data, usage }
+    {}
 
     /* deleted copy constructor
      *
@@ -244,17 +291,9 @@ public:
     /* default destructor */
     ~ebo () = default;
 
-
-
-protected:
-
-    /* target 
-     *
-     * return: GLenum for the target of the buffer
-     */
-    GLenum target () const override final { return GL_ELEMENT_ARRAY_BUFFER; }
-
 };
+
+
 
 /* class vao : object
  *
@@ -262,6 +301,13 @@ protected:
  */
 class glh::vao : public object
 {
+
+    /* window is a friend of vao
+     *
+     * this is so that the window can bind the vao
+     */
+    friend class window;
+
 public:
 
     /* constructor
@@ -339,15 +385,17 @@ private:
      *
      * bind the vertex array object
      */
-    void bind ();
+    void bind () const;
 
     /* unbind
      *
      * unbind the vertex array object
      */
-    void unbind ();
+    void unbind () const;
 
 };
+
+
 
 /* class buffer_exception : exception
  *
@@ -361,17 +409,15 @@ public:
      *
      * __what: description of the exception
      */
-    explicit buffer_exception ( const char * __what )
+    explicit buffer_exception ( const std::string& __what )
         : exception ( __what )
     {}
 
-    /* zero-parameter constructor
+    /* default zero-parameter constructor
      *
-     * construct glad_exception with no descrption
+     * construct buffer_exception with no descrption
      */
-    explicit buffer_exception ()
-        : exception { NULL }
-    {}
+    explicit buffer_exception () = default;
 
     /* default everything else and inherits what () function */
 

@@ -29,3 +29,6 @@
 
 /* include glhelper_buff.hpp */
 #include <glhelper/glhelper_buff.hpp>
+
+/* include glhelper_shader.hpp */
+#include <glhelper/glhelper_shader.hpp>
