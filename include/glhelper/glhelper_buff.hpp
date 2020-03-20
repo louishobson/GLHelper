@@ -270,7 +270,7 @@ public:
      * usage: the storage method for the data
      */
     explicit ebo ( const size_t size, const void * data, const GLenum usage )
-        : buffer { GL_ARRAY_BUFFER, size, data, usage }
+        : buffer { GL_ELEMENT_ARRAY_BUFFER, size, data, usage }
     {}
 
     /* deleted copy constructor
