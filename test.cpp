@@ -24,32 +24,52 @@
 
 
 
+void window_size_callback ( GLFWwindow * winptr, int width, int height )
+{
+    glh::window { winptr }.set_viewport_size ( width, height );
+}
+
+
+
 /* MAIN */
 
 int main ()
 {
-    glh::window win1
-    { 
-        []()
-        {
-            glh::window win2 { "Test window 1", 600, 500 };
-            glh::window win3 { "Test window 2", 600, 500 };
-            return win3;
-        } ()
-    };
-
     float vdata []
     {
         0.0f, 0.5f, 0.0f,
         -0.5f, -0.5f, 0.0f,
         0.5f, -0.5f, 0.0f
     };
+
+    unsigned edata []
+    {
+        0, 1, 2
+    };
     
-    glh::vbo vbo;
-    vbo.buffer_data ( sizeof ( vdata ), vdata, GL_STATIC_DRAW );
+    glh::window window;
+    window.set_window_size_callback ( window_size_callback );
 
+    glh::vbo vbo { sizeof ( vdata ), vdata, GL_STATIC_DRAW };
+    glh::ebo ebo { sizeof ( edata ), edata, GL_STATIC_DRAW };
+    
+    glh::vao vao;
+    vao.set_vertex_attrib ( 0, vbo, 3, GL_FLOAT, GL_FALSE, 3 * sizeof ( float ), ( void * ) 0 );
+    vao.bind_ebo ( ebo );
 
-    std::this_thread::sleep_for ( std::chrono::seconds ( 5 ) );
+    glh::vshader vshader { "/home/louis/OneDrive/Documents/Programming/Mandelbrot/src/shader/generic_vertex.glsl" };
+    glh::fshader fshader { "/home/louis/OneDrive/Documents/Programming/Mandelbrot/src/shader/generic_fragment.glsl" };
+    glh::program program { vshader, fshader };
+
+    window.clear ( 1., 1., 1., 1. );
+    window.swap_buffers ();
+
+    while ( !glfwWindowShouldClose ( window.internal_ptr () ) )
+    {
+        glfwWaitEvents ();
+        window.clear ( 1., 1., 1., 1. );
+        window.swap_buffers ();
+    }
 
     return 0;
 }
