@@ -148,6 +148,40 @@ void glh::window::set_window_size_callback ( const window_size_callback_t& callb
 
 
 
+/* EVENT CONTROL */
+
+/* poll_events
+ *
+ * run any callbacks set for events which have occured since the last poll
+ * immediately return even if no events have occured
+ */
+void glh::window::poll_events ()
+{
+    /* make window current, poll events and return */
+    make_current ();
+    glfwPollEvents ();
+}
+
+/* wait_events
+ *
+ * wait for at least one event to have occured since the last poll, and run associated callbacks
+ * if an event has already occured, this function returns immediately
+ * 
+ * timeout: seconds to wait for events before returning (or 0 for infinite timeout)
+ */
+void glh::window::wait_events ( const double timeout )
+{
+    /* make window current */
+    make_current ();
+
+    /* if timeout == 0, wait forever */
+    if ( timeout == 0.0f ) glfwWaitEvents ();
+    /* else, wait on timeout */
+    else glfwWaitEventsTimeout ( timeout );
+}
+
+
+
 /* DRAWING METHODS */
 
 /* draw_arrays

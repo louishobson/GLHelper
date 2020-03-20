@@ -206,6 +206,27 @@ public:
 
 
 
+
+    /* EVENT CONTROL */
+
+    /* poll_events
+     *
+     * run any callbacks set for events which have occured since the last poll
+     * immediately return even if no events have occured
+     */
+    void poll_events ();
+
+    /* wait_events
+     *
+     * wait for at least one event to have occured since the last poll, and run associated callbacks
+     * if an event has already occured, this function returns immediately
+     * 
+     * timeout: seconds to wait for events before returning (or 0 for infinite timeout)
+     */
+    void wait_events ( const double timeout );
+
+
+
     /* DRAWING METHODS */
 
     /* draw_arrays
