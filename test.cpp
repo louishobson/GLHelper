@@ -67,7 +67,7 @@ int main ()
         window.clear ( 1., 0.3, .5, 1. );
         window.draw_elements ( vao, program, GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
         window.swap_buffers ();
-        glfwWaitEvents ();
+        window.wait_events ( 0.0 );
     }
 
     return 0;
