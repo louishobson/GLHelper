@@ -180,6 +180,26 @@ void glh::window::wait_events ( const double timeout )
     else glfwWaitEventsTimeout ( timeout );
 }
 
+/* should_close
+ *
+ * return: boolean as to whether the window should close or not
+ */
+bool glh::window::should_close ()
+{
+    /* return if window should close */
+    return glfwWindowShouldClose ( winptr );
+}
+
+/* set_should close 
+ *
+ * set close flag on window
+ */
+void glh::window::set_should_close ()
+{
+    /* set should close */
+    glfwWindowShouldClose ( winptr );
+}
+
 
 
 /* DRAWING METHODS */

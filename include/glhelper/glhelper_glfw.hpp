@@ -225,6 +225,18 @@ public:
      */
     void wait_events ( const double timeout );
 
+    /* should_close
+     *
+     * return: boolean as to whether the window should close or not
+     */
+    bool should_close ();
+
+    /* set_should close 
+     *
+     * set close flag on window
+     */
+    void set_should_close ();
+
 
 
     /* DRAWING METHODS */
