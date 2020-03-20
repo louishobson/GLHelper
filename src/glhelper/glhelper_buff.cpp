@@ -29,7 +29,7 @@ glh::buffer::buffer ( const GLenum _target )
     : target { _target }
 {
     /* allocate the buffer */
-    glGenBuffers ( 1, ( unsigned * ) &id );
+    glGenBuffers ( 1, &id );
 }
 
 
