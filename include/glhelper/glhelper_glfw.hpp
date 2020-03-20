@@ -46,12 +46,27 @@
 /* include glhelper_buff.hpp */
 #include <glhelper/glhelper_buff.hpp>
 
+/* include glhelper_shader.hpp */
+#include <glhelper/glhelper_shader.hpp>
+
 
 
 /* NAMESPACE FORWARD DECLARATIONS */
 
 namespace glh
 {
+    /* class vao
+     *
+     * forward declaration for use by window class
+     */
+    class vao;
+
+    /* class program
+     *
+     * forward declaration for use by window class
+     */
+    class program;
+
     /* glad_loader due to circular dependancy */
     class glad_loader;
      
@@ -177,6 +192,8 @@ public:
     typedef void ( __window_size_callback_internal_t ) ( GLFWwindow *, int, int );
     typedef std::function<void ( GLFWwindow *, int, int )> window_size_callback_t;
 
+
+
     /* CALLBACK SETTING METHODS */
 
     /* set_window_size_callback
@@ -190,6 +207,32 @@ public:
 
 
     /* DRAWING METHODS */
+
+    /* draw_arrays
+     *
+     * draw vertices straight from a vbo (via a vao)
+     * all ebo data is ignored
+     * 
+     * _vao: the vao to draw from
+     * _program: shader program to use to draw the vertices
+     * mode: the primative to render
+     * start_index: the start index of the buffered data
+     * count: number of vertices to draw
+     */
+    void draw_arrays ( const vao& _vao, const program& _program, const GLenum mode, const GLint start_index, const GLsizei count );
+
+    /* draw_elements
+     *
+     * draw vertices from an ebo (via a vao)
+     * 
+     * _vao: the vao to draw from
+     * _program: shader program to use to draw the vertices
+     * mode: the primative to render
+     * count: number of vertices to draw
+     * type: the type of the data in the ebo
+     * start_index: the start index of the elements
+     */
+    void draw_elements ( const vao& _vao, const program& _program, const GLenum mode, const GLint count, const GLenum type, const void * start_index );
 
     /* swap_buffers
      *

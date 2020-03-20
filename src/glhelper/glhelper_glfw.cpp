@@ -150,6 +150,61 @@ void glh::window::set_window_size_callback ( const window_size_callback_t& callb
 
 /* DRAWING METHODS */
 
+/* draw_arrays
+ *
+ * draw vertices straight from a vbo (via a vao)
+ * all ebo data is ignored
+ * 
+ * _vao: the vao to draw from
+ * _program: shader program to use to draw the vertices
+ * mode: the primative to render
+ * start_index: the start index of the buffered data
+ * count: number of vertices to draw
+ */
+void glh::window::draw_arrays ( const vao& _vao, const program& _program, const GLenum mode, const GLint start_index, const GLsizei count )
+{
+    /* make the window current */
+    make_current ();
+    /* use the program */
+    _program.use ();
+    /* bind the vao */
+    _vao.bind ();
+
+    /* draw arrays */
+    glDrawArrays ( mode, start_index, count );
+
+    /* unbind the vao */
+    _vao.unbind ();
+}
+
+/* draw_elements
+ *
+ * draw vertices from an ebo (via a vao)
+ * 
+ * _vao: the vao to draw from
+ * _program: shader program to use to draw the vertices
+ * mode: the primative to render
+ * count: number of vertices to draw
+ * type: the type of the data in the ebo
+ * start_index: the start index of the elements
+ */
+void glh::window::draw_elements ( const vao& _vao, const program& _program, const GLenum mode, const GLint count, const GLenum type, const void * start_index )
+{
+    /* make the window current */
+    make_current ();
+    /* use the program */
+    _program.use ();
+    /* bind the vao */
+    _vao.bind ();
+
+    /* draw elements */
+    glDrawElements ( mode, count, type, start_index );
+
+    /* unbind the vao */
+    _vao.unbind ();
+}
+
+
 /* swap_buffers
  *
  * swap the GLFW buffers
