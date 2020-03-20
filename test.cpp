@@ -29,22 +29,20 @@ void window_size_callback ( GLFWwindow * winptr, int width, int height )
     glh::window { winptr }.set_viewport_size ( width, height );
 }
 
-
-
-/* MAIN */
-
 int main ()
 {
     float vdata []
     {
-        0.0f, 0.5f, 0.0f,
+        -0.5f, 0.5f, 0.0f,
+        0.5f, 0.5f, 0.0f,
         -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f
+        0.5f, -0.5f, 0.0f,
     };
 
     unsigned edata []
     {
-        0, 1, 2
+        0, 1, 2,
+        1, 2, 3
     };
     
     glh::window window;
@@ -61,14 +59,15 @@ int main ()
     glh::fshader fshader { "/home/louis/OneDrive/Documents/Programming/Mandelbrot/src/shader/generic_fragment.glsl" };
     glh::program program { vshader, fshader };
 
-    window.clear ( 1., 1., 1., 1. );
+    window.clear ( 1., 0.3, .5, 1. );
     window.swap_buffers ();
 
     while ( !glfwWindowShouldClose ( window.internal_ptr () ) )
     {
-        glfwWaitEvents ();
-        window.clear ( 1., 1., 1., 1. );
+        window.clear ( 1., 0.3, .5, 1. );
+        window.draw_elements ( vao, program, GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
         window.swap_buffers ();
+        glfwWaitEvents ();
     }
 
     return 0;
