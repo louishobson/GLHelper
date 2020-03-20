@@ -62,7 +62,7 @@ int main ()
     window.clear ( 1., 0.3, .5, 1. );
     window.swap_buffers ();
 
-    while ( !glfwWindowShouldClose ( window.internal_ptr () ) )
+    while ( !window.should_close () )
     {
         window.clear ( 1., 0.3, .5, 1. );
         window.draw_elements ( vao, program, GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
