@@ -444,6 +444,7 @@ template<unsigned M> inline float glh::math::det ( const matrix<M>& _matrix )
 {
     /* store the running determinant */
     float det = 0.;
+
     /* multiplier for working out the determinant
      * starts as 1, and is multiplied by -1 for each value on the top row
      * this allows for the positive negative pattern to occur
@@ -501,7 +502,7 @@ template<unsigned M> inline glh::math::matrix<M> glh::math::inverse ( const matr
     if ( determinant == 0 ) throw matrix_exception { "cannot find inverse of a singular matrix" };
 
     /* create the new matrix */
-    matrix<M> inv;
+    matrix<M> cof;
 
     /* multiplier for cofactors */
     float mult = 1.;
@@ -509,17 +510,17 @@ template<unsigned M> inline glh::math::matrix<M> glh::math::inverse ( const matr
     /* loop for each value in the new matrix */
     for ( unsigned iti = 0; iti < M * M; ++iti )
     {
-        /* replace it with its minor */
-        inv.at ( iti ) = minor ( _matrix, iti );
-        /* replace it with its cofactor value */
-        inv.at ( iti ) *= mult;
-        /* multiply mult by -1 to keep up sign-swapping pattern*/
+        /* replace it with its cofactor value
+         * this is found by multiplying the minor of the element by mult
+         * mult switches between 1 and -1 to get the alternating sign pattern
+         */
+        cof.at ( iti ) = minor ( _matrix, iti ) * mult;
+        /* multiply mult by -1 to keep up sign-swapping pattern */
         mult *= -1.;
     }
 
     /* return the transpose of the new matrix divided the determinant of the original matrix */
-    //return transpose ( inv ) / det ( _matrix );
-    return transpose ( inv ) / determinant;
+    return transpose ( result ) / determinant;
 }
 template<> inline glh::math::matrix<1> glh::math::inverse<1> ( const matrix<1>& _matrix )
 {
