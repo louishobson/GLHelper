@@ -33,10 +33,10 @@ int main ()
 {
     GLfloat vdata []
     {
-        -0.5f, 0.5f, 0.0f,
-        0.5f, 0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f
+        -1.f, 1.f, 0.0f,
+        1.f, 1.f, 0.0f,
+        -1.f, -1.f, 0.0f,
+        1.f, -1.f, 0.0f
     };
 
     GLuint edata []
@@ -56,12 +56,19 @@ int main ()
     vao.bind_ebo ( ebo );
 
     glh::vshader vshader { "/home/louis/OneDrive/Documents/Programming/Mandelbrot/src/shader/generic_vertex.glsl" };
-    glh::fshader fshader { "/home/louis/OneDrive/Documents/Programming/Mandelbrot/src/shader/generic_fragment.glsl" };
+    glh::fshader fshader { "/home/louis/OneDrive/Documents/Programming/Mandelbrot/src/shader/mandelbrot_fragment.glsl" };
     glh::program program { vshader, fshader };
+
+    program.set_uniform_float ( "mandelbrot_stretch", 0.002, 0.002, 1, 1 );
+    program.set_uniform_float ( "mandelbrot_translation", -2, -1, 0, 0 );
+    program.set_uniform_matrix ( "mandelbrot_rotation", glh::math::rotate ( glh::math::identity<2> (), 0, 1, glh::math::pi ( 0.1 ) ) );
+    program.set_uniform_float ( "mandelbrot_breakout", 2 );
+    program.set_uniform_int ( "mandelbrot_max_it", 40 );
+    program.set_uniform_int ( "mandelbrot_power", 2 );
 
     while ( !window.should_close () )
     {
-        window.clear ( 1., 0.3, .5, 1. );
+        window.clear ( 1., 1., 1., 1. );
         window.draw_elements ( vao, program, GL_TRIANGLES, 6, GL_UNSIGNED_INT, ( GLvoid * ) 0 );
         window.swap_buffers ();
         window.wait_events ( 0.0 );
