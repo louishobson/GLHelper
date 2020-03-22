@@ -70,15 +70,17 @@ namespace glh
  */
 template<unsigned M, unsigned N> class glh::matrix
 {
+
+    /* static assert that M == N != 0 */
+    static_assert ( M > 0 && N > 0, "matrix cannot have a 0 dimention" );
+
 public:
 
-    /* zero-parameter constructor
+    /* default zero-parameter constructor
      *
      * a matrix gets initialised to a zero matrix by default
      */
-    matrix ()
-        : data { 0. }
-    {}
+    matrix () = default;
 
     /* initialiser list constructor
      *
@@ -320,7 +322,7 @@ template<unsigned M, unsigned N> glh::matrix<N, M> glh::matrix<M, N>::transpose 
     matrix<N, M> transp;
 
     /* double loop to set new values */
-    for ( unsigned iti = 0; iti < M; ++iti ) for ( unsigned itj = 0; itj < N; ++itj ) transp.at ( iti, itj ) = data.at ( itj, iti );
+    for ( unsigned iti = 0; iti < M; ++iti ) for ( unsigned itj = 0; itj < N; ++itj ) transp.at ( iti, itj ) = at ( itj, iti );
 
     /* return new matrix */
     return transp;
@@ -354,7 +356,7 @@ template<unsigned M, unsigned N> glh::matrix<M - 1, N - 1> glh::matrix<M, N>::su
             /* if is the collumn we need to ignore, continue without incramenting subitj */
             if ( itj == j ) continue;
             /* otherwise set the new value */
-            submat.at ( subiti, subitj ) = data.at ( iti, itj );
+            submat.at ( subiti, subitj ) = at ( iti, itj );
             /* incrament subitij */
             ++subitj;
         }
@@ -385,10 +387,10 @@ template<unsigned M, unsigned N> float glh::matrix<M, N>::determinant () const
     if ( M == 0 ) throw matrix_exception ( "cannot find the determinant of a 0x0 matrix" );
 
     /* if is 1x1, return the only value */
-    if ( M == 1 ) return data.at ( 0 );
+    if ( M == 1 ) return at ( 0 );
 
     /* store the running determinant */
-    float det = 0;
+    float det = 0.;
     /* multiplier for working out the determinant
      * starts as 1, and is multiplied by -1 for each value on the top row
      * this allows for the positive negative pattern to occur
@@ -399,7 +401,7 @@ template<unsigned M, unsigned N> float glh::matrix<M, N>::determinant () const
     for ( unsigned iti = 0; iti < N; ++iti )
     {
         /* add to the determinant */
-        det += ( data.at ( iti ) * minor ( iti ) * det_mult );
+        det += ( at ( iti ) * minor ( iti ) * det_mult );
         /* multiply det_mult by -1 */
         det_mult *= -1.;
     }
@@ -416,6 +418,9 @@ template<unsigned M, unsigned N> float glh::matrix<M, N>::determinant () const
  */
 template<unsigned M, unsigned N> glh::matrix<M, N> glh::matrix<M, N>::inverse () const
 {
+    /* throw if is not square */
+    if ( !is_square () ) throw glh::matrix_exception { "cannot find the inverse of a non-square matrix" };
+
     /* create the new matrix */
     matrix<M, N> inv;
 
