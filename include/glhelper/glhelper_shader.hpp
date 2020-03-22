@@ -34,6 +34,9 @@
 /* include glhelper_glad.hpp */
 #include <glhelper/glhelper_glad.hpp>
 
+/* include glhelper_matrix.hpp */
+#include <glhelper/glhelper_matrix.hpp>
+
 
 
 /* MACROS */
@@ -320,6 +323,18 @@ public:
         { glUniform3ui ( get_uniform_location ( name ), v0, v1, v2 ); }
     void set_uniform_uint ( const std::string& name, const GLuint v0, const GLuint v1, const GLuint v2, const GLuint v3 )
         { glUniform4ui ( get_uniform_location ( name ), v0, v1, v2, v3 ); }
+
+    /* set_uniform_matrix
+     *
+     * set uniform based on a matrix
+     */
+    void set_uniform_matrix ( const std::string& name, const glh::math::mat2& v0 ) 
+        { glUniformMatrix2fv ( get_uniform_location ( name ), 1, GL_FALSE, v0.internal_ptr () ); }
+    void set_uniform_matrix ( const std::string& name, const glh::math::mat3& v0 ) 
+        { glUniformMatrix3fv ( get_uniform_location ( name ), 1, GL_FALSE, v0.internal_ptr () ); }
+    void set_uniform_matrix ( const std::string& name, const glh::math::mat4& v0 )
+        { glUniformMatrix4fv ( get_uniform_location ( name ), 1, GL_FALSE, v0.internal_ptr () ); }
+
 
 
 
