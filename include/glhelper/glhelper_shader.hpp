@@ -282,6 +282,47 @@ public:
 
 
 
+    /* set_uniform_float
+     *
+     * set uniform based on float value(s)
+     */
+    void set_uniform_float ( const std::string& name, const GLfloat v0 ) 
+        { glUniform1f ( get_uniform_location ( name ), v0 ); }
+    void set_uniform_float ( const std::string& name, const GLfloat v0, const GLfloat v1 ) 
+        { glUniform2f ( get_uniform_location ( name ), v0, v1 ); }
+    void set_uniform_float ( const std::string& name, const GLfloat v0, const GLfloat v1, const GLfloat v2 ) 
+        { glUniform3f ( get_uniform_location ( name ), v0, v1, v2 ); }
+    void set_uniform_float ( const std::string& name, const GLfloat v0, const GLfloat v1, const GLfloat v2, const GLfloat v3 )
+        { glUniform4f ( get_uniform_location ( name ), v0, v1, v2, v3 ); }
+
+    /* set_uniform_int
+     *
+     * set uniform based on integer value(s)
+     */
+    void set_uniform_int ( const std::string& name, const GLint v0 ) 
+        { glUniform1i ( get_uniform_location ( name ), v0 ); }
+    void set_uniform_int ( const std::string& name, const GLint v0, const GLint v1 ) 
+        { glUniform2i ( get_uniform_location ( name ), v0, v1 ); }
+    void set_uniform_int ( const std::string& name, const GLint v0, const GLint v1, const GLint v2 ) 
+        { glUniform3i ( get_uniform_location ( name ), v0, v1, v2 ); }
+    void set_uniform_int ( const std::string& name, const GLint v0, const GLint v1, const GLint v2, const GLint v3 )
+        { glUniform4i ( get_uniform_location ( name ), v0, v1, v2, v3 ); }
+
+    /* set_uniform_uint
+     *
+     * set uniform based on unsigned integer value(s)
+     */
+    void set_uniform_uint ( const std::string& name, const GLuint v0 ) 
+        { glUniform1ui ( get_uniform_location ( name ), v0 ); }
+    void set_uniform_uint ( const std::string& name, const GLuint v0, const GLuint v1 ) 
+        { glUniform2ui ( get_uniform_location ( name ), v0, v1 ); }
+    void set_uniform_uint ( const std::string& name, const GLuint v0, const GLuint v1, const GLuint v2 ) 
+        { glUniform3ui ( get_uniform_location ( name ), v0, v1, v2 ); }
+    void set_uniform_uint ( const std::string& name, const GLuint v0, const GLuint v1, const GLuint v2, const GLuint v3 )
+        { glUniform4ui ( get_uniform_location ( name ), v0, v1, v2, v3 ); }
+
+
+
     /* destroy
      *
      * destroys the shader program, setting id to 0
@@ -297,6 +338,14 @@ private:
      * use the shader program for the following OpenGL function calls
      */
     void use () const;
+
+    /* get_uniform_location
+     *
+     * get the location of a uniform
+     * 
+     * return: location of the uniform
+     */
+    GLint get_uniform_location ( const std::string& name );
 
 };
 
