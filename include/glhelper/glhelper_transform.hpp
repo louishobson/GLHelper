@@ -38,8 +38,14 @@
 
 namespace glh
 {
-    namespace transform
+    namespace math
     {
+        /* pi
+         *
+         * return: the value of pi multiplied by a constant
+         */
+        double pi ( const double k ) { return k * acos ( -1. ); }
+
         /* zero_matrix
          *
          * produce a zero square matrix
@@ -55,16 +61,6 @@ namespace glh
          * return: identity matrix of size MxM
          */
         template<unsigned M> matrix<M> identity ();
-
-        /* inverse
-         *          * 
-         * find the inverse of a transformation
-         * 
-         * trans: transformation matrix to invert (or the identity)
-         * 
-         * return: the inverse of the transformation
-         */
-        template<unsigned M> matrix<M> inverse ( const matrix<M>& trans );
 
         /* stretch
          *
@@ -111,36 +107,26 @@ namespace glh
  *
  * produce a zero square matrix
  */
-template<unsigned M> glh::matrix<M, M> glh::transform::zero_matrix ()
+template<unsigned M> glh::math::matrix<M, M> glh::math::zero_matrix ()
 {
     /* return a default matrix */
-    return matrix<M, M> {};
+    return math::matrix<M, M> {};
 }
 
 /* identity_matrix
  *
  * template function to produce an identity matrix
  */
-template<unsigned M> glh::matrix<M, M> glh::transform::identity ()
+template<unsigned M> glh::math::matrix<M, M> glh::math::identity ()
 {
     /* create new matrix */
-    matrix<M, M> identity;
+    math::matrix<M, M> identity;
 
     /* set values */
     for ( unsigned iti = 0; iti < M; ++iti ) identity.at ( iti, iti ) = 1.;
 
     /* return identity matrix */
     return identity;
-}
-
-/* inverse
- *
- * find the inverse of a transformation
- */
-template<unsigned M> glh::matrix<M> glh::transform::inverse ( const matrix<M>& trans )
-{
-    /* return the inverse */
-    return trans.inverse ();
 }
 
 /* stretch
@@ -153,10 +139,10 @@ template<unsigned M> glh::matrix<M> glh::transform::inverse ( const matrix<M>& t
  * 
  * return: the new transformation matrix
  */
-template<unsigned M> glh::matrix<M> glh::transform::stretch ( const matrix<M>& trans, const unsigned axis, const float sf )
+template<unsigned M> glh::math::matrix<M> glh::math::stretch ( const matrix<M>& trans, const unsigned axis, const float sf )
 {
     /* create the new matrix */
-    matrix<M> result { trans };
+    math::matrix<M> result { trans };
 
     /* multiply the appropriate row by the scale factor */
     for ( unsigned iti = 0; iti < M; ++iti ) result.at ( iti, axis ) *= sf;
@@ -174,7 +160,7 @@ template<unsigned M> glh::matrix<M> glh::transform::stretch ( const matrix<M>& t
  * 
  * return: the new transformation matrix
  */
-template<unsigned M> glh::matrix<M> glh::transform::enlarge ( const matrix<M>& trans, const float sf )
+template<unsigned M> glh::math::matrix<M> glh::math::enlarge ( const matrix<M>& trans, const float sf )
 {
     /* return trans multiplied by the scale factor */
     return trans * sf;
@@ -190,16 +176,16 @@ template<unsigned M> glh::matrix<M> glh::transform::enlarge ( const matrix<M>& t
  * 
  * returnL the new transformation matrix
  */
-template<unsigned M> glh::matrix<M> glh::transform::rotate ( const matrix<M>& trans, const unsigned axis0, const unsigned axis1, const float arg )
+template<unsigned M> glh::math::matrix<M> glh::math::rotate ( const matrix<M>& trans, const unsigned axis0, const unsigned axis1, const float arg )
 {
     /* create identity matrix */
-    matrix<M> rot = identity<M> ();
+    math::matrix<M> rot = identity<M> ();
 
     /* assign the cosine and sine values */
     rot.at ( axis0, axis0 ) = std::cos ( arg );
     rot.at ( axis1, axis1 ) = std::cos ( arg );
-    rot.at ( axis0, axis1 ) = -std::sin ( arg );
-    rot.at ( axis1, axis0 ) = std::sin ( arg );
+    rot.at ( axis0, axis1 ) = std::sin ( arg );
+    rot.at ( axis1, axis0 ) = -std::sin ( arg );
 
     /* return trans * rot */
     return trans * rot;
