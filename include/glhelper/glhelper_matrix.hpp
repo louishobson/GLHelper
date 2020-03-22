@@ -70,36 +70,50 @@ namespace glh
         /* MATRIX MODIFIER FUNCTIONS DECLARATIONS */
 
         /* transpose
-        *
-        * find the transpose matrix
-        */
+         * 
+         * _matrix: the matrix to transpose
+         * 
+         * return: the new matrix
+         */
         template<unsigned M, unsigned N> matrix<N, M> transpose ( const matrix<M, N>& _matrix );
 
         /* submatrix
-        *
-        * find the submatrix of a matrix
-        */
+         *
+         * _matrix: the original matrix
+         * i,j or i: row/column to remove, or the index of which to remove its row and column
+         * 
+         * return: the new transformed matrix
+         */
         template<unsigned M, unsigned N> matrix<M - 1, N - 1> submatrix ( const matrix<M, N>& _matrix, const unsigned i, const unsigned j );
         template<unsigned M, unsigned N> matrix<M - 1, N - 1> submatrix ( const matrix<M, N>& _matrix, const unsigned i );
 
         /* det
-        *
-        * find the determinant of a matrix
-        */
+         *
+         * _matrix: the matrix to find the determinant of
+         *
+         * return: the determinant
+         */
         template<unsigned M> float det ( const matrix<M>& _matrix );
+        template<> float det<1> ( const matrix<1>& _matrix );
 
         /* minor
-        *
-        * find the minor of a point in a matrix
-        */
+         *
+         * _matrix: the matrix to find a minor of
+         * i,j or i: the row/column, or the index to find the minor of
+         * 
+         * return: the minor of the element requested
+         */
         template<unsigned M> float minor ( const matrix<M>& _matrix, const unsigned i, const unsigned j );
         template<unsigned M> float minor ( const matrix<M>& _matrix, const unsigned i );
 
         /* inverse
          *
-         * find the inverse of a matrix
+         * _matrix: the matrix to find the inverse of
+         * 
+         * return: the inverse matrix
          */
         template<unsigned M> matrix<M> inverse ( const matrix<M>& _matrix );
+        template<> matrix<1> inverse<1> ( const matrix<1>& _matrix );
     }
 }
 
@@ -161,50 +175,6 @@ public:
     float& at ( const unsigned i );
     const float& at ( const unsigned i ) const;
 
-    /* is_square
-     *
-     * return: boolean for if the matrix is square or not
-     */
-    bool is_square () const { return ( M == N ); }
-
-
-
-    /* transpose
-     *
-     * find the transpose of this matrix
-     *
-    matrix<N, M> transpose () const { return glh::math::transpose ( * this ); }
-     */
-
-    /* submatrix
-     * 
-     * find a submatrix within this matrix
-     *
-    matrix<M - 1, N - 1> submatrix ( const unsigned i, const unsigned j ) const { return glh::math::submatrix ( * this, i, j ); }
-    matrix<M - 1, N - 1> submatrix ( const unsigned i ) const { return glh::math::submatrix ( * this, i ); }
-     */
-
-    /* det
-     *
-     * find the determinant of this matrix
-     *
-    float det () const { return glh::math::det ( * this ); }
-     */
-
-    /* minor
-     *
-     * find the minor of an element
-     *
-    float minor ( const unsigned i, const unsigned j ) const { return glh::math::minor ( * this, i, j ); }
-    float minor ( const unsigned i ) const { return glh::math::minor ( * this, i ); }
-     */
-
-    /* inverse
-     *
-     * find the inverse of this matrix
-     *
-    matrix<M, N> inverse () const { return glh::math::inverse ( * this ); }
-     */
 
 
     /* internal_data
@@ -288,6 +258,7 @@ template<unsigned M, unsigned N> glh::math::matrix<M, N> operator- ( const glh::
 /* overload of std::pow
  *
  * raise a matrix to a power
+ * a negative power uses the determinant as the base
  */
 template<unsigned M> glh::math::matrix<M> std::pow ( const glh::math::matrix<M> base, const int exp );
 
@@ -403,8 +374,10 @@ template<unsigned M, unsigned N> inline std::string glh::math::matrix<M, N>::for
 /* MATRIX MODIFIER FUNCTIONS IMPLEMENTATIONS */
 
 /* transpose
- *
- * return: the transpose of the matrix
+ * 
+ * _matrix: the matrix to transpose
+ * 
+ * return: the new matrix
  */
 template<unsigned M, unsigned N> inline glh::math::matrix<N, M> glh::math::transpose ( const matrix<M, N>& _matrix )
 {
@@ -420,9 +393,10 @@ template<unsigned M, unsigned N> inline glh::math::matrix<N, M> glh::math::trans
 
 /* submatrix
  *
- * i,j or i: the row/column to remove, or the index of which to remove its row and collumn
+ * _matrix: the original matrix
+ * i,j or i: row/column to remove, or the index of which to remove its row and column
  * 
- * return: a submatrix found by removing a row and column
+ * return: the new transformed matrix
  */
 template<unsigned M, unsigned N> inline glh::math::matrix<M - 1, N - 1> glh::math::submatrix ( const matrix<M, N>& _matrix, const unsigned i, const unsigned j )
 {
@@ -460,28 +434,11 @@ template<unsigned M, unsigned N> inline glh::math::matrix<M - 1, N - 1> glh::mat
     return submatrix ( _matrix, ( unsigned ) i / N, i % N );
 }
 
-/* minor
- *
- * find the minor of a point in a matrix
- */
-template<unsigned M> inline float glh::math::minor ( const matrix<M>& _matrix, const unsigned i, const unsigned j )
-{
-    /* return the determinant of the submatrix given by i and j */
-    return det ( submatrix ( _matrix, i, j ) );
-}
-template<unsigned M> inline float glh::math::minor ( const matrix<M>& _matrix, const unsigned i )
-{
-    /* return the determinant of the submatrix given by i */
-    return det ( submatrix ( _matrix, i ) );
-}
-
-
-
 /* det
  *
- * throws if the matrix is not square
- * 
- * return: the determinant of the matrix
+ * _matrix: the matrix to find the determinant of
+ *
+ * return: the determinant
  */
 template<unsigned M> inline float glh::math::det ( const matrix<M>& _matrix )
 {
@@ -505,22 +462,35 @@ template<unsigned M> inline float glh::math::det ( const matrix<M>& _matrix )
     /* return the determinant */
     return det;
 }
-
-/* matrix<1, 1> specialisation of determinant
- *
- * this specialisation purely returns the only value in the matrix
- */
 template<> inline float glh::math::det<1> ( const matrix<1>& _matrix )
 {
     /* return the only value in the matrix */
     return _matrix.at ( 0 );
 }
 
+/* minor
+ *
+ * _matrix: the matrix to find a minor of
+ * i,j or i: the row/column, or the index to find the minor of
+ * 
+ * return: the minor of the element requested
+ */
+template<unsigned M> inline float glh::math::minor ( const matrix<M>& _matrix, const unsigned i, const unsigned j )
+{
+    /* return the determinant of the submatrix given by i and j */
+    return det ( submatrix ( _matrix, i, j ) );
+}
+template<unsigned M> inline float glh::math::minor ( const matrix<M>& _matrix, const unsigned i )
+{
+    /* return the determinant of the submatrix given by i */
+    return det ( submatrix ( _matrix, i ) );
+}
+
 /* inverse
  *
- * throws if not a square matrix (where M==N)
+ * _matrix: the matrix to find the inverse of
  * 
- * return: the inverse of the matrix
+ * return: the inverse matrix
  */
 template<unsigned M> inline glh::math::matrix<M> glh::math::inverse ( const matrix<M>& _matrix )
 {
@@ -551,11 +521,6 @@ template<unsigned M> inline glh::math::matrix<M> glh::math::inverse ( const matr
     //return transpose ( inv ) / det ( _matrix );
     return transpose ( inv ) / determinant;
 }
-
-/* matrix<1, 1> specialisation of inverse
- *
- * this specialisation returns the recipricol of the element in the matrux
- */
 template<> inline glh::math::matrix<1> glh::math::inverse<1> ( const matrix<1>& _matrix )
 {
     /* if only element is 0, throw */
@@ -719,6 +684,7 @@ template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator- ( cons
 /* overload of std::pow
  *
  * raise a matrix to a power
+ * a negative power uses the determinant as the base
  */
 template<unsigned M> inline glh::math::matrix<M> std::pow ( const glh::math::matrix<M> base, const int exp )
 {
