@@ -730,7 +730,7 @@ template<unsigned M> glh::math::matrix<M> std::pow ( const glh::math::matrix<M> 
      * not going to include glh_transform.hpp just for the identity matrix
      */
     glh::math::matrix<M> result;
-    for ( unsigned iti = 0; iti < M * M; ++iti ) result.at ( iti, iti ) = 1.;
+    for ( unsigned iti = 0; iti < M; ++iti ) result.at ( iti, iti ) = 1.;
 
     /* apply power */
     for ( unsigned itexp = 0; itexp < newexp; ++itexp ) result = result * newbase;
