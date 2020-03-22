@@ -107,7 +107,7 @@ namespace glh
  *
  * produce a zero square matrix
  */
-template<unsigned M> glh::math::matrix<M, M> glh::math::zero_matrix ()
+template<unsigned M> inline glh::math::matrix<M, M> glh::math::zero_matrix ()
 {
     /* return a default matrix */
     return math::matrix<M, M> {};
@@ -117,7 +117,7 @@ template<unsigned M> glh::math::matrix<M, M> glh::math::zero_matrix ()
  *
  * template function to produce an identity matrix
  */
-template<unsigned M> glh::math::matrix<M, M> glh::math::identity ()
+template<unsigned M> inline glh::math::matrix<M, M> glh::math::identity ()
 {
     /* create new matrix */
     math::matrix<M, M> identity;
@@ -139,7 +139,7 @@ template<unsigned M> glh::math::matrix<M, M> glh::math::identity ()
  * 
  * return: the new transformation matrix
  */
-template<unsigned M> glh::math::matrix<M> glh::math::stretch ( const matrix<M>& trans, const unsigned axis, const float sf )
+template<unsigned M> inline glh::math::matrix<M> glh::math::stretch ( const matrix<M>& trans, const unsigned axis, const float sf )
 {
     /* create the new matrix */
     math::matrix<M> result { trans };
@@ -160,7 +160,7 @@ template<unsigned M> glh::math::matrix<M> glh::math::stretch ( const matrix<M>& 
  * 
  * return: the new transformation matrix
  */
-template<unsigned M> glh::math::matrix<M> glh::math::enlarge ( const matrix<M>& trans, const float sf )
+template<unsigned M> inline glh::math::matrix<M> glh::math::enlarge ( const matrix<M>& trans, const float sf )
 {
     /* return trans multiplied by the scale factor */
     return trans * sf;
@@ -176,7 +176,7 @@ template<unsigned M> glh::math::matrix<M> glh::math::enlarge ( const matrix<M>& 
  * 
  * returnL the new transformation matrix
  */
-template<unsigned M> glh::math::matrix<M> glh::math::rotate ( const matrix<M>& trans, const unsigned axis0, const unsigned axis1, const float arg )
+template<unsigned M> inline glh::math::matrix<M> glh::math::rotate ( const matrix<M>& trans, const unsigned axis0, const unsigned axis1, const float arg )
 {
     /* create identity matrix */
     math::matrix<M> rot = identity<M> ();
