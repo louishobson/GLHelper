@@ -113,7 +113,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    explicit buffer ( const GLenum _target, const size_t size, const void * data, const GLenum usage )
+    explicit buffer ( const GLenum _target, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
         : buffer { _target }
     { buffer_data ( size, data, usage ); }
 
@@ -149,7 +149,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    void buffer_data ( const size_t size, const void * data, const GLenum usage );
+    void buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage );
 
     /* clear_data
      *
@@ -219,7 +219,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    explicit vbo ( const size_t size, const void * data, const GLenum usage )
+    explicit vbo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
         : buffer { GL_ARRAY_BUFFER, size, data, usage }
     {}
 
@@ -269,7 +269,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    explicit ebo ( const size_t size, const void * data, const GLenum usage )
+    explicit ebo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
         : buffer { GL_ELEMENT_ARRAY_BUFFER, size, data, usage }
     {}
 

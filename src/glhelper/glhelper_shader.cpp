@@ -183,3 +183,21 @@ void glh::program::use () const
     /* use program */
     glUseProgram ( id );
 }
+
+/* get_uniform_location
+ *
+ * get the location of a uniform
+ * 
+ * return: location of the uniform
+ */
+GLint glh::program::get_uniform_location ( const std::string& name )
+{
+    /* use the program */
+    use ();
+    /* try to get location */
+    const GLint location = glGetUniformLocation ( id, name.c_str () );
+    /* if -1, throw */
+    if ( location == -1 ) throw shader_exception { "failed to find uniform" };
+    /* return location */
+    return location;
+}

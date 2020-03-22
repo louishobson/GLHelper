@@ -242,7 +242,7 @@ void glh::window::draw_arrays ( const vao& _vao, const program& _program, const 
  * type: the type of the data in the ebo
  * start_index: the start index of the elements
  */
-void glh::window::draw_elements ( const vao& _vao, const program& _program, const GLenum mode, const GLint count, const GLenum type, const void * start_index )
+void glh::window::draw_elements ( const vao& _vao, const program& _program, const GLenum mode, const GLint count, const GLenum type, const GLvoid * start_index )
 {
     /* make the window current */
     make_current ();
@@ -275,7 +275,7 @@ void glh::window::swap_buffers ()
  *
  * r,g,b,a: rgba values of the clear colour
  */
-void glh::window::clear ( const float r, const float g, const float b, const float a ) 
+void glh::window::clear ( const GLfloat r, const GLfloat g, const GLfloat b, const GLfloat a ) 
 {
     /* make window current */
     make_current (); 

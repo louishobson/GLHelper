@@ -32,3 +32,9 @@
 
 /* include glhelper_shader.hpp */
 #include <glhelper/glhelper_shader.hpp>
+
+/* include glhelper_matrix.hpp */
+#include <glhelper/glhelper_matrix.hpp>
+
+/* include glhelper_transform.hpp */
+#include <glhelper/glhelper_transform.hpp>
