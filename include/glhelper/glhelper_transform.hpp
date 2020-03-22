@@ -184,8 +184,8 @@ template<unsigned M> inline glh::math::matrix<M> glh::math::rotate ( const matri
     /* assign the cosine and sine values */
     rot.at ( axis0, axis0 ) = std::cos ( arg );
     rot.at ( axis1, axis1 ) = std::cos ( arg );
-    rot.at ( axis0, axis1 ) = std::sin ( arg );
-    rot.at ( axis1, axis0 ) = -std::sin ( arg );
+    rot.at ( axis0, axis1 ) = -std::sin ( arg );
+    rot.at ( axis1, axis0 ) = std::sin ( arg );
 
     /* return trans * rot */
     return trans * rot;
