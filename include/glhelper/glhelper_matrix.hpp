@@ -129,7 +129,7 @@ template<unsigned M, unsigned N> class glh::math::matrix
 {
 
     /* static assert that M > 0 && N > 0 */
-    static_assert ( M > 0 && N > 0, "matrix cannot have a 0 dimention" );
+    static_assert ( M > 0 && N > 0, "matrix cannot have a 0 dimension" );
 
 public:
 
