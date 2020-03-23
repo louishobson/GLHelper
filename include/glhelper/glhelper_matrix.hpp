@@ -145,7 +145,7 @@ public:
      *
      * constructs data from initialiser list
      */
-    explicit matrix ( std::initializer_list<float> init_list );
+    explicit matrix ( const std::initializer_list<float> init_list );
 
     /* default copy constructor
      *
@@ -157,7 +157,7 @@ public:
     matrix ( matrix<M, N>&& other ) = default;
 
     /* default copy assignment operator */
-    matrix& operator= ( const matrix<M, N>& other ) = default;
+    matrix<M, N>& operator= ( const matrix<M, N>& other ) = default;
 
     /* default destructor */
     virtual ~matrix () = default;
@@ -306,13 +306,13 @@ public:
  *
  * constructs data from initialiser list
  */
-template<unsigned M, unsigned N> inline glh::math::matrix<M, N>::matrix ( std::initializer_list<float> init_list )
+template<unsigned M, unsigned N> inline glh::math::matrix<M, N>::matrix ( const std::initializer_list<float> init_list )
     : data { { 0. } }
 {
     /* check the size of the list */
     if ( init_list.size () > M * N ) throw matrix_exception { "matrix initialiser list is too long" };
     /* set the values */
-    for ( auto it = init_list.begin (); it < init_list.end (); ++it ) data.at ( it - init_list.begin () ) = * it;
+    for ( auto it = init_list.begin (); it < init_list.end (); ++it ) at ( it - init_list.begin () ) = * it;
 }
 
 /* at
