@@ -520,7 +520,7 @@ template<unsigned M> inline glh::math::matrix<M> glh::math::inverse ( const matr
     }
 
     /* return the transpose of the new matrix divided the determinant of the original matrix */
-    return transpose ( result ) / determinant;
+    return transpose ( cof ) / determinant;
 }
 template<> inline glh::math::matrix<1> glh::math::inverse<1> ( const matrix<1>& _matrix )
 {
