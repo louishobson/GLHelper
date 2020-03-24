@@ -135,7 +135,7 @@ public:
      * 
      * the constructor is delegated onwards until vs... resolves to nothing, at which point the copy constructor should be called
      */
-    template<class T0, class T1, class... Ts> vector ( const T0& v0, const T1& v1, Ts... vs )
+    template<class T0, class T1, class... Ts> vector ( const T0& v0, const T1& v1, const Ts&... vs )
         : vector { concatenate ( v0, v1 ), vs... }
     {}
 
