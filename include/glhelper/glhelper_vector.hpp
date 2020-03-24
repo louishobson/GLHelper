@@ -369,7 +369,7 @@ template<unsigned M> float glh::math::dot_product ( const vector<M>& lhs, const 
  *
  * find the cross product of a 3d vector
  */
-glh::math::vector<3> glh::math::cross_product ( const vector<3>& lhs, const vector<3>& rhs )
+glh::math::vector<3> inline glh::math::cross_product ( const vector<3>& lhs, const vector<3>& rhs )
 {
     /* return cross product */
     return glh::math::vector<3> 
@@ -469,7 +469,7 @@ template<unsigned M> inline glh::math::vector<M>& operator*= ( glh::math::vector
  * division operations on vectors
  * for two vectors, division finds the component-wise dividend
  */
-template<unsigned M> glh::math::vector<M> operator/ ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+template<unsigned M> inline glh::math::vector<M> operator/ ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
 {
     /* create the new vector */
     glh::math::vector<M> result;
@@ -491,12 +491,12 @@ template<unsigned M> inline glh::math::vector<M> operator/ ( const glh::math::ve
     /* return the new vector */
     return result;
 }
-template<unsigned M> glh::math::vector<M> operator/= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+template<unsigned M> inline glh::math::vector<M> operator/= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
 {
     /* set lhs to equal lhs / rhs */
     return ( lhs = lhs / rhs );
 }
-template<unsigned M> glh::math::vector<M> operator/= ( glh::math::vector<M>& lhs, const float rhs )
+template<unsigned M> inline glh::math::vector<M> operator/= ( glh::math::vector<M>& lhs, const float rhs )
 {
     /* set lhs to equal lhs * rhs */
     return ( lhs = lhs / rhs );
