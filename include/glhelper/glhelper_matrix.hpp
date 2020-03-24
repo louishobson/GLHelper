@@ -137,17 +137,13 @@ public:
      *
      * a matrix gets initialised to a zero matrix by default
      */
-    matrix ()
-        : data { { 0. } }
-    {}
+    matrix () { data.fill ( 0. ); }
 
     /* float constructor
      *
      * sets all values to the float provided
      */
-    matrix ( const float val )
-        : data { { val } }
-    {}
+    matrix ( const float val ) { data.fill ( val ); }
 
     /* initialiser list constructor
      *
