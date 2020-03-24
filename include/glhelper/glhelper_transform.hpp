@@ -49,6 +49,14 @@ namespace glh
          */
         double pi ( const double k ) { return k * acos ( -1. ); }
 
+        /* rad
+         *
+         * convert degrees to radians
+         * 
+         * return: a conversion of deg into radians
+         */
+        double rad ( const double deg ) { return pi ( deg / 180 ); }
+
         /* zero_matrix
          *
          * produce a zero square matrix
