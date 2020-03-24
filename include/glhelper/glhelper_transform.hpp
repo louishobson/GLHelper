@@ -32,6 +32,9 @@
 /* include glhelper_matrix.hpp */
 #include <glhelper/glhelper_matrix.hpp>
 
+/* include glhelper_vector.hpp */
+#include <glhelper/glhelper_vector.hpp>
+
 
 
 /* NAMESPACE FORWARD DECLARATIONS */
@@ -101,6 +104,22 @@ namespace glh
 
 
 
+/* VECTOR-MATRIX OPERATOR DECLARATIONS */
+
+/* operator*
+ *
+ * multiplication of a matrix before a vector
+ */
+template<unsigned M, unsigned N> glh::math::vector<M> operator* ( const glh::math::matrix<M, N>& lhs, const glh::math::vector<N>& rhs );
+
+/* operator*=
+ *
+ * takes a vector and multiplies it by a matrix on its left
+ */
+template<unsigned M> glh::math::vector<M>& operator*= ( const glh::math::vector<M>& lhs, const glh::math::matrix<M>& rhs );
+
+
+
 /* FUNCTION IMPLEMENTATIONS */
 
 /* zero_matrix
@@ -110,7 +129,7 @@ namespace glh
 template<unsigned M> inline glh::math::matrix<M, M> glh::math::zero_matrix ()
 {
     /* return a default matrix */
-    return math::matrix<M, M> {};
+    return math::matrix<M, M> { 0. };
 }
 
 /* identity_matrix
@@ -190,6 +209,41 @@ template<unsigned M> inline glh::math::matrix<M> glh::math::rotate ( const matri
     /* return rot * trans */
     return rot * trans;
 }
+
+
+
+/* VECTOR-MATRIX OPERATOR IMPLEMENTATIONS */
+
+/* operator*
+ *
+ * multiplication of a matrix before a vector
+ */
+template<unsigned M, unsigned N> glh::math::vector<M> operator* ( const glh::math::matrix<M, N>& lhs, const glh::math::vector<N>& rhs )
+{
+    /* create the new vector */
+    glh::math::vector<M> result;
+
+    /* iterate for each value in result, and then each value in a row of the matrix */
+    for ( unsigned iti = 0; iti < M; ++iti ) for ( unsigned itj = 0; itj < N; ++itj )
+    {
+        /* keep adding to the values in result */
+        result.at ( iti ) += lhs.at ( iti, itj ) * rhs.at ( itj );
+    }
+
+    /* return result */
+    return result;
+}
+
+/* operator*=
+ *
+ * takes a vector and multiplies it by a matrix on its left
+ */
+template<unsigned M> glh::math::vector<M>& operator*= ( const glh::math::vector<M>& lhs, const glh::math::matrix<M>& rhs )
+{
+    /* return lhs = rhs * lhs */
+    return ( lhs = rhs * lhs );
+}
+
 
 
 
