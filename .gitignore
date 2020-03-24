@@ -6,6 +6,7 @@
 # Compiled files
 *.o
 *.a
+test
 
 # User-specific files
 *.rsuser
