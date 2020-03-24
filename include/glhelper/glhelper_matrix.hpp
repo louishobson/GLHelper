@@ -143,7 +143,7 @@ public:
      *
      * sets all values to the float provided
      */
-    matrix ( const float val ) { data.fill ( val ); }
+    explicit matrix ( const float val ) { data.fill ( val ); }
 
     /* initialiser list constructor
      *
@@ -157,14 +157,11 @@ public:
      */
     matrix ( const matrix<M, N>& other ) = default;
 
-    /* default move copy constructor */
-    matrix ( matrix<M, N>&& other ) = default;
-
     /* default copy assignment operator */
     matrix<M, N>& operator= ( const matrix<M, N>& other ) = default;
 
     /* default destructor */
-    virtual ~matrix () = default;
+    ~matrix () = default;
 
 
 

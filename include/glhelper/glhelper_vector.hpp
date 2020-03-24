@@ -119,7 +119,7 @@ public:
      *
      * sets all values to the float provided
      */
-    vector ( const float val ) { data.fill ( val ); }
+    explicit vector ( const float val ) { data.fill ( val ); }
 
     /* vector constructor
      *
@@ -127,7 +127,7 @@ public:
      * smaller vectors will be promoted, and the rest of this vector will be filled with 0s
      * larger vectors will be demoted, and their excessive elements will be ignored
      */
-    template<unsigned _M> vector ( const vector<_M>& other );
+    template<unsigned _M> explicit vector ( const vector<_M>& other );
 
     /* compound constructor
      *
