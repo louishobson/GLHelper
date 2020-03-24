@@ -59,7 +59,7 @@ int main ()
     glh::fshader fshader { "/home/louis/OneDrive/Documents/Programming/Mandelbrot/src/shader/mandelbrot_fragment.glsl" };
     glh::program program { vshader, fshader };
 
-    program.set_uniform_float ( "mandelbrot_stretch", 0.002, 0.002, 1, 1 );
+    program.set_uniform_vector ( "mandelbrot_stretch", glh::math::vec4 { glh::math::enlarge ( glh::math::vec2 { 1. }, 0.002 ) } );
     program.set_uniform_float ( "mandelbrot_translation", -2, -1, 0, 0 );
     program.set_uniform_matrix ( "mandelbrot_rotation", glh::math::rotate ( glh::math::identity<2> (), 0, 1, glh::math::pi ( 0.1 ) ) );
     program.set_uniform_float ( "mandelbrot_breakout", 2 );
