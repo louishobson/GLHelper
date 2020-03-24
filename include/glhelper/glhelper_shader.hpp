@@ -37,6 +37,9 @@
 /* include glhelper_matrix.hpp */
 #include <glhelper/glhelper_matrix.hpp>
 
+/* include glhelper_vector.hpp */
+#include <glhelper/glhelper_vector.hpp>
+
 
 
 /* MACROS */
@@ -335,6 +338,19 @@ public:
     void set_uniform_matrix ( const std::string& name, const glh::math::mat4& v0 )
         { glUniformMatrix4fv ( get_uniform_location ( name ), 1, GL_FALSE, v0.internal_ptr () ); }
 
+    /* set_uniform_vector
+     *
+     * set uniform based on a vector
+     * the same as the set_uniform_float functions, the parameters are packed into a vector
+     */
+    void set_uniform_vector ( const std::string& name, const glh::math::vec1& v0 ) 
+        { glUniform1fv ( get_uniform_location ( name ), 1, v0.internal_ptr () ); }
+    void set_uniform_vector ( const std::string& name, const glh::math::vec2& v0 ) 
+        { glUniform2fv ( get_uniform_location ( name ), 1, v0.internal_ptr () ); }
+    void set_uniform_vector ( const std::string& name, const glh::math::vec3& v0 ) 
+        { glUniform3fv ( get_uniform_location ( name ), 1, v0.internal_ptr () ); }
+    void set_uniform_vector ( const std::string& name, const glh::math::vec4& v0 )
+        { glUniform4fv ( get_uniform_location ( name ), 1, v0.internal_ptr () ); }
 
 
 

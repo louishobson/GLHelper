@@ -36,5 +36,8 @@
 /* include glhelper_matrix.hpp */
 #include <glhelper/glhelper_matrix.hpp>
 
+/* include glhelper_vector.hpp */
+#include <glhelper/glhelper_vector.hpp>
+
 /* include glhelper_transform.hpp */
 #include <glhelper/glhelper_transform.hpp>
