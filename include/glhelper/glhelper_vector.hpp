@@ -200,32 +200,52 @@ private:
 
 /* operator+(=)
  *
- * addition operations on vectors
+ * addition operations on vectors include:
+ * 
+ * vector + vector
+ * vector += vector
  */
 template<unsigned M> glh::math::vector<M> operator+ ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
 template<unsigned M> glh::math::vector<M>& operator+= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
 
 /* operator-(=)
  *
- * subtraction operations on vectors
+ * subtraction operations on vectors include:
+ * 
+ * vector - vector
+ * vector -= vector
  */
 template<unsigned M> glh::math::vector<M> operator- ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
 template<unsigned M> glh::math::vector<M>& operator-= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
 
 /* operator*(=)
  *
- * multiplication operations on vectors
- * for two vectors, multiplication finds the component-wise product
+ * multiplication operations on vectors include:
+ * 
+ * vector * vector (SEE BELOW)
+ * vector * scalar == scalar * vector
+ * vector *= vector
+ * vector *= scalar (SEE BELOW)
+ * 
+ * NOTE: vector multiplication finds the component wise product
+ *       use the cross_product and dot_product functions for other multiplication types
  */
 template<unsigned M> glh::math::vector<M> operator* ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
 template<unsigned M> glh::math::vector<M> operator* ( const glh::math::vector<M>& lhs, const float rhs );
+template<unsigned M> glh::math::vector<M> operator* ( const float lhs, const glh::math::vector<M>& rhs );
 template<unsigned M> glh::math::vector<M>& operator*= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
 template<unsigned M> glh::math::vector<M>& operator*= ( glh::math::vector<M>& lhs, const float rhs );
 
 /* operator/(=)
  *
- * division operations on vectors
- * for two vectors, division finds the component-wise dividend
+ * division operations on vectors include:
+ * 
+ * vector / vector (SEE BELOW)
+ * vector / scalar
+ * vector /= vector (SEE BELOW)
+ * vector /= scalar
+ * 
+ * NOTE: vector division finds the component wise dividend
  */
 template<unsigned M> glh::math::vector<M> operator/ ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
 template<unsigned M> glh::math::vector<M> operator/ ( const glh::math::vector<M>& lhs, const float rhs );
@@ -386,7 +406,10 @@ glh::math::vector<3> inline glh::math::cross_product ( const vector<3>& lhs, con
 
 /* operator+(=)
  *
- * addition operations on vectors
+ * addition operations on vectors include:
+ * 
+ * vector + vector
+ * vector += vector
  */
 template<unsigned M> inline glh::math::vector<M> operator+ ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
 {
@@ -407,7 +430,10 @@ template<unsigned M> inline glh::math::vector<M>& operator+= ( glh::math::vector
 
 /* operator-(=)
  *
- * subtraction operations on vectors
+ * subtraction operations on vectors include:
+ * 
+ * vector - vector
+ * vector -= vector
  */
 template<unsigned M> inline glh::math::vector<M> operator- ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
 {
@@ -428,8 +454,15 @@ template<unsigned M> inline glh::math::vector<M>& operator-= ( glh::math::vector
 
 /* operator*(=)
  *
- * multiplication operations on vectors
- * for two vectors, multiplication finds the component-wise product
+ * multiplication operations on vectors include:
+ * 
+ * vector * vector (SEE BELOW)
+ * vector * scalar == scalar * vector
+ * vector *= vector
+ * vector *= scalar (SEE BELOW)
+ * 
+ * NOTE: vector multiplication finds the component wise product
+ *       use the cross_product and dot_product functions for other multiplication types
  */
 template<unsigned M> inline glh::math::vector<M> operator* ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
 {
@@ -453,6 +486,11 @@ template<unsigned M> inline glh::math::vector<M> operator* ( const glh::math::ve
     /* return the new vector */
     return result;
 }
+template<unsigned M> inline glh::math::vector<M> operator* ( const float lhs, const glh::math::vector<M>& rhs )
+{
+    /* equivalent to vector * scalar */
+    return rhs * lhs;
+}
 template<unsigned M> inline glh::math::vector<M>& operator*= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
 {
     /* set lhs to equal lhs * rhs */
@@ -466,8 +504,14 @@ template<unsigned M> inline glh::math::vector<M>& operator*= ( glh::math::vector
 
 /* operator/(=)
  *
- * division operations on vectors
- * for two vectors, division finds the component-wise dividend
+ * division operations on vectors include:
+ * 
+ * vector / vector (SEE BELOW)
+ * vector / scalar
+ * vector /= vector (SEE BELOW)
+ * vector /= scalar
+ * 
+ * NOTE: vector division finds the component wise dividend
  */
 template<unsigned M> inline glh::math::vector<M> operator/ ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
 {
