@@ -141,6 +141,14 @@ public:
         : data { { 0. } }
     {}
 
+    /* float constructor
+     *
+     * sets all values to the float provided
+     */
+    matrix ( const float val )
+        : data { { val } }
+    {}
+
     /* initialiser list constructor
      *
      * constructs data from initialiser list
@@ -216,38 +224,38 @@ private:
  * addition operations on matrices
  */
 template<unsigned M, unsigned N> glh::math::matrix<M, N> operator+ ( const glh::math::matrix<M, N>& lhs, const glh::math::matrix<M, N>& rhs );
-template<unsigned M, unsigned N> glh::math::matrix<M, N> operator+ ( const glh::math::matrix<M, N>& lhs, const float& rhs );
+template<unsigned M, unsigned N> glh::math::matrix<M, N> operator+ ( const glh::math::matrix<M, N>& lhs, const float rhs );
 template<unsigned M, unsigned N> glh::math::matrix<M, N>& operator+= ( glh::math::matrix<M, N>& lhs, const glh::math::matrix<M, N>& rhs );
-template<unsigned M, unsigned N> glh::math::matrix<M, N>& operator+= ( glh::math::matrix<M, N>& lhs, const float& rhs );
+template<unsigned M, unsigned N> glh::math::matrix<M, N>& operator+= ( glh::math::matrix<M, N>& lhs, const float rhs );
 
 /* operator-(=)
  *
  * subtraction operations on matrices
  */
 template<unsigned M, unsigned N> glh::math::matrix<M, N> operator- ( const glh::math::matrix<M, N>& lhs, const glh::math::matrix<M, N>& rhs );
-template<unsigned M, unsigned N> glh::math::matrix<M, N> operator- ( const glh::math::matrix<M, N>& lhs, const float& rhs );
+template<unsigned M, unsigned N> glh::math::matrix<M, N> operator- ( const glh::math::matrix<M, N>& lhs, const float rhs );
 template<unsigned M, unsigned N> glh::math::matrix<M, N>& operator-= ( glh::math::matrix<M, N>& lhs, const glh::math::matrix<M, N>& rhs );
-template<unsigned M, unsigned N> glh::math::matrix<M, N>& operator-= ( glh::math::matrix<M, N>& lhs, const float& rhs );
+template<unsigned M, unsigned N> glh::math::matrix<M, N>& operator-= ( glh::math::matrix<M, N>& lhs, const float rhs );
 
 
 /* operator*(=)
  * 
  * multiplication operations on matrices
  */
-template<unsigned M1, unsigned N1M2, unsigned N2> glh::math::matrix<M1, N2> operator* ( const glh::math::matrix<M1, N1M2>& lhs, const glh::math::matrix<N1M2, N2>& rhs );
-template<unsigned M, unsigned N> glh::math::matrix<M, N> operator* ( const glh::math::matrix<M, N>& lhs, const float& rhs );
-template<unsigned M1, unsigned N1M2, unsigned N2> glh::math::matrix<M1, N2>& operator*= ( glh::math::matrix<M1, N1M2>& lhs, const glh::math::matrix<N1M2, N2>& rhs );
-template<unsigned M, unsigned N> glh::math::matrix<M, N>& operator*= ( glh::math::matrix<M, N>& lhs, const float& rhs );
+template<unsigned M0, unsigned N0M1, unsigned N1> glh::math::matrix<M0, N1> operator* ( const glh::math::matrix<M0, N0M1>& lhs, const glh::math::matrix<N0M1, N1>& rhs );
+template<unsigned M, unsigned N> glh::math::matrix<M, N> operator* ( const glh::math::matrix<M, N>& lhs, const float rhs );
+template<unsigned M0, unsigned N0M1, unsigned N1> glh::math::matrix<M0, N1>& operator*= ( glh::math::matrix<M0, N0M1>& lhs, const glh::math::matrix<N0M1, N1>& rhs );
+template<unsigned M, unsigned N> glh::math::matrix<M, N>& operator*= ( glh::math::matrix<M, N>& lhs, const float rhs );
 
 
 /* operator/(=)
  *
  * division operations on matrices
  */
-template<unsigned M1, unsigned N1M2, unsigned N2> glh::math::matrix<M1, N2> operator/ ( const glh::math::matrix<M1, N1M2>& lhs, const glh::math::matrix<N1M2, N2>& rhs );
-template<unsigned M, unsigned N> glh::math::matrix<M, N> operator/ ( const glh::math::matrix<M, N>& lhs, const float& rhs );
-template<unsigned M1, unsigned N1M2, unsigned N2> glh::math::matrix<M1, N2>& operator/= ( glh::math::matrix<M1, N1M2>& lhs, const glh::math::matrix<N1M2, N2>& rhs );
-template<unsigned M, unsigned N> glh::math::matrix<M, N>& operator/= ( glh::math::matrix<M, N>& lhs, const float& rhs );
+template<unsigned M0, unsigned N0M1, unsigned N1> glh::math::matrix<M0, N1> operator/ ( const glh::math::matrix<M0, N0M1>& lhs, const glh::math::matrix<N0M1, N1>& rhs );
+template<unsigned M, unsigned N> glh::math::matrix<M, N> operator/ ( const glh::math::matrix<M, N>& lhs, const float rhs );
+template<unsigned M0, unsigned N0M1, unsigned N1>glh::math::matrix<M0, N1>& operator/= ( glh::math::matrix<M0, N0M1>& lhs, const glh::math::matrix<N0M1, N1>& rhs );
+template<unsigned M, unsigned N> glh::math::matrix<M, N>& operator/= ( glh::math::matrix<M, N>& lhs, const float rhs );
 
 
 /* unary plus operator */
@@ -260,13 +268,13 @@ template<unsigned M, unsigned N> glh::math::matrix<M, N> operator- ( const glh::
  * raise a matrix to a power
  * a negative power uses the determinant as the base
  */
-template<unsigned M> glh::math::matrix<M> std::pow ( const glh::math::matrix<M> base, const int exp );
+template<unsigned M> glh::math::matrix<M> std::pow ( const glh::math::matrix<M>& base, const int exp );
 
 /* operator<<
  *
  * format as a one-line string
  */
-template<unsigned M, unsigned N> std::ostream& operator<< ( std::ostream& os, const glh::math::matrix<M, N>& obj );
+template<unsigned M, unsigned N> std::ostream& operator<< ( std::ostream& os, const glh::math::matrix<M, N>& _matrix );
 
 
 
@@ -307,7 +315,6 @@ public:
  * constructs data from initialiser list
  */
 template<unsigned M, unsigned N> inline glh::math::matrix<M, N>::matrix ( const std::initializer_list<float> init_list )
-    : data { { 0. } }
 {
     /* check the size of the list */
     if ( init_list.size () > M * N ) throw matrix_exception { "matrix initialiser list is too long" };
@@ -549,7 +556,7 @@ template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator+ ( cons
     /* return the result */
     return result;
 }
-template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator+ ( const glh::math::matrix<M, N>& lhs, const float& rhs )
+template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator+ ( const glh::math::matrix<M, N>& lhs, const float rhs )
 {
     /* create the new matrix */
     glh::math::matrix<M, N> result;
@@ -565,12 +572,11 @@ template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator+= ( gl
     /* set lhs to the addition of lhs and rhs */
     return ( lhs = lhs + rhs );
 }
-template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator+= ( glh::math::matrix<M, N>& lhs, const float& rhs )
+template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator+= ( glh::math::matrix<M, N>& lhs, const float rhs )
 {
     /* set lhs to the addition of lhs and rhs */
     return ( lhs = lhs + rhs );
 }
-
 
 /* operator-
  *
@@ -581,7 +587,7 @@ template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator- ( cons
     /* return the addition of lhs and -rhs */
     return lhs + -lhs;
 }
-template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator- ( const glh::math::matrix<M, N>& lhs, const float& rhs )
+template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator- ( const glh::math::matrix<M, N>& lhs, const float rhs )
 {
     /* return the addition of lhs and -rhs */
     return lhs + -rhs;
@@ -591,7 +597,7 @@ template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator-= ( gl
     /* set lhs to the subtraction of lhs and rhs */
     return ( lhs = lhs - rhs );
 }
-template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator-= ( glh::math::matrix<M, N>& lhs, const float& rhs )
+template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator-= ( glh::math::matrix<M, N>& lhs, const float rhs )
 {
     /* set lhs to the subtraction of lhs and rhs */
     return ( lhs = lhs - rhs );
@@ -601,22 +607,22 @@ template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator-= ( gl
  * 
  * multiplication operations on matrices
  */
-template<unsigned M1, unsigned N1M2, unsigned N2> inline glh::math::matrix<M1, N2> operator* ( const glh::math::matrix<M1, N1M2>& lhs, const glh::math::matrix<N1M2, N2>& rhs )
+template<unsigned M0, unsigned N0M1, unsigned N1> inline glh::math::matrix<M0, N1> operator* ( const glh::math::matrix<M0, N0M1>& lhs, const glh::math::matrix<N0M1, N1>& rhs )
 {
     /* create the new matrix */
-    glh::math::matrix<M1, N2> result;
+    glh::math::matrix<M0, N1> result;
 
     /* double loop for each row/column of result */
-    for ( unsigned iti = 0; iti < M1; ++iti ) for ( unsigned itj = 0; itj < N2; ++itj )
+    for ( unsigned iti = 0; iti < M0; ++iti ) for ( unsigned itj = 0; itj < N1; ++itj )
     {
         /* another loop to add up the product of the corresponding values of lhs and rhs*/
-        for ( unsigned itk = 0; itk < N1M2; ++itk ) result.at ( iti, itj ) += lhs.at ( iti, itk ) * rhs.at ( itk, itj );
+        for ( unsigned itk = 0; itk < N0M1; ++itk ) result.at ( iti, itj ) += lhs.at ( iti, itk ) * rhs.at ( itk, itj );
     }
 
     /* return result */
     return result;
 }
-template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator* ( const glh::math::matrix<M, N>& lhs, const float& rhs )
+template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator* ( const glh::math::matrix<M, N>& lhs, const float rhs )
 {
     /* create the new matrix */
     glh::math::matrix<M, N> result;
@@ -627,12 +633,12 @@ template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator* ( cons
     /* return result */
     return result;
 }
-template<unsigned M1, unsigned N1M2, unsigned N2> inline glh::math::matrix<M1, N2>& operator*= ( glh::math::matrix<M1, N1M2>& lhs, const glh::math::matrix<N1M2, N2>& rhs )
+template<unsigned M0, unsigned N0M1, unsigned N1> inline glh::math::matrix<M0, N1>& operator*= ( glh::math::matrix<M0, N0M1>& lhs, const glh::math::matrix<N0M1, N1>& rhs )
 {
     /* set lhs to the multiplication of lhs and rhs */
     return ( lhs = lhs * rhs );
 }
-template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator*= ( glh::math::matrix<M, N>& lhs, const float& rhs )
+template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator*= ( glh::math::matrix<M, N>& lhs, const float rhs )
 {
     /* set lhs to the multiplication of lhs and rhs */
     return ( lhs = lhs * rhs );
@@ -642,22 +648,22 @@ template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator*= ( gl
  *
  * division operations on matrices
  */
-template<unsigned M1, unsigned N1M2, unsigned N2> inline glh::math::matrix<M1, N2> operator/ ( const glh::math::matrix<M1, N1M2>& lhs, const glh::math::matrix<N1M2, N2>& rhs )
+template<unsigned M0, unsigned N0M1, unsigned N1> inline glh::math::matrix<M0, N1> operator/ ( const glh::math::matrix<M0, N0M1>& lhs, const glh::math::matrix<N0M1, N1>& rhs )
 {
     /* return the multiplication of lhs and the inverse of rhs */
     return lhs * inverse ( rhs );
 }
-template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator/ ( const glh::math::matrix<M, N>& lhs, const float& rhs )
+template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator/ ( const glh::math::matrix<M, N>& lhs, const float rhs )
 {
     /* return the multiplication of lhs and 1/rhs */
     return lhs * ( 1 / rhs );
 }
-template<unsigned M1, unsigned N1M2, unsigned N2> inline glh::math::matrix<M1, N2>& operator/= ( glh::math::matrix<M1, N1M2>& lhs, const glh::math::matrix<N1M2, N2>& rhs )
+template<unsigned M0, unsigned N0M1, unsigned N1> inline glh::math::matrix<M0, N1>& operator/= ( glh::math::matrix<M0, N0M1>& lhs, const glh::math::matrix<N0M1, N1>& rhs )
 {
     /* set lhs to the division of lhs and rhs */
     return ( lhs = lhs / rhs );
 }
-template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator/= ( glh::math::matrix<M, N>& lhs, const float& rhs )
+template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator/= ( glh::math::matrix<M, N>& lhs, const float rhs )
 {
     /* set lhs to the division of lhs and rhs */
     return ( lhs = lhs / rhs );
@@ -687,7 +693,7 @@ template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator- ( cons
  * raise a matrix to a power
  * a negative power uses the determinant as the base
  */
-template<unsigned M> inline glh::math::matrix<M> std::pow ( const glh::math::matrix<M> base, const int exp )
+template<unsigned M> inline glh::math::matrix<M> std::pow ( const glh::math::matrix<M>& base, const int exp )
 {
     /* produce new base based on sign of exp */
     glh::math::matrix<M> newbase { ( exp >= 0 ? base : inverse ( base ) ) };
@@ -712,7 +718,7 @@ template<unsigned M> inline glh::math::matrix<M> std::pow ( const glh::math::mat
  *
  * format as a one-line string
  */
-template<unsigned M, unsigned N> inline std::ostream& operator<< ( std::ostream& os, const glh::math::matrix<M, N>& obj )
+template<unsigned M, unsigned N> inline std::ostream& operator<< ( std::ostream& os, const glh::math::matrix<M, N>& _matrix )
 {
     /* stream intro into ostream */
     os << "glh::matrix<" << M << "," << N << ">{";
@@ -720,7 +726,7 @@ template<unsigned M, unsigned N> inline std::ostream& operator<< ( std::ostream&
     for ( unsigned iti = 0; iti < M * N; ++iti )
     {
         /* stream the value */
-        os << obj.at ( iti );
+        os << _matrix.at ( iti );
         /* if not end of stream, stream comma */
         if ( iti + 1 < M * N ) os << ",";
     }
