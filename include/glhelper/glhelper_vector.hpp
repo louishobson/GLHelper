@@ -342,7 +342,7 @@ glh::math::vector<2> inline glh::math::concatenate ( const float v0, const float
     glh::math::vector<2> conc;
 
     /* set the values */
-    conc.at ( 0 ) - v0;
+    conc.at ( 0 ) = v0;
     conc.at ( 1 ) = v1;
 
     /* return new vector */
