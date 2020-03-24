@@ -8,6 +8,9 @@
 *.a
 test
 
+# Binaries
+test
+
 # User-specific files
 *.rsuser
 *.suo

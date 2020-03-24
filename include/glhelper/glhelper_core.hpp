@@ -4,7 +4,7 @@
  * Distributed under MIT licence as a part of the GLHelper C++ library.
  * For details, see: https://github.com/louishobson/GLHelper/blob/master/LICENSE
  * 
- * src/glhelper_core.hpp
+ * include/glhelper/glhelper_core.hpp
  * 
  * core header for glhelper library
  * sets up OpenGL headers and defines core base classes
@@ -36,11 +36,11 @@
 
 namespace glh
 {
-    /* class glh_object
+    /* class object
      *
      * abstract base class to represent any OpenGL object
      */
-    class glh_object;
+    class object;
 }
 
 
@@ -51,61 +51,60 @@ namespace glh
  *
  * abstract base class to represent any OpenGL object
  */
-class glh::glh_object
+class glh::object
 {
 public:
-
-    /* int id
-     *
-     * the OpenGL id of the class
-     */
-    int id;
-
-
 
     /* full constructor
      *
      * _id: the id of the object
      */
-    explicit glh_object ( const int _id )
+    explicit object ( const GLuint _id )
         : id { _id }
     {}
 
     /* zero-parameter constructor
      *
-     * in this case, id is initialised to -1
+     * in this case, id is initialised to 0
      */
-    explicit glh_object ()
-        : id { -1 }
+    explicit object ()
+        : id { 0 }
     {}
 
-    /* default copy constructor
+    /* deleted copy constructor
      *
-     * no need for a move constructor, as only has to copy id
+     * it makes no sense to copy an object
      */
+    object ( const object& other ) = delete;
 
-    /* default copy assignment operator
+    /* deleted copy assignment operator
      *
-     * will replace id with the id of the other class
-     * the object referenced by this class will NOT be destroyed
+     * it makes no sense to assign the object after comstruction
      */
+    object& operator= ( const object& other ) = delete;
 
     /* virtual destructor
      *
      * virtual in preparation for polymorphism
      */
-    virtual ~glh_object () {}
+    virtual ~object () { id = 0; }
 
 
+
+    /* internal_id
+     *
+     * returns the internal id of the object
+     */
+    const GLuint& internal_id () const { return id; }
 
     /* virtual is_valid
      *
-     * determines if the object is valid (id >= 0)
+     * determines if the object is valid (id > 0)
      * may be overloaded when derived to add more parameters to validity
      * 
      * return: boolean representing validity
      */
-    virtual bool is_valid () const { return ( id >= 0 ); }
+    virtual bool is_valid () const { return ( id > 0 ); }
 
     /* virtual not operator
      *
@@ -116,12 +115,32 @@ public:
      */
     virtual bool operator! () const { return !is_valid (); }
 
+    /* virtual comparison operators
+     *
+     * determines if two objects are equal by comparing ids
+     * may be overloaded to add more parameters to equality
+     * 
+     * return: boolean representing equality
+     */
+    virtual bool operator== ( const object& other ) const { return ( id == other.id ); }
+    virtual bool operator!= ( const object& other ) const { return ( id != other.id ); }
+
     /* pure virtual destroy
      *
      * destroys the object, at least setting id to -1
      * although multiple calls to this function are valid, only the first should have effect
      */
     virtual void destroy () = 0;
+
+
+
+protected:
+
+    /* GLint id
+     *
+     * the OpenGL id of the class
+     */
+    GLuint id;
 
 };
 
