@@ -113,20 +113,21 @@ public:
      * 
      * creates a vector filled with 0s
      */
-    vector ()
-        : data { { 0. } }
-    {}
+    vector () { data.fill ( 0. ); }
 
     /* float constructor
      *
      * sets all values to the float provided
      */
-    vector ( const float val )
-        : data { { val } }
-    {}
+    vector ( const float val ) { data.fill ( val ); }
 
-    /* default copy constructor */
-    vector ( const vector<M>& other ) = default;
+    /* vector constructor
+     *
+     * construct from any other vector
+     * smaller vectors will be promoted, and the rest of this vector will be filled with 0s
+     * larger vectors will be demoted, and their excessive elements will be ignored
+     */
+    template<unsigned _M> vector ( const vector<_M>& other );
 
     /* compound constructor
      *
@@ -291,6 +292,20 @@ public:
 
 
 /* VECTOR IMPLEMENTATION */
+
+/* vector constructor
+ *
+ * construct from any other vector
+ * smaller vectors will be promoted, and the rest of this vector will be filled with 0s
+ * larger vectors will be demoted, and their excessive elements will be ignored
+ */
+template<unsigned M>
+template<unsigned _M> inline glh::math::vector<M>::vector ( const vector<_M>& other )
+    : vector { 0. }
+{
+    /* loop for whichever vector is smaller, copying values accordingly */
+    for ( unsigned iti = 0; iti < M && iti < _M; ++iti ) at ( iti ) = other.at ( iti );
+}
 
 /* at
  *
