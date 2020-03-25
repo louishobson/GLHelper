@@ -34,8 +34,7 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
-/* indlude stb_image.h */
-#define STB_IMAGE_IMPLEMENTATION
+/* indlude stb_image.h without implementation */
 #include <stb/stb_image.h>
 
 

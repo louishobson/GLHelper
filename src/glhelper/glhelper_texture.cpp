@@ -17,6 +17,10 @@
 /* include glhelper_texture.hpp */
 #include <glhelper/glhelper_texture.hpp>
 
+/* indlude stb_image.h with implementation */
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+
 
 
 /* TEXTURE2D IMPLEMENTATION */
@@ -118,6 +122,24 @@ void glh::texture2d::set_wrap ( const GLenum opt )
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, opt );
     unbind ();
 }
+
+
+
+/* destroy
+ *
+ * destroys the texture, setting its id to 0
+ */
+void glh::texture2d::destroy ()
+{
+    /* if is valid */
+    if ( is_valid () )
+    {
+        /* destroy and set id to 0 */
+        glDeleteShader ( id );
+        id = 0;
+    }    
+}
+
 
 
 /* bind
