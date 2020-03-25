@@ -61,8 +61,64 @@ glh::texture2d::texture2d ( const std::string& _path, const GLenum _format, cons
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
 
-    /* leave bound */
+    /* unbind */
+    unbind ();
 }
+
+/* set_mag/min_filter
+ *
+ * set the texture filtering parameters of magnified/minified texture
+ */
+void glh::texture2d::set_mag_filter ( const GLenum opt ) 
+{ 
+    /* bind, set paramater, unbind */
+    bind (); 
+    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, opt ); 
+    unbind ();
+}
+void glh::texture2d::set_min_filter ( const GLenum opt ) 
+{ 
+    /* bind, set paramater, unbind */
+    bind (); 
+    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, opt );
+    unbind ();
+}
+
+/* set_(s/t/r)_wrap
+ *
+ * set the wrapping options for each coordinate axis, or all at once
+ */
+void glh::texture2d::set_s_wrap ( const GLenum opt ) 
+{ 
+    /* bind, set paramater, unbind */
+    bind (); 
+    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, opt );
+    unbind ();
+}
+void glh::texture2d::set_t_wrap ( const GLenum opt ) 
+{ 
+    /* bind, set paramater, unbind */
+    bind (); 
+    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, opt );
+    unbind ();
+}
+void glh::texture2d::set_r_wrap ( const GLenum opt ) 
+{ 
+    /* bind, set paramater, unbind */
+    bind (); 
+    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, opt );
+    unbind ();
+}
+void glh::texture2d::set_wrap ( const GLenum opt ) 
+{
+    /* bind, set paramaters, unbind */
+    bind (); 
+    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, opt ); 
+    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, opt );
+    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, opt );
+    unbind ();
+}
+
 
 /* bind
  *
