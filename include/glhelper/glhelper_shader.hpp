@@ -126,7 +126,7 @@ public:
      * destroys the shader, setting its id to 0
      * any program using this shader will still function
      */
-    void destroy () override final;
+    void destroy () override;
 
 
 
@@ -358,7 +358,7 @@ public:
      *
      * destroys the shader program, setting id to 0
      */
-    void destroy () override final;
+    void destroy () override;
 
 
 
