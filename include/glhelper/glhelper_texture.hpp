@@ -103,7 +103,7 @@ public:
      * 
      * _texture_unit: the new texture unit
      */
-    void set_texture_unit ( const GLenum _texture_unit ) { texture_unit = _texture_unit }
+    void set_texture_unit ( const GLenum _texture_unit ) { texture_unit = _texture_unit; }
 
     /* set_mag/min_filter
      *
@@ -121,7 +121,7 @@ public:
     void set_r_wrap ( const GLenum opt );
     void set_wrap ( const GLenum opt );
 
-    
+
 
     /* destroy
      *
