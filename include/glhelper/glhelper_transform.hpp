@@ -47,7 +47,7 @@ namespace glh
          *
          * return: the value of pi multiplied by a constant
          */
-        float pi ( const float k ) { return k * acosf ( -1. ); }
+        double pi ( const double k ) { return k * acos ( -1. ); }
 
         /* rad
          *
@@ -55,7 +55,7 @@ namespace glh
          * 
          * return: a conversion of deg into radians
          */
-        float rad ( const float deg ) { return pi ( deg / 180 ); }
+        double rad ( const double deg ) { return pi ( deg / 180 ); }
 
         /* zero_matrix
          *
@@ -83,8 +83,8 @@ namespace glh
          * 
          * return: the new transformation matrix/vector
          */
-        template<unsigned M> matrix<M> stretch ( const matrix<M>& trans, const unsigned axis, const float sf );
-        template<unsigned M> vector<M> stretch ( const vector<M>& vec, const unsigned axis, const float sf );
+        template<unsigned M> matrix<M> stretch ( const matrix<M>& trans, const unsigned axis, const double sf );
+        template<unsigned M> vector<M> stretch ( const vector<M>& vec, const unsigned axis, const double sf );
 
         /* enlarge
          *
@@ -95,8 +95,8 @@ namespace glh
          * 
          * return: the new transformation matrix/vector
          */
-        template<unsigned M> matrix<M> enlarge ( const matrix<M>& trans, const float sf );
-        template<unsigned M> vector<M> enlarge ( const vector<M>& vec, const float sf );
+        template<unsigned M> matrix<M> enlarge ( const matrix<M>& trans, const double sf );
+        template<unsigned M> vector<M> enlarge ( const vector<M>& vec, const double sf );
 
         /* rotate
          *
@@ -108,8 +108,8 @@ namespace glh
          * 
          * return: the new transformation matrix/vector
          */
-        template<unsigned M> matrix<M> rotate ( const matrix<M>& trans, const unsigned axis0, const unsigned axis1, const float arg );
-        template<unsigned M> vector<M> rotate ( const vector<M>& vec, const unsigned axis0, const unsigned axis1, const float arg );
+        template<unsigned M> matrix<M> rotate ( const matrix<M>& trans, const unsigned axis0, const unsigned axis1, const double arg );
+        template<unsigned M> vector<M> rotate ( const vector<M>& vec, const unsigned axis0, const unsigned axis1, const double arg );
     }
 }
 
@@ -169,7 +169,7 @@ template<unsigned M> inline glh::math::matrix<M, M> glh::math::identity ()
  * 
  * return: the new transformation matrix/vector
  */
-template<unsigned M> inline glh::math::matrix<M> glh::math::stretch ( const matrix<M>& trans, const unsigned axis, const float sf )
+template<unsigned M> inline glh::math::matrix<M> glh::math::stretch ( const matrix<M>& trans, const unsigned axis, const double sf )
 {
     /* create the new matrix */
     math::matrix<M> result { trans };
@@ -180,7 +180,7 @@ template<unsigned M> inline glh::math::matrix<M> glh::math::stretch ( const matr
     /* return result */
     return result;
 }
-template<unsigned M> inline glh::math::vector<M> glh::math::stretch ( const vector<M>& vec, const unsigned axis, const float sf )
+template<unsigned M> inline glh::math::vector<M> glh::math::stretch ( const vector<M>& vec, const unsigned axis, const double sf )
 {
     /* create the new vector */
     math::vector<M> result { vec };
@@ -201,12 +201,12 @@ template<unsigned M> inline glh::math::vector<M> glh::math::stretch ( const vect
  * 
  * return: the new transformation matrix/vector
  */
-template<unsigned M> inline glh::math::matrix<M> glh::math::enlarge ( const matrix<M>& trans, const float sf )
+template<unsigned M> inline glh::math::matrix<M> glh::math::enlarge ( const matrix<M>& trans, const double sf )
 {
     /* return trans multiplied by the scale factor */
     return trans * sf;
 }
-template<unsigned M> inline glh::math::vector<M> glh::math::enlarge ( const vector<M>& vec, const float sf )
+template<unsigned M> inline glh::math::vector<M> glh::math::enlarge ( const vector<M>& vec, const double sf )
 {
     /* return vec multiplied by the scale factor */
     return vec * sf;
@@ -222,7 +222,7 @@ template<unsigned M> inline glh::math::vector<M> glh::math::enlarge ( const vect
  * 
  * return: the new transformation matrix/vector
  */
-template<unsigned M> inline glh::math::matrix<M> glh::math::rotate ( const matrix<M>& trans, const unsigned axis0, const unsigned axis1, const float arg )
+template<unsigned M> inline glh::math::matrix<M> glh::math::rotate ( const matrix<M>& trans, const unsigned axis0, const unsigned axis1, const double arg )
 {
     /* create identity matrix */
     math::matrix<M> rot = identity<M> ();
@@ -236,7 +236,7 @@ template<unsigned M> inline glh::math::matrix<M> glh::math::rotate ( const matri
     /* return rot * trans */
     return rot * trans;
 }
-template<unsigned M> inline glh::math::vector<M> glh::math::rotate ( const vector<M>& vec, const unsigned axis0, const unsigned axis1, const float arg )
+template<unsigned M> inline glh::math::vector<M> glh::math::rotate ( const vector<M>& vec, const unsigned axis0, const unsigned axis1, const double arg )
 {
     /* produce a rotational matrix and return the product */
     return glh::math::rotate ( glh::math::identity<M> (), axis0, axis1, arg ) * vec;
