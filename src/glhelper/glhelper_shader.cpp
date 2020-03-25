@@ -156,6 +156,21 @@ glh::program::program ( const vshader& vs, const fshader& fs )
     }
 }
 
+/* get_uniform
+ *
+ * return a uniform object based on a name
+ * 
+ * name: the name of the uniform
+ * 
+ * return: unfirom object
+ */
+glh::uniform glh::program::get_uniform ( const std::string& name ) const
+{ 
+    /* get the location and return the new uniform */
+    return uniform { get_uniform_location ( name ), * this }; 
+}
+
+
 /* destroy
  *
  * destroys the shader program, setting id to 0
@@ -190,10 +205,8 @@ void glh::program::use () const
  * 
  * return: location of the uniform
  */
-GLint glh::program::get_uniform_location ( const std::string& name )
+GLint glh::program::get_uniform_location ( const std::string& name ) const
 {
-    /* use the program */
-    use ();
     /* try to get location */
     const GLint location = glGetUniformLocation ( id, name.c_str () );
     /* if -1, throw */
