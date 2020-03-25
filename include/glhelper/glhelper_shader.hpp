@@ -56,12 +56,6 @@
 
 namespace glh
 {
-    /* class window
-     *
-     * forward declaration to allow program to make friend
-     */
-    class window;
-
     /* class shader : object
      *
      * base class for any type of shader
@@ -247,13 +241,6 @@ public:
  */
 class glh::program : public object
 {
-
-    /* window is a friend of program
-     *
-     * this is so that the window can activate the shader program
-     */
-    friend class window;
-
 public:
 
     /* three-shader constructor
@@ -360,15 +347,15 @@ public:
      */
     void destroy () override;
 
-
-
-private:
-
     /* use
      *
      * use the shader program for the following OpenGL function calls
      */
     void use () const;
+
+
+
+private:
 
     /* get_uniform_location
      *

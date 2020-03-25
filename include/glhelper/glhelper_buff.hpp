@@ -39,12 +39,6 @@
 
 namespace glh
 {
-    /* class window
-     *
-     * forward declaration to allow vao to make friend
-     */
-    class window;
-
     /* class buffer : object
      *
      * base class for storing a buffer
@@ -86,14 +80,6 @@ namespace glh
  */
 class glh::buffer : public object
 {
-
-    /* vao is a friend of a buffer object
-     *
-     * this allows the vao to access the bind functions
-     * this in turn allows for the vao to bind to a vbp/ebo
-     */
-    friend class vao;
-
 public:
 
     /* constructor
@@ -165,16 +151,6 @@ public:
      */
     void destroy () override;
 
-
-
-protected:
-
-    /* GLenum target
-     *
-     * the target to bind the buffer to
-     */
-    const GLenum target;
-
     /* bind
      *
      * bind the buffer
@@ -191,6 +167,15 @@ protected:
      */
     GLenum unbind () const;
 
+
+
+protected:
+
+    /* GLenum target
+     *
+     * the target to bind the buffer to
+     */
+    const GLenum target;
 };
 
 
@@ -301,13 +286,6 @@ public:
  */
 class glh::vao : public object
 {
-
-    /* window is a friend of vao
-     *
-     * this is so that the window can bind the vao
-     */
-    friend class window;
-
 public:
 
     /* constructor
@@ -376,10 +354,6 @@ public:
      * destroys the object, setting id to 0
      */
     void destroy () override;
-
-
-
-private:
 
     /* bind
      *
