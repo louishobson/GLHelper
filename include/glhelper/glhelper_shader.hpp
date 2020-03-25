@@ -332,11 +332,11 @@ public:
      * set uniform based on a matrix
      */
     void set_uniform_matrix ( const std::string& name, const glh::math::mat2& v0 ) 
-        { glUniformMatrix2fv ( get_uniform_location ( name ), 1, GL_FALSE, v0.internal_ptr () ); }
+        { glUniformMatrix2fv ( get_uniform_location ( name ), 1, GL_FALSE, v0.float_data ().data () ); }
     void set_uniform_matrix ( const std::string& name, const glh::math::mat3& v0 ) 
-        { glUniformMatrix3fv ( get_uniform_location ( name ), 1, GL_FALSE, v0.internal_ptr () ); }
+        { glUniformMatrix3fv ( get_uniform_location ( name ), 1, GL_FALSE, v0.float_data ().data () ); }
     void set_uniform_matrix ( const std::string& name, const glh::math::mat4& v0 )
-        { glUniformMatrix4fv ( get_uniform_location ( name ), 1, GL_FALSE, v0.internal_ptr () ); }
+        { glUniformMatrix4fv ( get_uniform_location ( name ), 1, GL_FALSE, v0.float_data ().data () ); }
 
     /* set_uniform_vector
      *
@@ -344,13 +344,13 @@ public:
      * the same as the set_uniform_float functions, the parameters are packed into a vector
      */
     void set_uniform_vector ( const std::string& name, const glh::math::vec1& v0 ) 
-        { glUniform1fv ( get_uniform_location ( name ), 1, v0.internal_ptr () ); }
+        { glUniform1fv ( get_uniform_location ( name ), 1, v0.float_data ().data () ); }
     void set_uniform_vector ( const std::string& name, const glh::math::vec2& v0 ) 
-        { glUniform2fv ( get_uniform_location ( name ), 1, v0.internal_ptr () ); }
+        { glUniform2fv ( get_uniform_location ( name ), 1, v0.float_data ().data () ); }
     void set_uniform_vector ( const std::string& name, const glh::math::vec3& v0 ) 
-        { glUniform3fv ( get_uniform_location ( name ), 1, v0.internal_ptr () ); }
+        { glUniform3fv ( get_uniform_location ( name ), 1, v0.float_data ().data () ); }
     void set_uniform_vector ( const std::string& name, const glh::math::vec4& v0 )
-        { glUniform4fv ( get_uniform_location ( name ), 1, v0.internal_ptr () ); }
+        { glUniform4fv ( get_uniform_location ( name ), 1, v0.float_data ().data () ); }
 
 
 
