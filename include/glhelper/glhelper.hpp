@@ -41,3 +41,6 @@
 
 /* include glhelper_transform.hpp */
 #include <glhelper/glhelper_transform.hpp>
+
+/* include glhelper_texture.hpp */
+#include <glhelper/glhelper_texture.hpp>
