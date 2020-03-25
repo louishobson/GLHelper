@@ -90,7 +90,7 @@ public:
     texture2d ( texture2d&& other ) = default;
 
     /* deleted assignment operator */
-    texture2d ( const texture2d& other ) = delete;
+    texture2d& operator= ( const texture2d& other ) = delete;
 
     /* virtual destructor */
     virtual ~texture2d () { destroy (); }
