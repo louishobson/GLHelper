@@ -140,8 +140,8 @@ protected:
  * 
  * return: boolean representing equality
  */
-bool operator== ( const glh::object& lhs, const glh::object& rhs ) { return ( lhs.internal_id () == rhs.internal_id () ); }
-bool operator!= ( const glh::object& lhs, const glh::object& rhs ) { return ( lhs.internal_id () != rhs.internal_id () ); }
+bool inline operator== ( const glh::object& lhs, const glh::object& rhs ) { return ( lhs.internal_id () == rhs.internal_id () ); }
+bool inline operator!= ( const glh::object& lhs, const glh::object& rhs ) { return ( lhs.internal_id () != rhs.internal_id () ); }
 
 
 

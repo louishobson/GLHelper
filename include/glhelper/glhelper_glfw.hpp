@@ -348,8 +348,8 @@ private:
  * 
  * return: boolean representing equality
  */
-bool operator== ( const glh::window& lhs, const glh::window& rhs ) { return ( lhs.internal_ptr () == rhs.internal_ptr () ); }
-bool operator!= ( const glh::window& lhs, const glh::window& rhs ) { return ( lhs.internal_ptr () != rhs.internal_ptr () ); }
+bool inline operator== ( const glh::window& lhs, const glh::window& rhs ) { return ( lhs.internal_ptr () == rhs.internal_ptr () ); }
+bool inline operator!= ( const glh::window& lhs, const glh::window& rhs ) { return ( lhs.internal_ptr () != rhs.internal_ptr () ); }
 
 
 
