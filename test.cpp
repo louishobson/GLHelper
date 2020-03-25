@@ -33,10 +33,10 @@ int main ()
 {
     GLfloat vdata []
     {
-        -1.f, 1.f, 0.0f,
-        1.f, 1.f, 0.0f,
-        -1.f, -1.f, 0.0f,
-        1.f, -1.f, 0.0f
+        -0.5f, 0.5f, 0.0f,
+        0.5f, 0.5f, 0.0f,
+        -0.5f, -0.5f, 0.0f,
+        0.5f, -0.5f, 0.0f
     };
 
     GLuint edata []
@@ -55,16 +55,9 @@ int main ()
     vao.set_vertex_attrib ( 0, vbo, 3, GL_FLOAT, GL_FALSE, 3 * sizeof ( GLfloat ), ( GLvoid * ) 0 );
     vao.bind_ebo ( ebo );
 
-    glh::vshader vshader { "/home/louis/OneDrive/Documents/Programming/Mandelbrot/src/shader/generic_vertex.glsl" };
-    glh::fshader fshader { "/home/louis/OneDrive/Documents/Programming/Mandelbrot/src/shader/mandelbrot_fragment.glsl" };
+    glh::vshader vshader { "shaders/vertex.glsl" };
+    glh::fshader fshader { "shaders/fragment.glsl" };
     glh::program program { vshader, fshader };
-
-    program.set_uniform_vector ( "mandelbrot_stretch", glh::math::vec4 { glh::math::enlarge ( glh::math::vec2 { 1. }, 0.002 ) } );
-    program.set_uniform_float ( "mandelbrot_translation", -2, -1, 0, 0 );
-    program.set_uniform_matrix ( "mandelbrot_rotation", glh::math::rotate ( glh::math::identity<2> (), 0, 1, glh::math::pi ( 0.1 ) ) );
-    program.set_uniform_float ( "mandelbrot_breakout", 2 );
-    program.set_uniform_int ( "mandelbrot_max_it", 40 );
-    program.set_uniform_int ( "mandelbrot_power", 2 );
 
     while ( !window.should_close () )
     {
