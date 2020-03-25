@@ -163,7 +163,7 @@ public:
      *
      * destroys the object, setting id to 0
      */
-    void destroy () override final;
+    void destroy () override;
 
 
 
@@ -375,7 +375,7 @@ public:
      *
      * destroys the object, setting id to 0
      */
-    void destroy () override final;
+    void destroy () override;
 
 
 
