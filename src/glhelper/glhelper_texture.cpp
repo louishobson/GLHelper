@@ -47,7 +47,7 @@ glh::texture2d::texture2d ( const std::string& _path, const GLenum _format, cons
 
     /* set the texture and generate mipmap */
     glTexImage2D ( GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
-    glGenerateMipmap ( GL_TEXTURE_2D );z
+    glGenerateMipmap ( GL_TEXTURE_2D );
 
     /* free image data */
     stbi_image_free ( image_data );
