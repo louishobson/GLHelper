@@ -75,6 +75,13 @@ namespace glh
      * shader program
      */
     class program;
+
+    /* class uniform
+     *
+     * a reference to a uniform in a program
+     * can set the uniform without querying its name
+     */
+    class uniform;
     
     /* class shader_exception : exception
      *
@@ -275,70 +282,15 @@ public:
 
 
 
-    /* set_uniform_float
+    /* get_uniform
      *
-     * set uniform based on float value(s)
+     * return a uniform object based on a name
+     * 
+     * name: the name of the uniform
+     * 
+     * return: unfirom object
      */
-    void set_uniform_float ( const std::string& name, const GLfloat v0 ) 
-        { glUniform1f ( get_uniform_location ( name ), v0 ); }
-    void set_uniform_float ( const std::string& name, const GLfloat v0, const GLfloat v1 ) 
-        { glUniform2f ( get_uniform_location ( name ), v0, v1 ); }
-    void set_uniform_float ( const std::string& name, const GLfloat v0, const GLfloat v1, const GLfloat v2 ) 
-        { glUniform3f ( get_uniform_location ( name ), v0, v1, v2 ); }
-    void set_uniform_float ( const std::string& name, const GLfloat v0, const GLfloat v1, const GLfloat v2, const GLfloat v3 )
-        { glUniform4f ( get_uniform_location ( name ), v0, v1, v2, v3 ); }
-
-    /* set_uniform_int
-     *
-     * set uniform based on integer value(s)
-     */
-    void set_uniform_int ( const std::string& name, const GLint v0 ) 
-        { glUniform1i ( get_uniform_location ( name ), v0 ); }
-    void set_uniform_int ( const std::string& name, const GLint v0, const GLint v1 ) 
-        { glUniform2i ( get_uniform_location ( name ), v0, v1 ); }
-    void set_uniform_int ( const std::string& name, const GLint v0, const GLint v1, const GLint v2 ) 
-        { glUniform3i ( get_uniform_location ( name ), v0, v1, v2 ); }
-    void set_uniform_int ( const std::string& name, const GLint v0, const GLint v1, const GLint v2, const GLint v3 )
-        { glUniform4i ( get_uniform_location ( name ), v0, v1, v2, v3 ); }
-
-    /* set_uniform_uint
-     *
-     * set uniform based on unsigned integer value(s)
-     */
-    void set_uniform_uint ( const std::string& name, const GLuint v0 ) 
-        { glUniform1ui ( get_uniform_location ( name ), v0 ); }
-    void set_uniform_uint ( const std::string& name, const GLuint v0, const GLuint v1 ) 
-        { glUniform2ui ( get_uniform_location ( name ), v0, v1 ); }
-    void set_uniform_uint ( const std::string& name, const GLuint v0, const GLuint v1, const GLuint v2 ) 
-        { glUniform3ui ( get_uniform_location ( name ), v0, v1, v2 ); }
-    void set_uniform_uint ( const std::string& name, const GLuint v0, const GLuint v1, const GLuint v2, const GLuint v3 )
-        { glUniform4ui ( get_uniform_location ( name ), v0, v1, v2, v3 ); }
-
-    /* set_uniform_matrix
-     *
-     * set uniform based on a matrix
-     */
-    void set_uniform_matrix ( const std::string& name, const glh::math::mat2& v0 ) 
-        { glUniformMatrix2fv ( get_uniform_location ( name ), 1, GL_FALSE, v0.float_data ().data () ); }
-    void set_uniform_matrix ( const std::string& name, const glh::math::mat3& v0 ) 
-        { glUniformMatrix3fv ( get_uniform_location ( name ), 1, GL_FALSE, v0.float_data ().data () ); }
-    void set_uniform_matrix ( const std::string& name, const glh::math::mat4& v0 )
-        { glUniformMatrix4fv ( get_uniform_location ( name ), 1, GL_FALSE, v0.float_data ().data () ); }
-
-    /* set_uniform_vector
-     *
-     * set uniform based on a vector
-     * the same as the set_uniform_float functions, the parameters are packed into a vector
-     */
-    void set_uniform_vector ( const std::string& name, const glh::math::vec1& v0 ) 
-        { glUniform1fv ( get_uniform_location ( name ), 1, v0.float_data ().data () ); }
-    void set_uniform_vector ( const std::string& name, const glh::math::vec2& v0 ) 
-        { glUniform2fv ( get_uniform_location ( name ), 1, v0.float_data ().data () ); }
-    void set_uniform_vector ( const std::string& name, const glh::math::vec3& v0 ) 
-        { glUniform3fv ( get_uniform_location ( name ), 1, v0.float_data ().data () ); }
-    void set_uniform_vector ( const std::string& name, const glh::math::vec4& v0 )
-        { glUniform4fv ( get_uniform_location ( name ), 1, v0.float_data ().data () ); }
-
+    uniform get_uniform ( const std::string& name ) const;
 
 
     /* destroy
@@ -361,12 +313,155 @@ private:
      *
      * get the location of a uniform
      * 
+     * _name: the name of the uniform
+     * 
      * return: location of the uniform
      */
-    GLint get_uniform_location ( const std::string& name );
+    GLint get_uniform_location ( const std::string& _name ) const;
 
 };
 
+
+/* class uniform
+ *
+ * a reference to a uniform in a program
+ * can set the uniform without querying its name
+ */
+class glh::uniform
+{
+public:
+
+    /* constructor
+     *
+     * construct from uniform name and containing program
+     *
+     * _location: the location of the uniform
+     * _prog: the program associated with the uniform
+     */
+    uniform ( const GLint _location, const program& _prog )
+        : location { _location }
+        , prog { _prog }
+    {}
+
+    /* deleted zero-parameter constructor */
+    uniform () = delete;
+
+    /* deleted copy constructor */
+    uniform ( const uniform& other ) = delete;
+
+    /* default move constructor */
+    uniform ( uniform&& other ) = default;
+
+    /* deleted copy assignment operator */
+    uniform& operator= ( const uniform& other ) = delete;
+
+
+
+    /* set_float
+     *
+     * set uniform based on float value(s)
+     * program must be already in use
+     * 
+     * v0...: the value(s) to set the uniform to
+     */
+    void set_float ( const GLfloat v0 ) 
+        { glUniform1f ( location, v0 ); }
+    void set_float ( const GLfloat v0, const GLfloat v1 ) 
+        { glUniform2f ( location, v0, v1 ); }
+    void set_float ( const GLfloat v0, const GLfloat v1, const GLfloat v2 ) 
+        { glUniform3f ( location, v0, v1, v2 ); }
+    void set_float ( const GLfloat v0, const GLfloat v1, const GLfloat v2, const GLfloat v3 )
+        { glUniform4f ( location, v0, v1, v2, v3 ); }
+
+    /* set_int
+     *
+     * set uniform based on integer value(s)
+     * program must be already in use
+     * 
+     * v0...: the value(s) to set the uniform to
+     */
+    void set_int ( const GLint v0 ) 
+        { glUniform1i ( location, v0 ); }
+    void set_int ( const GLint v0, const GLint v1 ) 
+        { glUniform2i ( location, v0, v1 ); }
+    void set_int ( const GLint v0, const GLint v1, const GLint v2 ) 
+        { glUniform3i ( location, v0, v1, v2 ); }
+    void set_int ( const GLint v0, const GLint v1, const GLint v2, const GLint v3 )
+        { glUniform4i ( location, v0, v1, v2, v3 ); }
+
+    /* set_uint
+     *
+     * set uniform based on unsigned integer value(s)
+     * program must be already in use
+     * 
+     * v0...: the value(s) to set the uniform to
+     */
+    void set_uint ( const GLuint v0 ) 
+        { glUniform1ui ( location, v0 ); }
+    void set_uint ( const GLuint v0, const GLuint v1 ) 
+        { glUniform2ui ( location, v0, v1 ); }
+    void set_uint ( const GLuint v0, const GLuint v1, const GLuint v2 ) 
+        { glUniform3ui ( location, v0, v1, v2 ); }
+    void set_uint ( const GLuint v0, const GLuint v1, const GLuint v2, const GLuint v3 )
+        { glUniform4ui ( location, v0, v1, v2, v3 ); }
+
+    /* set_matrix
+     *
+     * set uniform based on a matrix
+     * program must be already in use
+     * 
+     * name: the name of the uniform
+     * v0: the matrix to set the uniform to
+     */
+    void set_matrix ( const glh::math::mat2& v0 ) 
+        { glUniformMatrix2fv ( location, 1, GL_FALSE, v0.float_data ().data () ); }
+    void set_matrix ( const glh::math::mat3& v0 ) 
+        { glUniformMatrix3fv ( location, 1, GL_FALSE, v0.float_data ().data () ); }
+    void set_matrix ( const glh::math::mat4& v0 )
+        { glUniformMatrix4fv ( location, 1, GL_FALSE, v0.float_data ().data () ); }
+
+    /* set_vector
+     *
+     * set uniform based on a vector
+     * the same as the set_float functions, except the parameters are packed into a vector
+     * program must be already in use
+     * 
+     * v0: the vector to set the uniform to
+     */
+    void set_vector ( const glh::math::vec1& v0 ) 
+        { glUniform1fv ( location, 1, v0.float_data ().data () ); }
+    void set_vector ( const glh::math::vec2& v0 ) 
+        { glUniform2fv ( location, 1, v0.float_data ().data () ); }
+    void set_vector ( const glh::math::vec3& v0 ) 
+        { glUniform3fv ( location, 1, v0.float_data ().data () ); }
+    void set_vector ( const glh::math::vec4& v0 )
+        { glUniform4fv ( location, 1, v0.float_data ().data () ); }
+
+
+    
+    /* use_program
+     *
+     * use the associated program
+     */
+    void use_program () const { prog.use (); }
+
+
+
+private:
+
+    /* location
+     *
+     * the location of the uniform
+     */
+    const GLint location;
+
+    /* prog
+     *
+     * the program the uniform is associated with
+     */
+    const program& prog;
+
+};
 
 
 /* class shader_exception : exception
