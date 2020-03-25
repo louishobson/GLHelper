@@ -147,19 +147,6 @@ public:
 
 
 
-    /* OPERATORS */
-
-    /* comparison operators
-     *
-     * determines if two window objects refer to the same window
-     * 
-     * return: boolean representing equality
-     */
-    bool operator== ( const window& other ) const { return ( winptr == other.internal_ptr () ); }
-    bool operator!= ( const window& other ) const { return ( winptr != other.internal_ptr () ); }
-
-
-
     /* WINDOW CONTROLLING METHODS */
 
     /* set_window_size
@@ -354,6 +341,15 @@ private:
     void make_current ();
 
 };
+
+/* comparison operators
+ *
+ * determines if two window objects refer to the same window
+ * 
+ * return: boolean representing equality
+ */
+bool operator== ( const glh::window& lhs, const glh::window& rhs ) { return ( lhs.internal_ptr () == rhs.internal_ptr () ); }
+bool operator!= ( const glh::window& lhs, const glh::window& rhs ) { return ( lhs.internal_ptr () != rhs.internal_ptr () ); }
 
 
 

@@ -115,16 +115,6 @@ public:
      */
     virtual bool operator! () const { return !is_valid (); }
 
-    /* virtual comparison operators
-     *
-     * determines if two objects are equal by comparing ids
-     * may be overloaded to add more parameters to equality
-     * 
-     * return: boolean representing equality
-     */
-    virtual bool operator== ( const object& other ) const { return ( id == other.id ); }
-    virtual bool operator!= ( const object& other ) const { return ( id != other.id ); }
-
     /* pure virtual destroy
      *
      * destroys the object, at least setting id to -1
@@ -143,6 +133,15 @@ protected:
     GLuint id;
 
 };
+
+/* virtual comparison operators
+ *
+ * determines if two objects are equal by comparing ids
+ * 
+ * return: boolean representing equality
+ */
+bool operator== ( const glh::object& lhs, const glh::object& rhs ) { return ( lhs.internal_id () == rhs.internal_id () ); }
+bool operator!= ( const glh::object& lhs, const glh::object& rhs ) { return ( lhs.internal_id () != rhs.internal_id () ); }
 
 
 
