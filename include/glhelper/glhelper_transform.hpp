@@ -78,13 +78,13 @@ namespace glh
          * stretch along one axis
          * 
          * trans/vec: the transformation matrix/vector to stretch
-         * axis: the axis to stretch along (row/column beginning 0)
          * sf: scale factor of stretch
+         * axis: the axis to stretch along (row/column beginning 0)
          * 
          * return: the new transformation matrix/vector
          */
-        template<unsigned M> matrix<M> stretch ( const matrix<M>& trans, const unsigned axis, const double sf );
-        template<unsigned M> vector<M> stretch ( const vector<M>& vec, const unsigned axis, const double sf );
+        template<unsigned M> matrix<M> stretch ( const matrix<M>& trans, const double sf, const unsigned axis );
+        template<unsigned M> vector<M> stretch ( const vector<M>& vec, const double sf, const unsigned axis );
 
         /* enlarge
          *
@@ -103,13 +103,13 @@ namespace glh
          * rotate around a plane by a number of radians
          *
          * tran/vec: the transformation matrix/vector to rotate
-         * axis0,1: plane over which to rotate
          * arg: the anticlockwise angle to rotate by in radians
+         * axis0,1: plane over which to rotate
          * 
          * return: the new transformation matrix/vector
          */
-        template<unsigned M> matrix<M> rotate ( const matrix<M>& trans, const unsigned axis0, const unsigned axis1, const double arg );
-        template<unsigned M> vector<M> rotate ( const vector<M>& vec, const unsigned axis0, const unsigned axis1, const double arg );
+        template<unsigned M> matrix<M> rotate ( const matrix<M>& trans, const double arg, const unsigned axis0, const unsigned axis1 );
+        template<unsigned M> vector<M> rotate ( const vector<M>& vec, const double arg, const unsigned axis0, const unsigned axis1 );
     }
 }
 
@@ -164,12 +164,12 @@ template<unsigned M> inline glh::math::matrix<M, M> glh::math::identity ()
  * stretch along one axis
  * 
  * trans/vec: the transformation matrix/vector to stretch
- * axis: the axis to stretch along (row/column beginning 0)
  * sf: scale factor of stretch
+ * axis: the axis to stretch along (row/column beginning 0)
  * 
  * return: the new transformation matrix/vector
  */
-template<unsigned M> inline glh::math::matrix<M> glh::math::stretch ( const matrix<M>& trans, const unsigned axis, const double sf )
+template<unsigned M> inline glh::math::matrix<M> glh::math::stretch ( const matrix<M>& trans, const unsigned sf, const double axis )
 {
     /* create the new matrix */
     math::matrix<M> result { trans };
@@ -180,7 +180,7 @@ template<unsigned M> inline glh::math::matrix<M> glh::math::stretch ( const matr
     /* return result */
     return result;
 }
-template<unsigned M> inline glh::math::vector<M> glh::math::stretch ( const vector<M>& vec, const unsigned axis, const double sf )
+template<unsigned M> inline glh::math::vector<M> glh::math::stretch ( const vector<M>& vec, const unsigned sf, const double axis )
 {
     /* create the new vector */
     math::vector<M> result { vec };
@@ -216,13 +216,13 @@ template<unsigned M> inline glh::math::vector<M> glh::math::enlarge ( const vect
  *
  * rotate by a number of radians
  *
- * tran/vec: the transformation matrix/vector to rotate
- * axis0,1: plane over which to rotate
+ * trans/vec: the transformation matrix/vector to rotate
  * arg: the anticlockwise angle to rotate by in radians
+ * axis0,1: plane over which to rotate
  * 
  * return: the new transformation matrix/vector
  */
-template<unsigned M> inline glh::math::matrix<M> glh::math::rotate ( const matrix<M>& trans, const unsigned axis0, const unsigned axis1, const double arg )
+template<unsigned M> inline glh::math::matrix<M> glh::math::rotate ( const matrix<M>& trans, const unsigned arg, const unsigned axis0, const double axis1 )
 {
     /* create identity matrix */
     math::matrix<M> rot = identity<M> ();
@@ -236,7 +236,7 @@ template<unsigned M> inline glh::math::matrix<M> glh::math::rotate ( const matri
     /* return rot * trans */
     return rot * trans;
 }
-template<unsigned M> inline glh::math::vector<M> glh::math::rotate ( const vector<M>& vec, const unsigned axis0, const unsigned axis1, const double arg )
+template<unsigned M> inline glh::math::vector<M> glh::math::rotate ( const vector<M>& vec, const unsigned arg, const unsigned axis0, const double axis1 )
 {
     /* produce a rotational matrix and return the product */
     return glh::math::rotate ( glh::math::identity<M> (), axis0, axis1, arg ) * vec;
