@@ -78,17 +78,17 @@ namespace glh
         template<unsigned M> vector<M + 1> concatenate ( const double v0, const vector<M>& v1 );
         vector<2> concatenate ( const double v0, const double v1 );
 
-        /* dot_product
+        /* dot
          *
          * find the dot product of two vectors
          */
-        template<unsigned M> double dot_product ( const vector<M>& lhs, const vector<M>& rhs );
+        template<unsigned M> double dot ( const vector<M>& lhs, const vector<M>& rhs );
 
-        /* cross product
+        /* cross
          *
          * find the cross product of a 3d vector
          */
-        vector<3> cross_product ( const vector<3>& lhs, const vector<3>& rhs );
+        vector<3> cross ( const vector<3>& lhs, const vector<3>& rhs );
 
     }
 }
@@ -406,11 +406,11 @@ glh::math::vector<2> inline glh::math::concatenate ( const double v0, const doub
     return conc;
 }
 
-/* dot_product
+/* dot
  *
  * find the dot product of two vectors
  */
-template<unsigned M> double glh::math::dot_product ( const vector<M>& lhs, const vector<M>& rhs )
+template<unsigned M> double glh::math::dot ( const vector<M>& lhs, const vector<M>& rhs )
 {
     /* store cross product */
     double result;
@@ -422,11 +422,11 @@ template<unsigned M> double glh::math::dot_product ( const vector<M>& lhs, const
     return result;
 }
 
-/* cross product
+/* cross
  *
  * find the cross product of a 3d vector
  */
-glh::math::vector<3> inline glh::math::cross_product ( const vector<3>& lhs, const vector<3>& rhs )
+glh::math::vector<3> inline glh::math::cross ( const vector<3>& lhs, const vector<3>& rhs )
 {
     /* return cross product */
     return glh::math::vector<3> 
