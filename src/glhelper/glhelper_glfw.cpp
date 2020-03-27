@@ -336,10 +336,24 @@ void glh::window::unregister_object ()
  *
  * makes the window current
  */
-void glh::window::make_current () 
+void glh::window::make_current () const
 { 
-    /* make the context current */
-    glfwMakeContextCurrent ( winptr );
-    /* tell the glad loader to load to the current context */
-    glad_loader::load ();
+    /* if window not already current */
+    if ( !is_current () )
+    {
+        /* make the context current */
+        glfwMakeContextCurrent ( winptr );
+        /* tell the glad loader to load to the current context */
+        glad_loader::load ();
+    }
+}
+
+/* is_current
+ *
+ * checks if the window is current
+ */
+bool glh::window::is_current () const
+{
+    /* return true of context is current */
+    return ( glfwGetCurrentContext () == winptr );
 }

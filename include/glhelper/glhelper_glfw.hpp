@@ -338,7 +338,13 @@ private:
      *
      * makes the window current
      */
-    void make_current ();
+    void make_current () const;
+
+    /* is_current
+     *
+     * checks if the window is current
+     */
+    bool is_current () const;
 
 };
 
