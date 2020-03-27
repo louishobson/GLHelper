@@ -160,8 +160,8 @@ public:
      * swizzle a vector
      * the variadic template parameters define the indices of the vector being swizzled
      */
-    template<unsigned T0, unsigned T1, unsigned... Ts> vector<2 + sizeof... ( Ts )> swizzle () { return concatenate ( at ( T0 ), swizzle<T1, Ts...> () ); }
-    template<unsigned T> vector<1> swizzle () { return at ( T ); }
+    template<unsigned T0, unsigned T1, unsigned... Ts> vector<2 + sizeof... ( Ts )> swizzle () const { return concatenate ( at ( T0 ), swizzle<T1, Ts...> () ); }
+    template<unsigned T> vector<1> swizzle () const { return vector<1> { at ( T ) }; }
 
 
 
@@ -179,11 +179,11 @@ public:
     double * internal_ptr () { return data.data (); }
     const double * internal_ptr () const { return data.data (); }
 
-    /* float_data
+    /* export_data
      *
-     * return: an std::array formed of floats rather than doubles
+     * return: an std::array which can be used with OpenGL
      */
-    std::array<float, M> float_data () const;
+    std::array<float, M> export_data () const;
 
     /* format_str
      *
@@ -330,11 +330,11 @@ template<unsigned M> inline const double& glh::math::vector<M>::at ( const unsig
     return data.at ( i );
 }
 
-/* float_data
+/* export_data
  *
- * return: an std::array formed of floats rather than doubles
+ * return: an std::array which can be used with OpenGL
  */
-template<unsigned M> std::array<float, M> glh::math::vector<M>::float_data () const
+template<unsigned M> std::array<float, M> glh::math::vector<M>::export_data () const
 {
     /* create the new array */
     std::array<float, M> new_data;

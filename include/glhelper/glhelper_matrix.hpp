@@ -192,11 +192,11 @@ public:
     double * internal_ptr () { return data.data (); }
     const double * internal_ptr () const { return data.data (); }
 
-    /* float_data
+    /* export_data
      *
-     * return: an std::array formed of floats rather than doubles
+     * return: an std::array which can be used with OpenGL
      */
-    std::array<float, M * N> float_data () const;
+    std::array<float, M * N> export_data () const;
 
     /* format_str
      *
@@ -372,18 +372,20 @@ template<unsigned M, unsigned N> inline const double& glh::math::matrix<M, N>::a
     return data.at ( i );
 }
 
-/* float_data
+/* export_data
  *
- * return: an std::array formed of floats rather than doubles
+ * return: an std::array which can be used with OpenGL
  */
-template<unsigned M, unsigned N> std::array<float, M * N> glh::math::matrix<M, N>::float_data () const
-{
+template<unsigned M, unsigned N> std::array<float, M * N> glh::math::matrix<M, N>::export_data () const
+{   
     /* create the new array */
     std::array<float, M * N> new_data;
 
-    /* copy elements over */
-    for ( unsigned iti = 0; iti < M * N; ++iti ) new_data.at ( iti ) = at ( iti );
-
+    /* copy elements over, but transpose them at the same time (as thats what OpenGL expects) */
+    for ( unsigned iti = 0; iti < M; ++iti ) for ( unsigned itj = 0; itj < N; ++itj ) 
+    {
+        new_data.at ( ( iti * N ) + itj ) = at ( itj, iti );
+    }
     /* return the float data */
     return new_data;
 }
