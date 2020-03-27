@@ -175,7 +175,7 @@ void glh::window::wait_events ( const double timeout )
     make_current ();
 
     /* if timeout == 0, wait forever */
-    if ( timeout == 0.0f ) glfwWaitEvents ();
+    if ( timeout == 0. ) glfwWaitEvents ();
     /* else, wait on timeout */
     else glfwWaitEventsTimeout ( timeout );
 }
@@ -281,7 +281,7 @@ void glh::window::clear ( const GLfloat r, const GLfloat g, const GLfloat b, con
     make_current (); 
     /* set the clear colour and clear */
     glClearColor ( r, g, b, a ); 
-    glClear ( GL_COLOR_BUFFER_BIT );
+    glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 }
 
 
