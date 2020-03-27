@@ -31,40 +31,102 @@ void window_size_callback ( GLFWwindow * winptr, int width, int height )
 
 int main ()
 {
-    GLfloat vdata []
-    {
-        -0.5f, 0.5f, 0.0f,
-        0.5f, 0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f
+    GLfloat vdata[] = {
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
 
-    GLuint edata []
+    glh::math::vec3 posdata[] = 
     {
-        0, 1, 2,
-        1, 2, 3
+        glh::math::vec3 {  0.0f,  0.0f,  0.0f  },
+        glh::math::vec3 {  2.0f,  5.0f, -15.0f }, 
+        glh::math::vec3 { -1.5f, -2.2f, -2.5f  },  
+        glh::math::vec3 { -3.8f, -2.0f, -12.3f },  
+        glh::math::vec3 {  2.4f, -0.4f, -3.5f  },  
+        glh::math::vec3 { -1.7f,  3.0f, -7.5f  },  
+        glh::math::vec3 {  1.3f, -2.0f, -2.5f  },  
+        glh::math::vec3 {  1.5f,  2.0f, -2.5f  }, 
+        glh::math::vec3 {  1.5f,  0.2f, -1.5f  }, 
+        glh::math::vec3 { -1.3f,  1.0f, -1.5f  } 
     };
-    
+
     glh::window window;
     window.set_window_size_callback ( window_size_callback );
 
     glh::vbo vbo { sizeof ( vdata ), vdata, GL_STATIC_DRAW };
-    glh::ebo ebo { sizeof ( edata ), edata, GL_STATIC_DRAW };
-    
+
     glh::vao vao;
-    vao.set_vertex_attrib ( 0, vbo, 3, GL_FLOAT, GL_FALSE, 3 * sizeof ( GLfloat ), ( GLvoid * ) 0 );
-    vao.bind_ebo ( ebo );
+    vao.set_vertex_attrib ( 0, vbo, 3, GL_FLOAT, GL_FALSE, 5 * sizeof ( GLfloat ), ( GLvoid * ) 0 );
+    vao.set_vertex_attrib ( 1, vbo, 2, GL_FLOAT, GL_FALSE, 5 * sizeof ( GLfloat ), ( GLvoid * ) ( 3 * sizeof ( GLfloat ) ) );
 
     glh::vshader vshader { "shaders/vertex.glsl" };
     glh::fshader fshader { "shaders/fragment.glsl" };
     glh::program program { vshader, fshader };
 
-    while ( !window.should_close () )
+    glh::texture2d texture { "assets/crate.png", GL_RGBA };
+    texture.bind ();
+
+    glh::math::mat4 model = glh::math::identity<4> ();
+    glh::math::mat4 rot = glh::math::translate ( glh::math::identity<4> (), glh::math::vec3 { 0.0f, 0.0f, 5.0f } );
+    glh::math::mat4 view = glh::math::translate ( glh::math::identity<4> (), glh::math::vec3 { 0., 0., -15 } );
+    glh::math::mat4 proj = glh::math::perspective_fov ( glh::math::rad ( 45 ), 1., 0.1, 100. );
+    
+    program.use ();
+    glh::uniform proj_uni = program.get_uniform ( "trans" );
+
+    glEnable ( GL_DEPTH_TEST );
+
+    while ( !window.should_close () ) 
     {
         window.clear ( 1., 1., 1., 1. );
-        window.draw_elements ( vao, program, GL_TRIANGLES, 6, GL_UNSIGNED_INT, ( GLvoid * ) 0 );
+        rot = glh::math::rotate ( rot, glh::math::vec3 { glh::math::rad ( 1 ), 0, glh::math::rad ( 2 ) } );
+        for ( unsigned i = 0; i < 10; ++i )
+        {
+            model = glh::math::rotate ( glh::math::identity<4> (), glh::math::vec3 ( glh::math::rad ( ( i + 1 ) * 36 ), glh::math::rad ( ( i + 1 ) * 18 ), 0 ) );
+            proj_uni.set_matrix ( proj * view * rot * glh::math::translate ( model, posdata [ i ] ) );
+            window.draw_arrays ( vao, program, GL_TRIANGLES, 0, 6 * 6 );
+        }
         window.swap_buffers ();
-        window.wait_events ( 0.0 );
+        window.poll_events ();
     }
 
     return 0;
