@@ -31,7 +31,8 @@ void window_size_callback ( GLFWwindow * winptr, int width, int height )
 
 int main ()
 {
-    GLfloat vdata[] = {
+    GLfloat vdata[] = 
+    {
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
          0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
          0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
@@ -106,23 +107,21 @@ int main ()
     texture.bind ();
 
     glh::math::mat4 model = glh::math::identity<4> ();
-    glh::math::mat4 rot = glh::math::translate ( glh::math::identity<4> (), glh::math::vec3 { 0.0f, 0.0f, 5.0f } );
-    glh::math::mat4 view = glh::math::translate ( glh::math::identity<4> (), glh::math::vec3 { 0., 0., -15 } );
-    glh::math::mat4 proj = glh::math::perspective_fov ( glh::math::rad ( 45 ), 1., 0.1, 100. );
+    glh::math::mat4 view = glh::math::translate ( glh::math::identity<4> (), glh::math::vec3 { 0., 0., -20 } );
+    glh::math::mat4 proj = glh::math::perspective_fov ( glh::math::rad ( 45 ), 1920. / 1080., 0.1, 100. );
     
-    program.use ();
     glh::uniform proj_uni = program.get_uniform ( "trans" );
 
     glEnable ( GL_DEPTH_TEST );
 
     while ( !window.should_close () ) 
     {
+        program.use ();
         window.clear ( 1., 1., 1., 1. );
-        rot = glh::math::rotate ( rot, glh::math::vec3 { glh::math::rad ( 1 ), 0, glh::math::rad ( 2 ) } );
         for ( unsigned i = 0; i < 10; ++i )
         {
-            model = glh::math::rotate ( glh::math::identity<4> (), glh::math::vec3 ( glh::math::rad ( ( i + 1 ) * 36 ), glh::math::rad ( ( i + 1 ) * 18 ), 0 ) );
-            proj_uni.set_matrix ( proj * view * rot * glh::math::translate ( model, posdata [ i ] ) );
+            model = glh::math::translate ( glh::math::rotate ( glh::math::identity<4> (), glh::math::vec3 ( glh::math::rad ( ( i + 1 ) * 36 ), glh::math::rad ( ( i + 1 ) * 18 ), 0 ) ), posdata [ i ] );
+            proj_uni.set_matrix ( proj * view * model );
             window.draw_arrays ( vao, program, GL_TRIANGLES, 0, 6 * 6 );
         }
         window.swap_buffers ();
