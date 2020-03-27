@@ -302,8 +302,15 @@ public:
     /* use
      *
      * use the shader program for the following OpenGL function calls
+     * will not call glUseProgram if already in use
      */
     void use () const;
+
+    /* is_in_use
+     *
+     * return: boolean for if the program is in use
+     */
+    bool is_in_use () const;
 
 
 
@@ -365,13 +372,13 @@ public:
      * v0...: the value(s) to set the uniform to
      */
     void set_float ( const GLfloat v0 ) 
-        { glUniform1f ( location, v0 ); }
+        { check_is_program_in_use (); glUniform1f ( location, v0 ); }
     void set_float ( const GLfloat v0, const GLfloat v1 ) 
-        { glUniform2f ( location, v0, v1 ); }
+        { check_is_program_in_use (); glUniform2f ( location, v0, v1 ); }
     void set_float ( const GLfloat v0, const GLfloat v1, const GLfloat v2 ) 
-        { glUniform3f ( location, v0, v1, v2 ); }
+        { check_is_program_in_use (); glUniform3f ( location, v0, v1, v2 ); }
     void set_float ( const GLfloat v0, const GLfloat v1, const GLfloat v2, const GLfloat v3 )
-        { glUniform4f ( location, v0, v1, v2, v3 ); }
+        { check_is_program_in_use (); glUniform4f ( location, v0, v1, v2, v3 ); }
 
     /* set_int
      *
@@ -381,13 +388,13 @@ public:
      * v0...: the value(s) to set the uniform to
      */
     void set_int ( const GLint v0 ) 
-        { glUniform1i ( location, v0 ); }
+        { check_is_program_in_use (); glUniform1i ( location, v0 ); }
     void set_int ( const GLint v0, const GLint v1 ) 
-        { glUniform2i ( location, v0, v1 ); }
+        { check_is_program_in_use (); glUniform2i ( location, v0, v1 ); }
     void set_int ( const GLint v0, const GLint v1, const GLint v2 ) 
-        { glUniform3i ( location, v0, v1, v2 ); }
+        { check_is_program_in_use (); glUniform3i ( location, v0, v1, v2 ); }
     void set_int ( const GLint v0, const GLint v1, const GLint v2, const GLint v3 )
-        { glUniform4i ( location, v0, v1, v2, v3 ); }
+        { check_is_program_in_use (); glUniform4i ( location, v0, v1, v2, v3 ); }
 
     /* set_uint
      *
@@ -397,13 +404,13 @@ public:
      * v0...: the value(s) to set the uniform to
      */
     void set_uint ( const GLuint v0 ) 
-        { glUniform1ui ( location, v0 ); }
+        { check_is_program_in_use (); glUniform1ui ( location, v0 ); }
     void set_uint ( const GLuint v0, const GLuint v1 ) 
-        { glUniform2ui ( location, v0, v1 ); }
+        { check_is_program_in_use (); glUniform2ui ( location, v0, v1 ); }
     void set_uint ( const GLuint v0, const GLuint v1, const GLuint v2 ) 
-        { glUniform3ui ( location, v0, v1, v2 ); }
+        { check_is_program_in_use (); glUniform3ui ( location, v0, v1, v2 ); }
     void set_uint ( const GLuint v0, const GLuint v1, const GLuint v2, const GLuint v3 )
-        { glUniform4ui ( location, v0, v1, v2, v3 ); }
+        { check_is_program_in_use (); glUniform4ui ( location, v0, v1, v2, v3 ); }
 
     /* set_matrix
      *
@@ -414,11 +421,11 @@ public:
      * v0: the matrix to set the uniform to
      */
     void set_matrix ( const glh::math::mat2& v0 ) 
-        { glUniformMatrix2fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
+        { check_is_program_in_use (); glUniformMatrix2fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
     void set_matrix ( const glh::math::mat3& v0 ) 
-        { glUniformMatrix3fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
+        { check_is_program_in_use (); glUniformMatrix3fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
     void set_matrix ( const glh::math::mat4& v0 )
-        { glUniformMatrix4fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
+        { check_is_program_in_use (); glUniformMatrix4fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
 
     /* set_vector
      *
@@ -429,13 +436,13 @@ public:
      * v0: the vector to set the uniform to
      */
     void set_vector ( const glh::math::vec1& v0 ) 
-        { glUniform1fv ( location, 1, v0.export_data ().data () ); }
+        { check_is_program_in_use (); glUniform1fv ( location, 1, v0.export_data ().data () ); }
     void set_vector ( const glh::math::vec2& v0 ) 
-        { glUniform2fv ( location, 1, v0.export_data ().data () ); }
+        { check_is_program_in_use (); glUniform2fv ( location, 1, v0.export_data ().data () ); }
     void set_vector ( const glh::math::vec3& v0 ) 
-        { glUniform3fv ( location, 1, v0.export_data ().data () ); }
+        { check_is_program_in_use (); glUniform3fv ( location, 1, v0.export_data ().data () ); }
     void set_vector ( const glh::math::vec4& v0 )
-        { glUniform4fv ( location, 1, v0.export_data ().data () ); }
+        { check_is_program_in_use (); glUniform4fv ( location, 1, v0.export_data ().data () ); }
 
 
     
@@ -444,6 +451,12 @@ public:
      * use the associated program
      */
     void use_program () const { prog.use (); }
+
+    /* is_program_in_use
+     *
+     * return a boolean for if the associated program is in use
+     */
+    bool is_program_in_use () const { return prog.is_in_use (); } 
 
 
 
@@ -460,6 +473,12 @@ private:
      * the program the uniform is associated with
      */
     const program& prog;
+
+    /* check_is_program_in_use
+     *
+     * will throw if the associated program is not in use
+     */
+    void check_is_program_in_use () const;
 
 };
 

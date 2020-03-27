@@ -189,14 +189,28 @@ void glh::program::destroy ()
 /* use
  *
  * use the shader program for the following OpenGL function calls
+ * will not call glUseProgram if already in use
  */
 void glh::program::use () const
 { 
     /* if program is not valid, throw error */
     if ( !is_valid () ) throw shader_exception { "cannot use invalid shader program" };
 
-    /* use program */
-    glUseProgram ( id );
+    /* use program, if not already in use */
+    if ( !is_in_use () ) glUseProgram ( id );
+}
+
+/* is_in_use
+ *
+ * return: boolean for if the program is in use
+ */
+bool glh::program::is_in_use () const 
+{
+    /* get program currently in use */
+    GLint program_in_use;
+    glGetIntegerv ( GL_CURRENT_PROGRAM, &program_in_use ); 
+    /* return boolean for if is valid and is in use */
+    return ( is_valid () && program_in_use == id ); 
 }
 
 /* get_uniform_location
@@ -213,4 +227,18 @@ GLint glh::program::get_uniform_location ( const std::string& name ) const
     if ( location == -1 ) throw shader_exception { "failed to find uniform" };
     /* return location */
     return location;
+}
+
+
+
+/* UNIFORM IMPLEMENTATION */
+
+/* check_is_program_in_use
+ *
+ * will throw if the associated program is not in use
+ */
+void glh::uniform::check_is_program_in_use () const 
+{
+    /* if not in use, throw */ 
+    if ( !prog.is_in_use () ) throw shader_exception { "associated program of shader is not in use" };
 }
