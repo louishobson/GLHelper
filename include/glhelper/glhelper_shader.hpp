@@ -414,11 +414,11 @@ public:
      * v0: the matrix to set the uniform to
      */
     void set_matrix ( const glh::math::mat2& v0 ) 
-        { glUniformMatrix2fv ( location, 1, GL_FALSE, v0.float_data ().data () ); }
+        { glUniformMatrix2fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
     void set_matrix ( const glh::math::mat3& v0 ) 
-        { glUniformMatrix3fv ( location, 1, GL_FALSE, v0.float_data ().data () ); }
+        { glUniformMatrix3fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
     void set_matrix ( const glh::math::mat4& v0 )
-        { glUniformMatrix4fv ( location, 1, GL_FALSE, v0.float_data ().data () ); }
+        { glUniformMatrix4fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
 
     /* set_vector
      *
@@ -429,13 +429,13 @@ public:
      * v0: the vector to set the uniform to
      */
     void set_vector ( const glh::math::vec1& v0 ) 
-        { glUniform1fv ( location, 1, v0.float_data ().data () ); }
+        { glUniform1fv ( location, 1, v0.export_data ().data () ); }
     void set_vector ( const glh::math::vec2& v0 ) 
-        { glUniform2fv ( location, 1, v0.float_data ().data () ); }
+        { glUniform2fv ( location, 1, v0.export_data ().data () ); }
     void set_vector ( const glh::math::vec3& v0 ) 
-        { glUniform3fv ( location, 1, v0.float_data ().data () ); }
+        { glUniform3fv ( location, 1, v0.export_data ().data () ); }
     void set_vector ( const glh::math::vec4& v0 )
-        { glUniform4fv ( location, 1, v0.float_data ().data () ); }
+        { glUniform4fv ( location, 1, v0.export_data ().data () ); }
 
 
     
