@@ -88,7 +88,7 @@ public:
      * 
      * _target: the target for the buffer
      */
-    explicit buffer ( const GLenum _target );
+    explicit buffer ( const GLenum _target, const GLenum _reverse_target );
 
     /* construct and immediately buffer data
      *
@@ -99,8 +99,8 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    explicit buffer ( const GLenum _target, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
-        : buffer { _target }
+    explicit buffer ( const GLenum _target, const GLenum _reverse_target, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
+        : buffer { _target, _reverse_target }
     { buffer_data ( size, data, usage ); }
 
     /* deleted zero-parameter constructor */
@@ -167,6 +167,12 @@ public:
      */
     GLenum unbind () const;
 
+    /* is_bound
+     *
+     * checks if the buffer is bound
+     */
+    bool is_bound () const;
+
 
 
 protected:
@@ -176,6 +182,13 @@ protected:
      * the target to bind the buffer to
      */
     const GLenum target;
+
+    /* GLenum reverse_target
+     *
+     * the target to use when getting which buffer is bound
+     */
+    const GLenum reverse_target;
+
 };
 
 
@@ -193,7 +206,7 @@ public:
      * generates the buffer
      */
     explicit vbo ()
-        : buffer { GL_ARRAY_BUFFER }
+        : buffer { GL_ARRAY_BUFFER, GL_ARRAY_BUFFER_BINDING }
     {}
 
     /* construct and immediately buffer data
@@ -205,7 +218,7 @@ public:
      * usage: the storage method for the data
      */
     explicit vbo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
-        : buffer { GL_ARRAY_BUFFER, size, data, usage }
+        : buffer { GL_ARRAY_BUFFER, GL_ARRAY_BUFFER_BINDING, size, data, usage }
     {}
 
     /* deleted copy constructor
@@ -243,7 +256,7 @@ public:
      * generates the buffer
      */
     explicit ebo ()
-        : buffer { GL_ELEMENT_ARRAY_BUFFER }
+        : buffer { GL_ELEMENT_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER_BINDING }
     {}
 
     /* construct and immediately buffer data
@@ -255,7 +268,7 @@ public:
      * usage: the storage method for the data
      */
     explicit ebo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
-        : buffer { GL_ELEMENT_ARRAY_BUFFER, size, data, usage }
+        : buffer { GL_ELEMENT_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER_BINDING, size, data, usage }
     {}
 
     /* deleted copy constructor
@@ -366,6 +379,12 @@ public:
      * unbind the vertex array object
      */
     void unbind () const;
+
+    /* is_bound
+     *
+     * checks if the vao is bound
+     */
+    bool is_bound () const;
 
 };
 

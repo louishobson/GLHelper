@@ -25,8 +25,9 @@
  *
  * generates a buffer
  */
-glh::buffer::buffer ( const GLenum _target )
+glh::buffer::buffer ( const GLenum _target, const GLenum _reverse_target )
     : target { _target }
+    , reverse_target { _reverse_target }
 {
     /* allocate the buffer */
     glGenBuffers ( 1, &id );
@@ -81,8 +82,6 @@ void glh::buffer::destroy ()
     id = 0;
 }
 
-
-
 /* bind
  *
  * bind the buffer
@@ -94,8 +93,8 @@ GLenum glh::buffer::bind () const
     /* check object is valid */
     if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid buffer object" };
     
-    /* bind the buffer */
-    glBindBuffer ( target, id );
+    /* bind the buffer, if not bound already */
+    if ( !is_bound () ) glBindBuffer ( target, id );
 
     /* return the target */
     return target;
@@ -112,11 +111,24 @@ GLenum glh::buffer::unbind () const
     /* check object is valid */
     if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid buffer object" };
     
-    /* bind the buffer */
-    glBindBuffer ( target, 0 );
+    /* unbind the buffer, if bound */
+    if ( is_bound () ) glBindBuffer ( target, 0 );
 
     /* return the target */
     return target;
+}
+
+/* is_bound
+ *
+ * checks if the buffer is bound
+ */
+bool glh::buffer::is_bound () const
+{
+    /* get currently bound buffer */
+    GLint bound_buffer;
+    glGetIntegerv ( reverse_target, &bound_buffer ); 
+    /* return boolean for if is valid and is bound */
+    return ( is_valid () && bound_buffer == id ); 
 }
 
 
@@ -241,8 +253,8 @@ void glh::vao::bind () const
     /* check object is valid */
     if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid vertex array object" };
 
-    /* bind the vao */
-    glBindVertexArray ( id );
+    /* bind the vao, if not bound already */
+    if ( !is_bound () ) glBindVertexArray ( id );
 }
 
 /* unbind
@@ -254,6 +266,19 @@ void glh::vao::unbind () const
     /* check object is valid */
     if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid vertex array object" };
 
-    /* bind the vao */
-    glBindVertexArray ( 0 );
+    /* unbind the vao, if bound */
+    if ( is_bound () ) glBindVertexArray ( 0 );
+}
+
+/* is_bound
+ *
+ * checks if the vao is bound
+ */
+bool glh::vao::is_bound () const
+{
+    /* get currently bound vao */
+    GLint bound_vao;
+    glGetIntegerv ( GL_VERTEX_ARRAY_BINDING, &bound_vao ); 
+    /* return boolean for if is valid and is bound */
+    return ( is_valid () && bound_vao == id ); 
 }
