@@ -85,7 +85,7 @@ namespace glh
 
 
 
-/* FULL DECLARATIONS */
+/* WINDOW DEFINITION */
 
 /* class window
  *

@@ -119,7 +119,7 @@ namespace glh
 
 
 
-/* MATRIX DECLARATION */
+/* MATRIX DEFINITION */
 
 /* class matrix
  *

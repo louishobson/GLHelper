@@ -92,7 +92,7 @@ namespace glh
 
 
 
-/* FULL DECLARATIONS */
+/* SHADER DEFINITION */
 
 /* class shader : object
  *
@@ -146,6 +146,8 @@ protected:
 
 
 
+/* VSHADER DEFINITION */
+
 /* class vshader
  *
  * derived class for a vertex shader
@@ -177,6 +179,8 @@ public:
 };
 
 
+
+/* GSHADER DEFINITION */
 
 /* class gshader
  *
@@ -210,6 +214,8 @@ public:
 
 
 
+/* FSHADER DEFINITION */
+
 /* class fshader
  *
  * derived class for a fragment shader
@@ -241,6 +247,8 @@ public:
 };
 
 
+
+/* PROGRAM DEFINITION */
 
 /* class program : object
  *
@@ -328,6 +336,9 @@ private:
 
 };
 
+
+
+/* UNIFORM DEFINITION */
 
 /* class uniform
  *
@@ -482,6 +493,9 @@ private:
 
 };
 
+
+
+/* SHADER_EXCEPTION DEFINITION */
 
 /* class shader_exception : exception
  *

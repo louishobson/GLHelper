@@ -59,7 +59,7 @@ namespace glh
 
 
 
-/* FULL DECLARATIONS */
+/* TEXTURE2D DEFINITION */
 
 class glh::texture2d : public object
 {
@@ -173,6 +173,8 @@ private:
 };
 
 
+
+/* TEXTURE_EXCEPTION DEFINITION */
 
 /* class texture_exception : exception
  *

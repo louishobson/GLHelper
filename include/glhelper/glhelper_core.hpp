@@ -45,9 +45,9 @@ namespace glh
 
 
 
-/* FULL DECLARATIONS */
+/* OBJECT DEFINITION */
 
-/* class glh_object
+/* class object
  *
  * abstract base class to represent any OpenGL object
  */

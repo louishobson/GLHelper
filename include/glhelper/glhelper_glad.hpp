@@ -57,7 +57,7 @@ namespace glh
 
 
 
-/* FULL DECLARATIONS */
+/* GLAD_LOADER DEFINITION */
 
 /* class glad_loader, object glad
  *
