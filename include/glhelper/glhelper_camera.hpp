@@ -93,6 +93,11 @@ public:
 
 
 
+    /* get_trans
+     *
+     * recieve the transformation
+     */
+    const math::mat4& get_trans () const;
 
 private:
 
@@ -111,26 +116,26 @@ private:
      *
      * booleans to represent if view or proj have been changed
      */
-    bool view_change;
-    bool proj_change;
+    mutable bool view_change;
+    mutable bool proj_change;
 
     /* view
      *
      * the current view matrix
      */
-    math::mat4 view;
+    mutable math::mat4 view;
 
     /* proj
      *
      * the current projection matrix
      */
-    math::mat4 proj;
+    mutable math::mat4 proj;
 
     /* trans
      *
      * the current combination of the view and projection matrix
      */
-    math::mat4 trans;
+    mutable math::mat4 trans;
 
     /* update
      *
@@ -138,7 +143,7 @@ private:
      * 
      * return: bool for if any changes were applied
      */
-    bool update ();
+    bool update () const;
 
 };
 
