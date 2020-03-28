@@ -67,14 +67,14 @@ public:
      *
      * give parameters for look_towards and perspective_fov
      */
-    camera_perspective ( const math::vec3& _pos, const math::vec3& _direction, const math::vec3& _up, const double _fov, const double _aspect, const double _near, const double _far );
+    camera_perspective ( const math::vec3& _pos, const math::vec3& _direction, const math::vec3& _world_up, const double _fov, const double _aspect, const double _near, const double _far );
 
     /* minimal constructor
      *
      * create a default view matrix and give parameters for perspective_fov
      */
     camera_perspective ( const double _fov, const double _aspect, const double _near, const double _far )
-        : camera_perspective { math::vec3 { 0. }, math::vec3 { -1., 0., 0. }, math::vec3 { 0., 1., 0. }, _fov, _aspect, _near, _far } {}
+        : camera_perspective { math::vec3 { 0., 0., 0. }, math::vec3 { -1., 0., 0. }, math::vec3 { 0., 1., 0. }, _fov, _aspect, _near, _far } {}
         
     /* zero parameter constructor
      *
@@ -101,7 +101,7 @@ public:
      *
      * return: new position vector
      */
-    const math::vec3& move_relative ( const math::vec3& vec );
+    const math::vec3 move_relative ( const math::vec3& vec );
 
     /* move_global
      *
@@ -111,7 +111,20 @@ public:
      * 
      * return: new position vector
      */
-    const math::vec3& move_global ( const math::vec3& vec );
+    const math::vec3 move_global ( const math::vec3& vec );
+
+    /* pitch/yaw/world_yaw/roll
+     *
+     * rotate the camera via changed in pitch/roll/yaw
+     *
+     * arg: the angle in radians
+     * 
+     * return: the new direction unit vector
+     */
+    const math::vec3 pitch ( const double arg );
+    const math::vec3 yaw ( const double arg );
+    const math::vec3 world_yaw ( const double arg );
+    const math::vec3 roll ( const double arg );
 
 
 
@@ -152,6 +165,8 @@ private:
     /* view matrix parameters */
     math::vec3 pos;
     math::vec3 direction;
+    math::vec3 world_up;
+    math::vec3 right;
     math::vec3 up;
 
     /* perspective projection matrix parameters */
