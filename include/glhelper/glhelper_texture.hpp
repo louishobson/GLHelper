@@ -95,12 +95,13 @@ public:
 
 
 
-    /* set_texture_unit
+    /* get/set_texture_unit
      *
-     * change the texture unit and then bind to it
+     * get/change the texture unit and then bind to it
      * 
      * _texture_unit: the new texture unit
      */
+    GLenum get_texture_unit () const { return texture_unit; };
     void set_texture_unit ( const GLenum _texture_unit ) { texture_unit = _texture_unit; }
 
     /* set_mag/min_filter
@@ -129,15 +130,12 @@ public:
 
     /* bind
      *
-     * bind the texture to the current texture unit
+     * bind the texture to a texture unit
+     * 
+     * _texture_unit: the texture unit to bind to, or the last one
      */
     GLenum bind () const;
-
-    /* unbind
-     *
-     * unbind the texture from the current texture unit
-     */
-    GLenum unbind () const;
+    GLenum bind ( const GLenum _texture_unit );
 
     /* is_bound
      *

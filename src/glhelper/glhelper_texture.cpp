@@ -73,9 +73,6 @@ glh::texture2d::texture2d ( const std::string& _path, const GLenum _texture_unit
     /* set mag/min options */
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-
-    /* unbind */
-    unbind ();
 }
 
 /* set_mag/min_filter
@@ -87,14 +84,12 @@ void glh::texture2d::set_mag_filter ( const GLenum opt )
     /* bind, set paramater, unbind */
     bind (); 
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, opt ); 
-    unbind ();
 }
 void glh::texture2d::set_min_filter ( const GLenum opt ) 
 { 
     /* bind, set paramater, unbind */
     bind (); 
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, opt );
-    unbind ();
 }
 
 /* set_(s/t/r)_wrap
@@ -106,21 +101,18 @@ void glh::texture2d::set_s_wrap ( const GLenum opt )
     /* bind, set paramater, unbind */
     bind (); 
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, opt );
-    unbind ();
 }
 void glh::texture2d::set_t_wrap ( const GLenum opt ) 
 { 
     /* bind, set paramater, unbind */
     bind (); 
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, opt );
-    unbind ();
 }
 void glh::texture2d::set_r_wrap ( const GLenum opt ) 
 { 
     /* bind, set paramater, unbind */
     bind (); 
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, opt );
-    unbind ();
 }
 void glh::texture2d::set_wrap ( const GLenum opt ) 
 {
@@ -129,7 +121,6 @@ void glh::texture2d::set_wrap ( const GLenum opt )
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, opt ); 
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, opt );
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, opt );
-    unbind ();
 }
 
 
@@ -153,7 +144,9 @@ void glh::texture2d::destroy ()
 
 /* bind
  *
- * bind the texture
+ * bind the texture to a texture unit
+ * 
+ * _texture_unit: the texture unit to bind to, or the last one
  */
 GLenum glh::texture2d::bind () const
 {
@@ -168,23 +161,13 @@ GLenum glh::texture2d::bind () const
     /* return the target */
     return GL_TEXTURE_2D;
 }
-
-/* unbind
- *
- * unbind the texture
- */
-GLenum glh::texture2d::unbind () const
+GLenum glh::texture2d::bind ( const GLenum _texture_unit )
 {
-    /* check the object is valid */
-    if ( !is_valid () )  throw texture_exception { "attempted bind operation on invalid 2D texture object imported from path " + path };    
+    /* set new texture unit */
+    texture_unit = _texture_unit;
 
-    /* unbind the texture, if not already unbound
-     * texture unit gets activated by is_bound ()
-     */
-    if ( is_bound () ) glBindTexture ( GL_TEXTURE_2D, 0 );
-
-    /* return the target */
-    return GL_TEXTURE_2D;
+    /* bind */
+    bind ();
 }
 
 /* is_bound
