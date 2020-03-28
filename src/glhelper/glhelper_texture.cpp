@@ -167,7 +167,7 @@ GLenum glh::texture2d::bind ( const GLenum _texture_unit )
     texture_unit = _texture_unit;
 
     /* bind */
-    bind ();
+    return bind ();
 }
 
 /* is_bound
