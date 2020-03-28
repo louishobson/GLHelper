@@ -50,3 +50,6 @@
 
 /* include glhelper_render.hpp */
 #include <glhelper/glhelper_render.hpp>
+
+/* include glhelper_model.hpp */
+#include <glhelper/glhelper_model.hpp>
