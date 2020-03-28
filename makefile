@@ -51,4 +51,4 @@ src/glhelper/glhelper.a: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw
 #
 # test source
 test: test.o src/glhelper/glhelper.a src/glad/glad.o
-	$(CPP) -ldl -lGL -lglfw -lm -o $@ $^
+	$(CPP) -ldl -lGL -lglfw -lassimp -lm -o $@ $^
