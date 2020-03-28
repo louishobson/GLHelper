@@ -336,7 +336,7 @@ public:
 template<unsigned M, unsigned N> inline glh::math::matrix<M, N>::matrix ( const std::initializer_list<double> init_list )
 {
     /* check the size of the list */
-    if ( init_list.size () > M * N ) throw matrix_exception { "matrix initialiser list is too long" };
+    if ( init_list.size () != M * N ) throw matrix_exception { "matrix initialiser list is invalid" };
     /* set the values */
     for ( auto it = init_list.begin (); it < init_list.end (); ++it ) at ( it - init_list.begin () ) = * it;
 }
