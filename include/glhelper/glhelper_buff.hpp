@@ -72,7 +72,7 @@ namespace glh
 
 
 
-/* FULL DECLARATIONS */
+/* BUFFER DECLARATION */
 
 /* class buffer : object
  *
@@ -193,6 +193,8 @@ protected:
 
 
 
+/* VBO DECLARATION */
+
 /* class vbo : buffer
  *
  * vertex buffer object
@@ -243,6 +245,8 @@ public:
 
 
 
+/* EBO DECLARATION */
+
 /* class ebo : buffer
  *
  * element buffer object
@@ -292,6 +296,8 @@ public:
 };
 
 
+
+/* VAO DECLARATION */
 
 /* class vao : object
  *
@@ -389,6 +395,8 @@ public:
 };
 
 
+
+/* BUFFER_EXCEPTION DECLARATION */
 
 /* class buffer_exception : exception
  *
