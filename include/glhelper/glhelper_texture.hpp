@@ -145,6 +145,14 @@ public:
 
 
 
+    /* get_path
+     *
+     * get the path the texture was originally imported from
+     */
+    const std::string& get_path () const { return path; }
+
+
+
 private:
 
     /* path
