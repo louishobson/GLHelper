@@ -96,11 +96,11 @@ namespace glh
          */
         template<unsigned M> double modulus ( const vector<M>& vec );
 
-        /* normalise
+        /* norm
          *
          * convert to a unit vector
          */
-        template<unsigned M> vector<M> normalise ( const vector<M>& vec );
+        template<unsigned M> vector<M> norm ( const vector<M>& vec );
 
     }
 }
@@ -465,11 +465,11 @@ template<unsigned M> inline double glh::math::modulus ( const vector<M>& vec )
     return std::sqrt ( mod );
 }
 
-/* normalise
+/* norm
  *
  * convert to a unit vector
  */
-template<unsigned M> inline glh::math::vector<M> glh::math::normalise ( const vector<M>& vec )
+template<unsigned M> inline glh::math::vector<M> glh::math::norm ( const vector<M>& vec )
 {
     /* return the vector divided by its modulus */
     return vec / modulus ( vec );
