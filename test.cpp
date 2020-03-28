@@ -102,26 +102,40 @@ int main ()
     glh::vshader vshader { "shaders/vertex.glsl" };
     glh::fshader fshader { "shaders/fragment.glsl" };
     glh::program program { vshader, fshader };
+    program.use ();
 
     glh::texture2d texture { "assets/crate.png", GL_RGBA };
     texture.bind ();
 
-    glh::math::mat4 model = glh::math::identity<4> ();
-    glh::math::mat4 view = glh::math::translate ( glh::math::identity<4> (), glh::math::vec3 { 0., 0., -20 } );
-    glh::math::mat4 proj = glh::math::perspective_fov ( glh::math::rad ( 45 ), 1920. / 1080., 0.1, 100. );
-    
+    glh::math::mat4 model;
+    glh::camera_perspective camera;
+    camera.move_relative ( glh::math::vec3 { 0., 0., 30. } );
+
     glh::uniform proj_uni = program.get_uniform ( "trans" );
 
     glEnable ( GL_DEPTH_TEST );
 
+    double prev_time = glfwGetTime ();
     while ( !window.should_close () ) 
     {
-        program.use ();
+        double delta_time = glfwGetTime () - prev_time;
+
+        if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_W ) == GLFW_TRUE ) camera.move_relative ( delta_time * glh::math::vec3 { 0., 0., -20. } );
+        if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_A ) == GLFW_TRUE ) camera.move_relative ( delta_time * glh::math::vec3 { -10, 0., 0. } );
+        if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_S ) == GLFW_TRUE ) camera.move_relative ( delta_time * glh::math::vec3 { 0., 0., 20. } );
+        if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_D ) == GLFW_TRUE ) camera.move_relative ( delta_time * glh::math::vec3 { 10, 0., 0. } );
+
+        if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_UP ) == GLFW_TRUE ) camera.pitch ( delta_time * glh::math::rad ( 80 ) );
+        if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_LEFT ) == GLFW_TRUE ) camera.yaw ( delta_time * glh::math::rad ( 120 ) );
+        if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_DOWN ) == GLFW_TRUE ) camera.pitch ( delta_time * glh::math::rad ( -80 ) );
+        if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_RIGHT ) == GLFW_TRUE ) camera.yaw ( delta_time * glh::math::rad ( -120 ) );
+
+        prev_time = glfwGetTime ();
         window.clear ( 1., 1., 1., 1. );
         for ( unsigned i = 0; i < 10; ++i )
         {
-            model = glh::math::translate ( glh::math::rotate ( glh::math::identity<4> (), glh::math::vec3 ( glh::math::rad ( ( i + 1 ) * 36 ), glh::math::rad ( ( i + 1 ) * 18 ), 0 ) ), posdata [ i ] );
-            proj_uni.set_matrix ( proj * view * model );
+            model = glh::math::translate ( glh::math::rotate ( glh::math::identity<4> (), glh::math::rad ( i * 16 ), glh::math::norm ( glh::math::vec3 { 123, 53, 1 } ) ), posdata [ i ] );
+            proj_uni.set_matrix ( camera.get_trans () * model );
             window.draw_arrays ( vao, program, GL_TRIANGLES, 0, 6 * 6 );
         }
         window.swap_buffers ();
