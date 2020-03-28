@@ -65,9 +65,9 @@ public:
 
     /* full constructor
      *
-     * give parameters for look_at and perspective_fov
+     * give parameters for look_towards and perspective_fov
      */
-    camera_perspective ( const math::vec3& _pos, const math::vec3& _target, const math::vec3& _up, const double _fov, const double _aspect, const double _near, const double _far );
+    camera_perspective ( const math::vec3& _pos, const math::vec3& _direction, const math::vec3& _up, const double _fov, const double _aspect, const double _near, const double _far );
 
     /* minimal constructor
      *
@@ -93,6 +93,54 @@ public:
 
 
 
+    /* move_relative
+     *
+     * move camera relative to its own axis
+     * 
+     * vec: vector for movement (+x: right, +y: up, +z: back)
+     *
+     * return: new position vector
+     */
+    const math::vec3& move_relative ( const math::vec3& vec );
+
+    /* move_global
+     *
+     * move camera relative to the global axis
+     * 
+     * vec: vector for movement (+x: x, +y: y, +z: z)
+     * 
+     * return: new position vector
+     */
+    const math::vec3& move_global ( const math::vec3& vec );
+
+
+
+    /* set_fov
+     *
+     * set the field of view
+     */
+    void set_fov ( const double _fov ) { fov = _fov; proj_change = true; }
+
+    /* set_aspect
+     *
+     * set the aspect ratio
+     */
+    void set_aspect ( const double _aspect ) { aspect = _aspect; proj_change = true; }
+
+    /* set_near
+     *
+     * set the near position of the perspective projection matrix
+     */
+    void set_near ( const double _near ) { near = _near; proj_change = true; }
+
+    /* set_far
+     *
+     * set the far position of the perspective projection matrix
+     */
+    void set_far ( const double _far ) { far = _far; proj_change = true; }
+
+
+
     /* get_trans
      *
      * recieve the transformation
@@ -103,7 +151,7 @@ private:
 
     /* view matrix parameters */
     math::vec3 pos;
-    math::vec3 target;
+    math::vec3 direction;
     math::vec3 up;
 
     /* perspective projection matrix parameters */
