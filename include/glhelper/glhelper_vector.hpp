@@ -102,6 +102,12 @@ namespace glh
          */
         template<unsigned M> vector<M> norm ( const vector<M>& vec );
 
+        /* angle
+         *
+         * find the angle between two vectors
+         */
+        template<unsigned M> double angle ( const vector<M>& lhs, const vector<M>& rhs );
+
     }
 }
 
@@ -473,6 +479,16 @@ template<unsigned M> inline glh::math::vector<M> glh::math::norm ( const vector<
 {
     /* return the vector divided by its modulus */
     return vec / modulus ( vec );
+}
+
+/* angle
+ *
+ * find the angle between two vectors
+ */
+template<unsigned M> inline double glh::math::angle ( const vector<M>& lhs, const vector<M>& rhs )
+{
+    /* return the arccos of ( lhs.rhs / |lhs|.|rhs| ) */
+    return acos ( dot ( lhs, rhs ) / ( modulus ( lhs ) * modulus ( rhs ) ) );
 }
 
 
