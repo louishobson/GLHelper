@@ -126,18 +126,18 @@ namespace glh
          *
          * rotate along several axis simultaneously
          * only for 3D space (inc. 4D vectors for homogeneus coords)
-         * rotates around x, y, and z axis with the arguments in vector respectively
-         * the 4th dimension is left untouched
+         * rotate around an arbitrary unit axis
          * 
          * trans/vec: the transformation matrix/vector to rotate
-         * arg: the angle to rotate by in each axis
+         * arg: the angle to rotate by in radians
+         * axis: the unit axis to rotate in
          * 
          * return: the new transformation matrix/vector
          */
-        matrix<3> rotate ( const matrix<3>& trans, const vector<3>& arg );
-        vector<3> rotate ( const vector<3>& vec, vector<3>& arg );
-        matrix<4> rotate ( const matrix<4>& trans, const vector<3>& arg );
-        vector<4> rotate ( const vector<4>& vec, vector<3>& arg );
+        matrix<3> rotate ( const matrix<3>& trans, const double arg, const vector<3>& axis );
+        vector<3> rotate ( const vector<3>& vec, const double arg, const vector<3>& axis );
+        matrix<4> rotate ( const matrix<4>& trans, const double arg, const vector<3>& axis );
+        vector<4> rotate ( const vector<4>& vec, const double arg, const vector<3>& axis );
 
         /* translate
          *
@@ -169,7 +169,7 @@ namespace glh
 
         /* perspective
          *
-         * create a perspective matrix
+         * create a perspective projection matrix
          * 
          * l: the (x) position of the LEFT of the near rectangle of the frustum
          * r: the (x) position of the RIGHT of the near rectangle of the frustum
@@ -184,7 +184,7 @@ namespace glh
 
         /* perspective_fov
          *
-         * create a perspective matrix from a field of view
+         * create a perspective projection matrix from a field of view
          * 
          * fov: the field of view in radians
          * aspect: the aspect ratio of the screen
@@ -194,6 +194,32 @@ namespace glh
          * return: the perspective projection matrix
          */
         matrix<4> perspective_fov ( const double fov, const double aspect, const double n, const double f );
+
+        /* camera
+         *
+         * produce a camera matrix from vectors
+         * 
+         * p: position (non-unit) vector
+         * d: (viewing) direction unit vector
+         * r: right unit vector
+         * u: up unit vector
+         * 
+         * return: camera matrix based on vectors provided
+         */
+        matrix<4> camera ( const vector<3>& p, const vector<3>& d, const vector<3>& r, const vector<3>& u );
+
+        /* look_at
+         *
+         * produce a camera matrix based on a camera position, target position and an up vector
+         * 
+         * p: camera (non-unit) position vector
+         * t: target (non-unit) position vector
+         * u: up unit vector
+         * 
+         * return: camera matrix based on vectors provided
+         */
+        matrix<4> look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& u );
+
     }
 }
 
@@ -356,35 +382,66 @@ template<unsigned M> inline glh::math::vector<M> glh::math::rotate ( const vecto
 
 /* rotate with vector
  *
- * only for 3D space (inc. 4D vectors for homogeneus coords)
  * rotate along several axis simultaneously
- * rotates around x, y, and z axis with the arguments in vector respectively
- * the 4th dimension is left untouched
+ * only for 3D space (inc. 4D vectors for homogeneus coords)
+ * rotate around an arbitrary unit axis
  * 
  * trans/vec: the transformation matrix/vector to rotate
- * arg: the angle to rotate by in each axis
+ * arg: the angle to rotate by in radians
+ * axis: the unit axis to rotate in
  * 
  * return: the new transformation matrix/vector
  */
-inline glh::math::matrix<3> glh::math::rotate ( const matrix<3>& trans, const vector<3>& arg )
+glh::math::matrix<3> glh::math::rotate ( const matrix<3>& trans, const double arg, const vector<3>& axis )
 {
-    /* rotate around each axis */
-    return rotate ( identity<3> (), arg.at ( 2 ), 0, 1 ) * rotate ( identity<3> (), arg.at ( 1 ), 2, 0 ) * rotate ( identity<3> (), arg.at ( 0 ), 1, 2 ) * trans;
+    /* return the new transformation matrix */
+    return matrix<3>
+    {
+        ( cos ( arg ) ) + ( axis.at ( 0 ) * axis.at ( 0 )  * ( 1 - cos ( arg ) ) ),
+        ( axis.at ( 0 ) * axis.at ( 1 ) * ( 1 - cos ( arg ) ) ) - ( axis.at ( 2 ) * sin ( arg ) ),
+        ( axis.at ( 0 ) * axis.at ( 2 ) * ( 1 - cos ( arg ) ) ) + ( axis.at ( 1 ) * sin ( arg ) ),
+
+        ( axis.at ( 1 ) * axis.at ( 0 ) * ( 1 - cos ( arg ) ) ) + ( axis.at ( 2 ) * sin ( arg ) ),
+        ( cos ( arg ) ) + ( axis.at ( 1 ) * axis.at ( 1 ) * ( 1 - cos ( arg ) ) ),
+        ( axis.at ( 1 ) * axis.at ( 2 ) * ( 1 - cos ( arg ) ) ) - ( axis.at ( 0 ) * sin ( arg ) ),
+
+        ( axis.at ( 2 ) * axis.at ( 0 ) * ( 1 - cos ( arg ) ) ) - ( axis.at ( 1 ) * sin ( arg ) ),
+        ( axis.at ( 2 ) * axis.at ( 1 ) * ( 1 - cos ( arg ) ) ) + ( axis.at ( 0 ) * sin ( arg ) ),
+        ( cos ( arg ) ) + ( axis.at ( 2 ) * axis.at ( 2 ) * ( 1 - cos ( arg ) ) ) 
+    } * trans;
 }
-inline glh::math::vector<3> glh::math::rotate ( const vector<3>& vec, vector<3>& arg )
+glh::math::vector<3> glh::math::rotate ( const vector<3>& vec, const double arg, const vector<3>& axis )
 {
-    /* rotate the vector */
-    return rotate ( identity<3> (), arg ) * vec;
+    /* return the vector multiplied by the rotational matrix */
+    return rotate ( identity<3> (), arg, axis ) * vec;
 }
-inline glh::math::matrix<4> glh::math::rotate ( const matrix<4>& trans, const vector<3>& arg )
+glh::math::matrix<4> glh::math::rotate ( const matrix<4>& trans, const double arg, const vector<3>& axis )
 {
-    /* rotate around each axis */
-    return rotate ( identity<4> (), arg.at ( 2 ), 0, 1 ) * rotate ( identity<4> (), arg.at ( 1 ), 2, 0 ) * rotate ( identity<4> (), arg.at ( 0 ), 1, 2 ) * trans;
+    /* return the new transformation matrix */
+    return matrix<4>
+    {
+        ( cos ( arg ) ) + ( axis.at ( 0 ) * axis.at ( 0 )  * ( 1 - cos ( arg ) ) ),
+        ( axis.at ( 0 ) * axis.at ( 1 ) * ( 1 - cos ( arg ) ) ) - ( axis.at ( 2 ) * sin ( arg ) ),
+        ( axis.at ( 0 ) * axis.at ( 2 ) * ( 1 - cos ( arg ) ) ) + ( axis.at ( 1 ) * sin ( arg ) ),
+        0,
+
+        ( axis.at ( 1 ) * axis.at ( 0 ) * ( 1 - cos ( arg ) ) ) + ( axis.at ( 2 ) * sin ( arg ) ),
+        ( cos ( arg ) ) + ( axis.at ( 1 ) * axis.at ( 1 ) * ( 1 - cos ( arg ) ) ),
+        ( axis.at ( 1 ) * axis.at ( 2 ) * ( 1 - cos ( arg ) ) ) - ( axis.at ( 0 ) * sin ( arg ) ),
+        0,
+
+        ( axis.at ( 2 ) * axis.at ( 0 ) * ( 1 - cos ( arg ) ) ) - ( axis.at ( 1 ) * sin ( arg ) ),
+        ( axis.at ( 2 ) * axis.at ( 1 ) * ( 1 - cos ( arg ) ) ) + ( axis.at ( 0 ) * sin ( arg ) ),
+        ( cos ( arg ) ) + ( axis.at ( 2 ) * axis.at ( 2 ) * ( 1 - cos ( arg ) ) ),
+        0,
+
+        0, 0, 0, 1
+    } * trans;
 }
-inline glh::math::vector<4> glh::math::rotate ( const vector<4>& vec, vector<3>& arg )
+glh::math::vector<4> glh::math::rotate ( const vector<4>& vec, const double arg, const vector<3>& axis )
 {
-    /* rotate the vector */
-    return rotate ( identity<4> (), arg ) * vec;
+    /* return the vector multiplied by the rotational matrix */
+    return rotate ( identity<4> (), arg, axis ) * vec;
 }
 
 /* translate
@@ -451,7 +508,7 @@ template<unsigned M> inline glh::math::vector<M> glh::math::translate ( const ve
 
 /* perspective
  *
- * create a perspective matrix
+ * create a perspective projection matrix
  * 
  * l: the (x) position of the LEFT of the near rectangle of the frustum
  * r: the (x) position of the RIGHT of the near rectangle of the frustum
@@ -467,16 +524,16 @@ inline glh::math::matrix<4> glh::math::perspective ( const double l, const doubl
     /* return the new matrix */
     return matrix<4>
     {
-        ( 2 * n ) / ( r - l ),           0,             ( r + l ) / ( r - l ),              0,
-                  0,           ( 2 * n ) / ( t - b ),   ( t + b ) / ( t - b ),              0,
-                  0,                     0,           - ( f + n ) / ( f - n ), - ( 2 * f * n ) / ( f - n ), 
-                  0,                     0,                       -1,                       0
+        ( 2 * n ) / ( r - l ),           0,            ( r + l ) / ( r - l ),             0,
+                  0,           ( 2 * n ) / ( t - b ),  ( t + b ) / ( t - b ),             0,
+                  0,                     0,           -( f + n ) / ( f - n ), -( 2 * f * n ) / ( f - n ), 
+                  0,                     0,                       -1,                      0
     };
 }
 
 /* perspective_fov
  *
- * create a perspective matrix from a field of view
+ * create a perspective projection matrix from a field of view
  * 
  * fov: the field of view in radians
  * aspect: the aspect ratio of the screen
@@ -491,6 +548,58 @@ inline glh::math::matrix<4> glh::math::perspective_fov ( const double fov, const
     const double r = n * tan ( fov / 2 );
     /* call perspective */
     return perspective ( -r, r, - r / aspect, r / aspect, n, f );
+}
+
+/* camera
+ *
+ * produce a camera matrix from vectors
+ * 
+ * p: position (non-unit) vector
+ * d: (viewing) direction unit vector
+ * r: right unit vector
+ * u: up unit vector
+ * 
+ * return: camera matrix based on vectors provided
+ */
+glh::math::matrix<4> glh::math::camera ( const vector<3>& p, const vector<3>& d, const vector<3>& r, const vector<3>& u )
+{
+    /* return the camera matrix */
+    return matrix<4>
+    {
+        r.at ( 0 ), r.at ( 1 ), r.at ( 2 ), 0,
+        u.at ( 0 ), u.at ( 1 ), u.at ( 2 ), 0,
+        d.at ( 0 ), d.at ( 1 ), d.at ( 2 ), 0,
+            0     ,     0     ,     0     , 1
+    } * matrix<4>
+    {
+        1, 0, 0, -p.at ( 0 ),
+        0, 1, 0, -p.at ( 1 ),
+        0, 0, 1, -p.at ( 2 ),
+        0, 0, 0,      1
+    };
+}
+
+/* look_at
+ *
+ * produce a camera matrix based on a camera position, target position and an up vector
+ * 
+ * p: camera (non-unit) position vector
+ * t: target (non-unit) position vector
+ * u: world up unit vector
+ * 
+ * return: camera matrix based on vectors provided
+ */
+glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& u )
+{
+    /* d = norm ( p - t )
+     * r = norm ( u x d )
+     * cam_u = d x r
+     */
+    const vector<3> d = norm ( p - t );
+    const vector<3> r = norm ( cross ( u, d ) );
+    const vector<3> cam_u = cross ( d, r );
+    /* return the camera matrix */
+    return camera ( p, d, r, cam_u );
 }
 
 
