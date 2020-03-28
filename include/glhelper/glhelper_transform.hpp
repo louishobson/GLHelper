@@ -392,7 +392,7 @@ template<unsigned M> inline glh::math::vector<M> glh::math::rotate ( const vecto
  * 
  * return: the new transformation matrix/vector
  */
-glh::math::matrix<3> glh::math::rotate ( const matrix<3>& trans, const double arg, const vector<3>& axis )
+inline glh::math::matrix<3> glh::math::rotate ( const matrix<3>& trans, const double arg, const vector<3>& axis )
 {
     /* return the new transformation matrix */
     return matrix<3>
@@ -410,12 +410,12 @@ glh::math::matrix<3> glh::math::rotate ( const matrix<3>& trans, const double ar
         ( cos ( arg ) ) + ( axis.at ( 2 ) * axis.at ( 2 ) * ( 1 - cos ( arg ) ) ) 
     } * trans;
 }
-glh::math::vector<3> glh::math::rotate ( const vector<3>& vec, const double arg, const vector<3>& axis )
+inline glh::math::vector<3> glh::math::rotate ( const vector<3>& vec, const double arg, const vector<3>& axis )
 {
     /* return the vector multiplied by the rotational matrix */
     return rotate ( identity<3> (), arg, axis ) * vec;
 }
-glh::math::matrix<4> glh::math::rotate ( const matrix<4>& trans, const double arg, const vector<3>& axis )
+inline glh::math::matrix<4> glh::math::rotate ( const matrix<4>& trans, const double arg, const vector<3>& axis )
 {
     /* return the new transformation matrix */
     return matrix<4>
@@ -438,7 +438,7 @@ glh::math::matrix<4> glh::math::rotate ( const matrix<4>& trans, const double ar
         0, 0, 0, 1
     } * trans;
 }
-glh::math::vector<4> glh::math::rotate ( const vector<4>& vec, const double arg, const vector<3>& axis )
+inline glh::math::vector<4> glh::math::rotate ( const vector<4>& vec, const double arg, const vector<3>& axis )
 {
     /* return the vector multiplied by the rotational matrix */
     return rotate ( identity<4> (), arg, axis ) * vec;
@@ -561,7 +561,7 @@ inline glh::math::matrix<4> glh::math::perspective_fov ( const double fov, const
  * 
  * return: camera matrix based on vectors provided
  */
-glh::math::matrix<4> glh::math::camera ( const vector<3>& p, const vector<3>& d, const vector<3>& r, const vector<3>& u )
+inline glh::math::matrix<4> glh::math::camera ( const vector<3>& p, const vector<3>& d, const vector<3>& r, const vector<3>& u )
 {
     /* return the camera matrix */
     return matrix<4>
@@ -589,7 +589,7 @@ glh::math::matrix<4> glh::math::camera ( const vector<3>& p, const vector<3>& d,
  * 
  * return: camera matrix based on vectors provided
  */
-glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& u )
+inline glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& u )
 {
     /* d = norm ( p - t )
      * r = norm ( u x d )
