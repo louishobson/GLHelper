@@ -44,3 +44,6 @@
 
 /* include glhelper_texture.hpp */
 #include <glhelper/glhelper_texture.hpp>
+
+/* include glhelper_camera.hpp */
+#include <glhelper/glhelper_camera.hpp>
