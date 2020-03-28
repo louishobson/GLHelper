@@ -47,7 +47,7 @@ namespace glh
          *
          * return: the value of pi multiplied by a constant
          */
-        double pi ( const double k ) { return k * acos ( -1. ); }
+        inline double pi ( const double k ) { return k * acos ( -1. ); }
 
         /* rad
          *
@@ -55,7 +55,7 @@ namespace glh
          * 
          * return: a conversion of deg into radians
          */
-        double rad ( const double deg ) { return pi ( deg / 180 ); }
+        inline double rad ( const double deg ) { return pi ( deg / 180 ); }
 
         /* zero_matrix
          *
@@ -624,7 +624,7 @@ inline glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vecto
  * 
  * return: camera matrix based on vectors provided
  */
-glh::math::matrix<4> glh::math::look_towards ( const vector<3>& p, const vector<3>& d, const vector<3>& up )
+inline glh::math::matrix<4> glh::math::look_towards ( const vector<3>& p, const vector<3>& d, const vector<3>& up )
 {
     /* r = u x d
      * u = d x r
