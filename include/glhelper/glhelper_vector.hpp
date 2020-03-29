@@ -277,6 +277,11 @@ template<unsigned M> glh::math::vector<M> operator/ ( const glh::math::vector<M>
 template<unsigned M> glh::math::vector<M>& operator/= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
 template<unsigned M> glh::math::vector<M>& operator/= ( glh::math::vector<M>& lhs, const double rhs );
 
+/* unary plus operator */
+template<unsigned M> glh::math::vector<M> operator+ ( const glh::math::vector<M>& lhs );
+/* unary minus operator */
+template<unsigned M> glh::math::vector<M> operator- ( const glh::math::vector<M>& lhs );
+
 /* operator<<
  *
  * format as a one-line string
@@ -635,6 +640,25 @@ template<unsigned M> inline glh::math::vector<M> operator/= ( glh::math::vector<
 {
     /* set lhs to equal lhs * rhs */
     return ( lhs = lhs / rhs );
+}
+
+/* unary plus operator */
+template<unsigned M> inline glh::math::vector<M> operator+ ( const glh::math::vector<M>& lhs )
+{
+    /* return the same vector */
+    return lhs;
+}
+/* unary minus operator */
+template<unsigned M> inline glh::math::vector<M> operator- ( const glh::math::vector<M>& lhs )
+{
+    /* create new vector */
+    glh::math::vector<M> result { lhs };
+
+    /* negate all the values */
+    for ( unsigned iti = 0; iti < M; ++iti ) result.at ( iti ) = - result.at ( iti );
+
+    /* return the result */
+    return result;
 }
 
 /* operator<<
