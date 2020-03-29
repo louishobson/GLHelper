@@ -100,7 +100,6 @@ int main ()
     glh::uniform proj_uni = program.get_uniform ( "trans" );
 
     glh::texture2d texture { "assets/crate.png", GL_RGBA };
-    texture.bind ();
 
     glh::math::mat4 model;
     glh::camera_perspective camera { glh::math::rad ( 75 ), 16. / 9., 0.1, 200 };
