@@ -200,13 +200,11 @@ namespace glh
          * produce a camera matrix from vectors
          * 
          * p: position (non-unit) vector
-         * d: (viewing) direction unit vector
-         * r: right unit vector
-         * u: up unit vector
+         * x,y,z: unit axis for the camera
          * 
          * return: camera matrix based on vectors provided
          */
-        matrix<4> camera ( const vector<3>& p, const vector<3>& d, const vector<3>& r, const vector<3>& u );
+        matrix<4> camera ( const vector<3>& p, const vector<3>& x, const vector<3>& y, const vector<3>& z );
 
         /* look_at
          *
@@ -567,20 +565,18 @@ inline glh::math::matrix<4> glh::math::perspective_fov ( const double fov, const
  * produce a camera matrix from vectors
  * 
  * p: position (non-unit) vector
- * d: (viewing) direction unit vector
- * r: right unit vector
- * u: up unit vector
+ * x,y,z: unit axis for the camera
  * 
  * return: camera matrix based on vectors provided
  */
-inline glh::math::matrix<4> glh::math::camera ( const vector<3>& p, const vector<3>& d, const vector<3>& r, const vector<3>& u )
+inline glh::math::matrix<4> glh::math::camera ( const vector<3>& p, const vector<3>& x, const vector<3>& y, const vector<3>& z )
 {
     /* return the camera matrix */
     return matrix<4>
     {
-        r.at ( 0 ), r.at ( 1 ), r.at ( 2 ), 0,
-        u.at ( 0 ), u.at ( 1 ), u.at ( 2 ), 0,
-        d.at ( 0 ), d.at ( 1 ), d.at ( 2 ), 0,
+        x.at ( 0 ), x.at ( 1 ), x.at ( 2 ), 0,
+        y.at ( 0 ), y.at ( 1 ), y.at ( 2 ), 0,
+        z.at ( 0 ), z.at ( 1 ), z.at ( 2 ), 0,
             0     ,     0     ,     0     , 1
     } * matrix<4>
     {
@@ -632,7 +628,7 @@ inline glh::math::matrix<4> glh::math::look_towards ( const vector<3>& p, const 
     const vector<3> r = cross ( wup, d );
     const vector<3> u = cross ( d, r );
     /* return the camera matrix */
-    return camera ( p, d, r, u );
+    return camera ( p, -d, r, u );
 }
 
 
