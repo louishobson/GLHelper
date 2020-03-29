@@ -31,9 +31,6 @@
 #include <iostream>
 #include <string>
 
-/* include memory for shared_ptr */
-#include <memory>
-
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
@@ -147,50 +144,63 @@ public:
 
 
 
-    /* WINDOW CONTROLLING METHODS */
+    /* TRIVIAL STRUCTURES FOR INPUT INFO */
 
-    /* set_window_size
+    /* dimensions_t
      *
-     * set the size of the window
-     * 
-     * width/height: width and height of the window
+     * stores window dimensions
      */
-    void set_window_size ( const int width, const int height );
+    struct dimensions_t
+    {
+        int xpos;
+        int ypos;
+        int width;
+        int height;
+        int deltaxpos;
+        int deltaypos;
+        int deltawidth;
+        int deltaheight;
+    };
 
-    /* set_viewport_size
+    /* keyinfo_t
      *
-     * set the size of the viewport
-     *
-     * width/height: width and height of the viewport
+     * information about a key
      */
-    void set_viewport_size ( const int width, const int height );
+    struct keyinfo_t
+    {
+        int key;
+        int scancode;
+        int action;
+        int mods;
+    };
 
-
-
-    /* CALLBACK TYPEDEFS */
-
-    /* window_size_callback_t
+    /* mouseinfo_t
      *
-     * the callback type for window a window resize event
-     * 
-     * window&: reference to the window which was resized
-     * int,int: with, height
+     * information about mouse positioning
      */
-    typedef void ( __window_size_callback_internal_t ) ( GLFWwindow *, int, int );
-    typedef std::function<void ( GLFWwindow *, int, int )> window_size_callback_t;
+    struct mouseinfo_t
+    {
+        double xpos;
+        double ypos;
+        double xfrac;
+        double yfrac;
+        double deltaxpos;
+        double deltaypos;
+        double deltaxfrac;
+        double deltayfrac;
+    };
 
-
-
-    /* CALLBACK SETTING METHODS */
-
-    /* set_window_size_callback
+    /* timeinfo_t
      *
-     * set the callback for window resizing
-     * 
-     * callback: the callback to run on window resize event, or nullptr to remove the callback
+     * information about poll timings
      */
-    void set_window_size_callback ( const window_size_callback_t& callback );
-
+    struct timeinfo_t
+    {
+        double now;
+        double poll;
+        double lastpoll;
+        double deltapoll;
+    };
 
 
 
@@ -212,11 +222,17 @@ public:
      */
     void wait_events ( const double timeout );
 
+    /* post_empty_event
+     *
+     * post an empty event to cause wait event function to return
+     */
+    void post_empty_event ();
+
     /* should_close
      *
      * return: boolean as to whether the window should close or not
      */
-    bool should_close ();
+    bool should_close () const;
 
     /* set_should close 
      *
@@ -224,49 +240,74 @@ public:
      */
     void set_should_close ();
 
-
-
-    /* DRAWING METHODS */
-
-    /* draw_arrays
+    /* get_dimensions
      *
-     * draw vertices straight from a vbo (via a vao)
-     * all ebo data is ignored
+     * get the dimensions of the window
      * 
-     * _vao: the vao to draw from
-     * _program: shader program to use to draw the vertices
-     * mode: the primative to render
-     * start_index: the start index of the buffered data
-     * count: number of vertices to draw
+     * return: dimensions_t containing dimensions info
      */
-    void draw_arrays ( const vao& _vao, const program& _program, const GLenum mode, const GLint start_index, const GLsizei count );
+    dimensions_t get_dimensions () const;
 
-    /* draw_elements
+    /* get_key
      *
-     * draw vertices from an ebo (via a vao)
+     * test to see if a key was pressed
      * 
-     * _vao: the vao to draw from
-     * _program: shader program to use to draw the vertices
-     * mode: the primative to render
-     * count: number of vertices to draw
-     * type: the type of the data in the ebo
-     * start_index: the start index of the elements
+     * key: the GLFW code for the key
+     * 
+     * return: keyinfo_t containing info on the key
      */
-    void draw_elements ( const vao& _vao, const program& _program, const GLenum mode, const GLint count, const GLenum type, const GLvoid * start_index );
+    keyinfo_t get_key ( const int key ) const;
+
+    /* get_mouseinfo
+     *
+     * get info about the mouse position and its change
+     * 
+     * return: mouseinfo_t containing mouse info
+     */
+    mouseinfo_t get_mouseinfo () const;
+
+    /* get_timeinfo
+     *
+     * get info about the timings of polls
+     *
+     * return: timeinfo_t containing info about poll times
+     */
+    timeinfo_t get_timeinfo () const;
+
+
+
+    /* OTHER INPUT METHODS */
+
+    /* set_input_mode
+     *
+     * set the settings of an input mode
+     * 
+     * mode: the mode to change
+     * value: the value to change it to
+     */
+    void set_input_mode ( const int mode, const int value );
+
+
+
+    /* OPENGL WINDOW MANAGEMENT */
+
+    /* make_current
+     *
+     * makes the window current
+     */
+    void make_current () const;
+
+    /* is_current
+     *
+     * checks if the window is current
+     */
+    bool is_current () const;
 
     /* swap_buffers
      *
      * swap the GLFW buffers
      */
     void swap_buffers ();
-
-    /* clear
-     *
-     * clears the window
-     *
-     * r,g,b,a: rgba values of the clear colour
-     */
-    void clear ( const GLfloat r, const GLfloat g, const GLfloat b, const GLfloat a );
 
 
 
@@ -284,16 +325,6 @@ public:
 
 
 private:
-
-    /* CALLBACK STORAGE */
-
-    /* window_resize_callback
-     *
-     * callback for window resizing
-     */
-    window_size_callback_t window_size_callback;
-
-
 
     /* WINDOW OBJECT LIFETIME MANAGEMENT */
 
@@ -332,19 +363,21 @@ private:
 
 
 
-    /* OPENGL WINDOW MANAGEMENT */
+    /* PEVIOUS INFO STORAGE */
 
-    /* make_current
+    /* prev_dimensions/mouseinfo/timeinfo
      *
-     * makes the window current
+     * previous dimension, mouse and time info to calculate changes
      */
-    void make_current () const;
+    dimensions_t prev_dimensions;
+    mouseinfo_t prev_mouseinfo;
+    timeinfo_t prev_timeinfo;
 
-    /* is_current
+    /* get_poll_timeinfo
      *
-     * checks if the window is current
+     * set the timeinfo at a poll
      */
-    bool is_current () const;
+    timeinfo_t get_poll_timeinfo () const;
 
 };
 
