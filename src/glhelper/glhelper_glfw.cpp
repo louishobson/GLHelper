@@ -229,7 +229,7 @@ glh::window::mouseinfo_t glh::window::get_mouseinfo () const
     mouseinfo.xfrac = mouseinfo.xpos / dimensions.width;
     mouseinfo.yfrac = mouseinfo.ypos / dimensions.height;
     mouseinfo.deltaxfrac = mouseinfo.deltaxpos / dimensions.width;
-    mouseinfo.deltayfrac = mouseinfo.deltaypos / dimensions.width;
+    mouseinfo.deltayfrac = mouseinfo.deltaypos / dimensions.height;
 
     /* return the mouse info */
     return mouseinfo;
