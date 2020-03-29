@@ -47,3 +47,6 @@
 
 /* include glhelper_camera.hpp */
 #include <glhelper/glhelper_camera.hpp>
+
+/* include glhelper_render.hpp */
+#include <glhelper/glhelper_render.hpp>
