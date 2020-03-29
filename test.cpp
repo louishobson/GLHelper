@@ -108,7 +108,8 @@ int main ()
     texture.bind ();
 
     glh::math::mat4 model;
-    glh::camera_perspective camera;
+    double fov = glh::math::rad ( 45 );
+    glh::camera_perspective camera { fov, 16. / 9., 0.1, 100 };
     camera.move_relative ( glh::math::vec3 { 0., 0., 30. } );
 
     glh::uniform proj_uni = program.get_uniform ( "trans" );
@@ -129,6 +130,12 @@ int main ()
         if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_LEFT ) == GLFW_TRUE ) camera.yaw ( delta_time * glh::math::rad ( 120 ) );
         if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_DOWN ) == GLFW_TRUE ) camera.pitch ( delta_time * glh::math::rad ( -80 ) );
         if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_RIGHT ) == GLFW_TRUE ) camera.yaw ( delta_time * glh::math::rad ( -120 ) );
+
+        if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_Z ) == GLFW_TRUE ) camera.roll ( delta_time * glh::math::rad ( 80 ) );
+        if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_X ) == GLFW_TRUE ) camera.roll ( delta_time * glh::math::rad ( -80 ) ); 
+
+        if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_C ) == GLFW_TRUE ) camera.set_fov ( fov += glh::math::rad ( 2.5 ) );
+        if ( glfwGetKey ( window.internal_ptr (), GLFW_KEY_V ) == GLFW_TRUE ) camera.set_fov ( fov -= glh::math::rad ( 2.5 ) ); 
 
         prev_time = glfwGetTime ();
         window.clear ( 1., 1., 1., 1. );
