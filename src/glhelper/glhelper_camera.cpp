@@ -156,7 +156,7 @@ bool glh::camera_perspective::update () const
     /* if view has been changed, update */
     if ( view_change )
     {
-        view = math::look_towards ( pos, direction, up );
+        view = math::camera ( pos, direction, right, up );
         view_change = false;
     }
     
