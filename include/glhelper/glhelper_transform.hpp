@@ -214,11 +214,11 @@ namespace glh
          * 
          * p: camera (non-unit) position vector
          * t: target (non-unit) position vector
-         * up: world up unit vector
+         * wup: WORLD up unit vector
          * 
          * return: camera matrix based on vectors provided
          */
-        matrix<4> look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& up );
+        matrix<4> look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& wup );
 
         /* look_towards
          *
@@ -226,11 +226,11 @@ namespace glh
          * 
          * p: camera (non-unit) position vector
          * d: direction unit vector
-         * up: world up unit vector
+         * wup: WORLD up unit vector
          * 
          * return: camera matrix based on vectors provided
          */
-        matrix<4> look_towards ( const vector<3>& p, const vector<3>& d, const vector<3>& up );        
+        matrix<4> look_towards ( const vector<3>& p, const vector<3>& d, const vector<3>& wup );        
 
     }
 }
@@ -597,18 +597,18 @@ inline glh::math::matrix<4> glh::math::camera ( const vector<3>& p, const vector
  * 
  * p: camera (non-unit) position vector
  * t: target (non-unit) position vector
- * up: world up unit vector
+ * wup: WORLD up unit vector
  * 
  * return: camera matrix based on vectors provided
  */
-inline glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& up )
+inline glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& wup )
 {
     /* d = norm ( p - t )
-     * r = norm ( u x d )
+     * r = norm ( wup x d )
      * u = d x r
      */
     const vector<3> d = norm ( p - t );
-    const vector<3> r = cross ( up, d );
+    const vector<3> r = cross ( wup, d );
     const vector<3> u = cross ( d, r );
     /* return the camera matrix */
     return camera ( p, d, r, u );
@@ -620,16 +620,16 @@ inline glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vecto
  * 
  * p: camera (non-unit) position vector
  * d: direction unit vector
- * up: world up unit vector
+ * wup: WORLD up unit vector
  * 
  * return: camera matrix based on vectors provided
  */
-inline glh::math::matrix<4> glh::math::look_towards ( const vector<3>& p, const vector<3>& d, const vector<3>& up )
+inline glh::math::matrix<4> glh::math::look_towards ( const vector<3>& p, const vector<3>& d, const vector<3>& wup )
 {
-    /* r = u x d
+    /* r = wup x d
      * u = d x r
      */
-    const vector<3> r = cross ( up, d );
+    const vector<3> r = cross ( wup, d );
     const vector<3> u = cross ( d, r );
     /* return the camera matrix */
     return camera ( p, d, r, u );
