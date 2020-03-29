@@ -74,7 +74,7 @@ public:
      * create a default view matrix and give parameters for perspective_fov
      */
     camera_perspective ( const double _fov, const double _aspect, const double _near, const double _far )
-        : camera_perspective { math::vec3 { 0., 0., 0. }, math::vec3 { -1., 0., 0. }, math::vec3 { 0., 1., 0. }, _fov, _aspect, _near, _far } {}
+        : camera_perspective { math::vec3 { 0., 0., 0. }, math::vec3 { 0., 0., -1. }, math::vec3 { 0., 1., 0. }, _fov, _aspect, _near, _far } {}
         
     /* zero parameter constructor
      *
@@ -119,7 +119,7 @@ public:
      *
      * arg: the angle in radians
      * 
-     * return: the new direction unit vector
+     * return: the position vector
      */
     const math::vec3 pitch ( const double arg );
     const math::vec3 yaw ( const double arg );
@@ -164,10 +164,10 @@ private:
 
     /* view matrix parameters */
     math::vec3 pos;
-    math::vec3 direction;
+    math::vec3 z;
     math::vec3 world_up;
-    math::vec3 right;
-    math::vec3 up;
+    math::vec3 x;
+    math::vec3 y;
 
     /* perspective projection matrix parameters */
     double fov;

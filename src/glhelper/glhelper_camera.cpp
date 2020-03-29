@@ -27,10 +27,10 @@
  */
 glh::camera_perspective::camera_perspective ( const math::vec3& _pos, const math::vec3& _direction, const math::vec3& _world_up, const double _fov, const double _aspect, const double _near, const double _far )
     : pos { _pos }
-    , direction { math::norm (_direction ) }
+    , z { math::norm ( - _direction ) }
     , world_up { math::norm ( _world_up ) }
-    , right { math::cross ( world_up, direction ) }
-    , up { math::cross ( direction, right ) }
+    , x { math::cross ( world_up, z ) }
+    , y { math::cross ( z, x ) }
     , fov { _fov }
     , aspect { _aspect }
     , near { _near }
@@ -53,9 +53,9 @@ glh::camera_perspective::camera_perspective ( const math::vec3& _pos, const math
 const glh::math::vec3 glh::camera_perspective::move_relative ( const math::vec3& vec )
 {
     /* move pos */
-    pos += right * vec.at ( 0 );
-    pos += up * vec.at ( 1 );
-    pos += direction * vec.at ( 2 );
+    pos += x * vec.at ( 0 );
+    pos += y * vec.at ( 1 );
+    pos += z * vec.at ( 2 );
 
     /* set view as changed */
     view_change = true;
@@ -91,44 +91,44 @@ const glh::math::vec3 glh::camera_perspective::move_global ( const math::vec3& v
  */
 const glh::math::vec3 glh::camera_perspective::pitch ( const double arg )
 {
-    /* rotate and up direction around right axis */
-    direction = math::rotate ( direction, arg, right );
-    up = math::rotate ( up, arg, right );
+    /* rotate y and z around x axis */
+    y = math::rotate ( y, arg, x );
+    z = math::rotate ( z, arg, x );
 
-    /* set view as changed an return */
+    /* set view as changed and return */
     view_change = true;
-    return direction;
+    return pos;
 }
 const glh::math::vec3 glh::camera_perspective::yaw ( const double arg )
 {
-    /* rotate direction, and right around the up axis */
-    direction = math::rotate ( direction, arg, up );
-    right = math::rotate ( right, arg, up );
+    /* rotate x and z around the y axis */
+    x = math::rotate ( x, arg, y );
+    z = math::rotate ( z, arg, y );
 
     /* set view as changed and return */
     view_change = true;
-    return direction;
+    return pos;
 }
 const glh::math::vec3 glh::camera_perspective::world_yaw ( const double arg )
 {
-    /* rotate direction, right and up around the world_up axis */
-    direction = math::rotate ( direction, arg, world_up );
-    right = math::rotate ( right, arg, world_up );
-    up = math::rotate ( up, arg, world_up );
+    /* rotate x, y and z around the world_up axis */
+    x = math::rotate ( x, arg, world_up );
+    z = math::rotate ( z, arg, world_up );
+    y = math::rotate ( y, arg, world_up );
 
     /* set view as changed and return */
     view_change = true;
-    return direction;
+    return pos;
 }
 const glh::math::vec3 glh::camera_perspective::roll ( const double arg )
 {
-    /* rotate up and right around the direction axis */
-    right = math::rotate ( right, arg, direction );
-    up = math::rotate ( up, arg, direction );
+    /* rotate x and y around the z axis */
+    x = math::rotate ( x, arg, z );
+    y = math::rotate ( y, arg, z );
 
     /* set view as changed and return */
     view_change = true;
-    return direction;
+    return pos;
 }
 
 /* get_trans
@@ -156,7 +156,7 @@ bool glh::camera_perspective::update () const
     /* if view has been changed, update */
     if ( view_change )
     {
-        view = math::camera ( pos, direction, right, up );
+        view = math::camera ( pos, x, y, z );
         view_change = false;
     }
     
