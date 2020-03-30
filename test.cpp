@@ -104,6 +104,7 @@ int main ()
     glh::math::mat4 model;
     glh::camera_perspective camera { glh::math::rad ( 75 ), 16. / 9., 0.1, 200 };
     camera.move_global ( glh::math::vec3 { 0., 0., 30. } );
+    camera.enable_restrictive_mode ();
 
     glh::static_renderable renderable { window, vao, program, texture };
     renderable.clear_colour ( 1., 1., 1., 1. );
@@ -117,13 +118,13 @@ int main ()
         auto mouseinfo = window.get_mouseinfo ();
         renderable.viewport ( 0, 0, dimensions.width, dimensions.height );
 
-        if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move_relative ( timeinfo.deltapoll * glh::math::vec3 { 0., 0., -20. } );
-        if ( window.get_key ( GLFW_KEY_A ).action == GLFW_PRESS ) camera.move_relative ( timeinfo.deltapoll * glh::math::vec3 { -10, 0., 0. } );
-        if ( window.get_key ( GLFW_KEY_S ).action == GLFW_PRESS ) camera.move_relative ( timeinfo.deltapoll * glh::math::vec3 { 0., 0., 20. } );
-        if ( window.get_key ( GLFW_KEY_D ).action == GLFW_PRESS ) camera.move_relative ( timeinfo.deltapoll * glh::math::vec3 { 10, 0., 0. } );
+        if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 0., 0., -20. } );
+        if ( window.get_key ( GLFW_KEY_A ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { -10, 0., 0. } );
+        if ( window.get_key ( GLFW_KEY_S ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 0., 0., 20. } );
+        if ( window.get_key ( GLFW_KEY_D ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 10, 0., 0. } );
 
-        if ( window.get_key ( GLFW_KEY_SPACE ).action == GLFW_PRESS ) camera.move_relative ( timeinfo.deltapoll * glh::math::vec3 { 0., 10., 0. } );
-        if ( window.get_key ( GLFW_KEY_LEFT_SHIFT ).action == GLFW_PRESS ) camera.move_relative ( timeinfo.deltapoll * glh::math::vec3 { 0., -10., 0. } );
+        if ( window.get_key ( GLFW_KEY_SPACE ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 0., 10., 0. } );
+        if ( window.get_key ( GLFW_KEY_LEFT_SHIFT ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 0., -10., 0. } );
 
         if ( window.get_key ( GLFW_KEY_Z ).action == GLFW_PRESS ) camera.roll ( timeinfo.deltapoll * glh::math::rad ( 80 ) );
         if ( window.get_key ( GLFW_KEY_X ).action == GLFW_PRESS ) camera.roll ( timeinfo.deltapoll * glh::math::rad ( -80 ) ); 
