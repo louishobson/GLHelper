@@ -51,14 +51,15 @@
 
 namespace glh
 {
-    /* class renderable
+    /* class renderer
      *
      * base class for renderable objects
      * indented to be inherited from to create more complex classes
+     * contains static methods to configure OpenGL
      */
-    class renderable;
+    class renderer;
 
-    /* class simple_renderable : renderable
+    /* class simple_renderable : renderer
      *
      * holds references to a window, a vao, a program, and textures
      */
@@ -67,28 +68,29 @@ namespace glh
 
 
 
-/* RENDERABLE DEFINITION */
+/* RENDERER DEFINITION */
 
-/* renderable
+/* class renderer
  *
  * base class for renderable objects
  * indented to be inherited from to create more complex classes
+ * contains static methods to configure OpenGL
  */
-class glh::renderable
+class glh::renderer
 {
 public:
 
     /* default constructor */
-    renderable () = default;
+    renderer () = default;
 
     /* default copy constructor */
-    renderable ( const renderable& other ) = default;
+    renderer ( const renderer& other ) = default;
 
     /* default copy assignment operator */
-    renderable& operator= ( const renderable& other ) = default;
+    renderer& operator= ( const renderer& other ) = default;
 
     /* default destructor */
-    virtual ~renderable () = default;
+    virtual ~renderer () = default;
 
 
 
@@ -110,7 +112,7 @@ public:
      * start_index: the start index of the buffered data
      * count: number of vertices to draw
      */
-    void draw_arrays ( const GLenum mode, const GLint start_index, const GLsizei count ) 
+    static void draw_arrays ( const GLenum mode, const GLint start_index, const GLsizei count ) 
     { glDrawArrays ( mode, start_index, count ); }
 
     /* draw_elements
@@ -122,7 +124,7 @@ public:
      * type: the type of the data in the ebo
      * start_index: the start index of the elements
      */
-    void draw_elements ( const GLenum mode, const GLint count, const GLenum type, const GLvoid * start_index )
+    static void draw_elements ( const GLenum mode, const GLint count, const GLenum type, const GLvoid * start_index )
     { glDrawElements ( mode, count, type, start_index ); }
 
     /* clear_colour
@@ -131,28 +133,28 @@ public:
      * 
      * r,g,b,a: components for the new clear colour
      */
-    void clear_colour ( const double r, const double g, const double b, const double a )
+    static void clear_colour ( const double r, const double g, const double b, const double a )
     { glClearColor ( r, g, b, a ); }
 
     /* clear
      *
      * clears the screen
      */
-    void clear ()
+    static void clear ()
     { glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ); }
 
     /* enable/disable_depth_test
      * 
      * enable or disable depth testing
      */
-    void enable_depth_test () { glEnable ( GL_DEPTH_TEST ); }
-    void disable_depth_test () { glDisable ( GL_DEPTH_TEST ); }
+    static void enable_depth_test () { glEnable ( GL_DEPTH_TEST ); }
+    static void disable_depth_test () { glDisable ( GL_DEPTH_TEST ); }
 
     /* viewport
      *
      * set the viewport size
      */
-    void viewport ( GLint x, GLint y, GLsizei width, GLsizei height )
+    static void viewport ( GLint x, GLint y, GLsizei width, GLsizei height )
     { glViewport ( x, y, width, height ); }
 
 };
@@ -161,11 +163,11 @@ public:
 
 /* STATIC_RENDERABLE DEFINITION */
 
-/* class static_renderable : renderable
+/* class static_renderable : renderer
  *
  * holds a program, vbo, ebo, vao and 2D textures
  */
-class glh::static_renderable : public renderable
+class glh::static_renderable : public renderer
 {
 public:
 
