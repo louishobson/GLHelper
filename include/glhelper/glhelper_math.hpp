@@ -4,10 +4,9 @@
  * Distributed under MIT licence as a part of the GLHelper C++ library.
  * For details, see: https://github.com/louishobson/GLHelper/blob/master/LICENSE
  * 
- * include/glhelper/glhelper.hpp
+ * include/glhelper/glhelper_math.hpp
  * 
- * main header for glhelper library
- * includes all other necessary headers
+ * main header for including all math-based header files
  * 
  */
 
@@ -21,18 +20,6 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
-/* include glhelper_glad.hpp */
-#include <glhelper/glhelper_glad.hpp>
-
-/* include glhelper_glfw.hpp */
-#include <glhelper/glhelper_glfw.hpp>
-
-/* include glhelper_buff.hpp */
-#include <glhelper/glhelper_buff.hpp>
-
-/* include glhelper_shader.hpp */
-#include <glhelper/glhelper_shader.hpp>
-
 /* include glhelper_matrix.hpp */
 #include <glhelper/glhelper_matrix.hpp>
 
@@ -42,11 +29,3 @@
 /* include glhelper_transform.hpp */
 #include <glhelper/glhelper_transform.hpp>
 
-/* include glhelper_texture.hpp */
-#include <glhelper/glhelper_texture.hpp>
-
-/* include glhelper_camera.hpp */
-#include <glhelper/glhelper_camera.hpp>
-
-/* include glhelper_render.hpp */
-#include <glhelper/glhelper_render.hpp>

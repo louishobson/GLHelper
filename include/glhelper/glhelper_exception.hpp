@@ -45,7 +45,7 @@ namespace glh
 
 
 
-/* FULL DECLARATIONS */
+/* EXCEPTION DEFINITION */
 
 /* class exception : std::exception
  *

@@ -48,23 +48,22 @@ glh::window::window ( const std::string& title, const int width, const int heigh
     make_current ();
 
     /* set current viewport size */
-    set_window_size ( width, height );
-    set_viewport_size ( width, height );
+    glfwSetWindowSize ( winptr, width, height );
 
-    /* clear the viewport */
-    clear ( 0., 0., 0., 0. );
+    /* poll events to generate previous dimensions/mouseinfo/etc storage */
+    poll_events ();
 
     /* finally swap the buffer */
     swap_buffers ();
 }
 
 /* from pointer constructor
-     *
-     * constructs from pointer to already configured GLFWwindow
-     * 
-     * _winptr: pointer to GLFWwindow
-     * _managed: whether the window should be deleted on destruction of the object (defaults to true)
-     */
+ *
+ * constructs from pointer to already configured GLFWwindow
+ * 
+ * _winptr: pointer to GLFWwindow
+ * _managed: whether the window should be deleted on destruction of the object (defaults to true)
+ */
 glh::window::window ( GLFWwindow * _winptr, const bool _managed )
     : winptr { _winptr }
     , managed { _managed }
@@ -92,62 +91,6 @@ glh::window::~window ()
 
 
 
-/* WINDOW CONTROLLING METHODS */
-
-/* set_window_size
- *
- * set the size of the window
- * 
- * width/height: width and height of the window
- */
-void glh::window::set_window_size ( const int width, const int height ) 
-{
-    /* set the window size */ 
-    glfwSetWindowSize ( winptr, width, height ); 
-}
-
-/* set_viewport_size
- *
- * set the size of the viewport
- *
- * width/height: width and height of the viewport
- */
-void glh::window::set_viewport_size ( const int width, const int height ) 
-{ 
-    /* make window current */
-    make_current (); 
-    /* set the viewport size */
-    glViewport ( 0, 0, width, height ); 
-}
-
-
-
-/* CALLBACK SETTING METHODS */
-
-/* set_window_size_callback
- *
- * set the callback for window resizing
- * 
- * callback: the callback to run on window resize event
- */
-void glh::window::set_window_size_callback ( const window_size_callback_t& callback )
-{
-    /* remove callback */
-    glfwSetWindowSizeCallback ( winptr, NULL );
-    window_size_callback = nullptr;
-
-    /* if callback is invalid (e.g. nullptr), return */
-    if ( !callback ) return;
-
-    /* set callback attribute */
-    window_size_callback = callback;
-
-    /* set the callback */
-    glfwSetWindowSizeCallback ( winptr, * window_size_callback.target<__window_size_callback_internal_t *> () );
-}
-
-
-
 /* EVENT CONTROL */
 
 /* poll_events
@@ -157,6 +100,11 @@ void glh::window::set_window_size_callback ( const window_size_callback_t& callb
  */
 void glh::window::poll_events ()
 {
+    /* set prev_... storage */
+    prev_dimensions = get_dimensions ();
+    prev_mouseinfo = get_mouseinfo ();
+    prev_timeinfo = get_poll_timeinfo ();
+
     /* make window current, poll events and return */
     make_current ();
     glfwPollEvents ();
@@ -171,20 +119,38 @@ void glh::window::poll_events ()
  */
 void glh::window::wait_events ( const double timeout )
 {
+    /* set prev_... storage */
+    prev_dimensions = get_dimensions ();
+    prev_mouseinfo = get_mouseinfo ();
+    prev_timeinfo = get_poll_timeinfo ();
+
     /* make window current */
     make_current ();
 
     /* if timeout == 0, wait forever */
-    if ( timeout == 0.0f ) glfwWaitEvents ();
+    if ( timeout == 0. ) glfwWaitEvents ();
     /* else, wait on timeout */
     else glfwWaitEventsTimeout ( timeout );
+}
+
+/* post_empty_event
+ *
+ * post an empty event to cause wait event function to return
+ */
+void glh::window::post_empty_event ()
+{
+    /* make window current */
+    make_current ();
+
+    /* post empty event and return */
+    glfwPostEmptyEvent ();
 }
 
 /* should_close
  *
  * return: boolean as to whether the window should close or not
  */
-bool glh::window::should_close ()
+bool glh::window::should_close () const
 {
     /* return if window should close */
     return glfwWindowShouldClose ( winptr );
@@ -200,64 +166,140 @@ void glh::window::set_should_close ()
     glfwWindowShouldClose ( winptr );
 }
 
-
-
-/* DRAWING METHODS */
-
-/* draw_arrays
+/* get_dimensions
  *
- * draw vertices straight from a vbo (via a vao)
- * all ebo data is ignored
+ * get the dimensions of the window
  * 
- * _vao: the vao to draw from
- * _program: shader program to use to draw the vertices
- * mode: the primative to render
- * start_index: the start index of the buffered data
- * count: number of vertices to draw
+ * return: dimensions_t containing dimensions info
  */
-void glh::window::draw_arrays ( const vao& _vao, const program& _program, const GLenum mode, const GLint start_index, const GLsizei count )
+glh::window::dimensions_t glh::window::get_dimensions () const
 {
-    /* make the window current */
-    make_current ();
-    /* use the program */
-    _program.use ();
-    /* bind the vao */
-    _vao.bind ();
+    /* generate dimension info */
+    dimensions_t dimensions;
+    glfwGetWindowPos ( winptr, &dimensions.xpos, &dimensions.ypos );
+    glfwGetWindowSize ( winptr, &dimensions.width, &dimensions.height );
+    dimensions.deltaxpos = dimensions.xpos - prev_dimensions.xpos;
+    dimensions.deltaypos = dimensions.ypos - prev_dimensions.ypos;
+    dimensions.deltawidth = dimensions.width - prev_dimensions.width;
+    dimensions.deltaheight = dimensions.height - prev_dimensions.height;
 
-    /* draw arrays */
-    glDrawArrays ( mode, start_index, count );
-
-    /* unbind the vao */
-    _vao.unbind ();
+    /* return dimensions */
+    return dimensions;
 }
 
-/* draw_elements
+/* get_key
  *
- * draw vertices from an ebo (via a vao)
+ * test to see if a key was pressed
  * 
- * _vao: the vao to draw from
- * _program: shader program to use to draw the vertices
- * mode: the primative to render
- * count: number of vertices to draw
- * type: the type of the data in the ebo
- * start_index: the start index of the elements
+ * key: the GLFW code for the key
+ * 
+ * return: GLFW_TRUE/FALSE for if the key has been pressed since last poll
  */
-void glh::window::draw_elements ( const vao& _vao, const program& _program, const GLenum mode, const GLint count, const GLenum type, const GLvoid * start_index )
+glh::window::keyinfo_t glh::window::get_key ( const int key ) const
 {
-    /* make the window current */
-    make_current ();
-    /* use the program */
-    _program.use ();
-    /* bind the vao */
-    _vao.bind ();
+    /* generate the keyinfo */
+    keyinfo_t keyinfo;
+    keyinfo.key = key;
+    keyinfo.scancode = glfwGetKeyScancode ( key );
+    keyinfo.action = glfwGetKey ( winptr, key );
+    keyinfo.mods = 0;
 
-    /* draw elements */
-    glDrawElements ( mode, count, type, start_index );
-
-    /* unbind the vao */
-    _vao.unbind ();
+    /* return the keyinfo */
+    return keyinfo;
 }
 
+/* get_mouseinfo
+ *
+ * get info about the mouse position and its change
+ * 
+ * return: mouseinfo_t containing mouse info
+ */
+glh::window::mouseinfo_t glh::window::get_mouseinfo () const
+{
+    /* generate raw mouseinfo */
+    mouseinfo_t mouseinfo;
+    glfwGetCursorPos ( winptr, &mouseinfo.xpos, &mouseinfo.ypos );
+    mouseinfo.deltaxpos = mouseinfo.xpos - prev_mouseinfo.xpos;
+    mouseinfo.deltaypos = mouseinfo.ypos - prev_mouseinfo.ypos;
+
+    /* get the viewport dimensions */
+    dimensions_t dimensions = get_dimensions ();
+
+    /* set fractions in mouse info */
+    mouseinfo.xfrac = mouseinfo.xpos / dimensions.width;
+    mouseinfo.yfrac = mouseinfo.ypos / dimensions.height;
+    mouseinfo.deltaxfrac = mouseinfo.deltaxpos / dimensions.width;
+    mouseinfo.deltayfrac = mouseinfo.deltaypos / dimensions.height;
+
+    /* return the mouse info */
+    return mouseinfo;
+}
+
+/* get_timeinfo
+ *
+ * get info about the timings of polls
+ *
+ * return: timeinfo_t containing info about poll times
+ */
+glh::window::timeinfo_t glh::window::get_timeinfo () const
+{
+    /* generate timeinfo */
+    timeinfo_t timeinfo;
+    timeinfo.now = glfwGetTime ();
+    timeinfo.poll = prev_timeinfo.poll;
+    timeinfo.lastpoll = prev_timeinfo.lastpoll;
+    timeinfo.deltapoll = timeinfo.poll - timeinfo.lastpoll;
+
+    /* return timeinfo */
+    return timeinfo;
+}
+
+
+
+/* OTHER INPUT METHODS */
+
+/* set_input_mode
+ *
+ * set the settings of an input mode
+ * 
+ * mode: the mode to change
+ * value: the value to change it to
+ */
+void glh::window::set_input_mode ( const int mode, const int value )
+{
+    /* set the input mode */
+    glfwSetInputMode ( winptr, mode, value );
+}
+
+
+
+/* OPENGL WINDOW MANAGEMENT */
+
+/* make_current
+ *
+ * makes the window current
+ */
+void glh::window::make_current () const
+{ 
+    /* if window not already current */
+    if ( !is_current () )
+    {
+        /* make the context current */
+        glfwMakeContextCurrent ( winptr );
+        /* tell the glad loader to load to the current context */
+        glad_loader::load ();
+    }
+}
+
+/* is_current
+ *
+ * checks if the window is current
+ */
+bool glh::window::is_current () const
+{
+    /* return true of context is current */
+    return ( glfwGetCurrentContext () == winptr );
+}
 
 /* swap_buffers
  *
@@ -267,21 +309,6 @@ void glh::window::swap_buffers ()
 { 
     /* swap the buffers */
     glfwSwapBuffers ( winptr ); 
-}
-
-/* clear
- *
- * clears the window
- *
- * r,g,b,a: rgba values of the clear colour
- */
-void glh::window::clear ( const GLfloat r, const GLfloat g, const GLfloat b, const GLfloat a ) 
-{
-    /* make window current */
-    make_current (); 
-    /* set the clear colour and clear */
-    glClearColor ( r, g, b, a ); 
-    glClear ( GL_COLOR_BUFFER_BIT );
 }
 
 
@@ -330,16 +357,21 @@ void glh::window::unregister_object ()
 
 
 
-/* OPENGL WINDOW MANAGEMENT */
+/* PEVIOUS INFO STORAGE */
 
-/* make_current
+/* get_poll_timeinfo
  *
- * makes the window current
+ * set the timeinfo at a poll
  */
-void glh::window::make_current () 
-{ 
-    /* make the context current */
-    glfwMakeContextCurrent ( winptr );
-    /* tell the glad loader to load to the current context */
-    glad_loader::load ();
+glh::window::timeinfo_t glh::window::get_poll_timeinfo () const
+{
+    /* generate timeinfo */
+    timeinfo_t timeinfo;
+    timeinfo.now = glfwGetTime ();
+    timeinfo.poll = glfwGetTime ();
+    timeinfo.lastpoll = prev_timeinfo.poll;
+    timeinfo.deltapoll = timeinfo.poll - timeinfo.lastpoll;
+
+    /* return timeinfo */
+    return timeinfo;
 }

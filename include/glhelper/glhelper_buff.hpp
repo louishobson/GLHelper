@@ -39,12 +39,6 @@
 
 namespace glh
 {
-    /* class window
-     *
-     * forward declaration to allow vao to make friend
-     */
-    class window;
-
     /* class buffer : object
      *
      * base class for storing a buffer
@@ -78,7 +72,7 @@ namespace glh
 
 
 
-/* FULL DECLARATIONS */
+/* BUFFER DEFINITION */
 
 /* class buffer : object
  *
@@ -86,14 +80,6 @@ namespace glh
  */
 class glh::buffer : public object
 {
-
-    /* vao is a friend of a buffer object
-     *
-     * this allows the vao to access the bind functions
-     * this in turn allows for the vao to bind to a vbp/ebo
-     */
-    friend class vao;
-
 public:
 
     /* constructor
@@ -102,7 +88,7 @@ public:
      * 
      * _target: the target for the buffer
      */
-    explicit buffer ( const GLenum _target );
+    explicit buffer ( const GLenum _target, const GLenum _reverse_target );
 
     /* construct and immediately buffer data
      *
@@ -113,8 +99,8 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    explicit buffer ( const GLenum _target, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
-        : buffer { _target }
+    explicit buffer ( const GLenum _target, const GLenum _reverse_target, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
+        : buffer { _target, _reverse_target }
     { buffer_data ( size, data, usage ); }
 
     /* deleted zero-parameter constructor */
@@ -163,17 +149,7 @@ public:
      *
      * destroys the object, setting id to 0
      */
-    void destroy () override final;
-
-
-
-protected:
-
-    /* GLenum target
-     *
-     * the target to bind the buffer to
-     */
-    const GLenum target;
+    void destroy () override;
 
     /* bind
      *
@@ -191,9 +167,33 @@ protected:
      */
     GLenum unbind () const;
 
+    /* is_bound
+     *
+     * checks if the buffer is bound
+     */
+    bool is_bound () const;
+
+
+
+protected:
+
+    /* GLenum target
+     *
+     * the target to bind the buffer to
+     */
+    const GLenum target;
+
+    /* GLenum reverse_target
+     *
+     * the target to use when getting which buffer is bound
+     */
+    const GLenum reverse_target;
+
 };
 
 
+
+/* VBO DEFINITION */
 
 /* class vbo : buffer
  *
@@ -208,7 +208,7 @@ public:
      * generates the buffer
      */
     explicit vbo ()
-        : buffer { GL_ARRAY_BUFFER }
+        : buffer { GL_ARRAY_BUFFER, GL_ARRAY_BUFFER_BINDING }
     {}
 
     /* construct and immediately buffer data
@@ -220,7 +220,7 @@ public:
      * usage: the storage method for the data
      */
     explicit vbo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
-        : buffer { GL_ARRAY_BUFFER, size, data, usage }
+        : buffer { GL_ARRAY_BUFFER, GL_ARRAY_BUFFER_BINDING, size, data, usage }
     {}
 
     /* deleted copy constructor
@@ -245,6 +245,8 @@ public:
 
 
 
+/* EBO DEFINITION */
+
 /* class ebo : buffer
  *
  * element buffer object
@@ -258,7 +260,7 @@ public:
      * generates the buffer
      */
     explicit ebo ()
-        : buffer { GL_ELEMENT_ARRAY_BUFFER }
+        : buffer { GL_ELEMENT_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER_BINDING }
     {}
 
     /* construct and immediately buffer data
@@ -270,7 +272,7 @@ public:
      * usage: the storage method for the data
      */
     explicit ebo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
-        : buffer { GL_ELEMENT_ARRAY_BUFFER, size, data, usage }
+        : buffer { GL_ELEMENT_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER_BINDING, size, data, usage }
     {}
 
     /* deleted copy constructor
@@ -295,19 +297,14 @@ public:
 
 
 
+/* VAO DEFINITION */
+
 /* class vao : object
  *
  * vertex array object
  */
 class glh::vao : public object
 {
-
-    /* window is a friend of vao
-     *
-     * this is so that the window can bind the vao
-     */
-    friend class window;
-
 public:
 
     /* constructor
@@ -375,11 +372,7 @@ public:
      *
      * destroys the object, setting id to 0
      */
-    void destroy () override final;
-
-
-
-private:
+    void destroy () override;
 
     /* bind
      *
@@ -393,9 +386,17 @@ private:
      */
     void unbind () const;
 
+    /* is_bound
+     *
+     * checks if the vao is bound
+     */
+    bool is_bound () const;
+
 };
 
 
+
+/* BUFFER_EXCEPTION DEFINITION */
 
 /* class buffer_exception : exception
  *
