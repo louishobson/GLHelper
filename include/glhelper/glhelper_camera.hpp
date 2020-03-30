@@ -67,7 +67,7 @@ public:
      *
      * give parameters for look_towards and perspective_fov
      */
-    camera_perspective ( const math::vec3& _pos, const math::vec3& _direction, const math::vec3& _world_up, const double _fov, const double _aspect, const double _near, const double _far );
+    camera_perspective ( const math::vec3& _pos, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far );
 
     /* minimal constructor
      *
@@ -93,15 +93,27 @@ public:
 
 
 
-    /* move_relative
+    /* enable/disable_restrictive_mode
+     *
+     * enables/disables restrictive movement mode
+     * 
+     * when restricted, roll is disabled, and movement occures irrespective of pitch
+     * pitch is limited to 90 degrees up and down
+     */
+    void enable_restrictive_mode ();
+    void disable_restrictive_mode ();
+
+    /* move
      *
      * move camera relative to its own axis
+     * when unrestricted, the camera moves completely based on its own axis
+     * when restricted, y movement is global, but x and z are dependant on yaw
      * 
-     * vec: vector for movement (+x: right, +y: up, +z: back)
+     * vec: vector for movement
      *
      * return: new position vector
      */
-    const math::vec3 move_relative ( const math::vec3& vec );
+    const math::vec3 move ( const math::vec3& vec );
 
     /* move_global
      *
@@ -113,9 +125,10 @@ public:
      */
     const math::vec3 move_global ( const math::vec3& vec );
 
-    /* pitch/yaw/world_yaw/roll
+    /* pitch/yaw/roll
      *
-     * rotate the camera via changed in pitch/roll/yaw
+     * rotate the camera via changes in pitch/yaw/roll
+     * how this affects the camera is dependant on whether restrictive movement is active
      *
      * arg: the angle in radians
      * 
@@ -123,7 +136,6 @@ public:
      */
     const math::vec3 pitch ( const double arg );
     const math::vec3 yaw ( const double arg );
-    const math::vec3 world_yaw ( const double arg );
     const math::vec3 roll ( const double arg );
 
 
@@ -164,10 +176,15 @@ private:
 
     /* view matrix parameters */
     math::vec3 pos;
-    math::vec3 z;
-    math::vec3 world_up;
     math::vec3 x;
     math::vec3 y;
+    math::vec3 z;
+    math::vec3 restrict_x;
+    math::vec3 restrict_y;
+    math::vec3 restrict_z;
+
+    /* movement restriction */
+    bool restrictive_mode;
 
     /* perspective projection matrix parameters */
     double fov;
