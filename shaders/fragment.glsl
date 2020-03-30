@@ -13,10 +13,10 @@ in vec2 TexCoord;
 out vec4 FragColor;
 
 /* texture sampler */
-uniform sampler2D texture1;
+uniform sampler2D texunit;
 
 /* main */
 void main ()
 {
-    FragColor = texture ( texture1, TexCoord );
+    FragColor = texture ( texunit, TexCoord );
 }
