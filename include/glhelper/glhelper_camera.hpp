@@ -80,7 +80,7 @@ public:
      *
      * produce a default view and projection matrix
      */
-    camera_perspective () : camera_perspective { math::rad ( 45. ), 16. / 9., 0.1, 100. } {}
+    camera_perspective () : camera_perspective { math::rad ( 60. ), 16. / 9., 0.1, 100. } {}
 
     /* default copy constructor */
     camera_perspective ( const camera_perspective& other ) = default;
