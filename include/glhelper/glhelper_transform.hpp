@@ -48,6 +48,7 @@ namespace glh
          * return: the value of pi multiplied by a constant
          */
         inline double pi ( const double k ) { return k * acos ( -1. ); }
+        inline double pi () { return acos ( -1 ); }
 
         /* rad
          *
@@ -55,7 +56,15 @@ namespace glh
          * 
          * return: a conversion of deg into radians
          */
-        inline double rad ( const double deg ) { return pi ( deg / 180 ); }
+        inline double rad ( const double degrees ) { return pi ( degrees / 180 ); }
+
+        /* deg
+         *
+         * convert radians to degrees
+         * 
+         * return: a conversion of deg into radians
+         */
+        inline double deg ( const double radians ) { return ( radians / pi () ) * 180; }
 
         /* zero_matrix
          *
