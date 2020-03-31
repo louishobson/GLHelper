@@ -113,7 +113,7 @@ public:
      *
      * return: new position vector
      */
-    const math::vec3 move ( const math::vec3& vec );
+    const math::vec3& move ( const math::vec3& vec );
 
     /* move_global
      *
@@ -123,7 +123,7 @@ public:
      * 
      * return: new position vector
      */
-    const math::vec3 move_global ( const math::vec3& vec );
+    const math::vec3& move_global ( const math::vec3& vec );
 
     /* pitch/yaw/roll
      *
@@ -134,9 +134,9 @@ public:
      * 
      * return: the position vector
      */
-    const math::vec3 pitch ( const double arg );
-    const math::vec3 yaw ( const double arg );
-    const math::vec3 roll ( const double arg );
+    const math::vec3& pitch ( const double arg );
+    const math::vec3& yaw ( const double arg );
+    const math::vec3& roll ( const double arg );
 
 
 
@@ -166,9 +166,22 @@ public:
 
 
 
+    /* get_view
+     *
+     * get the view matrix
+     */
+    const math::mat4& get_view () const;
+
+    /* get_proj
+     *
+     * get the projection matrix
+     */
+    const math::mat4& get_proj () const;
+
     /* get_trans
      *
-     * recieve the transformation
+     * recieve the full transformation
+     * found by projection * view
      */
     const math::mat4& get_trans () const;
 
@@ -217,13 +230,25 @@ private:
      */
     mutable math::mat4 trans;
 
-    /* update
+    /* update_view
+     *
+     * update the view matrix
+     */
+    bool update_view () const;
+
+    /* update_proj
+     *
+     * update the projection matrix
+     */
+    bool update_proj () const;
+
+    /* update_trans
      *
      * update view, proj then trans if changes to parameters have occured
      * 
      * return: bool for if any changes were applied
      */
-    bool update () const;
+    bool update_trans () const;
 
 };
 
