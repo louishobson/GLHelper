@@ -26,7 +26,7 @@
 
 int main ()
 {
-    GLfloat vdata[] = 
+    GLfloat cratebuff [] = 
     {
         -0.5f, -0.5f, -0.5f,   0.0f, 0.0f,
          0.5f, -0.5f, -0.5f,   1.0f, 0.0f,
@@ -71,73 +71,103 @@ int main ()
         -0.5f,  0.5f, -0.5f,   0.0f, 1.0f
     };
 
-    glh::math::vec3 posdata[] = 
+    glh::math::vec3 cratepos []
     {
-        glh::math::vec3 {  0.0f,  0.0f,  0.0f  },
-        glh::math::vec3 {  2.0f,  5.0f, -15.0f }, 
-        glh::math::vec3 { -1.5f, -2.2f, -2.5f  },  
-        glh::math::vec3 { -3.8f, -2.0f, -12.3f },  
-        glh::math::vec3 {  2.4f, -0.4f, -3.5f  },  
-        glh::math::vec3 { -1.7f,  3.0f, -7.5f  },  
-        glh::math::vec3 {  1.3f, -2.0f, -2.5f  },  
-        glh::math::vec3 {  1.5f,  2.0f, -2.5f  }, 
-        glh::math::vec3 {  1.5f,  0.2f, -1.5f  }, 
-        glh::math::vec3 { -1.3f,  1.0f, -1.5f  } 
+        glh::math::vec3 { 0., 0.5, 0. },
+        glh::math::vec3 { 0., 1.5, 0. },
+
+        glh::math::vec3 { 5., 0.5, 3. }
     };
+
+    GLfloat floorbuff []
+    {
+        -100.0f, 0.0f,  100.0f,   0.0f, 0.0f,
+         100.0f, 0.0f,  100.0f,   100.0f, 0.0f,
+        -100.0f, 0.0f, -100.0f,   0.0f, 100.0f,
+         100.0f, 0.0f, -100.0f,   100.0f, 100.0f
+    };
+
+    GLuint floorelems []
+    {
+        0, 1, 2, 1, 2, 3
+    };
+
+    
 
     glh::window window;
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
 
-    glh::vbo vbo { sizeof ( vdata ), vdata, GL_STATIC_DRAW };
+    glh::vbo cratevbo { sizeof ( cratebuff ), cratebuff, GL_STATIC_DRAW };
+    glh::vbo floorvbo { sizeof ( floorbuff ), floorbuff, GL_STATIC_DRAW };
+    glh::ebo floorebo { sizeof ( floorelems ), floorelems, GL_STATIC_DRAW };
 
-    glh::vao vao;
-    vao.set_vertex_attrib ( 0, vbo, 3, GL_FLOAT, GL_FALSE, 5 * sizeof ( GLfloat ), ( GLvoid * ) 0 );
-    vao.set_vertex_attrib ( 1, vbo, 2, GL_FLOAT, GL_FALSE, 5 * sizeof ( GLfloat ), ( GLvoid * ) ( 3 * sizeof ( GLfloat ) ) );
+    glh::vao cratevao;
+    cratevao.set_vertex_attrib ( 0, cratevbo, 3, GL_FLOAT, GL_FALSE, 5 * sizeof ( GLfloat ), ( GLvoid * ) 0 );
+    cratevao.set_vertex_attrib ( 1, cratevbo, 2, GL_FLOAT, GL_FALSE, 5 * sizeof ( GLfloat ), ( GLvoid * ) ( 3 * sizeof ( GLfloat ) ) );
+    glh::vao floorvao;
+    floorvao.set_vertex_attrib ( 0, floorvbo, 3, GL_FLOAT, GL_FALSE, 5 * sizeof ( GLfloat ), ( GLvoid * ) 0 );
+    floorvao.set_vertex_attrib ( 1, floorvbo, 2, GL_FLOAT, GL_FALSE, 5 * sizeof ( GLfloat ), ( GLvoid * ) ( 3 * sizeof ( GLfloat ) ) );
+    floorvao.bind_ebo ( floorebo );
 
     glh::vshader vshader { "shaders/vertex.glsl" };
     glh::fshader fshader { "shaders/fragment.glsl" };
     glh::program program { vshader, fshader };
-    glh::uniform proj_uni = program.get_uniform ( "trans" );
+    glh::uniform trans_uni = program.get_uniform ( "trans" );
+    glh::uniform texture_uni = program.get_uniform ( "texunit" );
 
-    glh::texture2d texture { "assets/crate.png", GL_RGBA };
+    glh::texture2d cratetex { "assets/crate.png", GL_RGBA, GL_TEXTURE0 };
+    glh::texture2d floortex { "assets/grass.png", GL_RGB, GL_TEXTURE1 };
+    floortex.set_wrap ( GL_REPEAT );
 
     glh::math::mat4 model;
-    glh::camera_perspective camera { glh::math::rad ( 75 ), 16. / 9., 0.1, 200 };
-    camera.move_global ( glh::math::vec3 { 0., 0., 30. } );
+    glh::camera_perspective camera;
+    camera.move ( glh::math::vec3 { 0., 10., 0. } );
+    camera.enable_restrictive_mode ();
 
-    glh::static_renderable renderable { window, vao, program, texture };
-    renderable.clear_colour ( 1., 1., 1., 1. );
-    renderable.enable_depth_test ();
+    glh::static_renderable craterend { window, cratevao, program, cratetex };
+    glh::static_renderable floorrend { window, floorvao, program, floortex };
+    
+    glh::renderer::clear_colour ( 1., 1., 1., 1. );
+    glh::renderer::enable_depth_test ();
 
-    renderable.prepare ();
     while ( !window.should_close () ) 
     {
         auto timeinfo = window.get_timeinfo ();
         auto dimensions = window.get_dimensions ();
         auto mouseinfo = window.get_mouseinfo ();
-        renderable.viewport ( 0, 0, dimensions.width, dimensions.height );
 
-        if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move_relative ( timeinfo.deltapoll * glh::math::vec3 { 0., 0., -20. } );
-        if ( window.get_key ( GLFW_KEY_A ).action == GLFW_PRESS ) camera.move_relative ( timeinfo.deltapoll * glh::math::vec3 { -10, 0., 0. } );
-        if ( window.get_key ( GLFW_KEY_S ).action == GLFW_PRESS ) camera.move_relative ( timeinfo.deltapoll * glh::math::vec3 { 0., 0., 20. } );
-        if ( window.get_key ( GLFW_KEY_D ).action == GLFW_PRESS ) camera.move_relative ( timeinfo.deltapoll * glh::math::vec3 { 10, 0., 0. } );
+        glh::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
 
-        if ( window.get_key ( GLFW_KEY_SPACE ).action == GLFW_PRESS ) camera.move_relative ( timeinfo.deltapoll * glh::math::vec3 { 0., 10., 0. } );
-        if ( window.get_key ( GLFW_KEY_LEFT_SHIFT ).action == GLFW_PRESS ) camera.move_relative ( timeinfo.deltapoll * glh::math::vec3 { 0., -10., 0. } );
+        if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 0., 0., -20. } );
+        if ( window.get_key ( GLFW_KEY_A ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { -10, 0., 0. } );
+        if ( window.get_key ( GLFW_KEY_S ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 0., 0., 20. } );
+        if ( window.get_key ( GLFW_KEY_D ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 10, 0., 0. } );
+
+        if ( window.get_key ( GLFW_KEY_SPACE ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 0., 10., 0. } );
+        if ( window.get_key ( GLFW_KEY_LEFT_SHIFT ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 0., -10., 0. } );
 
         if ( window.get_key ( GLFW_KEY_Z ).action == GLFW_PRESS ) camera.roll ( timeinfo.deltapoll * glh::math::rad ( 80 ) );
         if ( window.get_key ( GLFW_KEY_X ).action == GLFW_PRESS ) camera.roll ( timeinfo.deltapoll * glh::math::rad ( -80 ) ); 
 
         camera.pitch ( mouseinfo.deltayfrac * glh::math::rad ( -80 ) );
-        camera.yaw ( mouseinfo.deltaxfrac * glh::math::rad ( -80 ) );  
+        camera.yaw ( mouseinfo.deltaxfrac * glh::math::rad ( -80 ) ); 
+        
 
-        renderable.clear ();
-        for ( unsigned i = 0; i < 10; ++i )
+        glh::renderer::clear ();
+
+        craterend.prepare ();
+        texture_uni.set_int ( 0 );
+        for ( auto vec: cratepos )
         {
-            model = glh::math::translate ( glh::math::rotate ( glh::math::identity<4> (), glh::math::rad ( i * 16 ), glh::math::norm ( glh::math::vec3 { 123, 53, 1 } ) ), posdata [ i ] );
-            proj_uni.set_matrix ( camera.get_trans () * model );
-            renderable.draw_arrays ( GL_TRIANGLES, 0, 6 * 6 );
+            trans_uni.set_matrix ( camera.get_trans () * glh::math::translate ( glh::math::identity<4> (), vec ) );
+            glh::renderer::draw_arrays ( GL_TRIANGLES, 0, 6 * 6 );
         }
+
+        floorrend.prepare ();
+        texture_uni.set_int ( 1 );
+        trans_uni.set_matrix ( camera.get_trans () );
+        glh::renderer::draw_elements ( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
+
         window.swap_buffers ();
         window.poll_events ();
         

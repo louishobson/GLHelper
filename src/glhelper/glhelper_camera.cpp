@@ -25,12 +25,15 @@
  *
  * give parameters for look_at and perspective_fov
  */
-glh::camera_perspective::camera_perspective ( const math::vec3& _pos, const math::vec3& _direction, const math::vec3& _world_up, const double _fov, const double _aspect, const double _near, const double _far )
+glh::camera_perspective::camera_perspective ( const math::vec3& _pos, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far )
     : pos { _pos }
-    , z { math::norm ( - _direction ) }
-    , world_up { math::norm ( _world_up ) }
-    , x { math::cross ( world_up, z ) }
-    , y { math::cross ( z, x ) }
+    , x { 0. }
+    , y { 0. }
+    , z { 0. }
+    , restrict_x { 0. }
+    , restrict_y { 0. }
+    , restrict_z { 0. }
+    , restrictive_mode { false }
     , fov { _fov }
     , aspect { _aspect }
     , near { _near }
@@ -38,24 +41,71 @@ glh::camera_perspective::camera_perspective ( const math::vec3& _pos, const math
     , view_change { true }
     , proj_change { true }
 {
+    /* set x, y, z, flat_x, world_y and flat_z */
+    z = math::norm ( - _direction );
+    x = math::cross ( math::norm ( _world_y ), z );
+    y = math::cross ( z, x );
+    restrict_x = x;
+    restrict_x = y;
+    restrict_z = z;
+
     /* update */
     update ();
 }
 
-/* move_relative
+
+
+/* enable/disable_restrictive_mode
+ *
+ * enables/disables restrictive movement mode
+ * 
+ * when restricted, roll is disabled, and movement occures irrespective of pitch
+ * pitch is limited to 90 degrees up and down
+ */
+void glh::camera_perspective::enable_restrictive_mode ()
+{
+    /* set to true */
+    restrictive_mode = true;
+
+    /* set the values of restrict_xyz */
+    restrict_x = x;
+    restrict_y = y;
+    restrict_z = z;
+}
+void glh::camera_perspective::disable_restrictive_mode () 
+{
+    /* purely set to false */ 
+    restrictive_mode = false;
+}
+
+/* move
  *
  * move camera relative to its own axis
+ * when unrestricted, the camera moves completely based on its own axis
+ * when restricted, y movement is global, but x and z are dependant on yaw
  * 
- * vec: vector for movement (+x: right, +y: up, +z: back)
+ * vec: vector for movement
  *
  * return: new position vector
  */
-const glh::math::vec3 glh::camera_perspective::move_relative ( const math::vec3& vec )
+const glh::math::vec3 glh::camera_perspective::move ( const math::vec3& vec )
 {
-    /* move pos */
-    pos += x * vec.at ( 0 );
-    pos += y * vec.at ( 1 );
-    pos += z * vec.at ( 2 );
+    
+    /* move pos
+     * if non-restricted use xyz, otherwise use restricted values
+    */
+    if ( !restrictive_mode )
+    {
+        pos += x * vec.at ( 0 );
+        pos += y * vec.at ( 1 );
+        pos += z * vec.at ( 2 );
+    } else
+    {
+        pos += restrict_x * vec.at ( 0 );
+        pos += restrict_y * vec.at ( 1 );
+        pos += restrict_z * vec.at ( 2 );
+    } 
+    
 
     /* set view as changed */
     view_change = true;
@@ -81,19 +131,42 @@ const glh::math::vec3 glh::camera_perspective::move_global ( const math::vec3& v
     return ( pos += vec );
 }
 
-/* pitch/yaw/world_yaw/roll
+/* pitch/yaw/roll
  *
- * rotate the camera via changed in pitch/roll/yaw
+ * rotate the camera via changes in pitch/yaw/roll
+ * how this affects the camera is dependant on whether restrictive movement is active
  *
  * arg: the angle in radians
  * 
- * return: the new direction unit vector
+ * return: the position vector
  */
 const glh::math::vec3 glh::camera_perspective::pitch ( const double arg )
 {
-    /* rotate y and z around x axis */
-    y = math::rotate ( y, arg, x );
-    z = math::rotate ( z, arg, x );
+    /* if non-restrictive, rotate y and z around x axis */
+    if ( !restrictive_mode )
+    {
+        y = math::rotate ( y, arg, x );
+        z = math::rotate ( z, arg, x );
+    } else
+    /* otherwise, rotate y and z around the restrict_x axis */
+    {
+        /* if trying to pitch beyond vertical, reduce arg accordingly */
+        double pitch_angle = math::angle ( restrict_y, z );
+        if ( pitch_angle + arg > math::rad ( 180 ) )
+        {
+            y = math::rotate ( y, math::rad ( 180 ) - pitch_angle, restrict_x );
+            z = math::rotate ( z, math::rad ( 180 ) - pitch_angle, restrict_x );
+        } else
+        if ( pitch_angle + arg < math::rad ( 0 ) )
+        {
+            y = math::rotate ( y, math::rad ( 0 ) - pitch_angle, restrict_x );
+            z = math::rotate ( z, math::rad ( 0 ) - pitch_angle, restrict_x );
+        } else
+        {        
+            y = math::rotate ( y, arg, restrict_x );
+            z = math::rotate ( z, arg, restrict_x );
+        }
+    }
 
     /* set view as changed and return */
     view_change = true;
@@ -101,20 +174,20 @@ const glh::math::vec3 glh::camera_perspective::pitch ( const double arg )
 }
 const glh::math::vec3 glh::camera_perspective::yaw ( const double arg )
 {
-    /* rotate x and z around the y axis */
-    x = math::rotate ( x, arg, y );
-    z = math::rotate ( z, arg, y );
-
-    /* set view as changed and return */
-    view_change = true;
-    return pos;
-}
-const glh::math::vec3 glh::camera_perspective::world_yaw ( const double arg )
-{
-    /* rotate x, y and z around the world_up axis */
-    x = math::rotate ( x, arg, world_up );
-    z = math::rotate ( z, arg, world_up );
-    y = math::rotate ( y, arg, world_up );
+    /* if non-restrictive, rotate x and z around the y axis */
+    if ( !restrictive_mode )
+    {
+        x = math::rotate ( x, arg, y );
+        z = math::rotate ( z, arg, y );
+    } else
+    /* otherwise, rotate x, restict_x, y, z and restrict_z around the restrict_y axis */
+    {
+        x = math::rotate ( x, arg, restrict_y );
+        restrict_x = math::rotate ( restrict_x, arg, restrict_y );
+        y = math::rotate ( y, arg, restrict_y );
+        z = math::rotate ( z, arg, restrict_y );
+        restrict_z = math::rotate ( restrict_z, arg, restrict_y );
+    }    
 
     /* set view as changed and return */
     view_change = true;
@@ -122,9 +195,14 @@ const glh::math::vec3 glh::camera_perspective::world_yaw ( const double arg )
 }
 const glh::math::vec3 glh::camera_perspective::roll ( const double arg )
 {
-    /* rotate x and y around the z axis */
-    x = math::rotate ( x, arg, z );
-    y = math::rotate ( y, arg, z );
+    /* if non-restrictive, rotate x and y around the z axis */
+    if ( !restrictive_mode )
+    {
+        x = math::rotate ( x, arg, z );
+        y = math::rotate ( y, arg, z );
+    } else
+    /* otherwise return pos without change */
+    return pos;
 
     /* set view as changed and return */
     view_change = true;

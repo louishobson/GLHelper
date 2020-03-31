@@ -140,6 +140,12 @@ public:
      */
     GLenum unbind () const;
 
+    /* is_bound
+     *
+     * return boolean for if the texture is bound
+     */
+    bool is_bound () const;
+
 
 
 private:

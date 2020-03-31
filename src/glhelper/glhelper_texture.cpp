@@ -151,10 +151,10 @@ GLenum glh::texture2d::bind () const
     /* check the object is valid */
     if ( !is_valid () )  throw texture_exception { "attempted bind operation on invalid 2D texture object" };    
 
-    /* activate the texture unit */
-    glActiveTexture ( texture_unit );
-    /* bind the texture */
-    glBindTexture ( GL_TEXTURE_2D, id );
+    /* bind the texture, if not already bound
+     * texture unit gets activated by is_bound ()
+     */
+    if ( !is_bound () ) glBindTexture ( GL_TEXTURE_2D, id );
 
     /* return the target */
     return GL_TEXTURE_2D;
@@ -169,11 +169,26 @@ GLenum glh::texture2d::unbind () const
     /* check the object is valid */
     if ( !is_valid () )  throw texture_exception { "attempted bind operation on invalid 2D texture object" };    
 
-    /* activate the texture unit */
-    glActiveTexture ( texture_unit );
-    /* unbind the texture */
-    glBindTexture ( GL_TEXTURE_2D, 0 );
+    /* unbind the texture, if not already unbound
+     * texture unit gets activated by is_bound ()
+     */
+    if ( is_bound () ) glBindTexture ( GL_TEXTURE_2D, 0 );
 
     /* return the target */
     return GL_TEXTURE_2D;
+}
+
+/* is_bound
+ *
+ * return boolean for if the texture is bound
+ */
+bool glh::texture2d::is_bound () const
+{
+    /* activate the texture unit */
+    glActiveTexture ( texture_unit );
+    /* get texture currently bound to unit */
+    GLint bound_texture;
+    glGetIntegerv ( GL_TEXTURE_BINDING_2D, &bound_texture ); 
+    /* return boolean for if is valid and is in use */
+    return ( is_valid () && bound_texture == id ); 
 }
