@@ -49,8 +49,8 @@ glh::camera_perspective::camera_perspective ( const math::vec3& _pos, const math
     restrict_x = y;
     restrict_z = z;
 
-    /* update */
-    update ();
+    /* update trans */
+    update_trans ();
 }
 
 
@@ -88,7 +88,7 @@ void glh::camera_perspective::disable_restrictive_mode ()
  *
  * return: new position vector
  */
-const glh::math::vec3 glh::camera_perspective::move ( const math::vec3& vec )
+const glh::math::vec3& glh::camera_perspective::move ( const math::vec3& vec )
 {
     
     /* move pos
@@ -122,7 +122,7 @@ const glh::math::vec3 glh::camera_perspective::move ( const math::vec3& vec )
  * 
  * return: new position vector
  */
-const glh::math::vec3 glh::camera_perspective::move_global ( const math::vec3& vec )
+const glh::math::vec3& glh::camera_perspective::move_global ( const math::vec3& vec )
 {
     /* set view as changed */
     view_change = true;
@@ -140,7 +140,7 @@ const glh::math::vec3 glh::camera_perspective::move_global ( const math::vec3& v
  * 
  * return: the position vector
  */
-const glh::math::vec3 glh::camera_perspective::pitch ( const double arg )
+const glh::math::vec3& glh::camera_perspective::pitch ( const double arg )
 {
     /* if non-restrictive, rotate y and z around x axis */
     if ( !restrictive_mode )
@@ -172,7 +172,7 @@ const glh::math::vec3 glh::camera_perspective::pitch ( const double arg )
     view_change = true;
     return pos;
 }
-const glh::math::vec3 glh::camera_perspective::yaw ( const double arg )
+const glh::math::vec3& glh::camera_perspective::yaw ( const double arg )
 {
     /* if non-restrictive, rotate x and z around the y axis */
     if ( !restrictive_mode )
@@ -193,7 +193,7 @@ const glh::math::vec3 glh::camera_perspective::yaw ( const double arg )
     view_change = true;
     return pos;
 }
-const glh::math::vec3 glh::camera_perspective::roll ( const double arg )
+const glh::math::vec3& glh::camera_perspective::roll ( const double arg )
 {
     /* if non-restrictive, rotate x and y around the z axis */
     if ( !restrictive_mode )
@@ -209,6 +209,28 @@ const glh::math::vec3 glh::camera_perspective::roll ( const double arg )
     return pos;
 }
 
+/* get_view
+ *
+ * get the view matrix
+ */
+const glh::math::mat4& glh::camera_perspective::get_view () const
+{
+    /* update and return view */
+    update_view ();
+    return view;
+}
+
+/* get_proj
+ *
+ * get the projection matrix
+ */
+const glh::math::mat4& glh::camera_perspective::get_proj () const
+{
+    /* update and return proj */
+    update_proj ();
+    return proj;
+}
+
 /* get_trans
  *
  * recieve the transformation
@@ -216,38 +238,64 @@ const glh::math::vec3 glh::camera_perspective::roll ( const double arg )
 const glh::math::mat4& glh::camera_perspective::get_trans () const
 {
     /* update and return trans */
-    update ();
+    update_trans ();
     return trans;
 }
 
-/* update
+/* update_view
  *
- * update view, proj then trans if changes to parameters have occured
- * 
- * return: bool for if any changes were applied
+ * update the view matrix
  */
-bool glh::camera_perspective::update () const
+bool glh::camera_perspective::update_view () const
 {
-    /* true if any change is to occur */
-    bool change_occured = view_change || proj_change;
-
     /* if view has been changed, update */
     if ( view_change )
     {
         view = math::camera ( pos, x, y, z );
         view_change = false;
+        return true;
     }
-    
+
+    /* else return false */
+    return false;
+}
+
+/* update_proj
+ *
+ * update the projection matrix
+ */
+bool glh::camera_perspective::update_proj () const
+{
     /* if proj has been changed, update */
     if ( proj_change )
     {
         proj = math::perspective_fov ( fov, aspect, near, far );
         proj_change = false;
+        return true;
     }
 
-    /* if any change occured, update trans */
-    if ( change_occured ) trans = proj * view;
+    /* else return false */
+    return false;
 
-    /* return change_occured */
-    return change_occured;
+}
+
+/* update_trans
+ *
+ * update view, proj then trans if changes to parameters have occured
+ * 
+ * return: bool for if any changes were applied
+ */
+bool glh::camera_perspective::update_trans () const
+{
+    /* if any change occured in updating view and proj, update trans */
+    bool view_update = update_view ();
+    bool proj_update = update_proj ();
+    if ( view_update || proj_update ) 
+    {
+        trans = proj * view;
+        return true;
+    }
+    
+    /* else return false */
+    return false;
 }
