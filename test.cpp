@@ -181,8 +181,7 @@ int main ()
         shininess_uni.set_float ( 2 );
         for ( auto vec: cratepos )
         {
-            glh::math::mat4 model;
-            model = glh::math::translate ( glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), scale ) ), vec * scale );
+            glh::math::mat4 model = glh::math::translate ( glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), scale ) ), vec * scale );
             model_uni.set_matrix ( model );
             normmat_uni.set_matrix ( glh::math::transpose ( glh::math::inverse ( glh::math::resize<3> ( model ) ) ) );
             glh::renderer::draw_arrays ( GL_TRIANGLES, 0, 6 * 6 );
