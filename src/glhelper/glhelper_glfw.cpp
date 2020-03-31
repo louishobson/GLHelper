@@ -100,11 +100,6 @@ glh::window::~window ()
  */
 void glh::window::poll_events ()
 {
-    /* set prev_... storage */
-    prev_dimensions = get_dimensions ();
-    prev_mouseinfo = get_mouseinfo ();
-    prev_timeinfo = get_poll_timeinfo ();
-
     /* make window current, poll events and return */
     make_current ();
     glfwPollEvents ();
@@ -119,11 +114,6 @@ void glh::window::poll_events ()
  */
 void glh::window::wait_events ( const double timeout )
 {
-    /* set prev_... storage */
-    prev_dimensions = get_dimensions ();
-    prev_mouseinfo = get_mouseinfo ();
-    prev_timeinfo = get_poll_timeinfo ();
-
     /* make window current */
     make_current ();
 
@@ -183,6 +173,9 @@ glh::window::dimensions_t glh::window::get_dimensions () const
     dimensions.deltawidth = dimensions.width - prev_dimensions.width;
     dimensions.deltaheight = dimensions.height - prev_dimensions.height;
 
+    /* set prev_dimensions */
+    prev_dimensions = dimensions;
+
     /* return dimensions */
     return dimensions;
 }
@@ -231,6 +224,9 @@ glh::window::mouseinfo_t glh::window::get_mouseinfo () const
     mouseinfo.deltaxfrac = mouseinfo.deltaxpos / dimensions.width;
     mouseinfo.deltayfrac = mouseinfo.deltaypos / dimensions.height;
 
+    /* set previous mouseinfo */
+    prev_mouseinfo = mouseinfo;
+
     /* return the mouse info */
     return mouseinfo;
 }
@@ -246,9 +242,12 @@ glh::window::timeinfo_t glh::window::get_timeinfo () const
     /* generate timeinfo */
     timeinfo_t timeinfo;
     timeinfo.now = glfwGetTime ();
-    timeinfo.poll = prev_timeinfo.poll;
-    timeinfo.lastpoll = prev_timeinfo.lastpoll;
-    timeinfo.deltapoll = timeinfo.poll - timeinfo.lastpoll;
+    timeinfo.last = prev_timeinfo.now;
+    timeinfo.delta = timeinfo.now - timeinfo.last;
+    
+    
+    /* set prev_timeinfo */
+    prev_timeinfo = timeinfo;
 
     /* return timeinfo */
     return timeinfo;
@@ -353,25 +352,4 @@ void glh::window::unregister_object ()
         /* terminate glfw */
         glfwTerminate ();
     }
-}
-
-
-
-/* PEVIOUS INFO STORAGE */
-
-/* get_poll_timeinfo
- *
- * set the timeinfo at a poll
- */
-glh::window::timeinfo_t glh::window::get_poll_timeinfo () const
-{
-    /* generate timeinfo */
-    timeinfo_t timeinfo;
-    timeinfo.now = glfwGetTime ();
-    timeinfo.poll = glfwGetTime ();
-    timeinfo.lastpoll = prev_timeinfo.poll;
-    timeinfo.deltapoll = timeinfo.poll - timeinfo.lastpoll;
-
-    /* return timeinfo */
-    return timeinfo;
 }

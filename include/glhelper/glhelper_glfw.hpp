@@ -197,9 +197,8 @@ public:
     struct timeinfo_t
     {
         double now;
-        double poll;
-        double lastpoll;
-        double deltapoll;
+        double last;
+        double delta;
     };
 
 
@@ -369,15 +368,9 @@ private:
      *
      * previous dimension, mouse and time info to calculate changes
      */
-    dimensions_t prev_dimensions;
-    mouseinfo_t prev_mouseinfo;
-    timeinfo_t prev_timeinfo;
-
-    /* get_poll_timeinfo
-     *
-     * set the timeinfo at a poll
-     */
-    timeinfo_t get_poll_timeinfo () const;
+    mutable dimensions_t prev_dimensions;
+    mutable mouseinfo_t prev_mouseinfo;
+    mutable timeinfo_t prev_timeinfo;
 
 };
 
