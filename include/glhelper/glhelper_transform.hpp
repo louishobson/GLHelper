@@ -82,6 +82,13 @@ namespace glh
          */
         template<unsigned M> matrix<M> identity ();
 
+        /* resize
+         *
+         * promote/demote a matrix' size
+         * a size promotion leaves the new rows/columns as like in an identity matrix
+         */
+        template<unsigned _M, unsigned M> matrix<_M> resize ( const matrix<M>& trans );
+
         /* stretch
          *
          * stretch along one axis
@@ -286,6 +293,26 @@ template<unsigned M> inline glh::math::matrix<M, M> glh::math::identity ()
 
     /* return identity matrix */
     return identity;
+}
+
+/* resize
+ *
+ * promote/demote a matrix' size
+ * a size promotion leaves the new rows/columns as like in an identity matrix
+ */
+template<unsigned _M, unsigned M> inline glh::math::matrix<_M> glh::math::resize ( const matrix<M>& trans )
+{
+    /* result matrix */
+    matrix<_M> result { identity<_M> () };
+
+    /* iterate over the smaller of _M and _N and copy values */
+    for ( unsigned iti = 0; iti < std::min ( _M, M ); ++iti ) for ( unsigned itj = 0; itj < std::min ( _M, M ); ++itj )
+    {
+        result.at ( iti, itj ) = trans.at ( iti, itj );
+    }
+
+    /* return result */
+    return result;
 }
 
 /* stretch
