@@ -26,65 +26,66 @@
 
 int main ()
 {
+
     GLfloat cratebuff [] = 
     {
-        -0.5f, -0.5f, -0.5f,   0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,   1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,   1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,   1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,   0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,   0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,   0.0f, 0.0f,   0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.5f,   1.0f, 0.0f,   0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,   1.0f, 1.0f,   0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,   1.0f, 1.0f,   0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,   0.0f, 1.0f,   0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,   0.0f, 0.0f,   0.0f,  0.0f, -1.0f,
 
-        -0.5f, -0.5f,  0.5f,   0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,   1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,   1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,   1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,   0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,   0.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,   0.0f, 0.0f,   0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f,  0.5f,   1.0f, 0.0f,   0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,   1.0f, 1.0f,   0.0f,  0.0f,  1.0f,   
+         0.5f,  0.5f,  0.5f,   1.0f, 1.0f,   0.0f,  0.0f,  1.0f,
+        -0.5f,  0.5f,  0.5f,   0.0f, 1.0f,   0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f,   0.0f, 0.0f,   0.0f,  0.0f,  1.0f,
 
-        -0.5f,  0.5f,  0.5f,   1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,   1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,   0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,   0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,   0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,   1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,   1.0f, 0.0f,  -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,   1.0f, 1.0f,  -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,   0.0f, 1.0f,  -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,   0.0f, 1.0f,  -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,   0.0f, 0.0f,  -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,   1.0f, 0.0f,  -1.0f,  0.0f,  0.0f,
 
-         0.5f,  0.5f,  0.5f,   1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,   1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,   0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,   0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,   0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,   1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,   1.0f, 0.0f,   1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,   1.0f, 1.0f,   1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,   0.0f, 1.0f,   1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,   0.0f, 1.0f,   1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,   0.0f, 0.0f,   1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,   1.0f, 0.0f,   1.0f,  0.0f,  0.0f,
 
-        -0.5f, -0.5f, -0.5f,   0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,   1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,   1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,   1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,   0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,   0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,   0.0f, 1.0f,   0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,   1.0f, 1.0f,   0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,   1.0f, 0.0f,   0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,   1.0f, 0.0f,   0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,   0.0f, 0.0f,   0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,   0.0f, 1.0f,   0.0f, -1.0f,  0.0f,
 
-        -0.5f,  0.5f, -0.5f,   0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,   1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,   1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,   1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,   0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,   0.0f, 1.0f
+        -0.5f,  0.5f, -0.5f,   0.0f, 1.0f,   0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,   1.0f, 1.0f,   0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,   1.0f, 0.0f,   0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,   1.0f, 0.0f,   0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,   0.0f, 0.0f,   0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,   0.0f, 1.0f,   0.0f,  1.0f,  0.0f,
     };
 
     glh::math::vec3 cratepos []
     {
-        glh::math::vec3 { 0., 0.5, 0. },
-        glh::math::vec3 { 0., 1.5, 0. },
+        glh::math::vec3 { 0.0, 0.5, 0.0 },
+        glh::math::vec3 { 0.0, 1.5, 0.0 },
 
-        glh::math::vec3 { 5., 0.5, 3. }
+        glh::math::vec3 { 5.0, 0.5, 3.0 }
     };
 
     GLfloat floorbuff []
     {
-        -100.0f, 0.0f,  100.0f,   0.0f, 0.0f,
-         100.0f, 0.0f,  100.0f,   100.0f, 0.0f,
-        -100.0f, 0.0f, -100.0f,   0.0f, 100.0f,
-         100.0f, 0.0f, -100.0f,   100.0f, 100.0f
+        -50.0f, 0.0f,  50.0f,     0.0f,   0.0f,   0.1f, 1.0f, 0.0f,
+         50.0f, 0.0f,  50.0f,   100.0f,   0.0f,   0.1f, 1.0f, 0.0f,
+        -50.0f, 0.0f, -50.0f,     0.0f, 100.0f,   0.1f, 1.0f, 0.0f,
+         50.0f, 0.0f, -50.0f,   100.0f, 100.0f,   0.1f, 1.0f, 0.0f
     };
 
     GLuint floorelems []
@@ -92,7 +93,7 @@ int main ()
         0, 1, 2, 1, 2, 3
     };
 
-    
+    double scale = 1;
 
     glh::window window;
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
@@ -102,33 +103,51 @@ int main ()
     glh::ebo floorebo { sizeof ( floorelems ), floorelems, GL_STATIC_DRAW };
 
     glh::vao cratevao;
-    cratevao.set_vertex_attrib ( 0, cratevbo, 3, GL_FLOAT, GL_FALSE, 5 * sizeof ( GLfloat ), ( GLvoid * ) 0 );
-    cratevao.set_vertex_attrib ( 1, cratevbo, 2, GL_FLOAT, GL_FALSE, 5 * sizeof ( GLfloat ), ( GLvoid * ) ( 3 * sizeof ( GLfloat ) ) );
+    cratevao.set_vertex_attrib ( 0, cratevbo, 3, GL_FLOAT, GL_FALSE, 8 * sizeof ( GLfloat ), ( GLvoid * ) 0 );
+    cratevao.set_vertex_attrib ( 1, cratevbo, 2, GL_FLOAT, GL_FALSE, 8 * sizeof ( GLfloat ), ( GLvoid * ) ( 3 * sizeof ( GLfloat ) ) );
+    cratevao.set_vertex_attrib ( 2, cratevbo, 3, GL_FLOAT, GL_FALSE, 8 * sizeof ( GLfloat ), ( GLvoid * ) ( 5 * sizeof ( GLfloat ) ) );
     glh::vao floorvao;
-    floorvao.set_vertex_attrib ( 0, floorvbo, 3, GL_FLOAT, GL_FALSE, 5 * sizeof ( GLfloat ), ( GLvoid * ) 0 );
-    floorvao.set_vertex_attrib ( 1, floorvbo, 2, GL_FLOAT, GL_FALSE, 5 * sizeof ( GLfloat ), ( GLvoid * ) ( 3 * sizeof ( GLfloat ) ) );
+    floorvao.set_vertex_attrib ( 0, floorvbo, 3, GL_FLOAT, GL_FALSE, 8 * sizeof ( GLfloat ), ( GLvoid * ) 0 );
+    floorvao.set_vertex_attrib ( 1, floorvbo, 2, GL_FLOAT, GL_FALSE, 8 * sizeof ( GLfloat ), ( GLvoid * ) ( 3 * sizeof ( GLfloat ) ) );
+    floorvao.set_vertex_attrib ( 2, floorvbo, 3, GL_FLOAT, GL_FALSE, 8 * sizeof ( GLfloat ), ( GLvoid * ) ( 5 * sizeof ( GLfloat ) ) );
     floorvao.bind_ebo ( floorebo );
 
     glh::vshader vshader { "shaders/vertex.glsl" };
     glh::fshader fshader { "shaders/fragment.glsl" };
     glh::program program { vshader, fshader };
-    glh::uniform trans_uni = program.get_uniform ( "trans" );
-    glh::uniform texture_uni = program.get_uniform ( "texunit" );
+    glh::uniform model_uni = program.get_uniform ( "Model" );
+    glh::uniform view_uni = program.get_uniform ( "View" );
+    glh::uniform proj_uni = program.get_uniform ( "Proj" );
+    glh::uniform normmat_uni = program.get_uniform ( "NormMat" );
+    glh::uniform viewpos_uni = program.get_uniform ( "ViewPos" );
+    glh::uniform ambient_uni = program.get_uniform ( "Ambient" );
+    glh::uniform lightpos_uni = program.get_uniform ( "LightPos" );
+    glh::uniform lightcolour_uni = program.get_uniform ( "LightColour" );
+    glh::uniform specstrength_uni = program.get_uniform ( "SpecStrength" );
+    glh::uniform shininess_uni = program.get_uniform ( "Shininess" );
+    glh::uniform texunit_uni = program.get_uniform ( "TexUnit" );
 
     glh::texture2d cratetex { "assets/crate.png", GL_RGBA, GL_TEXTURE0 };
     glh::texture2d floortex { "assets/grass.png", GL_RGB, GL_TEXTURE1 };
     floortex.set_wrap ( GL_REPEAT );
 
     glh::math::mat4 model;
-    glh::camera_perspective camera;
-    camera.move ( glh::math::vec3 { 0., 10., 0. } );
+    glh::camera_perspective camera { glh::math::rad ( 60 ), 16.0 / 9.0, 0.1, 1000 };
+    camera.move ( glh::math::vec3 { 0.0, 10.0, 0.0 } );
     camera.enable_restrictive_mode ();
 
     glh::static_renderable craterend { window, cratevao, program, cratetex };
     glh::static_renderable floorrend { window, floorvao, program, floortex };
     
-    glh::renderer::clear_colour ( 1., 1., 1., 1. );
+    glh::renderer::clear_colour ( 1.0, 1.0, 1.0, 1.0 );
     glh::renderer::enable_depth_test ();
+
+    program.use ();
+    proj_uni.set_matrix ( camera.get_proj () );
+    ambient_uni.set_vector ( glh::math::vec3 { 0.4, 0.4, 0.4 } );
+    lightpos_uni.set_vector ( glh::math::vec3 { 5.0, 5.0, -5.0 } * scale );
+    lightcolour_uni.set_vector ( glh::math::vec3 { 1.0, 1.0, 1.0 } );
+    specstrength_uni.set_float ( 0.5 );
 
     while ( !window.should_close () ) 
     {
@@ -138,39 +157,49 @@ int main ()
 
         glh::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
 
-        if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 0., 0., -20. } );
-        if ( window.get_key ( GLFW_KEY_A ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { -10, 0., 0. } );
-        if ( window.get_key ( GLFW_KEY_S ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 0., 0., 20. } );
-        if ( window.get_key ( GLFW_KEY_D ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 10, 0., 0. } );
+        if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0., 0., -10. } );
+        if ( window.get_key ( GLFW_KEY_A ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { -10, 0., 0. } );
+        if ( window.get_key ( GLFW_KEY_S ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0., 0., 10. } );
+        if ( window.get_key ( GLFW_KEY_D ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 10, 0., 0. } );
 
-        if ( window.get_key ( GLFW_KEY_SPACE ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 0., 10., 0. } );
-        if ( window.get_key ( GLFW_KEY_LEFT_SHIFT ).action == GLFW_PRESS ) camera.move ( timeinfo.deltapoll * glh::math::vec3 { 0., -10., 0. } );
+        if ( window.get_key ( GLFW_KEY_SPACE ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0., 10., 0. } );
+        if ( window.get_key ( GLFW_KEY_LEFT_SHIFT ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0., -10., 0. } );
 
-        if ( window.get_key ( GLFW_KEY_Z ).action == GLFW_PRESS ) camera.roll ( timeinfo.deltapoll * glh::math::rad ( 80 ) );
-        if ( window.get_key ( GLFW_KEY_X ).action == GLFW_PRESS ) camera.roll ( timeinfo.deltapoll * glh::math::rad ( -80 ) ); 
+        if ( window.get_key ( GLFW_KEY_Z ).action == GLFW_PRESS ) camera.roll ( timeinfo.delta * glh::math::rad ( 80 ) );
+        if ( window.get_key ( GLFW_KEY_X ).action == GLFW_PRESS ) camera.roll ( timeinfo.delta * glh::math::rad ( -80 ) ); 
 
         camera.pitch ( mouseinfo.deltayfrac * glh::math::rad ( -80 ) );
-        camera.yaw ( mouseinfo.deltaxfrac * glh::math::rad ( -80 ) ); 
+        camera.yaw ( mouseinfo.deltaxfrac * glh::math::rad ( -80 ) );
         
-
+        view_uni.set_matrix ( camera.get_view () );
+        viewpos_uni.set_vector ( camera.get_pos () );
+        
         glh::renderer::clear ();
 
         craterend.prepare ();
-        texture_uni.set_int ( 0 );
+        texunit_uni.set_int ( 0 );
+        shininess_uni.set_float ( 2 );
         for ( auto vec: cratepos )
         {
-            trans_uni.set_matrix ( camera.get_trans () * glh::math::translate ( glh::math::identity<4> (), vec ) );
+            glh::math::mat4 model;
+            model = glh::math::translate ( glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), scale ) ), vec * scale );
+            model_uni.set_matrix ( model );
+            normmat_uni.set_matrix ( glh::math::transpose ( glh::math::inverse ( glh::math::resize<3> ( model ) ) ) );
             glh::renderer::draw_arrays ( GL_TRIANGLES, 0, 6 * 6 );
         }
 
         floorrend.prepare ();
-        texture_uni.set_int ( 1 );
-        trans_uni.set_matrix ( camera.get_trans () );
+        texunit_uni.set_int ( 1 );
+        shininess_uni.set_float ( 2 );
+        model_uni.set_matrix ( glh::math::identity<4> () );
+        normmat_uni.set_matrix ( glh::math::identity<3> () );
         glh::renderer::draw_elements ( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 
         window.swap_buffers ();
+
+        std::this_thread::sleep_for ( std::chrono::milliseconds ( 1000 / 45 ) );
+
         window.poll_events ();
-        
     }
 
     return 0;
