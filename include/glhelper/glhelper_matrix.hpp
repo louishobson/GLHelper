@@ -137,7 +137,7 @@ public:
      *
      * a matrix gets initialised to a zero matrix by default
      */
-    matrix () { data.fill ( 0. ); }
+    matrix () { data.fill ( 0.0 ); }
 
     /* double constructor
      *

@@ -131,7 +131,7 @@ public:
      * 
      * creates a vector filled with 0s
      */
-    vector () { data.fill ( 0. ); }
+    vector () { data.fill ( 0.0 ); }
 
     /* double constructor
      *
