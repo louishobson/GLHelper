@@ -74,13 +74,13 @@ public:
      * create a default view matrix and give parameters for perspective_fov
      */
     camera_perspective ( const double _fov, const double _aspect, const double _near, const double _far )
-        : camera_perspective { math::vec3 { 0., 0., 0. }, math::vec3 { 0., 0., -1. }, math::vec3 { 0., 1., 0. }, _fov, _aspect, _near, _far } {}
+        : camera_perspective { math::vec3 { 0.0, 0.0, 0.0 }, math::vec3 { 0.0, 0.0, -1.0 }, math::vec3 { 0.0, 1.0, 0.0 }, _fov, _aspect, _near, _far } {}
         
     /* zero parameter constructor
      *
      * produce a default view and projection matrix
      */
-    camera_perspective () : camera_perspective { math::rad ( 60. ), 16. / 9., 0.1, 200. } {}
+    camera_perspective () : camera_perspective { math::rad ( 60.0 ), 16.0 / 9.0, 0.1, 200.0 } {}
 
     /* default copy constructor */
     camera_perspective ( const camera_perspective& other ) = default;
@@ -165,6 +165,12 @@ public:
     void set_far ( const double _far ) { far = _far; proj_change = true; }
 
 
+
+    /* get_pos
+     *
+     * get the current viewing position
+     */
+    const math::vec3& get_pos () const { return pos; }
 
     /* get_view
      *
