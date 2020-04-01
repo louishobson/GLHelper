@@ -76,16 +76,20 @@ int main ()
     {
         glh::math::vec3 { 0.0, 0.5, 0.0 },
         glh::math::vec3 { 0.0, 1.5, 0.0 },
+        glh::math::vec3 { 0.0, 2.5, 0.0 },
 
-        glh::math::vec3 { 5.0, 0.5, 3.0 }
+        glh::math::vec3 { 5.0, 0.5, 3.0 },
+        glh::math::vec3 { 5.0, 1.5, 3.0 },
+
+        glh::math::vec3 { -3.0, 0.5, -6.0 },
     };
 
     GLfloat floorbuff []
     {
-        -50.0f, 0.0f,  50.0f,     0.0f,   0.0f,   0.1f, 1.0f, 0.0f,
-         50.0f, 0.0f,  50.0f,   100.0f,   0.0f,   0.1f, 1.0f, 0.0f,
-        -50.0f, 0.0f, -50.0f,     0.0f, 100.0f,   0.1f, 1.0f, 0.0f,
-         50.0f, 0.0f, -50.0f,   100.0f, 100.0f,   0.1f, 1.0f, 0.0f
+        -50.0f, 0.0f,  50.0f,     0.0f,   0.0f,   0.0f, 1.0f, 0.0f,
+         50.0f, 0.0f,  50.0f,   100.0f,   0.0f,   0.0f, 1.0f, 0.0f,
+        -50.0f, 0.0f, -50.0f,     0.0f, 100.0f,   0.0f, 1.0f, 0.0f,
+         50.0f, 0.0f, -50.0f,   100.0f, 100.0f,   0.0f, 1.0f, 0.0f
     };
 
     GLuint floorelems []
@@ -139,13 +143,12 @@ int main ()
     glh::static_renderable craterend { window, cratevao, program, cratetex };
     glh::static_renderable floorrend { window, floorvao, program, floortex };
     
-    glh::renderer::clear_colour ( 1.0, 1.0, 1.0, 1.0 );
+    glh::renderer::clear_colour ( 0.0, 0.0, 0.0, 1.0 );
     glh::renderer::enable_depth_test ();
 
     program.use ();
     proj_uni.set_matrix ( camera.get_proj () );
     ambient_uni.set_vector ( glh::math::vec3 { 0.4, 0.4, 0.4 } );
-    lightpos_uni.set_vector ( glh::math::vec3 { 5.0, 5.0, -5.0 } * scale );
     lightcolour_uni.set_vector ( glh::math::vec3 { 1.0, 1.0, 1.0 } );
     specstrength_uni.set_float ( 0.5 );
 
@@ -173,6 +176,7 @@ int main ()
         
         view_uni.set_matrix ( camera.get_view () );
         viewpos_uni.set_vector ( camera.get_pos () );
+        lightpos_uni.set_vector ( glh::math::rotate ( glh::math::vec3 { 7.0, 5.0, -5.0 } * scale, glh::math::rad ( timeinfo.now * 30 ), glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
         
         glh::renderer::clear ();
 
