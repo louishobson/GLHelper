@@ -193,10 +193,7 @@ int main ()
         trans_uni [ "NormMat" ].set_matrix ( glh::math::identity<3> () );
         glh::renderer::draw_elements ( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 
-        window.swap_buffers ();
-        
-        //std::this_thread::sleep_for ( std::chrono::milliseconds ( 1000 / 60 ) );
-        
+        window.swap_buffers ();        
         window.poll_events ();
     }
 
