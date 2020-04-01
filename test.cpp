@@ -155,7 +155,12 @@ int main ()
         auto dimensions = window.get_dimensions ();
         auto mouseinfo = window.get_mouseinfo ();
 
-        glh::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
+        if ( dimensions.deltawidth != 0.0 || dimensions.deltaheight != 0.0 ) 
+        {
+            camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
+            trans_uni [ "Proj" ].set_matrix ( camera.get_proj () );
+            glh::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
+        }
 
         if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0., 0., -10. } );
         if ( window.get_key ( GLFW_KEY_A ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { -10, 0., 0. } );
