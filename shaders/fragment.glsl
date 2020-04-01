@@ -6,6 +6,23 @@
 
 #version 330 core
 
+/* structure for a material */
+struct MaterialStruct
+{
+    sampler2D TexUnit;
+    float Shininess;
+};
+
+/* structure for lighting */
+struct LightingStruct
+{
+    vec3 ViewPos;
+    vec3 Ambient;
+    vec3 LightPos;
+    vec3 Colour;
+    float SpecStrength;
+};
+
 /* texture coords, normal vector and position */
 in vec2 TexCoord;
 in vec3 NormVec;
@@ -14,39 +31,35 @@ in vec3 FragPos;
 /* output colour */
 out vec4 FragColor;
 
-/* viewing position, ambient light, light position, light colour, specular strength and shininess */
-uniform vec3 ViewPos;
-uniform vec3 Ambient;
-uniform vec3 LightPos;
-uniform vec3 LightColour;
-uniform float SpecStrength;
-uniform float Shininess;
-
-/* texture sampler */
-uniform sampler2D TexUnit;
+/* material and lighting uniforms */
+uniform MaterialStruct Material;
+uniform LightingStruct Lighting;
 
 /* main */
 void main ()
 {
-    /* CALCULATE DIFFUSE COMPONENT OF LIGHTING */
+    /* CALCULATE AMBIENT COMPONENT */
 
+    vec3 Ambient = Lighting.Ambient;
+
+    /* CALCULATE DIFFUSE COMPONENT */
 
     /* calculate light direction */
-    vec3 LightDir = normalize ( FragPos - LightPos );
+    vec3 LightDir = normalize ( FragPos - Lighting.LightPos );
     /* calculate diffuse component */
-    vec3 Diffuse = max ( dot ( NormVec, -LightDir ), 0.0 ) * LightColour;
+    vec3 Diffuse = max ( dot ( NormVec, -LightDir ), 0.0 ) * Lighting.Colour;
 
-    /* CALCULATE SPECULAR COMPONENTS */
+    /* CALCULATE SPECULAR COMPONENT */
 
     /* calculate the direction of viewing */
-    vec3 ViewDir = normalize ( ViewPos - FragPos );
+    vec3 ViewDir = normalize ( Lighting.ViewPos - FragPos );
     /* calculate the direction of the reflected light */
     vec3 ReflectDir = reflect ( LightDir, NormVec );
     /* calculate the specular component */
-    vec3 Specular = pow ( max ( dot ( ViewDir, ReflectDir ), 0.0 ), Shininess ) * SpecStrength * LightColour;
+    vec3 Specular = pow ( max ( dot ( ViewDir, ReflectDir ), 0.0 ), Material.Shininess ) * Lighting.SpecStrength * Lighting.Colour;
 
     /* SET THE FRAGMENT COLOUR */
 
     /* set to a combination of the ambient, diffuce and specular components */
-    FragColor = texture ( TexUnit, TexCoord ) * vec4 ( Ambient + Diffuse + Specular, 1.0 );
+    FragColor = texture ( Material.TexUnit, TexCoord ) * vec4 ( Ambient + Diffuse + Specular, 1.0 );
 }
