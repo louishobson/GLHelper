@@ -119,17 +119,9 @@ int main ()
     glh::vshader vshader { "shaders/vertex.glsl" };
     glh::fshader fshader { "shaders/fragment.glsl" };
     glh::program program { vshader, fshader };
-    glh::uniform model_uni = program.get_uniform ( "Model" );
-    glh::uniform view_uni = program.get_uniform ( "View" );
-    glh::uniform proj_uni = program.get_uniform ( "Proj" );
-    glh::uniform normmat_uni = program.get_uniform ( "NormMat" );
-    glh::uniform viewpos_uni = program.get_uniform ( "ViewPos" );
-    glh::uniform ambient_uni = program.get_uniform ( "Ambient" );
-    glh::uniform lightpos_uni = program.get_uniform ( "LightPos" );
-    glh::uniform lightcolour_uni = program.get_uniform ( "LightColour" );
-    glh::uniform specstrength_uni = program.get_uniform ( "SpecStrength" );
-    glh::uniform shininess_uni = program.get_uniform ( "Shininess" );
-    glh::uniform texunit_uni = program.get_uniform ( "TexUnit" );
+    glh::struct_uniform material_uni = program.get_structure_uniform ( "Material" );
+    glh::struct_uniform lighting_uni = program.get_structure_uniform ( "Lighting" );
+    glh::struct_uniform trans_uni = program.get_structure_uniform ( "Trans" );
 
     glh::texture2d cratetex { "assets/crate.png", GL_RGBA, GL_TEXTURE0 };
     glh::texture2d floortex { "assets/grass.png", GL_RGB, GL_TEXTURE1 };
@@ -147,10 +139,10 @@ int main ()
     glh::renderer::enable_depth_test ();
 
     program.use ();
-    proj_uni.set_matrix ( camera.get_proj () );
-    ambient_uni.set_vector ( glh::math::vec3 { 0.4, 0.4, 0.4 } );
-    lightcolour_uni.set_vector ( glh::math::vec3 { 1.0, 1.0, 1.0 } );
-    specstrength_uni.set_float ( 0.5 );
+    trans_uni [ "Proj" ].set_matrix ( camera.get_proj () );
+    lighting_uni [ "Ambient" ].set_vector ( glh::math::vec3 { 0.4, 0.4, 0.4 } );
+    lighting_uni [ "Colour" ].set_vector ( glh::math::vec3 { 1.0, 1.0, 1.0 } );
+    lighting_uni [ "SpecStrength" ].set_float ( 0.5 );
 
     while ( !window.should_close () ) 
     {
@@ -174,28 +166,28 @@ int main ()
         camera.pitch ( mouseinfo.deltayfrac * glh::math::rad ( -80 ) );
         camera.yaw ( mouseinfo.deltaxfrac * glh::math::rad ( -80 ) );
         
-        view_uni.set_matrix ( camera.get_view () );
-        viewpos_uni.set_vector ( camera.get_pos () );
-        lightpos_uni.set_vector ( glh::math::rotate ( glh::math::vec3 { 7.0, 5.0, -5.0 } * scale, glh::math::rad ( timeinfo.now * 30 ), glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
+        trans_uni [ "View" ].set_matrix ( camera.get_view () );
+        lighting_uni [ "ViewPos" ].set_vector ( camera.get_pos () );
+        lighting_uni [ "LightPos" ].set_vector ( glh::math::rotate ( glh::math::vec3 { 7.0, 5.0, -5.0 } * scale, glh::math::rad ( timeinfo.now * 30 ), glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
         
         glh::renderer::clear ();
 
         craterend.prepare ();
-        texunit_uni.set_int ( 0 );
-        shininess_uni.set_float ( 2 );
+        material_uni [ "TexUnit" ].set_int ( 0 );
+        material_uni [ "Shininess" ].set_float ( 2 );
         for ( auto vec: cratepos )
         {
             glh::math::mat4 model = glh::math::translate ( glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), scale ) ), vec * scale );
-            model_uni.set_matrix ( model );
-            normmat_uni.set_matrix ( glh::math::transpose ( glh::math::inverse ( glh::math::resize<3> ( model ) ) ) );
+            trans_uni [ "Model" ].set_matrix ( model );
+            trans_uni [ "NormMat" ].set_matrix ( glh::math::transpose ( glh::math::inverse ( glh::math::resize<3> ( model ) ) ) );
             glh::renderer::draw_arrays ( GL_TRIANGLES, 0, 6 * 6 );
         }
 
         floorrend.prepare ();
-        texunit_uni.set_int ( 1 );
-        shininess_uni.set_float ( 2 );
-        model_uni.set_matrix ( glh::math::identity<4> () );
-        normmat_uni.set_matrix ( glh::math::identity<3> () );
+        material_uni [ "TexUnit" ].set_int ( 1 );
+        material_uni [ "Shininess" ].set_float ( 2 );
+        trans_uni [ "Model" ].set_matrix ( glh::math::identity<4> () );
+        trans_uni [ "NormMat" ].set_matrix ( glh::math::identity<3> () );
         glh::renderer::draw_elements ( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 
         window.swap_buffers ();
