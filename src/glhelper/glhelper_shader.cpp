@@ -165,7 +165,7 @@ glh::program::program ( const vshader& vs, const fshader& fs )
  * return: unfirom object
  */
 glh::uniform glh::program::get_uniform ( const std::string& name )
-{ 
+{
     /* get the location and return the new uniform */
     return uniform { get_uniform_location ( name ), * this }; 
 }

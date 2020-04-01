@@ -576,7 +576,7 @@ private:
      *
      * the name of the structure uniform
      */
-    const std::string& name;
+    const std::string name;
 
     /* prog
      *
