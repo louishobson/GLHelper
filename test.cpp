@@ -123,26 +123,31 @@ int main ()
     glh::struct_uniform lighting_uni = program.get_structure_uniform ( "Lighting" );
     glh::struct_uniform trans_uni = program.get_structure_uniform ( "Trans" );
 
-    glh::texture2d cratetex { "assets/crate.png", GL_RGBA, GL_TEXTURE0 };
-    glh::texture2d floortex { "assets/grass.png", GL_RGB, GL_TEXTURE1 };
-    floortex.set_wrap ( GL_REPEAT );
+    glh::texture2d cratedifftex { "assets/container_diff.png", GL_RGBA, GL_TEXTURE0 };
+    glh::texture2d cratespectex { "assets/container_spec.png", GL_RGBA, GL_TEXTURE1 };
+    glh::texture2d floordifftex { "assets/grass.png", GL_RGB, GL_TEXTURE0 };
+    glh::texture2d floorspectex { "assets/black.png", GL_RGB, GL_TEXTURE1 };
+    floordifftex.set_wrap ( GL_REPEAT );
+    floorspectex.set_wrap ( GL_REPEAT );
 
     glh::math::mat4 model;
-    glh::camera_perspective camera { glh::math::rad ( 60 ), 16.0 / 9.0, 0.1, 1000 };
+    glh::camera_perspective camera { glh::math::rad ( 75 ), 16.0 / 9.0, 0.1, 1000 };
     camera.move ( glh::math::vec3 { 0.0, 10.0, 0.0 } );
     camera.enable_restrictive_mode ();
 
-    glh::static_renderable craterend { window, cratevao, program, cratetex };
-    glh::static_renderable floorrend { window, floorvao, program, floortex };
+    glh::static_renderable craterend { window, cratevao, program, cratedifftex, cratespectex };
+    glh::static_renderable floorrend { window, floorvao, program, floordifftex, floorspectex };
     
     glh::renderer::clear_colour ( 0.0, 0.0, 0.0, 1.0 );
     glh::renderer::enable_depth_test ();
 
     program.use ();
     trans_uni [ "Proj" ].set_matrix ( camera.get_proj () );
-    lighting_uni [ "Ambient" ].set_vector ( glh::math::vec3 { 0.4, 0.4, 0.4 } );
-    lighting_uni [ "Colour" ].set_vector ( glh::math::vec3 { 1.0, 1.0, 1.0 } );
-    lighting_uni [ "SpecStrength" ].set_float ( 0.5 );
+    material_uni [ "Diffuse" ].set_int ( 0 );
+    material_uni [ "Specular" ].set_int ( 1 );
+    lighting_uni [ "Ambient" ].set_vector ( glh::math::vec3 { 0.3, 0.3, 0.3 } );
+    lighting_uni [ "Diffuse" ].set_vector ( glh::math::vec3 { 0.7, 0.7, 0.7 } );
+    lighting_uni [ "Specular" ].set_vector ( glh::math::vec3 { 1.0, 1.0, 1.0 } );
 
     while ( !window.should_close () ) 
     {
@@ -168,13 +173,12 @@ int main ()
         
         trans_uni [ "View" ].set_matrix ( camera.get_view () );
         lighting_uni [ "ViewPos" ].set_vector ( camera.get_pos () );
-        lighting_uni [ "LightPos" ].set_vector ( glh::math::rotate ( glh::math::vec3 { 7.0, 5.0, -5.0 } * scale, glh::math::rad ( timeinfo.now * 30 ), glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
-        
+        lighting_uni [ "LightPos" ].set_vector ( glh::math::rotate ( glh::math::vec3 { 7.0, 2.0, -5.0 } * scale, glh::math::rad ( timeinfo.now * 30 ), glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
+
         glh::renderer::clear ();
 
         craterend.prepare ();
-        material_uni [ "TexUnit" ].set_int ( 0 );
-        material_uni [ "Shininess" ].set_float ( 2 );
+        material_uni [ "Shininess" ].set_float ( 64 );
         for ( auto vec: cratepos )
         {
             glh::math::mat4 model = glh::math::translate ( glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), scale ) ), vec * scale );
@@ -184,16 +188,15 @@ int main ()
         }
 
         floorrend.prepare ();
-        material_uni [ "TexUnit" ].set_int ( 1 );
         material_uni [ "Shininess" ].set_float ( 2 );
         trans_uni [ "Model" ].set_matrix ( glh::math::identity<4> () );
         trans_uni [ "NormMat" ].set_matrix ( glh::math::identity<3> () );
         glh::renderer::draw_elements ( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 
         window.swap_buffers ();
-
-        std::this_thread::sleep_for ( std::chrono::milliseconds ( 1000 / 45 ) );
-
+        
+        std::this_thread::sleep_for ( std::chrono::milliseconds ( 1000 / 60 ) );
+        
         window.poll_events ();
     }
 
