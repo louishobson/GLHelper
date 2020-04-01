@@ -195,7 +195,7 @@ int main ()
 
         window.swap_buffers ();
         
-        std::this_thread::sleep_for ( std::chrono::milliseconds ( 1000 / 60 ) );
+        //std::this_thread::sleep_for ( std::chrono::milliseconds ( 1000 / 60 ) );
         
         window.poll_events ();
     }
