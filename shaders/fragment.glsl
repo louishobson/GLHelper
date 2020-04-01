@@ -9,7 +9,8 @@
 /* structure for a material */
 struct MaterialStruct
 {
-    sampler2D TexUnit;
+    sampler2D Diffuse;
+    sampler2D Specular;
     float Shininess;
 };
 
@@ -17,14 +18,14 @@ struct MaterialStruct
 struct LightingStruct
 {
     vec3 ViewPos;
-    vec3 Ambient;
     vec3 LightPos;
-    vec3 Colour;
-    float SpecStrength;
+    vec3 Ambient;
+    vec3 Diffuse;
+    vec3 Specular;
 };
 
 /* texture coords, normal vector and position */
-in vec2 TexCoord;
+in vec2 TexCoords;
 in vec3 NormVec;
 in vec3 FragPos;
 
@@ -40,14 +41,15 @@ void main ()
 {
     /* CALCULATE AMBIENT COMPONENT */
 
-    vec3 Ambient = Lighting.Ambient;
+    vec3 Ambient = vec3 ( texture ( Material.Diffuse, TexCoords ) ) * Lighting.Ambient;
 
     /* CALCULATE DIFFUSE COMPONENT */
 
     /* calculate light direction */
     vec3 LightDir = normalize ( FragPos - Lighting.LightPos );
     /* calculate diffuse component */
-    vec3 Diffuse = max ( dot ( NormVec, -LightDir ), 0.0 ) * Lighting.Colour;
+    float Diff = max ( dot ( NormVec, -LightDir ), 0.0 );
+    vec3 Diffuse = vec3 ( texture ( Material.Diffuse, TexCoords ) ) * Diff * Lighting.Diffuse;
 
     /* CALCULATE SPECULAR COMPONENT */
 
@@ -56,10 +58,11 @@ void main ()
     /* calculate the direction of the reflected light */
     vec3 ReflectDir = reflect ( LightDir, NormVec );
     /* calculate the specular component */
-    vec3 Specular = pow ( max ( dot ( ViewDir, ReflectDir ), 0.0 ), Material.Shininess ) * Lighting.SpecStrength * Lighting.Colour;
+    float Spec = pow ( max ( dot ( ViewDir, ReflectDir ), 0.0 ), Material.Shininess );
+    vec3 Specular = vec3 ( texture ( Material.Specular, TexCoords ) ) * Spec * Lighting.Specular;
 
     /* SET THE FRAGMENT COLOUR */
 
     /* set to a combination of the ambient, diffuce and specular components */
-    FragColor = texture ( Material.TexUnit, TexCoord ) * vec4 ( Ambient + Diffuse + Specular, 1.0 );
+    FragColor = vec4 ( Ambient + Diffuse + Specular, 1.0 );
 }

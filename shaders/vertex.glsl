@@ -17,11 +17,11 @@ struct TransStructure
 
 /* vertices, texture coords and normal */
 layout ( location = 0 ) in vec3 aPos;
-layout ( location = 1 ) in vec2 aTexCoord;
+layout ( location = 1 ) in vec2 aTexCoords;
 layout ( location = 2 ) in vec3 aNormVec;
 
 /* texture coords, normal */
-out vec2 TexCoord;
+out vec2 TexCoords;
 out vec3 NormVec;
 out vec3 FragPos;
 
@@ -33,8 +33,8 @@ void main ()
 {
     /* set the position to be the same as the attribute, with an alpha of 1.0 */
     gl_Position = Trans.Proj * Trans.View * Trans.Model * vec4 ( aPos, 1.0f );
-    /* set TexCoord to aTex */
-    TexCoord = aTexCoord;
+    /* set TexCoords to aTexCoords */
+    TexCoords = aTexCoords;
     /* set NormVec to NormMat * aNormVec */
     NormVec = normalize ( Trans.NormMat * aNormVec );
     /* set FragPos */
