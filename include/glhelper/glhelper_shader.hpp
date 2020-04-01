@@ -23,6 +23,7 @@
 /* include core headers */
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <string>
 
 /* include glhelper_core.hpp */
@@ -82,6 +83,12 @@ namespace glh
      * can set the uniform without querying its name
      */
     class uniform;
+
+    /* class struct_uniform
+     *
+     * a reference to a structure uniform in a program
+     */
+    class struct_uniform;
     
     /* class shader_exception : exception
      *
@@ -298,7 +305,18 @@ public:
      * 
      * return: unfirom object
      */
-    uniform get_uniform ( const std::string& name ) const;
+    uniform get_uniform ( const std::string& name );
+
+    /* get_structure_uniform
+     *
+     * return a structure uniform object based on a name
+     *
+     * name: the name of the structure uniform
+     * 
+     * return: structure uniform object
+     */
+    struct_uniform get_structure_uniform ( const std::string& name );
+
 
 
     /* destroy
@@ -351,12 +369,12 @@ public:
 
     /* constructor
      *
-     * construct from uniform name and containing program
+     * construct from location and containing program
      *
      * _location: the location of the uniform
      * _prog: the program associated with the uniform
      */
-    uniform ( const GLint _location, const program& _prog )
+    uniform ( const GLint _location, program& _prog )
         : location { _location }
         , prog { _prog }
     {}
@@ -364,14 +382,14 @@ public:
     /* deleted zero-parameter constructor */
     uniform () = delete;
 
-    /* deleted copy constructor */
-    uniform ( const uniform& other ) = delete;
-
-    /* default move constructor */
-    uniform ( uniform&& other ) = default;
+    /* default copy constructor */
+    uniform ( const uniform& other ) = default;
 
     /* deleted copy assignment operator */
     uniform& operator= ( const uniform& other ) = delete;
+
+    /* default destructor */
+    ~uniform () = default;
 
 
 
@@ -483,13 +501,102 @@ private:
      *
      * the program the uniform is associated with
      */
-    const program& prog;
+    program& prog;
 
     /* check_is_program_in_use
      *
      * will throw if the associated program is not in use
      */
     void check_is_program_in_use () const;
+
+};
+
+
+
+/* class struct_uniform
+ *
+ * a reference to a structure uniform in a program
+ */
+class glh::struct_uniform
+{
+public:
+
+    /* constructor
+     *
+     * construct from a name and containing program
+     *
+     * _location: the location of the uniform
+     * _prog: the program associated with the uniform
+     */
+    struct_uniform ( const std::string& _name, program& _prog )
+        : name { _name }
+        , prog { _prog }
+    {}
+
+    /* deleted zero-parameter constructor */
+    struct_uniform () = delete;
+
+    /* default copy constructor */
+    struct_uniform ( const struct_uniform& other ) = default;
+
+    /* deleted copy assignment operator */
+    struct_uniform& operator= ( const struct_uniform& other ) = delete;
+
+    /* default destructor */
+    ~struct_uniform () = default;
+
+
+
+    /* at/operator[]
+     *
+     * get a member of the struct
+     */
+    uniform& at ( const std::string& member ) { return get_member ( member ); }
+    const uniform& at ( const std::string& member ) const { return get_member ( member ); }
+    uniform& operator[] ( const std::string& member ) { return get_member ( member ); }
+    const uniform& operator[] ( const std::string& member ) const { return get_member ( member ); }
+
+
+
+    /* use_program
+     *
+     * use the associated program
+     */
+    void use_program () const { prog.use (); }
+
+    /* is_program_in_use
+     *
+     * return a boolean for if the associated program is in use
+     */
+    bool is_program_in_use () const { return prog.is_in_use (); }
+
+private:
+
+    /* name
+     *
+     * the name of the structure uniform
+     */
+    const std::string& name;
+
+    /* prog
+     *
+     * the program the uniform is associated with
+     */
+    program& prog;
+
+    /* members
+     * 
+     * a map of member names to their uniform class
+     */
+    mutable std::map<std::string, uniform> members;
+
+    /* get_member
+     *
+     * get a member of the struct
+     * create new element in members if necessary
+     */
+    uniform& get_member ( const std::string& member );
+    const uniform& get_member ( const std::string& member ) const;
 
 };
 

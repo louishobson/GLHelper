@@ -164,12 +164,25 @@ glh::program::program ( const vshader& vs, const fshader& fs )
  * 
  * return: unfirom object
  */
-glh::uniform glh::program::get_uniform ( const std::string& name ) const
+glh::uniform glh::program::get_uniform ( const std::string& name )
 { 
     /* get the location and return the new uniform */
     return uniform { get_uniform_location ( name ), * this }; 
 }
 
+/* get_structure_uniform
+ *
+ * return a structure uniform object based on a name
+ *
+ * name: the name of the structure uniform
+ * 
+ * return: structure uniform object
+ */
+glh::struct_uniform glh::program::get_structure_uniform ( const std::string& name )
+{
+    /* get return a structure uniform with the given name */
+    return struct_uniform { name, * this };
+}
 
 /* destroy
  *
@@ -241,4 +254,46 @@ void glh::uniform::check_is_program_in_use () const
 {
     /* if not in use, throw */ 
     if ( !prog.is_in_use () ) throw shader_exception { "associated program of shader is not in use" };
+}
+
+
+
+/* STRUCT_UNIFORM IMPLEMENTATION */
+
+/* get_member
+ *
+ * get a member of the struct
+ * create new element in members if necessary
+ */
+glh::uniform& glh::struct_uniform::get_member ( const std::string& member )
+{
+    /* try to get the member from the map */
+    try
+    {
+        return members.at ( member );
+    }
+    /* catch out of range error */
+    catch ( const std::out_of_range& ex )
+    {
+        /* add uniform to map */
+        uniform uni = prog.get_uniform ( name + "." + member );
+        members.insert ( { member, uni } );
+        return members.at ( member );
+    }
+}
+const glh::uniform& glh::struct_uniform::get_member ( const std::string& member ) const
+{
+    /* try to get the member from the map */
+    try
+    {
+        return members.at ( member );
+    }
+    /* catch out of range error */
+    catch ( const std::out_of_range& ex )
+    {
+        /* add uniform to map */
+        uniform uni = prog.get_uniform ( name + "." + member );
+        members.insert ( { member, uni } );
+        return members.at ( member );
+    }
 }
