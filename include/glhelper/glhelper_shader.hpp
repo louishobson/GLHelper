@@ -84,11 +84,23 @@ namespace glh
      */
     class uniform;
 
-    /* class struct_uniform
+    /* class complex_uniform
+     *
+     * a base class for a uniform which stores other uniforms
+     */
+    class complex_uniform;
+
+    /* class struct_uniform : complex_uniform
      *
      * a reference to a structure uniform in a program
      */
     class struct_uniform;
+
+    /* class array_uniform : complex_uniform
+     *
+     * a reference to an array uniform in a program
+     */
+    template<class T> class array_uniform;
     
     /* class shader_exception : exception
      *
@@ -297,7 +309,7 @@ public:
 
 
 
-    /* get_uniform
+    /* get_(struct_/array_)uniform
      *
      * return a uniform object based on a name
      * 
@@ -306,16 +318,11 @@ public:
      * return: unfirom object
      */
     uniform get_uniform ( const std::string& name );
-
-    /* get_structure_uniform
-     *
-     * return a structure uniform object based on a name
-     *
-     * name: the name of the structure uniform
-     * 
-     * return: structure uniform object
-     */
-    struct_uniform get_structure_uniform ( const std::string& name );
+    const uniform get_unfiorm ( const std::string& name ) const;
+    struct_uniform get_struct_uniform ( const std::string& name );
+    const struct_uniform get_struct_uniform ( const std::string& name ) const;
+    template<class T> array_uniform<T> get_array_uniform ( const std::string& name ) { return array_uniform<T> { name, * this }; }
+    template<class T> const array_uniform<T> get_array_uniform ( const std::string& name ) const { return array_uniform<T> { name, * this }; }
 
 
 
@@ -341,6 +348,13 @@ public:
 
 
 private:
+
+    /* uniform_locations
+     *
+     * a map to the location of uniforms based on their names
+     * saves some time on searching for uniforms every time they are changed
+     */
+    mutable std::map<std::string, GLint> uniform_locations;
 
     /* get_uniform_location
      *
@@ -512,12 +526,11 @@ private:
 };
 
 
-
-/* class struct_uniform
+/* class complex_uniform
  *
- * a reference to a structure uniform in a program
+ * a base class for a uniform which stores other uniforms
  */
-class glh::struct_uniform
+class glh::complex_uniform
 {
 public:
 
@@ -525,12 +538,78 @@ public:
      *
      * construct from a name and containing program
      *
-     * _location: the location of the uniform
+     * _name: the name of the uniform
+     * _prog: the program associated with the uniform
+     */
+    complex_uniform ( const std::string& _name, program& _prog )
+        : name { _name }
+        , prog { _prog }
+    {}
+
+    /* deleted zero-parameter constructor */
+    complex_uniform () = default;
+
+    /* default copy constructor */
+    complex_uniform ( const complex_uniform& other ) = default;
+
+    /* deleted copy assignment operator */
+    complex_uniform& operator= ( const complex_uniform& other ) = delete;
+
+    /* default pure virtual destructor */
+    virtual ~complex_uniform () = 0;
+
+
+
+    /* use_program
+     *
+     * use the associated program
+     */
+    void use_program () const { prog.use (); }
+
+    /* is_program_in_use
+     *
+     * return a boolean for if the associated program is in use
+     */
+    bool is_program_in_use () const { return prog.is_in_use (); }
+
+protected:
+
+    /* name
+     *
+     * the name of the structure uniform
+     */
+    const std::string name;
+
+    /* prog
+     *
+     * the program the uniform is associated with
+     */
+    program& prog;
+
+};
+
+/* make destructor default */
+inline glh::complex_uniform::~complex_uniform () = default;
+
+
+
+/* class struct_uniform : complex_uniform
+ *
+ * a reference to a structure uniform in a program
+ */
+class glh::struct_uniform : public complex_uniform
+{
+public:
+
+    /* constructor
+     *
+     * construct from a name and containing program
+     *
+     * _name: the name of the uniform
      * _prog: the program associated with the uniform
      */
     struct_uniform ( const std::string& _name, program& _prog )
-        : name { _name }
-        , prog { _prog }
+        : complex_uniform { _name, _prog }
     {}
 
     /* deleted zero-parameter constructor */
@@ -547,56 +626,101 @@ public:
 
 
 
+    /* get_(struct_/array_)uniform
+     *
+     * get a member of the struct
+     */
+    uniform get_uniform ( const std::string& member ) { return prog.get_uniform ( name + "." + member ); }
+    const uniform get_uniform ( const std::string& member ) const { return prog.get_uniform ( name + "." + member ); }
+    struct_uniform get_struct_uniform ( const std::string& member ) { return struct_uniform { name + "." + member, prog }; }
+    const struct_uniform get_struct_uniform ( const std::string& member ) const { return struct_uniform { name + "." + member, prog }; }
+    template<class T> array_uniform<T> get_array_uniform ( const std::string& member ) { return array_uniform<T> { name + "." + member, prog }; }
+    template<class T> const array_uniform<T> get_array_uniform ( const std::string& member ) const { return array_uniform<T> { name + "." + member, prog }; }
+
+};
+
+
+
+/* class array_uniform : complex_uniform
+ *
+ * a reference to an array uniform in a program
+ */
+template<class T> class glh::array_uniform : public complex_uniform
+{
+public:
+
+    /* constructor
+     *
+     * construct from a name and containing program
+     *
+     * _name: the name of the uniform
+     * _prog: the program associated with the uniform
+     */
+    array_uniform ( const std::string& _name, program& _prog )
+        : complex_uniform { _name, _prog }
+    {}
+
+    /* deleted zero-parameter constructor */
+    array_uniform () = delete;
+
+    /* default copy constructor */
+    array_uniform ( const array_uniform& other ) = default;
+
+    /* deleted copy assignment operator */
+    array_uniform& operator= ( const array_uniform& other ) = delete;
+
+    /* default destructor */
+    ~array_uniform () = default;
+
+
+
     /* at/operator[]
      *
-     * get a member of the struct
+     * return the uniform at an index
      */
-    uniform& at ( const std::string& member ) { return get_member ( member ); }
-    const uniform& at ( const std::string& member ) const { return get_member ( member ); }
-    uniform& operator[] ( const std::string& member ) { return get_member ( member ); }
-    const uniform& operator[] ( const std::string& member ) const { return get_member ( member ); }
+    T at ( const unsigned i ) { return T { name + "[" + std::to_string ( i ) + "]", prog }; }
+    const T at ( const unsigned i ) const { return T { name + "[" + std::to_string ( i ) + "]", prog }; }
+    T operator[] ( const unsigned i ) { return at ( i ); }
+    const T operator[] ( const unsigned i ) const { return at ( i ); }
 
+};
+template<> class glh::array_uniform<glh::uniform> : public complex_uniform
+{
+public:
 
-
-    /* use_program
+    /* constructor
      *
-     * use the associated program
-     */
-    void use_program () const { prog.use (); }
-
-    /* is_program_in_use
+     * construct from a name and containing program
      *
-     * return a boolean for if the associated program is in use
+     * _name: the name of the uniform
+     * _prog: the program associated with the uniform
      */
-    bool is_program_in_use () const { return prog.is_in_use (); }
+    array_uniform ( const std::string& _name, program& _prog )
+        : complex_uniform { _name, _prog }
+    {}
 
-private:
+    /* deleted zero-parameter constructor */
+    array_uniform () = delete;
 
-    /* name
+    /* default copy constructor */
+    array_uniform ( const array_uniform& other ) = default;
+
+    /* deleted copy assignment operator */
+    array_uniform& operator= ( const array_uniform& other ) = delete;
+
+    /* default destructor */
+    ~array_uniform () = default;
+
+
+
+    /* at/operator[]
      *
-     * the name of the structure uniform
+     * return the uniform at an index
      */
-    const std::string name;
-
-    /* prog
-     *
-     * the program the uniform is associated with
-     */
-    program& prog;
-
-    /* members
-     * 
-     * a map of member names to their uniform class
-     */
-    mutable std::map<std::string, uniform> members;
-
-    /* get_member
-     *
-     * get a member of the struct
-     * create new element in members if necessary
-     */
-    uniform& get_member ( const std::string& member );
-    const uniform& get_member ( const std::string& member ) const;
+    uniform at ( const unsigned i ) { return prog.get_uniform ( name + "[" + std::to_string ( i ) + "]" ); }
+    const uniform at ( const unsigned i ) const { return prog.get_uniform ( name + "[" + std::to_string ( i ) + "]" ); }
+    uniform operator[] ( const unsigned i ) { return at ( i ); }
+    const uniform operator[] ( const unsigned i ) const { return at ( i ); }
 
 };
 
