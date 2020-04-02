@@ -119,9 +119,10 @@ int main ()
     glh::vshader vshader { "shaders/vertex.glsl" };
     glh::fshader fshader { "shaders/fragment.glsl" };
     glh::program program { vshader, fshader };
-    glh::struct_uniform material_uni = program.get_structure_uniform ( "Material" );
-    glh::struct_uniform lighting_uni = program.get_structure_uniform ( "Lighting" );
-    glh::struct_uniform trans_uni = program.get_structure_uniform ( "Trans" );
+    auto viewpos_uni = program.get_uniform ( "ViewPos" );
+    auto material_uni = program.get_struct_uniform ( "Material" );
+    auto lighting_uni = program.get_array_uniform<glh::struct_uniform> ( "Lighting" );
+    auto trans_uni = program.get_struct_uniform ( "Trans" );
 
     glh::texture2d cratedifftex { "assets/container_diff.png", GL_RGBA, GL_TEXTURE0 };
     glh::texture2d cratespectex { "assets/container_spec.png", GL_RGBA, GL_TEXTURE1 };
@@ -142,12 +143,18 @@ int main ()
     glh::renderer::enable_depth_test ();
 
     program.use ();
-    trans_uni [ "Proj" ].set_matrix ( camera.get_proj () );
-    material_uni [ "Diffuse" ].set_int ( 0 );
-    material_uni [ "Specular" ].set_int ( 1 );
-    lighting_uni [ "Ambient" ].set_vector ( glh::math::vec3 { 0.3, 0.3, 0.3 } );
-    lighting_uni [ "Diffuse" ].set_vector ( glh::math::vec3 { 0.7, 0.7, 0.7 } );
-    lighting_uni [ "Specular" ].set_vector ( glh::math::vec3 { 1.0, 1.0, 1.0 } );
+    trans_uni.get_uniform ( "Proj" ).set_matrix ( camera.get_proj () );
+    material_uni.get_uniform ( "Diffuse" ).set_int ( 0 );
+    material_uni.get_uniform ( "Specular" ).set_int ( 1 );
+    for ( unsigned i = 0; i < 2; ++i )
+    {
+        lighting_uni.at ( i ).get_struct_uniform ( "Attenuation" ).get_uniform ( "Constant" ).set_float ( 1.0 );
+        lighting_uni.at ( i ).get_struct_uniform ( "Attenuation" ).get_uniform ( "Linear" ).set_float ( 0.045 );
+        lighting_uni.at ( i ).get_struct_uniform ( "Attenuation" ).get_uniform ( "Quadratic" ).set_float ( 0.0075 );
+        lighting_uni.at ( i ).get_struct_uniform ( "Properties" ).get_uniform ( "Ambient" ).set_vector ( glh::math::vec3 { 0.3, 0.3, 0.3 } );
+        lighting_uni.at ( i ).get_struct_uniform ( "Properties" ).get_uniform ( "Diffuse" ).set_vector ( glh::math::vec3 { 0.7, 0.7, 0.7 } );
+        lighting_uni.at ( i ).get_struct_uniform ( "Properties" ).get_uniform ( "Specular" ).set_vector ( glh::math::vec3 { 1.0, 1.0, 1.0 } );
+    }
 
     while ( !window.should_close () ) 
     {
@@ -158,7 +165,7 @@ int main ()
         if ( dimensions.deltawidth != 0.0 || dimensions.deltaheight != 0.0 ) 
         {
             camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
-            trans_uni [ "Proj" ].set_matrix ( camera.get_proj () );
+            trans_uni.get_uniform ( "Proj" ).set_matrix ( camera.get_proj () );
             glh::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
         }
 
@@ -176,26 +183,28 @@ int main ()
         camera.pitch ( mouseinfo.deltayfrac * glh::math::rad ( -80 ) );
         camera.yaw ( mouseinfo.deltaxfrac * glh::math::rad ( -80 ) );
         
-        trans_uni [ "View" ].set_matrix ( camera.get_view () );
-        lighting_uni [ "ViewPos" ].set_vector ( camera.get_pos () );
-        lighting_uni [ "LightPos" ].set_vector ( glh::math::rotate ( glh::math::vec3 { 7.0, 2.0, -5.0 } * scale, glh::math::rad ( timeinfo.now * 30 ), glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
+        trans_uni.get_uniform ( "View" ).set_matrix ( camera.get_view () );
+        viewpos_uni.set_vector ( camera.get_pos () );
+        lighting_uni.at ( 0 ).get_uniform ( "Position" ).set_vector ( glh::math::rotate ( glh::math::vec3 { 7.0, 2.0, -5.0 } * scale, glh::math::rad ( timeinfo.now * 30 ), glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
+        lighting_uni.at ( 1 ).get_uniform ( "Position" ).set_vector ( glh::math::rotate ( glh::math::vec3 { 7.0, 2.0, -5.0 } * scale, - glh::math::rad ( timeinfo.now * 30 ), glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
+        
 
         glh::renderer::clear ();
 
         craterend.prepare ();
-        material_uni [ "Shininess" ].set_float ( 64 );
+        material_uni.get_uniform ( "Shininess" ).set_float ( 64 );
         for ( auto vec: cratepos )
         {
             glh::math::mat4 model = glh::math::translate ( glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), scale ) ), vec * scale );
-            trans_uni [ "Model" ].set_matrix ( model );
-            trans_uni [ "NormMat" ].set_matrix ( glh::math::transpose ( glh::math::inverse ( glh::math::resize<3> ( model ) ) ) );
+            trans_uni.get_uniform ( "Model" ).set_matrix ( model );
+            trans_uni.get_uniform ( "NormMat" ).set_matrix ( glh::math::transpose ( glh::math::inverse ( glh::math::resize<3> ( model ) ) ) );
             glh::renderer::draw_arrays ( GL_TRIANGLES, 0, 6 * 6 );
         }
 
         floorrend.prepare ();
-        material_uni [ "Shininess" ].set_float ( 2 );
-        trans_uni [ "Model" ].set_matrix ( glh::math::identity<4> () );
-        trans_uni [ "NormMat" ].set_matrix ( glh::math::identity<3> () );
+        material_uni.get_uniform ( "Shininess" ).set_float ( 2 );
+        trans_uni.get_uniform ( "Model" ).set_matrix ( glh::math::identity<4> () );
+        trans_uni.get_uniform ( "NormMat" ).set_matrix ( glh::math::identity<3> () );
         glh::renderer::draw_elements ( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 
         window.swap_buffers ();        
