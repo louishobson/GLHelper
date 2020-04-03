@@ -125,10 +125,10 @@ int main ()
     auto dirlight_uni = program.get_struct_uniform ( "DirLight" );
     auto trans_uni = program.get_struct_uniform ( "Trans" );
 
-    glh::texture2d cratedifftex { "assets/container_diff.png", GL_RGBA, GL_TEXTURE0 };
-    glh::texture2d cratespectex { "assets/container_spec.png", GL_RGBA, GL_TEXTURE1 };
-    glh::texture2d floordifftex { "assets/grass.png", GL_RGB, GL_TEXTURE0 };
-    glh::texture2d floorspectex { "assets/black.png", GL_RGB, GL_TEXTURE1 };
+    glh::texture2d cratedifftex { "assets/container_diff.png", GL_TEXTURE0 };
+    glh::texture2d cratespectex { "assets/container_spec.png", GL_TEXTURE1 };
+    glh::texture2d floordifftex { "assets/grass.png", GL_TEXTURE0 };
+    glh::texture2d floorspectex { "assets/black.png", GL_TEXTURE1 };
     floordifftex.set_wrap ( GL_REPEAT );
     floorspectex.set_wrap ( GL_REPEAT );
 
