@@ -71,10 +71,9 @@ public:
      * default settings are applied
      * 
      * _path: path to the image for the texture
-     * _format: the format of the image (e.g. GL_RGB)
      * _texture_unit: the texture unit to bind to
      */
-    texture2d ( const std::string& _path, const GLenum _format, const GLenum _texture_unit = GL_TEXTURE0 );
+    texture2d ( const std::string& _path, const GLenum _texture_unit = GL_TEXTURE0 );
 
     /* deleted zero-parameter constructor
      *
@@ -160,7 +159,7 @@ private:
      *
      * the format of the texture (e.g. GL_RGB)
      */
-    const GLenum format;
+    GLenum format;
 
     /* texture_unit
      *
