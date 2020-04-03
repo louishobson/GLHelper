@@ -154,7 +154,7 @@ int main ()
         pointlights_uni.at ( i ).get_struct_uniform ( "Properties" ).get_uniform ( "Specular" ).set_vector ( glh::math::vec3 { 1.0, 1.0, 1.0 } );
     }
     dirlight_uni.get_uniform ( "Direction" ).set_vector ( glh::math::norm ( glh::math::vec3 { 0.0, -1.0, 0.0 } ) );
-    dirlight_uni.get_struct_uniform ( "Properties" ).get_uniform ( "Ambient" ).set_vector ( glh::math::vec3 { 0.05, 0.05, 0.05 } );
+    dirlight_uni.get_struct_uniform ( "Properties" ).get_uniform ( "Ambient" ).set_vector ( glh::math::vec3 { 0.1, 0.1, 0.1 } );
     dirlight_uni.get_struct_uniform ( "Properties" ).get_uniform ( "Diffuse" ).set_vector ( glh::math::vec3 { 0.1, 0.1, 0.1 } );
     dirlight_uni.get_struct_uniform ( "Properties" ).get_uniform ( "Specular" ).set_vector ( glh::math::vec3 { 0.3, 0.3, 0.3 } );
 
