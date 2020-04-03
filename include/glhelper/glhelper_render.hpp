@@ -56,11 +56,6 @@ namespace glh
      */
     class renderer;
 
-    /* class simple_renderable : renderer
-     *
-     * holds references to a window, a vao, a program, and textures
-     */
-    class static_renderable;
 }
 
 
@@ -87,16 +82,7 @@ public:
     renderer& operator= ( const renderer& other ) = default;
 
     /* default destructor */
-    virtual ~renderer () = default;
-
-
-
-    /* virtual (un)prepare
-     *
-     * so that inherited classes can be correcly (un)prepared
-     */
-    virtual void prepare () {}
-    virtual void unprepare () {};
+    ~renderer () = default;
 
 
 
@@ -155,84 +141,6 @@ public:
     { glViewport ( x, y, width, height ); }
 
 };
-
-
-
-/* STATIC_RENDERABLE DEFINITION */
-
-/* class static_renderable : renderer
- *
- * holds a program, vbo, ebo, vao and 2D textures
- */
-class glh::static_renderable : public renderer
-{
-public:
-
-    /* constructor */
-    template<class... Ts>
-    static_renderable ( const window& __window, const vao& __vao, const program& __program, const Ts&... __texture2d )
-        : _window { __window }
-        , _vao { __vao }
-        , _program { __program }
-        , _texture2d { { &__texture2d... } }
-    {}
-
-    /* deleted zero parameter constructor */
-    static_renderable () = delete;
-
-    /* default copy constructor */
-    static_renderable ( const static_renderable& other ) = default;
-
-    /* default copy assignment operator */
-    static_renderable& operator= ( const static_renderable& other ) = default;
-
-    /* default destructor */
-    ~static_renderable () = default;
-
-
-
-    /* prepare
-     *
-     * perform all binds etc. ready for rendering
-     */
-    void prepare () override;
-
-    /* unprepare
-     *
-     * undo all binds etc
-     */
-    void unprepare () override;
-
-
-
-private:
-
-    /* const window& _window
-     *
-     * the window to render onto
-     */
-    const window& _window;
-
-    /* const vao& _vao
-     *
-     * the vao to use for vertex and buffer data
-     */
-    const vao& _vao;
-
-    /* const program& _program
-     *
-     * the program to use for rendering
-     */
-    const program& _program;
-
-    /* std::vector _texture2d
-     *
-     * array of pointers to 2D textures
-     */
-    std::vector<const texture2d *> _texture2d;
-
-};
-
 
 /* #ifndef GLHELPER_RENDER_HPP_INCLUDED */
 #endif
