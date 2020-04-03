@@ -35,7 +35,7 @@ glh::shader::shader ( const GLenum _target, const std::string& _path )
     /* close the file */
     shader_file.close ();
     /* throw exception if shader source is empty */
-    if ( source.empty () ) throw shader_exception { "imported shader source is empty" };
+    if ( source.empty () ) throw shader_exception { "imported shader source is empty at path " + path };
 
     /* generate shader object, attach the source and compile */
     id = glCreateShader ( target );
@@ -56,7 +56,7 @@ glh::shader::shader ( const GLenum _target, const std::string& _path )
         std::cerr << comp_log;
         /* destroy the shader and throw */
         destroy ();
-        throw shader_exception { "shader compilation failed" };
+        throw shader_exception { "shader compilation failed for shader at path " + path };
     }
 }
 
