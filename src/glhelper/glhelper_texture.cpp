@@ -31,23 +31,32 @@
  * default settings are applied
  * 
  * _path: path to the image for the texture
- * _format: the format of the image (e.g. GL_RGB)
  * _texture_unit: the texture unit to bind to
  */
-glh::texture2d::texture2d ( const std::string& _path, const GLenum _format, const GLenum _texture_unit )
+glh::texture2d::texture2d ( const std::string& _path, const GLenum _texture_unit )
     : path { _path }
-    , format { _format }
+    , format { GL_NONE }
     , texture_unit { _texture_unit }
 {
     /* load the image */
     unsigned char * image_data = stbi_load ( path.c_str (), &width, &height, &channels, 0 );
 
     /* check for error */
-    if ( !image_data ) throw texture_exception { "failed to load texture from file" };
+    if ( !image_data ) throw texture_exception { "failed to load texture from file at path " + path };
 
     /* generate texture object and bind it */
     glGenTextures ( 1, &id );
     bind ();
+
+    /* get the format of the texture based on the number of channels */
+    if ( channels == 1 ) format = GL_RED; else
+    if ( channels == 2 ) format = GL_RG; else
+    if ( channels == 3 ) format = GL_RGB; else
+    if ( channels == 4 ) format = GL_RGBA; else
+    {
+        throw texture_exception { "failed to set texture format for texture with " + std::to_string ( channels ) + " channels" };
+    }
+    
 
     /* set the texture and generate mipmap */
     glTexImage2D ( GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
@@ -149,7 +158,7 @@ void glh::texture2d::destroy ()
 GLenum glh::texture2d::bind () const
 {
     /* check the object is valid */
-    if ( !is_valid () )  throw texture_exception { "attempted bind operation on invalid 2D texture object" };    
+    if ( !is_valid () )  throw texture_exception { "attempted bind operation on invalid 2D texture object imported from path " + path };    
 
     /* bind the texture, if not already bound
      * texture unit gets activated by is_bound ()
@@ -167,7 +176,7 @@ GLenum glh::texture2d::bind () const
 GLenum glh::texture2d::unbind () const
 {
     /* check the object is valid */
-    if ( !is_valid () )  throw texture_exception { "attempted bind operation on invalid 2D texture object" };    
+    if ( !is_valid () )  throw texture_exception { "attempted bind operation on invalid 2D texture object imported from path " + path };    
 
     /* unbind the texture, if not already unbound
      * texture unit gets activated by is_bound ()
