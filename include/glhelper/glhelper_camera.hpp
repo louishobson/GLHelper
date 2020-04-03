@@ -172,6 +172,12 @@ public:
      */
     const math::vec3& get_pos () const { return pos; }
 
+    /* get_direction
+     *
+     * get the current viewing direction
+     */
+    math::vec3 get_direction () const { return -z; }
+
     /* get_view
      *
      * get the view matrix
