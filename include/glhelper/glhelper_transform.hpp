@@ -244,7 +244,18 @@ namespace glh
          * 
          * return: camera matrix based on vectors provided
          */
-        matrix<4> look_towards ( const vector<3>& p, const vector<3>& d, const vector<3>& wup );        
+        matrix<4> look_towards ( const vector<3>& p, const vector<3>& d, const vector<3>& wup );
+
+        /* normal
+         *
+         * produce a normal matrix from a model-view matrix
+         * 
+         * trans: the model-view matrix to change to a normal matrix
+         * 
+         * return: the mormal matrix
+         */
+        matrix<3> normal ( const matrix<4>& trans );
+
 
     }
 }
@@ -667,6 +678,19 @@ inline glh::math::matrix<4> glh::math::look_towards ( const vector<3>& p, const 
     return camera ( p, -d, r, u );
 }
 
+/* normal
+ *
+ * produce a normal matrix from a model-view matrix
+ * 
+ * trans: the model-view matrix to change to a normal matrix
+ * 
+ * return: the mormal matrix
+ */
+inline glh::math::matrix<3> glh::math::normal ( const matrix<4>& trans )
+{
+    /* return the transpose of the inverse of the top left 3x3 submatrix of trans */
+    return transpose ( inverse ( resize<3> ( trans ) ) );
+}
 
 
 
