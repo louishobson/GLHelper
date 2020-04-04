@@ -77,6 +77,9 @@ public:
      */
     object ( const object& other ) = delete;
 
+    /* default move constructor */
+    object ( object&& other ) = default;
+
     /* deleted copy assignment operator
      *
      * it makes no sense to assign the object after comstruction
