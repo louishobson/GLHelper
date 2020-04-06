@@ -145,6 +145,14 @@ public:
 
 
 
+    /* is_valid
+     *
+     * overload of is_valid to allow id of zero
+     */
+    //bool is_valid () const override { return true; }
+
+
+
     /* get_path
      *
      * get the path the texture was originally imported from

@@ -78,7 +78,9 @@ public:
     object ( const object& other ) = delete;
 
     /* default move constructor */
-    object ( object&& other ) = default;
+    object ( object&& other )
+        : id { other.id }
+    { other.id = 0; }
 
     /* deleted copy assignment operator
      *

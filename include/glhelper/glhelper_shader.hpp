@@ -498,6 +498,19 @@ public:
      */
     bool is_program_in_use () const { return prog.is_in_use (); } 
 
+    /* get_location
+     * 
+     * gets the location of the uniform
+     */
+    const GLint& get_location () const { return location; }
+
+    /* get_program
+     *
+     * return a reference to the program
+     */
+    program& get_program () { return prog; }
+    const program& get_program () const { return prog; }
+
 
 
 private:
@@ -521,6 +534,11 @@ private:
     void check_is_program_in_use () const;
 
 };
+
+/* comparison operators */
+inline bool operator== ( const glh::uniform& lhs, const glh::uniform& rhs ) { return ( lhs.get_location () == rhs.get_location () && lhs.get_program () == rhs.get_program () ); }
+inline bool operator!= ( const glh::uniform& lhs, const glh::uniform& rhs ) { return ( lhs.get_location () != rhs.get_location () || lhs.get_program () != rhs.get_program () ); }
+
 
 
 /* class complex_uniform
@@ -569,6 +587,19 @@ public:
      */
     bool is_program_in_use () const { return prog.is_in_use (); }
 
+    /* get_name
+     *
+     * get the name of the uniform
+     */
+    const std::string& get_name () const { return name; }
+
+    /* get_program
+     *
+     * get the program associated with the uniform
+     */
+    program& get_program () { return prog; }
+    const program& get_program () const { return prog; }
+
 protected:
 
     /* name
@@ -587,6 +618,10 @@ protected:
 
 /* make destructor default */
 inline glh::complex_uniform::~complex_uniform () = default;
+
+/* comparison operators */
+inline bool operator== ( const glh::complex_uniform& lhs, const glh::complex_uniform& rhs ) { return ( lhs.get_name () == rhs.get_name () && lhs.get_program () == rhs.get_program () ); }
+inline bool operator!= ( const glh::complex_uniform& lhs, const glh::complex_uniform& rhs ) { return ( lhs.get_name () != rhs.get_name () || lhs.get_program () != rhs.get_program () ); }
 
 
 
