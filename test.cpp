@@ -34,7 +34,7 @@ int main ()
     //glh::model::model xenomorphe { "./assets/xenomorphe", "scene.gltf" };
     //glh::model::model plane { "./assets/plane", "scene.gltf" };
     //glh::model::model room { "./assets/room", "scene.gltf" };
-    glh::model::model factory { "./assets/factory", "scene.gltf", 0 };
+    glh::model::model factory { "./assets/factory", "scene.gltf" };
 
     glh::vshader vshader { "shaders/vertex.glsl" };
     glh::fshader fshader { "shaders/fragment.glsl" };
@@ -44,7 +44,7 @@ int main ()
     auto model_uni = trans_uni.get_uniform ( "model" );
     auto normal_uni = trans_uni.get_uniform ( "norm" );
 
-    glh::camera_perspective camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 1000 };
+    glh::camera_perspective camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 1000.0 };
     camera.enable_restrictive_mode ();
     
     glh::renderer::clear_colour ( 1.0, 1.0, 1.0, 1.0 );
