@@ -150,11 +150,11 @@ glh::model::material& glh::model::model::add_material ( material& location, cons
 
     /* set the base colours of the stacks */
     if ( aimaterial.Get ( AI_MATKEY_COLOR_AMBIENT, temp_colour ) == aiReturn_SUCCESS )
-    location.ambient_stack.base_colour = cast_vector ( temp_colour ); else location.ambient_stack.base_colour = math::vec3 { 0.0, 0.0, 0.0};
+    location.ambient_stack.base_colour = cast_vector ( temp_colour ); else location.ambient_stack.base_colour = math::vec3 { 0.0 };
     if ( aimaterial.Get ( AI_MATKEY_COLOR_DIFFUSE, temp_colour ) == aiReturn_SUCCESS )
-    location.diffuse_stack.base_colour = cast_vector ( temp_colour ); else location.diffuse_stack.base_colour = math::vec3 { 0.0, 0.0, 0.0 };
+    location.diffuse_stack.base_colour = cast_vector ( temp_colour ); else location.diffuse_stack.base_colour = math::vec3 { 0.0 };
     if ( aimaterial.Get ( AI_MATKEY_COLOR_SPECULAR, temp_colour ) == aiReturn_SUCCESS )
-    location.specular_stack.base_colour = cast_vector ( temp_colour ); else location.specular_stack.base_colour = math::vec3 { 0.0, 0.0, 0.0 };
+    location.specular_stack.base_colour = cast_vector ( temp_colour ); else location.specular_stack.base_colour = math::vec3 { 0.0 };
 
     /* set up the ambient texture stack textures */
     location.ambient_stack.levels.resize ( aimaterial.GetTextureCount ( aiTextureType_AMBIENT ) );
@@ -231,6 +231,16 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack_
     if ( aimaterial.Get ( AI_MATKEY_TEXBLEND ( aitexturetype, index ), temp_float ) == aiReturn_SUCCESS ) 
     location.blend_strength = temp_float; else location.blend_strength = 1.0;
 
+    /* set wrapping modes */
+    if ( aimaterial.Get ( AI_MATKEY_MAPPINGMODE_U ( aitexturetype, index ), temp_int ) == aiReturn_SUCCESS )
+    location.wrapping_u = temp_int; else location.wrapping_u = aiTextureMapMode_Wrap;
+    if ( aimaterial.Get ( AI_MATKEY_MAPPINGMODE_V ( aitexturetype, index ), temp_int ) == aiReturn_SUCCESS )
+    location.wrapping_v = temp_int; else location.wrapping_v = aiTextureMapMode_Wrap;
+
+    /* set uvwsrc */
+    if ( aimaterial.Get ( AI_MATKEY_UVWSRC ( aitexturetype, index ), temp_int ) == aiReturn_SUCCESS )
+    location.uvwsrc = temp_int; else location.uvwsrc = 0;
+
     /* check if already inported */
     for ( unsigned i = 0; i < textures.size (); ++i ) if ( textures.at ( i ).get_path () == texpath )
     {
@@ -260,14 +270,22 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack_
  */
 glh::model::mesh& glh::model::model::add_mesh ( mesh& location, const aiMesh& aimesh )
 {
-    /* add the vertices */
+    /* add vertices, normals and texcoords */
     location.vertices.resize ( aimesh.mNumVertices );
     for ( unsigned i = 0; i < aimesh.mNumVertices; ++i )
     {
+        /* add vertices and normals */
         location.vertices.at ( i ).position = cast_vector ( aimesh.mVertices [ i ] );
         location.vertices.at ( i ).normal = cast_vector ( aimesh.mNormals [ i ] );
-        location.vertices.at ( i ).texcoords = cast_vector ( aimesh.mTextureCoords [ 0 ][ i ] );
+
+        /* resize texcoords to number of uv components and set them */
+        location.vertices.at ( i ).texcoords.resize ( aimesh.GetNumUVChannels () );
+        for ( unsigned j = 0; j < aimesh.GetNumUVChannels (); ++j )
+        location.vertices.at ( i ).texcoords.at ( j ) = cast_vector ( aimesh.mTextureCoords [ j ][ i ] );
     }
+
+    /* set the number of uv channels */
+    location.num_uv_channels = aimesh.GetNumUVChannels ();
 
     /* add material reference */
     location.properties_index = aimesh.mMaterialIndex;
@@ -318,18 +336,22 @@ glh::model::face& glh::model::model::add_face ( face& location, mesh& parent, co
 void glh::model::model::configure_buffers ( mesh& location )
 {
     /* create temporary array for vertex data */
-    GLfloat vertices [ location.vertices.size () * 9 ];
+    const unsigned components_per_vertex = 6 + ( 3 * location.num_uv_channels );
+    GLfloat vertices [ location.vertices.size () * components_per_vertex ];
     for ( unsigned i = 0; i < location.vertices.size (); ++i )
     {
-        vertices [ ( i * 9 ) + 0 ] = location.vertices.at ( i ).position.at ( 0 );
-        vertices [ ( i * 9 ) + 1 ] = location.vertices.at ( i ).position.at ( 1 );
-        vertices [ ( i * 9 ) + 2 ] = location.vertices.at ( i ).position.at ( 2 );
-        vertices [ ( i * 9 ) + 3 ] = location.vertices.at ( i ).normal.at ( 0 );
-        vertices [ ( i * 9 ) + 4 ] = location.vertices.at ( i ).normal.at ( 1 );
-        vertices [ ( i * 9 ) + 5 ] = location.vertices.at ( i ).normal.at ( 2 );
-        vertices [ ( i * 9 ) + 6 ] = location.vertices.at ( i ).texcoords.at ( 0 );
-        vertices [ ( i * 9 ) + 7 ] = location.vertices.at ( i ).texcoords.at ( 1 );
-        vertices [ ( i * 9 ) + 8 ] = location.vertices.at ( i ).texcoords.at ( 2 );
+        vertices [ ( i * components_per_vertex ) + 0 ] = location.vertices.at ( i ).position.at ( 0 );
+        vertices [ ( i * components_per_vertex ) + 1 ] = location.vertices.at ( i ).position.at ( 1 );
+        vertices [ ( i * components_per_vertex ) + 2 ] = location.vertices.at ( i ).position.at ( 2 );
+        vertices [ ( i * components_per_vertex ) + 3 ] = location.vertices.at ( i ).normal.at ( 0 );
+        vertices [ ( i * components_per_vertex ) + 4 ] = location.vertices.at ( i ).normal.at ( 1 );
+        vertices [ ( i * components_per_vertex ) + 5 ] = location.vertices.at ( i ).normal.at ( 2 );
+        for ( unsigned j = 0; j < location.num_uv_channels; ++j )
+        {
+            vertices [ ( i * components_per_vertex ) + ( j * 3 ) + 6 ] = location.vertices.at ( i ).texcoords.at ( j ).at ( 0 );
+            vertices [ ( i * components_per_vertex ) + ( j * 3 ) + 7 ] = location.vertices.at ( i ).texcoords.at ( j ).at ( 1 );
+            vertices [ ( i * components_per_vertex ) + ( j * 3 ) + 8 ] = location.vertices.at ( i ).texcoords.at ( j ).at ( 2 );
+        }        
     }
 
     /* create temporary array to store indices */
@@ -346,9 +368,12 @@ void glh::model::model::configure_buffers ( mesh& location )
     location.index_data.buffer_data ( sizeof ( indices ), indices, GL_STATIC_DRAW );
 
     /* configure the vao */
-    location.array_object.set_vertex_attrib ( 0, location.vertex_data, 3, GL_FLOAT, GL_FALSE, 9 * sizeof ( GLfloat ), ( GLvoid * ) 0 );
-    location.array_object.set_vertex_attrib ( 1, location.vertex_data, 3, GL_FLOAT, GL_FALSE, 9 * sizeof ( GLfloat ), ( GLvoid * ) ( 3 * sizeof ( GLfloat ) ) );
-    location.array_object.set_vertex_attrib ( 2, location.vertex_data, 3, GL_FLOAT, GL_FALSE, 9 * sizeof ( GLfloat ), ( GLvoid * ) ( 6 * sizeof ( GLfloat ) ) );
+    location.array_object.set_vertex_attrib ( 0, location.vertex_data, 3, GL_FLOAT, GL_FALSE, components_per_vertex * sizeof ( GLfloat ), ( GLvoid * ) 0 );
+    location.array_object.set_vertex_attrib ( 1, location.vertex_data, 3, GL_FLOAT, GL_FALSE, components_per_vertex * sizeof ( GLfloat ), ( GLvoid * ) ( 3 * sizeof ( GLfloat ) ) );
+    for ( unsigned i = 0; i < location.num_uv_channels; ++i )
+    {
+        location.array_object.set_vertex_attrib ( 2 + i, location.vertex_data, 3, GL_FLOAT, GL_FALSE, components_per_vertex * sizeof ( GLfloat ), ( GLvoid * ) ( ( ( i * 3 ) + 6 ) * sizeof ( GLfloat ) ) );
+    }
     location.array_object.bind_ebo ( location.index_data );
 }
 
@@ -378,8 +403,6 @@ glh::model::node& glh::model::model::add_node ( node& location, const aiNode& ai
 
     /* set transformation */
     location.transform = cast_matrix ( ainode.mTransformation );
-
-    std::cout << location.transform.format_str () << std::endl;
 
     /* return node */
     return location;
@@ -434,23 +457,32 @@ void glh::model::model::render_mesh ( const mesh& location ) const
     for ( i = 0; i < location.properties->ambient_stack.levels.size (); ++i, ++offset ) 
     {
         location.properties->ambient_stack.levels.at ( i ).texture->bind ( GL_TEXTURE0 + i + offset );
+        location.properties->ambient_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( location.properties->ambient_stack.levels.at ( i ).wrapping_u ) );
+        location.properties->ambient_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( location.properties->ambient_stack.levels.at ( i ).wrapping_v ) );
         cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( i + offset );
         cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "blend_operation" ).set_int ( location.properties->ambient_stack.levels.at ( i ).blend_operation );
         cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "blend_strength" ).set_float ( location.properties->ambient_stack.levels.at ( i ).blend_strength );
+        cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "uvwsrc" ).set_int ( location.properties->ambient_stack.levels.at ( i ).uvwsrc );
     }
     for ( i = 0; i < location.properties->diffuse_stack.levels.size (); ++i, ++offset ) 
     {
         location.properties->diffuse_stack.levels.at ( i ).texture->bind ( GL_TEXTURE0 + i + offset );
+        location.properties->diffuse_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( location.properties->diffuse_stack.levels.at ( i ).wrapping_u ) );
+        location.properties->diffuse_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( location.properties->diffuse_stack.levels.at ( i ).wrapping_v ) );
         cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( i + offset );
         cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "blend_operation" ).set_int ( location.properties->diffuse_stack.levels.at ( i ).blend_operation );
         cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "blend_strength" ).set_float ( location.properties->diffuse_stack.levels.at ( i ).blend_strength );
+        cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "uvwsrc" ).set_int ( location.properties->diffuse_stack.levels.at ( i ).uvwsrc );
     }
     for ( i = 0; i < location.properties->specular_stack.levels.size (); ++i, ++offset ) 
     {
         location.properties->specular_stack.levels.at ( i ).texture->bind ( GL_TEXTURE0 + i + offset );
+        location.properties->specular_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( location.properties->specular_stack.levels.at ( i ).wrapping_u ) );
+        location.properties->specular_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( location.properties->specular_stack.levels.at ( i ).wrapping_v ) );
         cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( i + offset );
         cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "blend_operation" ).set_int ( location.properties->specular_stack.levels.at ( i ).blend_operation );
         cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "blend_strength" ).set_float ( location.properties->specular_stack.levels.at ( i ).blend_strength );
+        cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "uvwsrc" ).set_int ( location.properties->specular_stack.levels.at ( i ).uvwsrc );
     }
 
     /* set blending mode */

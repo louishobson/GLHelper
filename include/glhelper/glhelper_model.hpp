@@ -152,8 +152,8 @@ struct glh::model::vertex
     /* normal vector */
     math::vec3 normal;
 
-    /* texture coords */
-    math::vec3 texcoords;
+    /* multiple uv channels of texture coords */
+    std::vector<math::vec3> texcoords;
 };
 
 
@@ -171,6 +171,13 @@ struct glh::model::texture_stack_level
 
     /* blend strength */
     double blend_strength;
+
+    /* wrapping modes */
+    int wrapping_u;
+    int wrapping_v;
+
+    /* uv channel the texture coords should be taken from */
+    unsigned uvwsrc;
 
     /* index of the texture */
     unsigned index;
@@ -269,6 +276,9 @@ struct glh::model::mesh
     /* the vertices the mesh consists of */
     std::vector<vertex> vertices;
 
+    /* the number of uv channels the mesh consists of for each vertex */
+    unsigned num_uv_channels;
+
     /* index of the material the mesh is made from */
     unsigned properties_index;
 
@@ -332,7 +342,9 @@ public:
      * _entry: the entry file to the model
      * _pps: post processing steps (or default recommended)
      */
-    model ( const std::string& _directory, const std::string& _entry, const unsigned _pps = aiProcess_Triangulate | aiProcess_FlipUVs );
+    model ( const std::string& _directory, const std::string& _entry, const unsigned _pps = 
+    aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenUVCoords | aiProcess_TransformUVCoords | aiProcess_GenNormals | 
+    aiProcess_JoinIdenticalVertices | aiProcess_RemoveRedundantMaterials | aiProcess_OptimizeMeshes | aiProcess_Debone );
 
     /* deleted zero parameter constructor */
     model () = delete;
@@ -445,6 +457,16 @@ private:
         for ( unsigned i = 0; i < 4; ++i ) for ( unsigned j = 0; j < 4; ++j ) result.at ( i, j ) = mat [ i ][ j ];
         return result;
     }
+
+
+
+    /* cast_wrapping
+     *
+     * cast assimp wrapping macros to OpenGL wrapping macros
+     */
+    int cast_wrapping ( const int wrap ) const
+    { if ( wrap == aiTextureMapMode_Wrap ) return GL_REPEAT; if ( wrap == aiTextureMapMode_Clamp ) return GL_CLAMP_TO_BORDER;
+      if ( wrap == aiTextureMapMode_Mirror ) return GL_MIRRORED_REPEAT; else return GL_REPEAT; }
 
 
 
