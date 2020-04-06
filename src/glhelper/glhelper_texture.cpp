@@ -39,7 +39,7 @@ glh::texture2d::texture2d ( const std::string& _path, const GLenum _texture_unit
     , texture_unit { _texture_unit }
 {
     /* load the image */
-    unsigned char * image_data = stbi_load ( path.c_str (), &width, &height, &channels, 0 );
+    unsigned char * image_data = stbi_load ( path.c_str (), &width, &height, &channels, 4 );
 
     /* check for error */
     if ( !image_data ) throw texture_exception { "failed to load texture from file at path " + path };
@@ -48,18 +48,11 @@ glh::texture2d::texture2d ( const std::string& _path, const GLenum _texture_unit
     glGenTextures ( 1, &id );
     bind ();
 
-    /* get the format of the texture based on the number of channels */
-    if ( channels == 1 ) format = GL_RED; else
-    if ( channels == 2 ) format = GL_RG; else
-    if ( channels == 3 ) format = GL_RGB; else
-    if ( channels == 4 ) format = GL_RGBA; else
-    {
-        throw texture_exception { "failed to set texture format for texture with " + std::to_string ( channels ) + " channels" };
-    }
-    
-
-    /* set the texture and generate mipmap */
-    glTexImage2D ( GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
+    /* set the texture and generate mipmap
+     * although the original image may not have 4 channels, by putting the last parameter as 4 in stbi_load,
+     * the image is forced to have 4 channels
+     */
+    glTexImage2D ( GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data );
     glGenerateMipmap ( GL_TEXTURE_2D );
 
     /* free image data */
