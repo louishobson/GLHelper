@@ -428,10 +428,7 @@ void glh::model::model::render_node ( const node& location, const math::mat4& tr
     cached_normal_uniform->set_matrix ( math::normal ( trans ) );
 
     /* render all of the meshes */
-    for ( const mesh * m: location.meshes ) 
-    {
-        render_mesh ( * m );
-    }
+    for ( const mesh * m: location.meshes ) render_mesh ( * m );
 }
 
 /* render_mesh
