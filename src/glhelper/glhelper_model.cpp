@@ -497,4 +497,7 @@ void glh::model::model::render_mesh ( const mesh& location ) const
 
     /* draw elements */
     renderer::draw_elements ( GL_TRIANGLES, location.faces.size () * 3, GL_UNSIGNED_INT, 0 );
+
+    /* unbind the vao */
+    location.array_object.unbind ();
 }
