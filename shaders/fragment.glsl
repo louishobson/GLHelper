@@ -13,6 +13,7 @@ struct texture_stack_level_struct
 {
     int blend_operation;
     float blend_strength;
+    int uvwsrc;
     sampler2D texunit;
 };
 
@@ -39,8 +40,8 @@ struct material_struct
     float opacity;
 };
 
-/* texture coord, normal vector and position */
-in vec2 texcoord;
+/* texture coords, normal vector and position */
+in vec2 texcoords [ 8 ];
 in vec3 norm;
 in vec3 fragpos;
 
@@ -62,17 +63,23 @@ uniform material_struct material;
  *
  * return: the overall colour of the fragment of the stack
  */
-vec4 evaluate_stack ( material_struct mat, texture_stack_struct stack )
+vec3 evaluate_stack ( material_struct mat, texture_stack_struct stack )
 {
     /* get base colour */
-    vec4 stack_colour = vec4 ( stack.base_colour, 1.0 );
+    vec3 stack_colour = stack.base_colour;
 
     /* loop through the stack */
     for ( int i = 0; i < stack.stack_size; ++i )
     {
         /* get the colour */
-        stack_colour += texture ( stack.levels [ i ].texunit, texcoord ) * stack.levels [ i ].blend_strength;
+        vec3 level_colour = texture ( stack.levels [ i ].texunit, texcoords [ stack.levels [ i ].uvwsrc ] ).xyz * stack.levels [ i ].blend_strength;
         /* add to the stack */
+        if ( stack.levels [ i ].blend_operation == 0 ) stack_colour = stack_colour * level_colour; else
+        if ( stack.levels [ i ].blend_operation == 1 ) stack_colour = stack_colour + level_colour; else
+        if ( stack.levels [ i ].blend_operation == 2 ) stack_colour = stack_colour - level_colour; else
+        if ( stack.levels [ i ].blend_operation == 3 ) stack_colour = stack_colour / level_colour; else
+        if ( stack.levels [ i ].blend_operation == 4 ) stack_colour = ( stack_colour + level_colour ) - ( stack_colour * level_colour ); else
+        if ( stack.levels [ i ].blend_operation == 5 ) stack_colour = stack_colour + ( level_colour - 0.5 );   
     }
 
     /* return the stack colour */
@@ -84,7 +91,7 @@ vec4 evaluate_stack ( material_struct mat, texture_stack_struct stack )
 /* main */
 void main ()
 {
-    fragcolour = vec4 ( vec3 ( evaluate_stack ( material, material.ambient_stack )
+    fragcolour = vec4 ( evaluate_stack ( material, material.ambient_stack )
                  + evaluate_stack ( material, material.diffuse_stack )
-                 + evaluate_stack ( material, material.specular_stack ) ).xyz / 4, 1.0 );
+                 + evaluate_stack ( material, material.specular_stack ), 1.0 );
 }

@@ -18,10 +18,10 @@ struct trans_struct
 /* vertices, texture coords and normal */
 layout ( location = 0 ) in vec3 pos;
 layout ( location = 1 ) in vec3 in_norm;
-layout ( location = 2 ) in vec2 in_texcoord;
+layout ( location = 2 ) in vec2 in_texcoords [ 8 ];
 
 /* texture coords, normal */
-out vec2 texcoord;
+out vec2 texcoords [ 8 ];
 out vec3 norm;
 out vec3 fragpos;
 
@@ -33,8 +33,8 @@ void main ()
 {
     /* set the position to be the same as the attribute, with an alpha of 1.0 */
     gl_Position = trans.proj * trans.view * trans.model * vec4 ( pos, 1.0f );
-    /* set texcoord to in_texcoords */
-    texcoord = in_texcoord;
+    /* set texcoords to in_texcoords */
+    texcoords = in_texcoords;
     /* set norm to trans.norm * in_norm */
     norm = normalize ( trans.norm * in_norm );
     /* set fragpos */
