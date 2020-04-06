@@ -11,6 +11,10 @@ test
 # Binaries
 test
 
+# All of assets
+assets/*
+assets
+
 # User-specific files
 *.rsuser
 *.suo
