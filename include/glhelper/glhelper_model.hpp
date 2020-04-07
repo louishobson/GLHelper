@@ -625,7 +625,7 @@ private:
 
     /* render_node
      *
-     * render the model
+     * render a node and all of its children
      * 
      * location: the node to render
      * transform: the current model transformation from all the previous nodes
