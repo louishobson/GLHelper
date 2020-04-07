@@ -47,7 +47,7 @@ int main ()
     glh::camera_perspective camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 1000.0 };
     camera.enable_restrictive_mode ();
     
-    glh::renderer::clear_colour ( 1.0, 1.0, 1.0, 1.0 );
+    glh::renderer::clear_color ( 1.0, 1.0, 1.0, 1.0 );
     glh::renderer::enable_depth_test ();
 
     program.use ();

@@ -70,9 +70,9 @@ void glh::model::model::render ( struct_uniform& material_uni, uniform& model_ma
             material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "stack_size" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_uniform ( "stack_size" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_uniform ( "stack_size" ),
-            material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "base_colour" ),
-            material_uni.get_struct_uniform ( "diffuse_stack" ).get_uniform ( "base_colour" ),
-            material_uni.get_struct_uniform ( "specular_stack" ).get_uniform ( "base_colour" ),
+            material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "base_color" ),
+            material_uni.get_struct_uniform ( "diffuse_stack" ).get_uniform ( "base_color" ),
+            material_uni.get_struct_uniform ( "specular_stack" ).get_uniform ( "base_color" ),
             material_uni.get_struct_uniform ( "ambient_stack" ).get_array_uniform<struct_uniform> ( "levels" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_array_uniform<struct_uniform> ( "levels" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_array_uniform<struct_uniform> ( "levels" ),
@@ -143,17 +143,17 @@ void glh::model::model::process_scene ( const aiScene& aiscene )
 glh::model::material& glh::model::model::add_material ( material& location, const aiMaterial& aimaterial )
 {
     /* temportary get storage */
-    aiColor3D temp_colour;
+    aiColor3D temp_color;
     float temp_float;
     int temp_int;
 
-    /* set the base colours of the stacks */
-    if ( aimaterial.Get ( AI_MATKEY_COLOR_AMBIENT, temp_colour ) == aiReturn_SUCCESS )
-    location.ambient_stack.base_colour = cast_vector ( temp_colour ); else location.ambient_stack.base_colour = math::vec3 { 0.0 };
-    if ( aimaterial.Get ( AI_MATKEY_COLOR_DIFFUSE, temp_colour ) == aiReturn_SUCCESS )
-    location.diffuse_stack.base_colour = cast_vector ( temp_colour ); else location.diffuse_stack.base_colour = math::vec3 { 0.0 };
-    if ( aimaterial.Get ( AI_MATKEY_COLOR_SPECULAR, temp_colour ) == aiReturn_SUCCESS )
-    location.specular_stack.base_colour = cast_vector ( temp_colour ); else location.specular_stack.base_colour = math::vec3 { 0.0 };
+    /* set the base colors of the stacks */
+    if ( aimaterial.Get ( AI_MATKEY_COLOR_AMBIENT, temp_color ) == aiReturn_SUCCESS )
+    location.ambient_stack.base_color = cast_vector ( temp_color ); else location.ambient_stack.base_color = math::vec3 { 0.0 };
+    if ( aimaterial.Get ( AI_MATKEY_COLOR_DIFFUSE, temp_color ) == aiReturn_SUCCESS )
+    location.diffuse_stack.base_color = cast_vector ( temp_color ); else location.diffuse_stack.base_color = math::vec3 { 0.0 };
+    if ( aimaterial.Get ( AI_MATKEY_COLOR_SPECULAR, temp_color ) == aiReturn_SUCCESS )
+    location.specular_stack.base_color = cast_vector ( temp_color ); else location.specular_stack.base_color = math::vec3 { 0.0 };
 
     /* set up the ambient texture stack textures */
     location.ambient_stack.levels.resize ( aimaterial.GetTextureCount ( aiTextureType_AMBIENT ) );
@@ -443,10 +443,10 @@ void glh::model::model::render_mesh ( const mesh& location ) const
     cached_material_uniforms->diffuse_stack_size_uni.set_int ( location.properties->diffuse_stack.levels.size () );
     cached_material_uniforms->specular_stack_size_uni.set_int ( location.properties->specular_stack.levels.size () );
 
-    /* set the colour values */
-    cached_material_uniforms->ambient_stack_base_colour_uni.set_vector ( location.properties->ambient_stack.base_colour );
-    cached_material_uniforms->diffuse_stack_base_colour_uni.set_vector ( location.properties->diffuse_stack.base_colour );
-    cached_material_uniforms->specular_stack_base_colour_uni.set_vector ( location.properties->specular_stack.base_colour ); 
+    /* set the color values */
+    cached_material_uniforms->ambient_stack_base_color_uni.set_vector ( location.properties->ambient_stack.base_color );
+    cached_material_uniforms->diffuse_stack_base_color_uni.set_vector ( location.properties->diffuse_stack.base_color );
+    cached_material_uniforms->specular_stack_base_color_uni.set_vector ( location.properties->specular_stack.base_color ); 
 
     /* bind the textures and set the sampler values */
     unsigned i = 0, offset = 0;

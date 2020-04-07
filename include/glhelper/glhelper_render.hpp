@@ -110,13 +110,13 @@ public:
     static void draw_elements ( const GLenum mode, const GLint count, const GLenum type, const GLvoid * start_index )
     { glDrawElements ( mode, count, type, start_index ); }
 
-    /* clear_colour
+    /* clear_color
      *
-     * set the clear colour
+     * set the clear color
      * 
-     * r,g,b,a: components for the new clear colour
+     * r,g,b,a: components for the new clear color
      */
-    static void clear_colour ( const double r, const double g, const double b, const double a )
+    static void clear_color ( const double r, const double g, const double b, const double a )
     { glClearColor ( r, g, b, a ); }
 
     /* clear

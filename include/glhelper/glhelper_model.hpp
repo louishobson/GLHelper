@@ -196,8 +196,8 @@ struct glh::model::texture_stack_level
  */
  struct glh::model::texture_stack
  {
-    /* the base colour */
-    math::vec3 base_colour;
+    /* the base color */
+    math::vec3 base_color;
 
     /* array of texture references */
     std::vector<texture_stack_level> levels;
@@ -411,9 +411,9 @@ private:
         uniform ambient_stack_size_uni;
         uniform diffuse_stack_size_uni;
         uniform specular_stack_size_uni;
-        uniform ambient_stack_base_colour_uni;
-        uniform diffuse_stack_base_colour_uni;
-        uniform specular_stack_base_colour_uni;
+        uniform ambient_stack_base_color_uni;
+        uniform diffuse_stack_base_color_uni;
+        uniform specular_stack_base_color_uni;
         array_uniform<struct_uniform> ambient_stack_levels_uni; 
         array_uniform<struct_uniform> diffuse_stack_levels_uni; 
         array_uniform<struct_uniform> specular_stack_levels_uni;
