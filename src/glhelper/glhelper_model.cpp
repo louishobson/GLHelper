@@ -96,7 +96,6 @@ void glh::model::model::render ( struct_uniform& material_uni, uniform& model_ma
 
 
 
-
 /* process_scene
  *
  * build from a scene object
