@@ -209,27 +209,6 @@ namespace glh
          * exception relating to models
          */
         class model_exception;
-
-
-
-        /* MODEL PROGRAMS */
-
-        /* phong/gouraud shaders
-         *
-         * shaders for Phong/Gouraud lighting
-         */
-        extern vshader phong_vshader;
-        extern fshader phong_fshader;
-        extern vshader gouraud_vshader;
-        extern fshader gouraud_fshader;
-
-        /* phong/gouraud shaders
-         *
-         * programs using Phong/Gouraud lighting
-         */
-        extern program phong_program;
-        extern program gouraud_program;
-
     }
 }
 
