@@ -8,6 +8,103 @@
  * 
  * importing and managing models using assimp
  * 
+ * 
+ * 
+ * the model class expects uniform data to be formatted in a specific way to function
+ * 
+ * the formats and structures expected to be found in the program are explained below
+ * 
+ * although the names of the actual structure types are not of importance,
+ * the variable names within the struct cannot be modified
+ * 
+ * 
+ * 
+ * VERTEX ATTTRIBUTES
+ * 
+ * 0: vec3  : vertices
+ * 1: vec3  : normals
+ * 2: vec3[]: UV channels of texture coordinates
+ *
+ * how many UV channels you allow (size of the array at location 2) is up to the user
+ * too many is not an issue, too few will be
+ * 
+ * 
+ * 
+ * TEXTURE_STACK_LEVEL_STRUCT
+ *  
+ * struct texture_stack_level_struct
+ * {
+ *     int blend_operation;
+ *     float blend_strength;
+ *     int uvwsrc;
+ *     sampler2D texunit;
+ * };
+ * 
+ * this structure is for a level of a texture stack
+ * 
+ * blend_operation: one of aiTextureOP
+ * blend_strength: a multiple for each level of the stack to be multiplied by
+ * uvwsrc: which UV channel the texture coordinates should be taken from
+ * texunit: the sampler2D for the texture
+ * 
+ * 
+ * 
+ * TEXTURE_STACK_STRUCT
+ * 
+ * struct texture_stack_struct
+ * {
+ *     int stack_size;
+ *     vec3 base_color;
+ *     texture_stack_level_struct levels [];
+ * };
+ * 
+ * this structure is for a texture stack
+ * 
+ * stack_size: the number of levels of the stack
+ * base_color: the base color of which textures in the stack are blended with
+ * levels: an array of levels of the texture stack, of user-specified size
+ * 
+ * 
+ * 
+ * MATERIAL_STRUCT
+ * 
+ * struct material_struct
+ * {
+ *     texture_stack_struct ambient_stack;
+ *     texture_stack_struct diffuse_stack;
+ *     texture_stack_struct specular_stack;
+ * 
+ *     int blending_mode;
+ * 
+ *     float shininess;
+ *     float shininess_strength;
+ * 
+ *     float opacity;
+ * };
+ * 
+ * this structure is for a material
+ * 
+ * *_stack: the texture stacks for ambient, diffuse and specular texture maps
+ * blending_mode: how to blend the computed fragment color with the previous color
+ * shininess: the shininess value for the material
+ * shininess_strength: a multiple for the specular contribution for a pixel's color
+ * opacity: the opacity of the material (1 = opaque, 0 = transparent)
+ * 
+ * 
+ * 
+ * UNIFORMS
+ * 
+ * in order to render a model, the render method requires three uniform values:
+ * 
+ * material_uni: a struct_uniform referring to a material_struct in the program (to set the material info)
+ * model_uni: a normal uniform referring to a mat4 in the program (for the model matrix)
+ * normal_uni: a normal uniform referrring to a mat4 in the program (for the normal matrix)
+ * 
+ * 
+ * 
+ * for information about implementing logic in shaders, see pseudocode at the bottom of: 
+ * http://assimp.sourceforge.net/lib_html/materials.html
+ * 
  */
 
 
