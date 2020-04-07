@@ -214,7 +214,7 @@ namespace glh
 
 
 
-/* MATERIAL DEFINITION */
+/* VERTEX DEFINITION */
 
 /* struct vertex
  *
@@ -401,6 +401,8 @@ struct glh::model::node
 };
 
 
+
+/* MODEL DEFINITION */
 
 /* class model
  *
