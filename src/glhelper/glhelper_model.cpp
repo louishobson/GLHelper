@@ -56,10 +56,9 @@ glh::model::model::model ( const std::string& _directory, const std::string& _en
  * material: a struct uniform with the same members as glh::model::material
  *           the texture stacks should be arrays of structs containing members in glh::model::texture_reference
  * model_matrix: a 4x4 matrix uniform which arranges meshes to relative positions
- * normal_matrix: a 4x4 matrix uniform based produced from the model matrix
  * transform: the overall model transformation to apply (identity by default)
  */
-void glh::model::model::render ( struct_uniform& material_uni, uniform& model_matrix, uniform& normal_matrix, const math::mat4 transform )
+void glh::model::model::render ( struct_uniform& material_uni, uniform& model_matrix, const math::mat4 transform )
 {
     /* reload the cache of material uniforms  */
     if ( cached_material_uniforms.get () == nullptr || cached_material_uniforms->material_uni != material_uni )
@@ -83,12 +82,9 @@ void glh::model::model::render ( struct_uniform& material_uni, uniform& model_ma
          } );
     }
 
-    /* reload the model and normal matrix uniforms */
+    /* reload the model uniform */
     if ( cached_model_uniform.get () == nullptr || * cached_model_uniform != model_matrix )
     cached_model_uniform.reset ( new uniform { model_matrix } );
-
-    if ( cached_normal_uniform.get () == nullptr || * cached_normal_uniform != normal_matrix )
-    cached_normal_uniform.reset ( new uniform { normal_matrix } );
 
     /* render the root node */
     render_node ( root_node, transform );
@@ -155,12 +151,26 @@ glh::model::material& glh::model::model::add_material ( material& location, cons
     if ( aimaterial.Get ( AI_MATKEY_COLOR_SPECULAR, temp_color ) == aiReturn_SUCCESS )
     location.specular_stack.base_color = cast_vector ( temp_color ); else location.specular_stack.base_color = math::vec3 { 0.0 };
 
-    /* set up the ambient texture stack textures */
-    location.ambient_stack.levels.resize ( aimaterial.GetTextureCount ( aiTextureType_AMBIENT ) );
-    for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_AMBIENT ); ++i )
+    /* set up the ambient texture stack textures
+     * if ambient textures are present, use those
+     * otherwise borrow the diffuse textures
+     */
+    if ( aimaterial.GetTextureCount ( aiTextureType_AMBIENT ) > 0 )
     {
-        add_texture ( location.ambient_stack.levels.at ( i ), aimaterial, i, aiTextureType_AMBIENT );  
+        location.ambient_stack.levels.resize ( aimaterial.GetTextureCount ( aiTextureType_AMBIENT ) );
+        for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_AMBIENT ); ++i )
+        {
+            add_texture ( location.ambient_stack.levels.at ( i ), aimaterial, i, aiTextureType_AMBIENT );  
+        }
+    } else
+    {
+        location.ambient_stack.levels.resize ( aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ) );
+        for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ); ++i )
+        {
+            add_texture ( location.ambient_stack.levels.at ( i ), aimaterial, i, aiTextureType_DIFFUSE );  
+        }
     }
+    
 
     /* set up the diffuse texture stack textures */
     location.diffuse_stack.levels.resize ( aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ) );
@@ -422,9 +432,8 @@ void glh::model::model::render_node ( const node& location, const math::mat4& tr
     /* first render the child nodes */
     for ( const node& child: location.children ) render_node ( child, trans );
 
-    /* set the model and normal matrices */
+    /* set the model matrix */
     cached_model_uniform->set_matrix ( trans );
-    cached_normal_uniform->set_matrix ( math::normal ( trans ) );
 
     /* render all of the meshes */
     for ( const mesh * m: location.meshes ) render_mesh ( * m );
