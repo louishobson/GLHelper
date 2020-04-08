@@ -454,17 +454,17 @@ inline glh::math::matrix<3> glh::math::rotate ( const matrix<3>& trans, const do
     /* return the new transformation matrix */
     return matrix<3>
     {
-        ( cos ( arg ) ) + ( axis.at ( 0 ) * axis.at ( 0 )  * ( 1 - cos ( arg ) ) ),
-        ( axis.at ( 0 ) * axis.at ( 1 ) * ( 1 - cos ( arg ) ) ) - ( axis.at ( 2 ) * sin ( arg ) ),
-        ( axis.at ( 0 ) * axis.at ( 2 ) * ( 1 - cos ( arg ) ) ) + ( axis.at ( 1 ) * sin ( arg ) ),
+        ( std::cos ( arg ) ) + ( axis.at ( 0 ) * axis.at ( 0 )  * ( 1 - std::cos ( arg ) ) ),
+        ( axis.at ( 0 ) * axis.at ( 1 ) * ( 1 - std::cos ( arg ) ) ) - ( axis.at ( 2 ) * std::sin ( arg ) ),
+        ( axis.at ( 0 ) * axis.at ( 2 ) * ( 1 - std::cos ( arg ) ) ) + ( axis.at ( 1 ) * std::sin ( arg ) ),
 
-        ( axis.at ( 1 ) * axis.at ( 0 ) * ( 1 - cos ( arg ) ) ) + ( axis.at ( 2 ) * sin ( arg ) ),
-        ( cos ( arg ) ) + ( axis.at ( 1 ) * axis.at ( 1 ) * ( 1 - cos ( arg ) ) ),
-        ( axis.at ( 1 ) * axis.at ( 2 ) * ( 1 - cos ( arg ) ) ) - ( axis.at ( 0 ) * sin ( arg ) ),
+        ( axis.at ( 1 ) * axis.at ( 0 ) * ( 1 - std::cos ( arg ) ) ) + ( axis.at ( 2 ) * std::sin ( arg ) ),
+        ( std::cos ( arg ) ) + ( axis.at ( 1 ) * axis.at ( 1 ) * ( 1 - std::cos ( arg ) ) ),
+        ( axis.at ( 1 ) * axis.at ( 2 ) * ( 1 - std::cos ( arg ) ) ) - ( axis.at ( 0 ) * std::sin ( arg ) ),
 
-        ( axis.at ( 2 ) * axis.at ( 0 ) * ( 1 - cos ( arg ) ) ) - ( axis.at ( 1 ) * sin ( arg ) ),
-        ( axis.at ( 2 ) * axis.at ( 1 ) * ( 1 - cos ( arg ) ) ) + ( axis.at ( 0 ) * sin ( arg ) ),
-        ( cos ( arg ) ) + ( axis.at ( 2 ) * axis.at ( 2 ) * ( 1 - cos ( arg ) ) ) 
+        ( axis.at ( 2 ) * axis.at ( 0 ) * ( 1 - std::cos ( arg ) ) ) - ( axis.at ( 1 ) * std::sin ( arg ) ),
+        ( axis.at ( 2 ) * axis.at ( 1 ) * ( 1 - std::cos ( arg ) ) ) + ( axis.at ( 0 ) * std::sin ( arg ) ),
+        ( std::cos ( arg ) ) + ( axis.at ( 2 ) * axis.at ( 2 ) * ( 1 - std::cos ( arg ) ) ) 
     } * trans;
 }
 inline glh::math::vector<3> glh::math::rotate ( const vector<3>& vec, const double arg, const vector<3>& axis )
@@ -477,19 +477,19 @@ inline glh::math::matrix<4> glh::math::rotate ( const matrix<4>& trans, const do
     /* return the new transformation matrix */
     return matrix<4>
     {
-        ( cos ( arg ) ) + ( axis.at ( 0 ) * axis.at ( 0 )  * ( 1 - cos ( arg ) ) ),
-        ( axis.at ( 0 ) * axis.at ( 1 ) * ( 1 - cos ( arg ) ) ) - ( axis.at ( 2 ) * sin ( arg ) ),
-        ( axis.at ( 0 ) * axis.at ( 2 ) * ( 1 - cos ( arg ) ) ) + ( axis.at ( 1 ) * sin ( arg ) ),
+        ( std::cos ( arg ) ) + ( axis.at ( 0 ) * axis.at ( 0 )  * ( 1 - std::cos ( arg ) ) ),
+        ( axis.at ( 0 ) * axis.at ( 1 ) * ( 1 - std::cos ( arg ) ) ) - ( axis.at ( 2 ) * std::sin ( arg ) ),
+        ( axis.at ( 0 ) * axis.at ( 2 ) * ( 1 - std::cos ( arg ) ) ) + ( axis.at ( 1 ) * std::sin ( arg ) ),
         0,
 
-        ( axis.at ( 1 ) * axis.at ( 0 ) * ( 1 - cos ( arg ) ) ) + ( axis.at ( 2 ) * sin ( arg ) ),
-        ( cos ( arg ) ) + ( axis.at ( 1 ) * axis.at ( 1 ) * ( 1 - cos ( arg ) ) ),
-        ( axis.at ( 1 ) * axis.at ( 2 ) * ( 1 - cos ( arg ) ) ) - ( axis.at ( 0 ) * sin ( arg ) ),
+        ( axis.at ( 1 ) * axis.at ( 0 ) * ( 1 - std::cos ( arg ) ) ) + ( axis.at ( 2 ) * std::sin ( arg ) ),
+        ( std::cos ( arg ) ) + ( axis.at ( 1 ) * axis.at ( 1 ) * ( 1 - std::cos ( arg ) ) ),
+        ( axis.at ( 1 ) * axis.at ( 2 ) * ( 1 - std::cos ( arg ) ) ) - ( axis.at ( 0 ) * std::sin ( arg ) ),
         0,
 
-        ( axis.at ( 2 ) * axis.at ( 0 ) * ( 1 - cos ( arg ) ) ) - ( axis.at ( 1 ) * sin ( arg ) ),
-        ( axis.at ( 2 ) * axis.at ( 1 ) * ( 1 - cos ( arg ) ) ) + ( axis.at ( 0 ) * sin ( arg ) ),
-        ( cos ( arg ) ) + ( axis.at ( 2 ) * axis.at ( 2 ) * ( 1 - cos ( arg ) ) ),
+        ( axis.at ( 2 ) * axis.at ( 0 ) * ( 1 - std::cos ( arg ) ) ) - ( axis.at ( 1 ) * std::sin ( arg ) ),
+        ( axis.at ( 2 ) * axis.at ( 1 ) * ( 1 - std::cos ( arg ) ) ) + ( axis.at ( 0 ) * std::sin ( arg ) ),
+        ( std::cos ( arg ) ) + ( axis.at ( 2 ) * axis.at ( 2 ) * ( 1 - std::cos ( arg ) ) ),
         0,
 
         0, 0, 0, 1
@@ -602,7 +602,7 @@ inline glh::math::matrix<4> glh::math::perspective ( const double l, const doubl
 inline glh::math::matrix<4> glh::math::perspective_fov ( const double fov, const double aspect, const double n, const double f )
 {
     /* calculate the right position */
-    const double r = n * tan ( fov / 2 );
+    const double r = n * std::tan ( fov / 2 );
     /* call perspective */
     return perspective ( -r, r, - r / aspect, r / aspect, n, f );
 }

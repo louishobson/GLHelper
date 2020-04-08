@@ -41,12 +41,12 @@ glh::camera_perspective::camera_perspective ( const math::vec3& _pos, const math
     , view_change { true }
     , proj_change { true }
 {
-    /* set x, y, z, flat_x, world_y and flat_z */
+    /* set x, y, z, restrict_x, restrict_y and restrict_z */
     z = math::norm ( - _direction );
     x = math::cross ( math::norm ( _world_y ), z );
     y = math::cross ( z, x );
     restrict_x = x;
-    restrict_x = y;
+    restrict_y = y;
     restrict_z = z;
 
     /* update trans */
@@ -254,7 +254,7 @@ bool glh::camera_perspective::update_view () const
         view = math::camera ( pos, x, y, z );
         view_change = false;
         return true;
-    }
+    } else std::cout << "nochange\n";
 
     /* else return false */
     return false;
