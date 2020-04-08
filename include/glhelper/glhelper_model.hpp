@@ -98,7 +98,6 @@
  * 
  * material_uni: a struct_uniform referring to a material_struct in the program (to set the material info)
  * model_uni: a normal uniform referring to a mat4 in the program (for the model matrix)
- * normal_uni: a normal uniform referrring to a mat4 in the program (for the normal matrix)
  * 
  * 
  * 
@@ -448,10 +447,9 @@ public:
      * material: a struct uniform with the same members as glh::model::material
      *           the texture stacks should be arrays of structs containing members in glh::model::texture_reference
      * model_matrix: a 4x4 matrix uniform which arranges meshes to relative positions
-     * normal_matrix: a 4x4 matrix uniform based produced from the model matrix
      * transform: the overall model transformation to apply (identity by default)
      */
-    void render ( struct_uniform& material_uni, uniform& model_matrix, uniform& normal_matrix, const math::mat4 transform = math::identity<4> () );
+    void render ( struct_uniform& material_uni, uniform& model_matrix, const math::mat4 transform = math::identity<4> () );
 
 
 
@@ -504,7 +502,6 @@ private:
     /* cached uniforms */
     std::unique_ptr<cached_material_uniforms_struct> cached_material_uniforms;
     std::unique_ptr<uniform> cached_model_uniform;
-    std::unique_ptr<uniform> cached_normal_uniform;
 
 
 
