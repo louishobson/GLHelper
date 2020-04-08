@@ -194,7 +194,7 @@ glh::model::material& glh::model::model::add_material ( material& location, cons
     if ( aimaterial.Get ( AI_MATKEY_SHININESS, temp_float ) == aiReturn_SUCCESS )
     location.shininess = temp_float; else location.shininess = 0.0;
     if ( aimaterial.Get ( AI_MATKEY_SHININESS_STRENGTH, temp_float ) == aiReturn_SUCCESS )
-    location.shininess_strength = temp_float; else location.shininess_strength = 0.0;
+    location.shininess_strength = temp_float; else location.shininess_strength = 1.0;
 
     /* get the opacity */
     if ( aimaterial.Get ( AI_MATKEY_OPACITY, temp_float ) == aiReturn_SUCCESS )
@@ -494,11 +494,11 @@ void glh::model::model::render_mesh ( const mesh& location ) const
     cached_material_uniforms->blending_mode_uni.set_int ( location.properties->blending_mode );
 
     /* set shininess values */
-    cached_material_uniforms->shininess_uni.set_int ( location.properties->shininess );
-    cached_material_uniforms->shininess_strength_uni.set_int ( location.properties->shininess_strength );
+    cached_material_uniforms->shininess_uni.set_float ( location.properties->shininess );
+    cached_material_uniforms->shininess_strength_uni.set_float ( location.properties->shininess_strength );
 
     /* set opacity */
-    cached_material_uniforms->opacity_uni.set_int ( location.properties->opacity );
+    cached_material_uniforms->opacity_uni.set_float ( location.properties->opacity );
 
     /* bind the vao */
     location.array_object.bind ();
