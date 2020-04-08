@@ -476,13 +476,13 @@ public:
      * v0: the vector to set the uniform to
      */
     void set_vector ( const glh::math::vec1& v0 ) 
-        { check_is_program_in_use (); glUniform1fv ( location, 1, v0.export_data ().data () ); }
+        { check_is_program_in_use (); glUniform1f ( location, v0.at ( 0 ) ); }
     void set_vector ( const glh::math::vec2& v0 ) 
-        { check_is_program_in_use (); glUniform2fv ( location, 1, v0.export_data ().data () ); }
+        { check_is_program_in_use (); glUniform2f ( location, v0.at ( 0 ), v0.at ( 1 ) ); }
     void set_vector ( const glh::math::vec3& v0 ) 
-        { check_is_program_in_use (); glUniform3fv ( location, 1, v0.export_data ().data () ); }
+        { check_is_program_in_use (); glUniform3f ( location, v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ) ); }
     void set_vector ( const glh::math::vec4& v0 )
-        { check_is_program_in_use (); glUniform4fv ( location, 1, v0.export_data ().data () ); }
+        { check_is_program_in_use (); glUniform4f ( location, v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ), v0.at ( 3 ) ); }
 
 
     
