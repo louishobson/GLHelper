@@ -172,7 +172,7 @@ public:
 
 
 
-protected:
+private:
 
     /* GLenum target
      *
