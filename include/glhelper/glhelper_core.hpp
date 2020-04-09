@@ -139,7 +139,7 @@ protected:
 
 };
 
-/* virtual comparison operators
+/* comparison operators
  *
  * determines if two objects are equal by comparing ids
  * 
