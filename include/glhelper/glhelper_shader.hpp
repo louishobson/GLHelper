@@ -57,7 +57,7 @@ namespace glh
      */
     class shader;
 
-    /* class v/g/fshader
+    /* class v/g/fshader : shader
      *
      * derived classes for specific shader types
      */
@@ -144,6 +144,26 @@ public:
 
 
 
+    /* get_target
+     *
+     * get the target of the shader
+     */
+    const GLenum& get_target () const { return target; }
+
+    /* get_path
+     *
+     * get the path of the shader
+     */
+    const std::string& get_path () const { return path; }
+
+    /* get_source
+     *
+     * get the source of the shader
+     */
+    const std::string& get_source () const { return source; }
+
+
+
 private:
 
     /* shader target */
@@ -175,7 +195,7 @@ public:
     {}
 
     /* deleted zero-parameter constructor */
-    explicit vshader () = delete;
+    vshader () = delete;
 
     /* deleted copy constructor */
     vshader ( const vshader& other ) = delete;
@@ -209,7 +229,7 @@ public:
     {}
 
     /* deleted zero-parameter constructor */
-    explicit gshader () = delete;
+    gshader () = delete;
 
     /* deleted copy constructor */
     gshader ( const gshader& other ) = delete;
@@ -243,7 +263,7 @@ public:
     {}
 
     /* deleted zero-parameter constructor */
-    explicit fshader () = delete;
+    fshader () = delete;
 
     /* deleted copy constructor */
     fshader ( const fshader& other ) = delete;
@@ -276,7 +296,7 @@ public:
      * link all three shaders into a program
      * NOTE: the shader program remains valid even when linked shaders are destroyed
      */
-    explicit program ( const vshader& vs, const gshader& gs, const fshader& fs );
+    program ( const vshader& vs, const gshader& gs, const fshader& fs );
 
     /* two-shader constructor
      *
@@ -284,10 +304,10 @@ public:
      * uses the default geometry shader
      * NOTE: the shader program remains valid even when linked shaders are destroyed
      */
-    explicit program ( const vshader& vs, const fshader& fs );
+    program ( const vshader& vs, const fshader& fs );
 
     /* deleted zero-parameter constructor */
-    explicit program () = delete;
+    program () = delete;
 
     /* deleted copy constructor */
     program ( const program& other ) = delete;
@@ -779,7 +799,7 @@ public:
      *
      * construct shader_exception with no descrption
      */
-    explicit shader_exception () = default;
+    shader_exception () = default;
 
     /* default everything else and inherits what () function */
 

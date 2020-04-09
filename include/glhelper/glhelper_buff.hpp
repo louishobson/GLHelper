@@ -85,7 +85,7 @@ public:
      * 
      * _target: the target for the buffer
      */
-    explicit buffer ( const GLenum _target, const GLenum _reverse_target );
+    buffer ( const GLenum _target, const GLenum _reverse_target );
 
     /* construct and immediately buffer data
      *
@@ -96,12 +96,12 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    explicit buffer ( const GLenum _target, const GLenum _reverse_target, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
+    buffer ( const GLenum _target, const GLenum _reverse_target, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
         : buffer { _target, _reverse_target }
     { buffer_data ( size, data, usage ); }
 
     /* deleted zero-parameter constructor */
-    explicit buffer () = delete;
+    buffer () = delete;
 
     /* deleted copy constructor
      *
@@ -154,7 +154,7 @@ public:
      * 
      * return: the target it is bound to
      */
-    GLenum bind () const;
+    const GLenum& bind () const;
 
     /* unbind
      *
@@ -162,13 +162,22 @@ public:
      * 
      * return: the target just unbound
      */
-    GLenum unbind () const;
+    const GLenum& unbind () const;
 
     /* is_bound
      *
      * checks if the buffer is bound
      */
     bool is_bound () const;
+
+
+
+    /* get_(reverse)target
+     *
+     * get the (reverse ) target in which the buffer is bound
+     */
+    const GLenum& get_target () const { return target; }
+    const GLenum& get_reverse_target () const { return reverse_target; }
 
 
 
@@ -204,7 +213,7 @@ public:
      *
      * generates the buffer
      */
-    explicit vbo ()
+    vbo ()
         : buffer { GL_ARRAY_BUFFER, GL_ARRAY_BUFFER_BINDING }
     {}
 
@@ -216,7 +225,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    explicit vbo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
+    vbo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
         : buffer { GL_ARRAY_BUFFER, GL_ARRAY_BUFFER_BINDING, size, data, usage }
     {}
 
@@ -256,7 +265,7 @@ public:
      *
      * generates the buffer
      */
-    explicit ebo ()
+    ebo ()
         : buffer { GL_ELEMENT_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER_BINDING }
     {}
 
@@ -268,7 +277,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    explicit ebo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
+    ebo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
         : buffer { GL_ELEMENT_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER_BINDING, size, data, usage }
     {}
 
@@ -308,7 +317,7 @@ public:
      *
      * creates a vertex array object without any vbo or ebo bound
      */
-    explicit vao ();
+    vao ();
 
     /* deleted copy constructor */
     vao ( const vao& other ) = delete;
@@ -415,7 +424,7 @@ public:
      *
      * construct buffer_exception with no descrption
      */
-    explicit buffer_exception () = default;
+    buffer_exception () = default;
 
     /* default everything else and inherits what () function */
 

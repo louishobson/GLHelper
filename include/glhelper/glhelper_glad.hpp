@@ -68,7 +68,7 @@ class glh::glad_loader
 public:    
 
     /* deleted constructor */
-    explicit glad_loader () = delete;
+    glad_loader () = delete;
 
     /* deleted copy constructor */
     glad_loader ( const glad_loader& other ) = delete;
@@ -77,6 +77,7 @@ public:
     glad_loader& operator= ( const glad_loader& other ) = delete;
 
     /* default destructor */
+    ~glad_loader () = default;
 
 
 
@@ -130,7 +131,7 @@ public:
      *
      * construct glad_exception with no descrption
      */
-    explicit glad_exception () = default;
+    glad_exception () = default;
 
     /* default everything else and inherits what () function */
 

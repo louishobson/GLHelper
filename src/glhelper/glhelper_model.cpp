@@ -29,7 +29,7 @@
  * _entry: the entry file to the model
  * _pps: post processing steps (or default recommended)
  */
-glh::model::model::model ( const std::string& _directory, const std::string& _entry, const unsigned _pps )
+glh::model::model::model ( const std::string& _directory, const std::string& _entry, const int _pps )
     : directory { _directory }
     , entry { _entry }
     , pps { _pps | aiProcess_Triangulate }

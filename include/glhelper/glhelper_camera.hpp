@@ -134,29 +134,33 @@ public:
 
 
 
-    /* set_fov
+    /* get/set_fov
      *
-     * set the field of view
+     * get/set the field of view
      */
     void set_fov ( const double _fov ) { fov = _fov; proj_change = true; }
+    const double& get_fov () const { return fov; }
 
-    /* set_aspect
+    /* get/set_aspect
      *
-     * set the aspect ratio
+     * get/set the aspect ratio
      */
     void set_aspect ( const double _aspect ) { aspect = _aspect; proj_change = true; }
+    const double& get_aspect () const { return aspect; }
 
-    /* set_near
+    /* get/set_near
      *
-     * set the near position of the perspective projection matrix
+     * get/set the near position of the perspective projection matrix
      */
     void set_near ( const double _near ) { near = _near; proj_change = true; }
+    const double& get_near () const { return near; }
 
-    /* set_far
+    /* get/set_far
      *
-     * set the far position of the perspective projection matrix
+     * get/set the far position of the perspective projection matrix
      */
     void set_far ( const double _far ) { far = _far; proj_change = true; }
+    const double& get_far () const { return far; }
 
 
 

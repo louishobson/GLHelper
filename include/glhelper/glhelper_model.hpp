@@ -352,7 +352,7 @@ struct glh::model::mesh
     std::vector<vertex> vertices;
 
     /* the number of uv channels the mesh consists of for each vertex */
-    unsigned num_uv_channels;
+    int num_uv_channels;
 
     /* index of the material the mesh is made from */
     unsigned properties_index;
@@ -419,7 +419,7 @@ public:
      * _entry: the entry file to the model
      * _pps: post processing steps (or default recommended)
      */
-    model ( const std::string& _directory, const std::string& _entry, const unsigned _pps = 
+    model ( const std::string& _directory, const std::string& _entry, const int _pps = 
     aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenUVCoords | aiProcess_TransformUVCoords | aiProcess_GenNormals | 
     aiProcess_JoinIdenticalVertices | aiProcess_RemoveRedundantMaterials | aiProcess_OptimizeMeshes | aiProcess_Debone );
 
@@ -462,7 +462,7 @@ private:
     const std::string entry;
 
     /* the post processing steps used to import the model */
-    const unsigned pps;
+    const int pps;
 
 
 
@@ -663,7 +663,7 @@ public:
      *
      * construct model_exception with no descrption
      */
-    explicit model_exception () = default;
+    model_exception () = default;
 
     /* default everything else and inherits what () function */
 

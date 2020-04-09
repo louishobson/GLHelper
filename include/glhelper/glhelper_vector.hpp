@@ -312,7 +312,7 @@ public:
      *
      * construct vector_exception with no descrption
      */
-    explicit vector_exception () = default;
+    vector_exception () = default;
 
     /* default everything else and inherits what () function */
 

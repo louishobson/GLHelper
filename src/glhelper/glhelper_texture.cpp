@@ -35,7 +35,7 @@
  */
 glh::texture2d::texture2d ( const std::string& _path, const GLenum _texture_unit )
     : path { _path }
-    , format { GL_NONE }
+    , format { GL_RGBA }
     , texture_unit { _texture_unit }
 {
     /* load the image */

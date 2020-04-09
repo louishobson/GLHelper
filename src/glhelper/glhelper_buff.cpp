@@ -88,7 +88,7 @@ void glh::buffer::destroy ()
  * 
  * return: the target it is bound to
  */
-GLenum glh::buffer::bind () const 
+const GLenum& glh::buffer::bind () const 
 { 
     /* check object is valid */
     if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid buffer object" };
@@ -106,7 +106,7 @@ GLenum glh::buffer::bind () const
  * 
  * return: the target just unbound
  */
-GLenum glh::buffer::unbind () const
+const GLenum& glh::buffer::unbind () const
 { 
     /* check object is valid */
     if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid buffer object" };
