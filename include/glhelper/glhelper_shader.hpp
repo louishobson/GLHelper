@@ -144,7 +144,7 @@ public:
 
 
 
-protected:
+private:
 
     /* shader target */
     const GLenum target;
@@ -596,6 +596,8 @@ public:
      */
     program& get_program () { return prog; }
     const program& get_program () const { return prog; }
+
+
 
 protected:
 
