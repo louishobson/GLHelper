@@ -444,13 +444,37 @@ public:
      *
      * render the model
      * 
-     * material: a struct uniform with the same members as glh::model::material
-     *           the texture stacks should be arrays of structs containing members in glh::model::texture_reference
-     * model_uni: a 4x4 matrix uniform which arranges meshes to relative positions
+     * material_uni: material uniform to cache and set the material properties to
+     * model_uni: a 4x4 matrix uniform to cache and apply set the model transformations to
      * transform: the overall model transformation to apply (identity by default)
      */
     void render ( const struct_uniform& material_uni, const uniform& model_uni, const math::mat4& transform = math::identity<4> () ) const;
+    void render ( const math::mat4& transform = math::identity<4> () ) const;
 
+    /* cache_material_uniforms
+     *
+     * cache a material uniform for later use
+     * 
+     * material_uni: the uniform to cache
+     */
+    void cache_material_uniforms ( const struct_uniform& material_uni ) const;
+
+    /* cache_model_uniform
+     *
+     * cache a model uniform for later sue
+     * 
+     * model_uni: the uniform to cache
+     */
+    void cache_model_uniform ( const uniform& model_uni ) const;
+
+    /* cache_uniforms
+     *
+     * cache all uniforms simultaneously
+     *
+     * material_uni: the material uniform to cache
+     * model_uni: model uniform to cache
+     */
+    void cache_uniforms ( const struct_uniform& material_uni, const uniform& model_uni ) const;
 
 
 private:
@@ -558,84 +582,84 @@ private:
      * take an assimp material object and add it to the store
      * this will, in turn, add any textures required to the store
      * 
-     * location: the material to configure
+     * _material: the material to configure
      * aimaterial: the assimp material object to add
      * 
      * return: the material just added
      */
-    material& add_material ( material& location, const aiMaterial& aimaterial );
+    material& add_material ( material& _material, const aiMaterial& aimaterial );
 
     /* add_texture
      *
      * add a texture to a texture stack
      * 
-     * location: the location of the level in the texture stack
+     * _texture_stack_level: the location of the level in the texture stack
      * aimaterial: the material the texture is being added from
      * index: the index of the texture
      * aitexturetype: the type of the stack
      * 
      * return: the texture stack level just added
      */
-    texture_stack_level& add_texture ( texture_stack_level& location, const aiMaterial& aimaterial, const unsigned index, const aiTextureType aitexturetype );
+    texture_stack_level& add_texture ( texture_stack_level& _texture_stack_level, const aiMaterial& aimaterial, const unsigned index, const aiTextureType aitexturetype );
 
     /* add_mesh
      *
      * add a mesh to a node
      *
-     * location: the mesh to configure
+     * _mesh: the mesh to configure
      * aimesh: the assimp mesh object to add
      * 
      * return: the mesh just added
      */
-    mesh& add_mesh ( mesh& location, const aiMesh& aimesh );
+    mesh& add_mesh ( mesh& _mesh, const aiMesh& aimesh );
 
     /* add_face
      *
      * add a face to a mesh
      * 
-     * location: the face to configure
-     * parent: the mesh parent to the face
+     * _face: the face to configure
+     * _mesh: the mesh parent to the face
      * aiface: the assimp face object to add
      * 
      * return: the face just added
      */
-    face& add_face ( face& location, mesh& parent, const aiFace& aiface );
+    face& add_face ( face& _face, mesh& _mesh, const aiFace& aiface );
 
     /* configure_buffers
      *
      * configure the buffers of a mesh
      * 
-     * location: the mesh to configure
+     * _mesh: the mesh to configure
      */
-    void configure_buffers ( mesh& location );
+    void configure_buffers ( mesh& _mesh );
 
     /* add_node
      *
      * recursively add nodes to the node tree
      * 
-     * location: the node to configure
+     * _node: the node to configure
      * ainode: the assimp node object to add
      * 
      * return: the node just added
      */
-    node& add_node ( node& location, const aiNode& ainode );
+    node& add_node ( node& _node, const aiNode& ainode );
 
     /* render_node
      *
      * render a node and all of its children
      * 
-     * location: the node to render
+     * _node: the node to render
      * transform: the current model transformation from all the previous nodes
      */
-    void render_node ( const node& location, const math::mat4& transform ) const;
+    void render_node ( const node& _node, const math::mat4& transform ) const;
 
     /* render_mesh
      *
      * render a mesh
      * 
-     * location: the mesh to render
+     * _mesh: the mesh to render
      */
-    void render_mesh ( const mesh& location ) const;
+    void render_mesh ( const mesh& _mesh ) const;
 
 };
 
