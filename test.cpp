@@ -102,7 +102,7 @@ int main ()
         camera.yaw ( mouseinfo.deltaxfrac * glh::math::rad ( -80 ) );
 
         trans_uni.get_uniform ( "view" ).set_matrix ( camera.get_view () );
-        trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_pos () );
+        trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
         light_position = glh::math::rotate ( light_position, glh::math::rad ( 0.5 ), glh::math::vec3 ( 1.0, 0.0, 0.0 ) );
         lighting_uni.get_array_uniform<glh::struct_uniform> ( "point" ).at ( 0 ).get_uniform ( "position" ).set_vector ( light_position );
 
@@ -113,7 +113,7 @@ int main ()
         //nanosuit.render ( material_uni, model_uni, glh::math::translate ( glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 1 ) ), glh::math::vec3 { 0.0, 0.0, 0.0 } ) );
         //reinhardt.render ( material_uni, model_uni, glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 0.01 ) ) );
         //room.render ( material_uni, model_uni, glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 2.0 ) ) );
-        factory.render ( material_uni, model_uni, glh::math::translate ( glh::math::resize<4> ( glh::math::rotate ( glh::math::enlarge ( glh::math::identity<3> (), 0.1 ), glh::math::rad ( 90 ), 1, 2 ) ), glh::math::vec3 { -10.0, 0.0, -20.0 } ) );
+        factory.render ( material_uni, model_uni, glh::math::translate ( glh::math::resize<4> ( glh::math::rotate ( glh::math::enlarge ( glh::math::identity<3> (), 0.1 ), glh::math::rad ( 90 ), 1, 2 ) ), glh::math::vec3 { -20.0, 0.0, -20.0 } ) );
 
         window.swap_buffers ();
         window.poll_events ();
