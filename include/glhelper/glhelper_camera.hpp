@@ -61,7 +61,7 @@ public:
      *
      * give parameters for look_towards and perspective_fov
      */
-    camera_perspective ( const math::vec3& _pos, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far );
+    camera_perspective ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far );
 
     /* minimal constructor
      *
@@ -138,37 +138,37 @@ public:
      *
      * get/set the field of view
      */
-    void set_fov ( const double _fov ) { fov = _fov; proj_change = true; }
     const double& get_fov () const { return fov; }
+    void set_fov ( const double _fov ) { fov = _fov; proj_change = true; }
 
     /* get/set_aspect
      *
      * get/set the aspect ratio
      */
-    void set_aspect ( const double _aspect ) { aspect = _aspect; proj_change = true; }
     const double& get_aspect () const { return aspect; }
+    void set_aspect ( const double _aspect ) { aspect = _aspect; proj_change = true; }
 
     /* get/set_near
      *
      * get/set the near position of the perspective projection matrix
      */
-    void set_near ( const double _near ) { near = _near; proj_change = true; }
     const double& get_near () const { return near; }
+    void set_near ( const double _near ) { near = _near; proj_change = true; }
 
     /* get/set_far
      *
      * get/set the far position of the perspective projection matrix
      */
-    void set_far ( const double _far ) { far = _far; proj_change = true; }
     const double& get_far () const { return far; }
+    void set_far ( const double _far ) { far = _far; proj_change = true; }
 
 
 
-    /* get_pos
+    /* get_position
      *
      * get the current viewing position
      */
-    const math::vec3& get_pos () const { return pos; }
+    const math::vec3& get_position () const { return position; }
 
     /* get_direction
      *
@@ -198,7 +198,7 @@ public:
 private:
 
     /* view matrix parameters */
-    math::vec3 pos;
+    math::vec3 position;
     math::vec3 x;
     math::vec3 y;
     math::vec3 z;

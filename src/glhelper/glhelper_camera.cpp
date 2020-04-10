@@ -25,8 +25,8 @@
  *
  * give parameters for look_at and perspective_fov
  */
-glh::camera_perspective::camera_perspective ( const math::vec3& _pos, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far )
-    : pos { _pos }
+glh::camera_perspective::camera_perspective ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far )
+    : position { _position }
     , x { 0. }
     , y { 0. }
     , z { 0. }
@@ -91,19 +91,19 @@ void glh::camera_perspective::disable_restrictive_mode ()
 const glh::math::vec3& glh::camera_perspective::move ( const math::vec3& vec )
 {
     
-    /* move pos
+    /* move position
      * if non-restricted use xyz, otherwise use restricted values
     */
     if ( !restrictive_mode )
     {
-        pos += x * vec.at ( 0 );
-        pos += y * vec.at ( 1 );
-        pos += z * vec.at ( 2 );
+        position += x * vec.at ( 0 );
+        position += y * vec.at ( 1 );
+        position += z * vec.at ( 2 );
     } else
     {
-        pos += restrict_x * vec.at ( 0 );
-        pos += restrict_y * vec.at ( 1 );
-        pos += restrict_z * vec.at ( 2 );
+        position += restrict_x * vec.at ( 0 );
+        position += restrict_y * vec.at ( 1 );
+        position += restrict_z * vec.at ( 2 );
     } 
     
 
@@ -111,7 +111,7 @@ const glh::math::vec3& glh::camera_perspective::move ( const math::vec3& vec )
     view_change = true;
 
     /* return pos */
-    return pos;
+    return position;
 }
 
 /* move_global
@@ -127,8 +127,8 @@ const glh::math::vec3& glh::camera_perspective::move_global ( const math::vec3& 
     /* set view as changed */
     view_change = true;
     
-    /* return vec added to pos */
-    return ( pos += vec );
+    /* return vec added to position */
+    return ( position += vec );
 }
 
 /* pitch/yaw/roll
@@ -170,7 +170,7 @@ const glh::math::vec3& glh::camera_perspective::pitch ( const double arg )
 
     /* set view as changed and return */
     view_change = true;
-    return pos;
+    return position;
 }
 const glh::math::vec3& glh::camera_perspective::yaw ( const double arg )
 {
@@ -191,7 +191,7 @@ const glh::math::vec3& glh::camera_perspective::yaw ( const double arg )
 
     /* set view as changed and return */
     view_change = true;
-    return pos;
+    return position;
 }
 const glh::math::vec3& glh::camera_perspective::roll ( const double arg )
 {
@@ -200,13 +200,13 @@ const glh::math::vec3& glh::camera_perspective::roll ( const double arg )
     {
         x = math::rotate ( x, arg, z );
         y = math::rotate ( y, arg, z );
-    } else
-    /* otherwise return pos without change */
-    return pos;
+    }
+    /* otherwise return position without change */
+    else return position;
 
     /* set view as changed and return */
     view_change = true;
-    return pos;
+    return position;
 }
 
 /* get_view
@@ -251,7 +251,7 @@ bool glh::camera_perspective::update_view () const
     /* if view has been changed, update */
     if ( view_change )
     {
-        view = math::camera ( pos, x, y, z );
+        view = math::camera ( position, x, y, z );
         view_change = false;
         return true;
     } else std::cout << "nochange\n";
