@@ -62,19 +62,21 @@ struct light_struct
     vec3 ambient_color;
     vec3 diffuse_color;
     vec3 specular_color;
+
+    bool enabled;
 };
 
 /* structure for storing multiple lights of each type */
 struct lighting_struct
 {
-    int directional_size;
-    light_struct directional [ MAX_NUM_LIGHTS ];
+    int dirlights_size;
+    light_struct dirlights [ MAX_NUM_LIGHTS ];
 
-    int point_size;
-    light_struct point [ MAX_NUM_LIGHTS ];
+    int pointlights_size;
+    light_struct pointlights [ MAX_NUM_LIGHTS ];
 
-    int spotlight_size;
-    light_struct spotlight [ MAX_NUM_LIGHTS ];
+    int spotlights_size;
+    light_struct spotlights [ MAX_NUM_LIGHTS ];
 };
 
 /* transformations structure */
@@ -178,21 +180,21 @@ vec3 compute_ambient_component ( material_struct mat, lighting_struct lights )
     vec3 ambient_color = vec3 ( 0.0, 0.0, 0.0 );
 
     /* loop over lights and apply attenuation where necesarry */
-    for ( int i = 0; i < lights.directional_size; ++i )
+    for ( int i = 0; i < lights.dirlights_size; ++i )
     {
         /* add ambient light from directional source */
-        ambient_color += base_color * lights.directional [ i ].ambient_color;
+        ambient_color += base_color * lights.dirlights [ i ].ambient_color;
     }
 
-    for ( int i = 0; i < lights.point_size; ++i )
+    for ( int i = 0; i < lights.pointlights_size; ++i )
     {
         /* add ambient light from point source, including attenuation */
-        ambient_color += base_color * lights.point [ i ].ambient_color * compute_attenuation
+        ambient_color += base_color * lights.pointlights [ i ].ambient_color * compute_attenuation
         (
-            length ( lights.point [ i ].position - fragpos ),
-            lights.point [ i ].att_const,
-            lights.point [ i ].att_linear,
-            lights.point [ i ].att_quad
+            length ( lights.pointlights [ i ].position - fragpos ),
+            lights.pointlights [ i ].att_const,
+            lights.pointlights [ i ].att_linear,
+            lights.pointlights [ i ].att_quad
         );
     }
 
@@ -223,27 +225,27 @@ vec3 compute_diffuse_component ( material_struct mat, lighting_struct lights )
     vec3 diffuse_color = vec3 ( 0.0, 0.0, 0.0 );
 
     /* loop over lights and apply attenuation where necesarry */
-    for ( int i = 0; i < lights.directional_size; ++i )
+    for ( int i = 0; i < lights.dirlights_size; ++i )
     {
         /* get diffuse multiplier */
-        float diff = max ( dot ( normal, -lights.directional [ i ].direction ), 0.0 );
+        float diff = max ( dot ( normal, -lights.dirlights [ i ].direction ), 0.0 );
         /* add diffuse light from directional source */
-        diffuse_color += base_color * lights.directional [ i ].diffuse_color * diff;
+        diffuse_color += base_color * lights.dirlights [ i ].diffuse_color * diff;
     }
 
-    for ( int i = 0; i < lights.point_size; ++i )
+    for ( int i = 0; i < lights.pointlights_size; ++i )
     {
         /* get normalised vector from fragment to light */
-        vec3 fraglightdir = normalize ( lights.point [ i ].position - fragpos );
+        vec3 fraglightdir = normalize ( lights.pointlights [ i ].position - fragpos );
         /* get diffuse multiplier */
         float diff = max ( dot ( normal, fraglightdir ), 0.0 );
         /* add diffuse light from point source, including attenuation */
-        diffuse_color += base_color * lights.point [ i ].diffuse_color * diff * compute_attenuation
+        diffuse_color += base_color * lights.pointlights [ i ].diffuse_color * diff * compute_attenuation
         (
-            length ( lights.point [ i ].position - fragpos ),
-            lights.point [ i ].att_const,
-            lights.point [ i ].att_linear,
-            lights.point [ i ].att_quad
+            length ( lights.pointlights [ i ].position - fragpos ),
+            lights.pointlights [ i ].att_const,
+            lights.pointlights [ i ].att_linear,
+            lights.pointlights [ i ].att_quad
         );
     }
 
@@ -277,31 +279,31 @@ vec3 compute_specular_component ( material_struct mat, lighting_struct lights )
     vec3 fragviewdir = normalize ( trans.viewpos - fragpos );
 
     /* loop over lights and apply attenuation where necesarry */
-    for ( int i = 0; i < lights.directional_size; ++i )
+    for ( int i = 0; i < lights.dirlights_size; ++i )
     {
         /* reflect the light off of the fragment */
-        vec3 reflectlightdir = normalize ( reflect ( -lights.directional [ i ].direction, normal ) );
+        vec3 reflectlightdir = normalize ( reflect ( -lights.dirlights [ i ].direction, normal ) );
         /* get specular multiplier */
         float spec = pow ( max ( dot ( fragviewdir, reflectlightdir ), 0.0 ), material.shininess );
         /* add specular light from directional source */
-        specular_color += base_color * lights.directional [ i ].specular_color * spec;
+        specular_color += base_color * lights.dirlights [ i ].specular_color * spec;
     }
 
-    for ( int i = 0; i < lights.point_size; ++i )
+    for ( int i = 0; i < lights.pointlights_size; ++i )
     {
         /* get normalised vector from fragment to light */
-        vec3 fraglightdir = normalize ( lights.point [ i ].position - fragpos );
+        vec3 fraglightdir = normalize ( lights.pointlights [ i ].position - fragpos );
         /* reflect the light off of the fragment */
         vec3 reflectlightdir = normalize ( reflect ( fraglightdir, normal ) );
         /* get specular multiplier */
         float spec = pow ( max ( dot ( fragviewdir, reflectlightdir ), 0.0 ), material.shininess );
         /* add specular light from point source, including attenuation */
-        specular_color += base_color * lights.point [ i ].specular_color * spec * compute_attenuation
+        specular_color += base_color * lights.pointlights [ i ].specular_color * spec * compute_attenuation
         (
-            length ( lights.point [ i ].position - fragpos ),
-            lights.point [ i ].att_const,
-            lights.point [ i ].att_linear,
-            lights.point [ i ].att_quad
+            length ( lights.pointlights [ i ].position - fragpos ),
+            lights.pointlights [ i ].att_const,
+            lights.pointlights [ i ].att_linear,
+            lights.pointlights [ i ].att_quad
         );
     }
 
