@@ -419,7 +419,7 @@ public:
      * _entry: the entry file to the model
      * _pps: post processing steps (or default recommended)
      */
-    model ( const std::string& _directory, const std::string& _entry, const int _pps = 
+    model ( const std::string& _directory, const std::string& _entry, const unsigned _pps = 
     aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenUVCoords | aiProcess_TransformUVCoords | aiProcess_GenNormals | 
     aiProcess_JoinIdenticalVertices | aiProcess_RemoveRedundantMaterials | aiProcess_OptimizeMeshes | aiProcess_Debone );
 
@@ -446,10 +446,10 @@ public:
      * 
      * material: a struct uniform with the same members as glh::model::material
      *           the texture stacks should be arrays of structs containing members in glh::model::texture_reference
-     * model_matrix: a 4x4 matrix uniform which arranges meshes to relative positions
+     * model_uni: a 4x4 matrix uniform which arranges meshes to relative positions
      * transform: the overall model transformation to apply (identity by default)
      */
-    void render ( struct_uniform& material_uni, uniform& model_matrix, const math::mat4 transform = math::identity<4> () );
+    void render ( const struct_uniform& material_uni, const uniform& model_uni, const math::mat4& transform = math::identity<4> () ) const;
 
 
 
@@ -462,7 +462,7 @@ private:
     const std::string entry;
 
     /* the post processing steps used to import the model */
-    const int pps;
+    const unsigned pps;
 
 
 
@@ -500,8 +500,8 @@ private:
     };
 
     /* cached uniforms */
-    std::unique_ptr<cached_material_uniforms_struct> cached_material_uniforms;
-    std::unique_ptr<uniform> cached_model_uniform;
+    mutable std::unique_ptr<cached_material_uniforms_struct> cached_material_uniforms;
+    mutable std::unique_ptr<uniform> cached_model_uniform;
 
 
 

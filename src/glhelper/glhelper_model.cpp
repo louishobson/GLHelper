@@ -29,7 +29,7 @@
  * _entry: the entry file to the model
  * _pps: post processing steps (or default recommended)
  */
-glh::model::model::model ( const std::string& _directory, const std::string& _entry, const int _pps )
+glh::model::model::model ( const std::string& _directory, const std::string& _entry, const unsigned _pps )
     : directory { _directory }
     , entry { _entry }
     , pps { _pps | aiProcess_Triangulate }
@@ -55,13 +55,13 @@ glh::model::model::model ( const std::string& _directory, const std::string& _en
  * 
  * material: a struct uniform with the same members as glh::model::material
  *           the texture stacks should be arrays of structs containing members in glh::model::texture_reference
- * model_matrix: a 4x4 matrix uniform which arranges meshes to relative positions
+ * model_uni: a 4x4 matrix uniform which arranges meshes to relative positions
  * transform: the overall model transformation to apply (identity by default)
  */
-void glh::model::model::render ( struct_uniform& material_uni, uniform& model_matrix, const math::mat4 transform )
+void glh::model::model::render ( const struct_uniform& material_uni, const uniform& model_uni, const math::mat4& transform ) const
 {
     /* reload the cache of material uniforms  */
-    if ( cached_material_uniforms.get () == nullptr || cached_material_uniforms->material_uni != material_uni )
+    if ( !cached_material_uniforms || cached_material_uniforms->material_uni != material_uni )
     {
         cached_material_uniforms.reset ( new cached_material_uniforms_struct
         {
@@ -83,8 +83,8 @@ void glh::model::model::render ( struct_uniform& material_uni, uniform& model_ma
     }
 
     /* reload the model uniform */
-    if ( cached_model_uniform.get () == nullptr || * cached_model_uniform != model_matrix )
-    cached_model_uniform.reset ( new uniform { model_matrix } );
+    if ( !cached_model_uniform || * cached_model_uniform != model_uni )
+    cached_model_uniform.reset ( new uniform { model_uni } );
 
     /* render the root node */
     render_node ( root_node, transform );
