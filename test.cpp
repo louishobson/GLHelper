@@ -40,9 +40,8 @@ int main ()
     glh::fshader fshader { "shaders/fragment.glsl" };
     glh::program program { vshader, fshader };
     auto trans_uni = program.get_struct_uniform ( "trans" );
-    auto material_uni = program.get_struct_uniform ( "material" );
-    auto model_uni = trans_uni.get_uniform ( "model" );
-    auto lighting_uni = program.get_struct_uniform ( "lighting" );
+
+    factory.cache_uniforms ( program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
 
     glh::camera_perspective camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 500.0 };
     camera.enable_restrictive_mode ();
@@ -51,21 +50,12 @@ int main ()
     glh::renderer::enable_depth_test ();
 
     program.use ();
+
+    glh::lighting lighting;
     glh::math::vec3 light_position { 0.0, 0.0, -60.0 };
-    trans_uni.get_uniform ( "proj" ).set_matrix ( camera.get_proj () );
-    lighting_uni.get_uniform ( "directional_size" ).set_int ( 1 );
-    lighting_uni.get_uniform ( "point_size" ).set_int ( 1 );
-    lighting_uni.get_array_uniform<glh::struct_uniform> ( "directional" ).at ( 0 ).get_uniform ( "direction" ).set_vector ( glh::math::vec3 { 0.0, -1.0, 0.0 } );
-    lighting_uni.get_array_uniform<glh::struct_uniform> ( "directional" ).at ( 0 ).get_uniform ( "ambient_color" ).set_vector ( glh::math::vec3 { 0.4, 0.4, 0.4 } );
-    lighting_uni.get_array_uniform<glh::struct_uniform> ( "directional" ).at ( 0 ).get_uniform ( "diffuse_color" ).set_vector ( glh::math::vec3 { 0.4, 0.4, 0.4 } );
-    lighting_uni.get_array_uniform<glh::struct_uniform> ( "directional" ).at ( 0 ).get_uniform ( "specular_color" ).set_vector ( glh::math::vec3 { 0.7, 0.7, 0.7 } );
-    lighting_uni.get_array_uniform<glh::struct_uniform> ( "point" ).at ( 0 ).get_uniform ( "position" ).set_vector ( light_position );
-    lighting_uni.get_array_uniform<glh::struct_uniform> ( "point" ).at ( 0 ).get_uniform ( "ambient_color" ).set_vector ( glh::math::vec3 { 0.0, 0.0, 0.0 } );
-    lighting_uni.get_array_uniform<glh::struct_uniform> ( "point" ).at ( 0 ).get_uniform ( "diffuse_color" ).set_vector ( glh::math::vec3 { 1.0, 1.0, 1.0 } );
-    lighting_uni.get_array_uniform<glh::struct_uniform> ( "point" ).at ( 0 ).get_uniform ( "specular_color" ).set_vector ( glh::math::vec3 { 1.0, 1.0, 1.0 } );
-    lighting_uni.get_array_uniform<glh::struct_uniform> ( "point" ).at ( 0 ).get_uniform ( "att_const" ).set_float ( 1.0 );
-    lighting_uni.get_array_uniform<glh::struct_uniform> ( "point" ).at ( 0 ).get_uniform ( "att_linear" ).set_float ( 0.011 );
-    lighting_uni.get_array_uniform<glh::struct_uniform> ( "point" ).at ( 0 ).get_uniform ( "att_quad" ).set_float ( 0.0007 );
+    lighting.add_dirlight ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 0.4 }, glh::math::vec3 { 0.4 }, glh::math::vec3 { 0.7 } );
+    lighting.add_pointlight ( light_position, 1.0, 0.011, 0.0007, glh::math::vec3 { 0.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
+    lighting.cache_uniforms ( program.get_struct_uniform ( "lighting" ) );
 
     window.get_mouseinfo ();
     auto dimensions = window.get_dimensions ();
@@ -103,9 +93,11 @@ int main ()
 
         trans_uni.get_uniform ( "view" ).set_matrix ( camera.get_view () );
         trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
-        light_position = glh::math::rotate ( light_position, glh::math::rad ( 0.5 ), glh::math::vec3 ( 1.0, 0.0, 0.0 ) );
-        lighting_uni.get_array_uniform<glh::struct_uniform> ( "point" ).at ( 0 ).get_uniform ( "position" ).set_vector ( light_position );
 
+        light_position = glh::math::rotate ( light_position, glh::math::rad ( 0.5 ), glh::math::vec3 ( 1.0, 0.0, 0.0 ) );
+        lighting.at_pointlight ( 0 ).set_position ( light_position );
+        lighting.apply ();
+       
         glh::renderer::clear ();
 
         //plane.render ( material_uni, model_uni, glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 0.01 ) ) );
@@ -113,7 +105,7 @@ int main ()
         //nanosuit.render ( material_uni, model_uni, glh::math::translate ( glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 1 ) ), glh::math::vec3 { 0.0, 0.0, 0.0 } ) );
         //reinhardt.render ( material_uni, model_uni, glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 0.01 ) ) );
         //room.render ( material_uni, model_uni, glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 2.0 ) ) );
-        factory.render ( material_uni, model_uni, glh::math::translate ( glh::math::resize<4> ( glh::math::rotate ( glh::math::enlarge ( glh::math::identity<3> (), 0.1 ), glh::math::rad ( 90 ), 1, 2 ) ), glh::math::vec3 { -20.0, 0.0, -20.0 } ) );
+        factory.render ( glh::math::translate ( glh::math::resize<4> ( glh::math::rotate ( glh::math::enlarge ( glh::math::identity<3> (), 0.1 ), glh::math::rad ( 90 ), 1, 2 ) ), glh::math::vec3 { -20.0, 0.0, -20.0 } ) );
 
         window.swap_buffers ();
         window.poll_events ();
