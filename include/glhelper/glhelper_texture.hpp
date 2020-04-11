@@ -148,7 +148,7 @@ public:
      * 
      * _texture_unit: the new texture unit
      */
-    const GLenum& get_texture_unit () const { return texture_unit; };
+    const unsigned& get_texture_unit () const { return texture_unit; };
     void set_texture_unit ( const unsigned _texture_unit ) { texture_unit = _texture_unit; }
 
     /* get_width/height
