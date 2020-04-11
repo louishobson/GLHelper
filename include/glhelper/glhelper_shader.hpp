@@ -71,6 +71,12 @@ namespace glh
      */
     class program;
 
+    /* struct is_uniform
+     *
+     * is_uniform::value is true if the type is a uniform
+     */
+    template<class T> struct is_uniform;
+
     /* class uniform
      *
      * a reference to a uniform in a program
@@ -95,6 +101,16 @@ namespace glh
      * a reference to an array uniform in a program
      */
     template<class T> class array_uniform;
+
+    /* using declaration for array uniform types
+     *
+     * simplify common types of array uniforms a bit
+     */
+    using uniform_array_uniform = array_uniform<uniform>;
+    using struct_array_uniform = array_uniform<struct_uniform>;
+    using uniform_2d_array_uniform = array_uniform<array_uniform<uniform>>;
+    using struct_2d_array_uniform = array_uniform<array_uniform<struct_uniform>>;
+
     
     /* class shader_exception : exception
      *
@@ -338,6 +354,19 @@ public:
     template<class T> array_uniform<T> get_array_uniform ( const std::string& name ) { return array_uniform<T> { name, * this }; }
     template<class T> const array_uniform<T> get_array_uniform ( const std::string& name ) const { return array_uniform<T> { name, * this }; }
 
+    /* get_..._array_uniform
+     *
+     * simplified versions of get_array_uniform
+     */
+    uniform_array_uniform get_uniform_array_uniform ( const std::string& name );
+    const uniform_array_uniform get_uniform_array_uniform ( const std::string& name ) const;
+    struct_array_uniform get_struct_array_uniform ( const std::string& name );
+    const struct_array_uniform get_struct_array_uniform ( const std::string& name ) const;
+    uniform_2d_array_uniform get_uniform_2d_array_uniform ( const std::string& name );
+    const uniform_2d_array_uniform get_uniform_2d_array_uniform ( const std::string& name ) const;
+    struct_2d_array_uniform get_struct_2d_array_uniform ( const std::string& name );
+    const struct_2d_array_uniform get_struct_2d_array_uniform ( const std::string& name ) const;
+
 
 
     /* destroy
@@ -382,6 +411,34 @@ private:
 
 };
 
+
+
+/* IS_UNIFORM DEFINITION */
+
+/* struct is_uniform
+ *
+ * is_uniform::value is true if the type is a uniform
+ */
+template<class T> struct glh::is_uniform
+{
+    static const bool value = false;
+    operator bool () { return value; }
+};
+template<> struct glh::is_uniform<glh::uniform>
+{
+    static const bool value = true;
+    operator bool () { return value; }
+};
+template<> struct glh::is_uniform<glh::struct_uniform>
+{
+    static const bool value = true;
+    operator bool () { return value; }
+};
+template<> template<class _T> struct glh::is_uniform<glh::array_uniform<_T>>
+{
+    static const bool value = is_uniform<_T>::value;
+    operator bool () { return value; }
+};
 
 
 /* UNIFORM DEFINITION */
@@ -681,12 +738,26 @@ public:
      *
      * get a member of the struct
      */
-    uniform get_uniform ( const std::string& member ) { return prog.get_uniform ( name + "." + member ); }
-    const uniform get_uniform ( const std::string& member ) const { return prog.get_uniform ( name + "." + member ); }
-    struct_uniform get_struct_uniform ( const std::string& member ) { return struct_uniform { name + "." + member, prog }; }
-    const struct_uniform get_struct_uniform ( const std::string& member ) const { return struct_uniform { name + "." + member, prog }; }
+    uniform get_uniform ( const std::string& member );
+    const uniform get_uniform ( const std::string& member ) const;
+    struct_uniform get_struct_uniform ( const std::string& member );
+    const struct_uniform get_struct_uniform ( const std::string& member ) const;
     template<class T> array_uniform<T> get_array_uniform ( const std::string& member ) { return array_uniform<T> { name + "." + member, prog }; }
     template<class T> const array_uniform<T> get_array_uniform ( const std::string& member ) const { return array_uniform<T> { name + "." + member, prog }; }
+
+    /* get_..._array_uniform
+     *
+     * simplified versions of get_array_uniform
+     */
+    uniform_array_uniform get_uniform_array_uniform ( const std::string& member );
+    const uniform_array_uniform get_uniform_array_uniform ( const std::string& member ) const;
+    struct_array_uniform get_struct_array_uniform ( const std::string& member );
+    const struct_array_uniform get_struct_array_uniform ( const std::string& member ) const;
+    uniform_2d_array_uniform get_uniform_2d_array_uniform ( const std::string& member );
+    const uniform_2d_array_uniform get_uniform_2d_array_uniform ( const std::string& member ) const;
+    struct_2d_array_uniform get_struct_2d_array_uniform ( const std::string& member );
+    const struct_2d_array_uniform get_struct_2d_array_uniform ( const std::string& member ) const;
+
 
 };
 
@@ -696,8 +767,11 @@ public:
  *
  * a reference to an array uniform in a program
  */
-template<class T> class glh::array_uniform : public complex_uniform
+template<class T = glh::uniform> class glh::array_uniform : public complex_uniform
 {
+    /* static assert that T is a uniform */
+    static_assert ( is_uniform<T>::value, "cannot create array_uniform object containing non-uniform type" );
+
 public:
 
     /* constructor
@@ -737,6 +811,9 @@ public:
 };
 template<> class glh::array_uniform<glh::uniform> : public complex_uniform
 {
+    /* static assert that T is a uniform */
+    static_assert ( is_uniform<glh::uniform>::value, "cannot create array_uniform object containing non-uniform type" );
+
 public:
 
     /* constructor
