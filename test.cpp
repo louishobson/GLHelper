@@ -49,7 +49,7 @@ int main ()
     program.use ();
 
     glh::light_system light_system;
-    light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 0.3 }, glh::math::vec3 { 0.7 }, glh::math::vec3 { 1.0 } );
+    light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 0.2 }, glh::math::vec3 { 0.8 }, glh::math::vec3 { 1.0 } );
     light_system.cache_uniforms ( program.get_struct_uniform ( "light_system" ) );
 
     window.get_mouseinfo ();
