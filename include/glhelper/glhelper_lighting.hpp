@@ -52,24 +52,38 @@
  * 
  * 
  * 
- * LIGHTING_STRUCT
+ * LIGHT_COLLECTION_STRUCT
  * 
- * struct lighting_struct
+ * struct light_collection_struct
  * {
- *     int ditlights_size;
- *     light_struct dirlights [];
- * 
- *     int pointlights_size;
- *     light_struct pointlights [];
- * 
- *     int spotlights_size;
- *     light_struct spotlights [];
+ *     int size;
+ *     light_struct lights [];
  * };
  * 
- * this structure holds arrays of each type of light
- * the size of the arrays for each type must be large enough to store as many lights as required
+ * this structure holds an array of lights
+ * the size of the array must be large enough to store as many lights as required
+ * the idea is that the lights in the array are all of the same type, however they can be any type you wish
+ * one could have more than one light collection for different types of light
  * 
- * x_size & x[]: the size of the array of a type of light, and the actual array
+ * size: the number of lights being held
+ * lights: array of lights
+ * 
+ * 
+ * 
+ * LIGHT_SYSTEM_STRUCT
+ * 
+ * struct light_system_struct
+ * {
+ *     light_collection_struct dircoll;
+ *     light_collection_struct pointcoll;
+ *     light_collection_struct spotcoll;
+ * };
+ * 
+ * this structure holds multiple types of collections of lights
+ * 
+ * dircoll: collection of dirrectional lights
+ * pointcoll: collection of point lights
+ * spotcoll: collection of spotlights
  * 
  */
 
@@ -112,6 +126,12 @@ namespace glh
      */
     class light;
 
+    /* is_light
+     *
+     * is_light::value is true, if the type is a light
+     */
+    template<class T> struct is_light;
+
     /* class dirlight : light
      *
      * directional light class
@@ -130,11 +150,25 @@ namespace glh
      */
     class spotlight;
 
-    /* class lighting
+    /* class light_collection
      *
-     * class to store multiple of different types of light
+     * class to store multiple lights of the same type
      */
-    class lighting;
+    template<class T> class light_collection;
+
+    /* using declarations for light_collection
+     *
+     * simplifies template
+     */
+    using dirlight_collection = light_collection<dirlight>;
+    using pointlight_collection = light_collection<pointlight>;
+    using spotlight_collection = light_collection<spotlight>;
+
+    /* class light_system
+     *
+     * several collection of lights for each type
+     */
+    class light_system;
 
     /* class lighting_exception : exception
      *
@@ -202,8 +236,8 @@ public:
     /* default move assignment operator */
     light& operator= ( light&& other ) = default;
 
-    /* pure virtual destructor */
-    virtual ~light () = 0;
+    /* default virtual destructor */
+    virtual ~light () = default;
 
 
 
@@ -318,8 +352,34 @@ private:
 
 };
 
-/* make destructor default */
-inline glh::light::~light () = default;
+
+
+/* IS_LIGHT DEFINITION */
+
+/* struct is_light
+ *
+ * is_light::value is true if the type is a light
+ */
+template<class T> struct glh::is_light
+{
+    static const bool value = false;
+    operator bool () { return value; } 
+};
+template<> struct glh::is_light<glh::dirlight>
+{
+    static const bool value = true;
+    operator bool () { return value; } 
+};
+template<> struct glh::is_light<glh::pointlight>
+{
+    static const bool value = true;
+    operator bool () { return value; } 
+};
+template<> struct glh::is_light<glh::spotlight>
+{
+    static const bool value = true;
+    operator bool () { return value; } 
+};
 
 
 
@@ -505,175 +565,161 @@ public:
 
 
 
-/* LIGHTING DEFINITION */
+/* LIGHT_COLLECTION DEFINITION */
 
-/* class lighting
+/* class light_collection
  *
- * class to store multiple of different types of light
+ * class to store multiple lights of the same type
  */
-class glh::lighting
+template<class T = glh::light> class glh::light_collection
 {
+    /* static assert that T is a light */
+    static_assert ( is_light<T>::value, "cannot create light_collection object containing non-light type" );
+
 public:
 
-    /* default constructor
-     *
-     * an empty set of lights
-     */
-    lighting () = default;
+    /* default constructor */
+    light_collection () = default;
 
     /* copy constructor
      *
-     * not default as cannot copy cached uniforms
+     * not default as cannot copy uniform cache
      */
-    lighting ( const lighting& other )
-        : dirlights { other.dirlights }
-        , pointlights { other.pointlights }
-        , spotlights { other.spotlights }
+    light_collection ( const light_collection& other )
+        : lights { other.lights }
     {}
 
     /* default move constructor */
-    lighting ( lighting&& other ) = default;
+    light_collection ( light_collection&& other ) = default;
 
     /* copy assignment operator
      *
-     * not default for the same reason as copy constructor
+     * not default for same reason as copy constructor
      */
-    lighting& operator= ( const lighting& other );
+    light_collection& operator= ( const light_collection& other )
+    { lights = other.lights; return * this; }
 
     /* default move assignment operator */
-    lighting& operator= ( lighting&& other ) = default;
-
-    /* default destructor */
-    ~lighting () = default;
+    light_collection& operator= ( light_collection&& other ) = default;
 
 
 
-    /* at_dirlight
-     *
-     * get a dirlight at an index
-     */
-    dirlight& at_dirlight ( const unsigned i ) { return dirlights.at ( i ); }
-    const dirlight& at_dirlight ( const unsigned i ) const { return dirlights.at ( i ); }
-
-    /* at_pointlight
-     *
-     * get a pointlight at an index
-     */
-    pointlight& at_pointlight ( const unsigned i ) { return pointlights.at ( i ); }
-    const pointlight& at_pointlight ( const unsigned i ) const { return pointlights.at ( i ); }
-
-    /* at_spotlight
-     *
-     * get a spotlight at an index
-     */
-    spotlight& at_spotlight ( const unsigned i ) { return spotlights.at ( i ); }
-    const spotlight& at_spotlight ( const unsigned i ) const { return spotlights.at ( i ); }
-
-
-
-    /* add_dirlight
-     *
-     * add a dirlight to the lighting system
-     * overloads are based on constructors of dirlight
-     */
-    void add_dirlight () { dirlights.push_back ( dirlight {} ); }
-    void add_dirlight ( const dirlight& _dirlight ) { dirlights.push_back ( _dirlight ); }
-    void add_dirlight ( dirlight&& _dirlight ) { dirlights.push_back ( _dirlight ); }
-    void add_dirlight ( const math::vec3& _direction
-                      , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-                      , const bool _enabled = true )
-    { dirlights.push_back ( dirlight { _direction, _ambient_color, _diffuse_color, _specular_color, _enabled } ); }
-
-    /* add_pointlight
-     *
-     * add a pointlight to the lighting system
-     * overloads are based on the constructors of pointlight
-     */
-    void add_pointlight () { pointlights.push_back ( pointlight {} ); }
-    void add_pointlight ( const pointlight& _pointlight ) { pointlights.push_back ( _pointlight ); }
-    void add_pointlight ( pointlight&& _pointlight ) { pointlights.push_back ( _pointlight ); }
-    void add_pointlight ( const math::vec3& _position
-                      , const double _att_const, const double _att_linear, const double _att_quad
-                      , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-                      , const bool _enabled = true )
-    { pointlights.push_back ( pointlight { _position, _att_const, _att_linear, _att_quad, _ambient_color, _diffuse_color, _specular_color, _enabled } ); }
-
-    /* add_spotlight
-     * 
-     * add a spotlight to the lighting system
-     * overloads are based on the constructors of spotlight
-     */
-    void add_spotlight () { spotlights.push_back ( spotlight {} ); }
-    void add_spotlight ( const spotlight& _spotlight ) { spotlights.push_back ( _spotlight ); }
-    void add_spotlight ( spotlight&& _spotlight ) { spotlights.push_back ( _spotlight ); }
-    void add_spotlight ( const math::vec3& _position, const math::vec3& _direction
-                       , const double _inner_cone, const double _outer_cone,const double _att_const, const double _att_linear, const double _att_quad
-                       , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-                       , const bool _enabled = true )
-    { spotlights.push_back ( spotlight { _position, _direction, _inner_cone, _outer_cone, _att_const, _att_linear, _att_quad, _ambient_color, _diffuse_color, _specular_color, _enabled } ); }
-
-
-
-    /* erase_dirlight
-     *
-     * remove a dirlight at an index
-     */
-    void erase_dirlight ( const unsigned i ) { dirlights.erase ( dirlights.begin () + i ); }
-    
-    /* erase_pointlight
-     *
-     * remove a pointlight at an index
-     */
-    void erase_pointlight ( const unsigned i ) { pointlights.erase ( pointlights.begin () + i ); }
-    
-    /* erase_spotlight
-     *
-     * remove a spotlight at an index
-     */
-    void erase_spotlight ( const unsigned i ) { spotlights.erase ( spotlights.begin () + i ); }
+    /* array of lights */
+    std::vector<T> lights;
 
 
 
     /* apply
      *
-     * apply the lighting to a uniform
-     * the uniform should be of type lighting_struct (see top)
+     * apply the lighting to uniforms
      * 
-     * lightint_uni: the uniform to apply the lights to (which will be cached)
+     * light_collection_uni: the uniform to apply the lights to
      */
-    void apply ( const struct_uniform& lighting_uni ) const;
+    void apply ( const struct_uniform& light_collection_uni ) const;
     void apply () const;
 
     /* cache_uniforms
      *
-     * cache light uniforms for later use
+     * cache uniforms for later use
      * 
-     * lightint_uni: the uniform to cache
+     * light_collection_uni: the uniform to cache
      */
-    void cache_uniforms ( const struct_uniform& lighting_uni ) const;
+    void cache_uniforms ( const struct_uniform& light_collection_uni ) const;
 
 
 
 private:
 
-    /* dirlights/pointlights/spotlights
+    /* struct for cached uniforms */
+    struct cached_uniforms_struct
+    {
+        struct_uniform light_collection_uni;
+        uniform size_uni;
+        struct_array_uniform lights_uni;
+    };
+
+    /* cached uniforms */
+    mutable std::unique_ptr<cached_uniforms_struct> cached_uniforms;
+};
+
+
+
+/* LIGHT_SYSTEM DEFINITION */
+
+/* class light_system
+ *
+ * several collection of lights for each type
+ */
+class glh::light_system
+{
+public:
+
+    /* default constructor */
+    light_system () = default;
+
+    /* copy constructor
      *
-     * arrays of each type of light
+     * not default as cannot copy uniform cache
      */
-    std::vector<dirlight> dirlights;
-    std::vector<pointlight> pointlights;
-    std::vector<spotlight> spotlights;
+    light_system ( const light_system& other )
+        : dircoll { other.dircoll }
+        , pointcoll { other.pointcoll }
+        , spotcoll { other.spotcoll }
+    {}
+
+    /* default move constructor */
+    light_system ( light_system&& other ) = default;
+
+    /* copy assignment operator 
+     *
+     * not default for same reason as copy constructor
+     */
+    light_system& operator= ( const light_system& other )
+    { dircoll = other.dircoll; pointcoll = other.pointcoll; spotcoll = other.spotcoll; return * this; }
+
+    /* default move assignment operator */
+    light_system& operator= ( light_system&& other ) = default;
+
+    /* default destructor */
+    ~light_system () = default;
+
+
+
+    /* light collections */
+    dirlight_collection dircoll;
+    pointlight_collection pointcoll;
+    spotlight_collection spotcoll;
+
+
+
+    /* apply
+     *
+     * apply the lighting to uniforms
+     * 
+     * light_system_uni: the uniform to apply the lights to
+     */
+    void apply ( const struct_uniform& light_system_uni ) const;
+    void apply () const;
+
+    /* cache_uniforms
+     *
+     * cache uniforms for later use
+     * 
+     * light_system_uni: the uniform to cache
+     */
+    void cache_uniforms ( const struct_uniform& light_system_uni ) const;
+
+
+
+private:
 
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
-        struct_uniform lighting_uni;
-        uniform dirlights_size_uni;
-        array_uniform<struct_uniform> dirlights_uni;
-        uniform pointlights_size_uni;
-        array_uniform<struct_uniform> pointlights_uni;
-        uniform spotlights_size_uni;
-        array_uniform<struct_uniform> spotlights_uni;
+        struct_uniform light_system_uni;
+        struct_uniform dircoll_uni;
+        struct_uniform pointcoll_uni;
+        struct_uniform spotcoll_uni;
     };
 
     /* cached uniforms */
@@ -710,6 +756,57 @@ public:
     /* default everything else and inherits what () function */
 
 };
+
+
+
+/* LIGHT_COLLECTION IMPLEMENTATION */
+
+/* apply
+ *
+ * apply the lighting to uniforms
+ * 
+ * light_collection_uni: the uniform to apply the lights to
+ */
+template<class T>
+inline void glh::light_collection<T>::apply ( const struct_uniform& light_collection_uni ) const
+{
+    /* cache uniform */
+    cache_uniforms ( light_collection_uni );
+
+    /* apply */
+    apply ();
+}
+template<class T>
+inline void glh::light_collection<T>::apply () const
+{
+    /* throw if no uniform is cached */
+    if ( !cached_uniforms ) throw lighting_exception { "attempted to apply light_collection to uniform with out a complete uniform cache" };
+
+    /* set uniforms */
+    cached_uniforms->size_uni.set_int ( lights.size () );
+    for ( unsigned i = 0; i < lights.size (); ++i ) lights.at ( i ).apply ( cached_uniforms->lights_uni.at ( i ) );
+}
+
+/* cache_uniforms
+ *
+ * cache uniforms for later use
+ * 
+ * light_collection_uni: the uniform to cache
+ */
+template<class T>
+inline void glh::light_collection<T>::cache_uniforms ( const struct_uniform& light_collection_uni ) const
+{
+    /* if not already cached, cache uniforms */
+    if ( !cached_uniforms || cached_uniforms->light_collection_uni != light_collection_uni )
+    {
+        cached_uniforms.reset ( new cached_uniforms_struct
+        {
+            light_collection_uni,
+            light_collection_uni.get_uniform ( "size" ),
+            light_collection_uni.get_struct_array_uniform ( "lights" )
+        } );
+    }
+}
 
 
 
