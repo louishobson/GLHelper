@@ -477,6 +477,7 @@ public:
     void cache_uniforms ( const struct_uniform& material_uni, const uniform& model_uni ) const;
 
 
+
 private:
 
     /* the directory the model is contained within */
@@ -514,9 +515,9 @@ private:
         uniform ambient_stack_base_color_uni;
         uniform diffuse_stack_base_color_uni;
         uniform specular_stack_base_color_uni;
-        array_uniform<struct_uniform> ambient_stack_levels_uni; 
-        array_uniform<struct_uniform> diffuse_stack_levels_uni; 
-        array_uniform<struct_uniform> specular_stack_levels_uni;
+        struct_array_uniform ambient_stack_levels_uni; 
+        struct_array_uniform diffuse_stack_levels_uni; 
+        struct_array_uniform specular_stack_levels_uni;
         uniform blending_mode_uni;
         uniform shininess_uni;
         uniform shininess_strength_uni;
