@@ -67,7 +67,7 @@ public:
      *
      * creates an exception with no description (by setting _what to NULL)
      */
-    explicit exception () = default;
+    exception () = default;
 
     /* default copy constructor */
     /* default asignment operator */

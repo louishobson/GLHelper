@@ -319,7 +319,7 @@ public:
      *
      * construct matrix_exception with no descrption
      */
-    explicit matrix_exception () = default;
+    matrix_exception () = default;
 
     /* default everything else and inherits what () function */
 

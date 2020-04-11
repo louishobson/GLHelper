@@ -29,14 +29,8 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
-/* include glhelper_matrix.hpp */
-#include <glhelper/glhelper_matrix.hpp>
-
-/* include glhelper_vector.hpp */
-#include <glhelper/glhelper_vector.hpp>
-
-/* include glhelper_transform.hpp */
-#include <glhelper/glhelper_transform.hpp>
+/* include glhelper_math.hpp */
+#include <glhelper/glhelper_math.hpp>
 
 
 
@@ -67,7 +61,7 @@ public:
      *
      * give parameters for look_towards and perspective_fov
      */
-    camera_perspective ( const math::vec3& _pos, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far );
+    camera_perspective ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far );
 
     /* minimal constructor
      *
@@ -140,37 +134,41 @@ public:
 
 
 
-    /* set_fov
+    /* get/set_fov
      *
-     * set the field of view
+     * get/set the field of view
      */
+    const double& get_fov () const { return fov; }
     void set_fov ( const double _fov ) { fov = _fov; proj_change = true; }
 
-    /* set_aspect
+    /* get/set_aspect
      *
-     * set the aspect ratio
+     * get/set the aspect ratio
      */
+    const double& get_aspect () const { return aspect; }
     void set_aspect ( const double _aspect ) { aspect = _aspect; proj_change = true; }
 
-    /* set_near
+    /* get/set_near
      *
-     * set the near position of the perspective projection matrix
+     * get/set the near position of the perspective projection matrix
      */
+    const double& get_near () const { return near; }
     void set_near ( const double _near ) { near = _near; proj_change = true; }
 
-    /* set_far
+    /* get/set_far
      *
-     * set the far position of the perspective projection matrix
+     * get/set the far position of the perspective projection matrix
      */
+    const double& get_far () const { return far; }
     void set_far ( const double _far ) { far = _far; proj_change = true; }
 
 
 
-    /* get_pos
+    /* get_position
      *
      * get the current viewing position
      */
-    const math::vec3& get_pos () const { return pos; }
+    const math::vec3& get_position () const { return position; }
 
     /* get_direction
      *
@@ -200,7 +198,7 @@ public:
 private:
 
     /* view matrix parameters */
-    math::vec3 pos;
+    math::vec3 position;
     math::vec3 x;
     math::vec3 y;
     math::vec3 z;

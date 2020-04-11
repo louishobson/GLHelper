@@ -184,7 +184,51 @@ const glh::struct_uniform glh::program::get_struct_uniform ( const std::string& 
     /* return the struct uniform */
     return struct_uniform { name, const_cast<program&> ( * this ) };
 }
-    
+
+/* get_..._array_uniform
+ *
+ * simplified versions of get_array_uniform
+ */
+glh::uniform_array_uniform glh::program::get_uniform_array_uniform ( const std::string& name )
+{
+    /* return the array uniform */
+    return uniform_array_uniform { name, * this };
+}
+const glh::uniform_array_uniform glh::program::get_uniform_array_uniform ( const std::string& name ) const
+{
+    /* return the array uniform */
+    return uniform_array_uniform { name, const_cast<program&> ( * this ) };
+}
+glh::struct_array_uniform glh::program::get_struct_array_uniform ( const std::string& name )
+{
+    /* return the array uniform */
+    return struct_array_uniform { name, * this };
+}
+const glh::struct_array_uniform glh::program::get_struct_array_uniform ( const std::string& name ) const
+{
+    /* return the array uniform */
+    return struct_array_uniform { name, const_cast<program&> ( * this ) };
+}
+glh::uniform_2d_array_uniform glh::program::get_uniform_2d_array_uniform ( const std::string& name )
+{
+    /* return the array uniform */
+    return uniform_2d_array_uniform { name, * this };
+}
+const glh::uniform_2d_array_uniform glh::program::get_uniform_2d_array_uniform ( const std::string& name ) const
+{
+    /* return the array uniform */
+    return uniform_2d_array_uniform { name, const_cast<program&> ( * this ) };
+}
+glh::struct_2d_array_uniform glh::program::get_struct_2d_array_uniform ( const std::string& name )
+{
+    /* return the array uniform */
+    return struct_2d_array_uniform { name, * this };
+}
+const glh::struct_2d_array_uniform glh::program::get_struct_2d_array_uniform ( const std::string& name ) const
+{
+    /* return the array uniform */
+    return struct_2d_array_uniform { name, const_cast<program&> ( * this ) };
+}
 
 /* destroy
  *
@@ -267,4 +311,78 @@ void glh::uniform::check_is_program_in_use () const
 {
     /* if not in use, throw */ 
     if ( !prog.is_in_use () ) throw shader_exception { "associated program of shader is not in use" };
+}
+
+
+
+/* STRUCT_UNIFORM IMPLEMENTATION */
+
+/* get_(struct_/array_)uniform
+ *
+ * get a member of the struct
+ */
+glh::uniform glh::struct_uniform::get_uniform ( const std::string& member )
+{
+    /* return uniform */
+    return prog.get_uniform ( name + "." + member );
+}
+const glh::uniform glh::struct_uniform::get_uniform ( const std::string& member ) const
+{
+    /* return uniform */
+    return prog.get_uniform ( name + "." + member );
+}
+glh::struct_uniform glh::struct_uniform::get_struct_uniform ( const std::string& member )
+{
+    /* return uniform */
+    return prog.get_struct_uniform ( name + "." + member );
+}
+const glh::struct_uniform glh::struct_uniform::get_struct_uniform ( const std::string& member ) const
+{
+    /* return uniform */
+    return prog.get_struct_uniform ( name + "." + member );
+}
+
+/* get_..._array_uniform
+ *
+ * simplified versions of get_array_uniform
+ */
+glh::uniform_array_uniform glh::struct_uniform::get_uniform_array_uniform ( const std::string& member )
+{
+    /* return the array uniform */
+    return uniform_array_uniform { name + "." + member, prog };
+}
+const glh::uniform_array_uniform glh::struct_uniform::get_uniform_array_uniform ( const std::string& member ) const
+{
+    /* return the array uniform */
+    return uniform_array_uniform { name + "." + member, prog };
+}
+glh::struct_array_uniform glh::struct_uniform::get_struct_array_uniform ( const std::string& member )
+{
+    /* return the array uniform */
+    return struct_array_uniform { name + "." + member, prog };
+}
+const glh::struct_array_uniform glh::struct_uniform::get_struct_array_uniform ( const std::string& member ) const
+{
+    /* return the array uniform */
+    return struct_array_uniform { name + "." + member, prog };
+}
+glh::uniform_2d_array_uniform glh::struct_uniform::get_uniform_2d_array_uniform ( const std::string& member )
+{
+    /* return the array uniform */
+    return uniform_2d_array_uniform { name + "." + member, prog };
+}
+const glh::uniform_2d_array_uniform glh::struct_uniform::get_uniform_2d_array_uniform ( const std::string& member ) const
+{
+    /* return the array uniform */
+    return uniform_2d_array_uniform { name + "." + member, prog };
+}
+glh::struct_2d_array_uniform glh::struct_uniform::get_struct_2d_array_uniform ( const std::string& member )
+{
+    /* return the array uniform */
+    return struct_2d_array_uniform { name + "." + member, prog };
+}
+const glh::struct_2d_array_uniform glh::struct_uniform::get_struct_2d_array_uniform ( const std::string& member ) const
+{
+    /* return the array uniform */
+    return struct_2d_array_uniform { name + "." + member, prog };
 }

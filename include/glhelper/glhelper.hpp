@@ -53,3 +53,6 @@
 
 /* include glhelper_model.hpp */
 #include <glhelper/glhelper_model.hpp>
+
+/* glhelper_lighting.hpp */
+#include <glhelper/glhelper_lighting.hpp>

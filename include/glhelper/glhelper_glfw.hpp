@@ -52,12 +52,6 @@
 
 namespace glh
 {
-    /* class vao
-     *
-     * forward declaration for use by window class
-     */
-    class vao;
-
     /* class program
      *
      * forward declaration for use by window class
@@ -102,13 +96,13 @@ public:
      * title: the title of the window
      * width/height: the width and height of the window
      */
-    explicit window ( const std::string& title, const int width, const int height );
+    window ( const std::string& title, const int width, const int height );
 
     /* zero-parameter constructor
      *
      * creates a glfw window based on defaults
      */
-    explicit window ()
+    window ()
         : window { "New window", 600, 400 }
     {}
 
@@ -119,7 +113,7 @@ public:
      * _winptr: pointer to GLFWwindow
      * _managed: whether the window should be deleted on destruction of the object (defaults to false)
      */
-    explicit window ( GLFWwindow * _winptr, const bool _managed = false );
+    window ( GLFWwindow * _winptr, const bool _managed = false );
 
     /* deleted copy constructor
      *
@@ -319,7 +313,6 @@ public:
      * return: pointer held by winptr
      */
     const GLFWwindow * internal_ptr () const { return winptr; }
-    GLFWwindow * internal_ptr () { return winptr; }
 
 
 
@@ -405,7 +398,7 @@ public:
      *
      * construct glfw_exception with no descrption
      */
-    explicit glfw_exception () = default;
+    glfw_exception () = default;
 
     /* default everything else and inherits what () function */
 
