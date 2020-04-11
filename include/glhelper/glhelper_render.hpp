@@ -133,6 +133,20 @@ public:
     static void enable_depth_test () { glEnable ( GL_DEPTH_TEST ); }
     static void disable_depth_test () { glDisable ( GL_DEPTH_TEST ); }
 
+    /* enable/disable_depth_mask
+     *
+     * enable or disable whether the depth buffer is updated when a fragment passes the depth test
+     */
+    static void enable_depth_mask () { glDepthMask ( GL_TRUE ); }
+    static void disable_depth_mask () { glDepthMask ( GL_FALSE ); }
+
+    /* depth_func
+     *
+     * set the function to use for depth testing
+     * GL_LESS is the default
+     */
+    static void depth_func ( const GLenum func ) { glDepthFunc ( func ); }
+
     /* viewport
      *
      * set the viewport size
