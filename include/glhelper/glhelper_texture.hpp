@@ -71,9 +71,9 @@ public:
      * default settings are applied
      * 
      * _path: path to the image for the texture
-     * _texture_unit: the texture unit to bind to
+     * _texture_unit: the texture unit to bind to (integer 0-31)
      */
-    texture2d ( const std::string& _path, const GLenum _texture_unit = GL_TEXTURE0 );
+    texture2d ( const std::string& _path, const GLenum _texture_unit = 0 );
 
     /* deleted zero-parameter constructor
      *
@@ -126,7 +126,7 @@ public:
      * _texture_unit: the texture unit to bind to, or the last one
      */
     GLenum bind () const;
-    GLenum bind ( const GLenum _texture_unit );
+    GLenum bind ( const unsigned _texture_unit );
 
     /* is_bound
      *
@@ -149,7 +149,7 @@ public:
      * _texture_unit: the new texture unit
      */
     const GLenum& get_texture_unit () const { return texture_unit; };
-    void set_texture_unit ( const GLenum _texture_unit ) { texture_unit = _texture_unit; }
+    void set_texture_unit ( const unsigned _texture_unit ) { texture_unit = _texture_unit; }
 
     /* get_width/height
      *
@@ -183,8 +183,9 @@ private:
     /* texture_unit
      *
      * the texture unit to bind to
+     * not one of GL_TEXTURE0 + x, rather just the x-value
      */
-    GLenum texture_unit;
+    unsigned texture_unit;
 
     /* widith, height, channels
      *

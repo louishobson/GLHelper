@@ -31,7 +31,7 @@
  * default settings are applied
  * 
  * _path: path to the image for the texture
- * _texture_unit: the texture unit to bind to
+ * _texture_unit: the texture unit to bind to (integer 0-31)
  */
 glh::texture2d::texture2d ( const std::string& _path, const GLenum _texture_unit )
     : path { _path }
@@ -154,7 +154,7 @@ GLenum glh::texture2d::bind () const
     /* return the target */
     return GL_TEXTURE_2D;
 }
-GLenum glh::texture2d::bind ( const GLenum _texture_unit )
+GLenum glh::texture2d::bind ( const unsigned _texture_unit )
 {
     /* set new texture unit */
     texture_unit = _texture_unit;
@@ -170,7 +170,7 @@ GLenum glh::texture2d::bind ( const GLenum _texture_unit )
 bool glh::texture2d::is_bound () const
 {
     /* activate the texture unit */
-    glActiveTexture ( texture_unit );
+    glActiveTexture ( GL_TEXTURE0 + texture_unit );
     /* get texture currently bound to unit */
     GLint bound_texture;
     glGetIntegerv ( GL_TEXTURE_BINDING_2D, &bound_texture ); 
