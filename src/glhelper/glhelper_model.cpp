@@ -209,6 +209,7 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
         }
     } else
     {
+        _material.ambient_stack.base_color = _material.diffuse_stack.base_color;
         _material.ambient_stack.levels.resize ( aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ) );
         for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ); ++i )
         {
