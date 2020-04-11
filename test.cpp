@@ -30,10 +30,6 @@ int main ()
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
 
     glh::model::model nanosuit { "./assets/nanosuit", "nanosuit.obj" };
-    //glh::model::model reinhardt { "./assets/reinhardt", "scene.gltf" };
-    //glh::model::model xenomorphe { "./assets/xenomorphe", "scene.gltf" };
-    //glh::model::model plane { "./assets/plane", "scene.gltf" };
-    //glh::model::model room { "./assets/room", "scene.gltf" };
     glh::model::model factory { "./assets/factory", "scene.gltf" };
 
     glh::vshader vshader { "shaders/vertex.glsl" };
@@ -42,7 +38,8 @@ int main ()
     auto trans_uni = program.get_struct_uniform ( "trans" );
 
     factory.cache_uniforms ( program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
-
+    nanosuit.cache_uniforms ( program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
+    
     glh::camera_perspective camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 500.0 };
     camera.enable_restrictive_mode ();
     
@@ -51,11 +48,9 @@ int main ()
 
     program.use ();
 
-    glh::lighting lighting;
-    glh::math::vec3 light_position { 0.0, 0.0, -60.0 };
-    lighting.add_dirlight ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 0.4 }, glh::math::vec3 { 0.4 }, glh::math::vec3 { 0.7 } );
-    lighting.add_pointlight ( light_position, 1.0, 0.011, 0.0007, glh::math::vec3 { 0.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
-    lighting.cache_uniforms ( program.get_struct_uniform ( "lighting" ) );
+    glh::light_system light_system;
+    light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 0.3 }, glh::math::vec3 { 0.7 }, glh::math::vec3 { 1.0 } );
+    light_system.cache_uniforms ( program.get_struct_uniform ( "light_system" ) );
 
     window.get_mouseinfo ();
     auto dimensions = window.get_dimensions ();
@@ -93,18 +88,12 @@ int main ()
 
         trans_uni.get_uniform ( "view" ).set_matrix ( camera.get_view () );
         trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
-
-        light_position = glh::math::rotate ( light_position, glh::math::rad ( 0.5 ), glh::math::vec3 ( 1.0, 0.0, 0.0 ) );
-        lighting.at_pointlight ( 0 ).set_position ( light_position );
-        lighting.apply ();
        
+        light_system.apply ();
+
         glh::renderer::clear ();
 
-        //plane.render ( material_uni, model_uni, glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 0.01 ) ) );
-        //xenomorphe.render ( material_uni, model_uni, glh::math::translate ( glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 0.08 ) ), glh::math::vec3 { 20.0, 0.0, 20.0 } ) );
-        //nanosuit.render ( material_uni, model_uni, glh::math::translate ( glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 1 ) ), glh::math::vec3 { 0.0, 0.0, 0.0 } ) );
-        //reinhardt.render ( material_uni, model_uni, glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 0.01 ) ) );
-        //room.render ( material_uni, model_uni, glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 2.0 ) ) );
+        //nanosuit.render ( glh::math::translate ( glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 1 ) ), glh::math::vec3 { 0.0, 0.0, 0.0 } ) );
         factory.render ( glh::math::translate ( glh::math::resize<4> ( glh::math::rotate ( glh::math::enlarge ( glh::math::identity<3> (), 0.1 ), glh::math::rad ( 90 ), 1, 2 ) ), glh::math::vec3 { -20.0, 0.0, -20.0 } ) );
 
         window.swap_buffers ();

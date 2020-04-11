@@ -66,17 +66,19 @@ struct light_struct
     bool enabled;
 };
 
-/* structure for storing multiple lights of each type */
-struct lighting_struct
+/* structure for storing multiple lights */
+struct light_collection_struct
 {
-    int dirlights_size;
-    light_struct dirlights [ MAX_NUM_LIGHTS ];
+    int size;
+    light_struct lights [ MAX_NUM_LIGHTS ];
+};
 
-    int pointlights_size;
-    light_struct pointlights [ MAX_NUM_LIGHTS ];
-
-    int spotlights_size;
-    light_struct spotlights [ MAX_NUM_LIGHTS ];
+/* structure for storing multiple collections of lights */
+struct light_system_struct
+{
+    light_collection_struct dircoll;
+    light_collection_struct pointcoll;
+    light_collection_struct spotcoll;
 };
 
 /* transformations structure */
@@ -98,7 +100,7 @@ out vec4 fragcolor;
 
 /* material and lighting uniforms */
 uniform material_struct material;
-uniform lighting_struct lighting;
+uniform light_system_struct light_system;
 
 /* transformation matrices */
 uniform trans_struct trans;
@@ -164,11 +166,11 @@ float compute_attenuation ( float dist, float att_const, float att_linear, float
  * take a material and compute the ambient component of the light hitting the fragment
  *
  * mat: the material of the fragment
- * lights: lighting_struct containing all of the light sources
+ * lighting: light_system_struct containing all of the light sources
  *
  * return: the ambient component of the fragment
  */
-vec3 compute_ambient_component ( material_struct mat, lighting_struct lights )
+vec3 compute_ambient_component ( material_struct mat, light_system_struct lighting )
 {
     /* evaluate the ambient stack */
     vec3 base_color = evaluate_stack ( mat, mat.ambient_stack );
@@ -180,21 +182,21 @@ vec3 compute_ambient_component ( material_struct mat, lighting_struct lights )
     vec3 ambient_color = vec3 ( 0.0, 0.0, 0.0 );
 
     /* loop over lights and apply attenuation where necesarry */
-    for ( int i = 0; i < lights.dirlights_size; ++i )
+    for ( int i = 0; i < lighting.dircoll.size; ++i )
     {
         /* add ambient light from directional source */
-        ambient_color += base_color * lights.dirlights [ i ].ambient_color;
+        ambient_color += base_color * lighting.dircoll.lights [ i ].ambient_color;
     }
 
-    for ( int i = 0; i < lights.pointlights_size; ++i )
+    for ( int i = 0; i < lighting.pointcoll.size; ++i )
     {
         /* add ambient light from point source, including attenuation */
-        ambient_color += base_color * lights.pointlights [ i ].ambient_color * compute_attenuation
+        ambient_color += base_color * lighting.pointcoll.lights [ i ].ambient_color * compute_attenuation
         (
-            length ( lights.pointlights [ i ].position - fragpos ),
-            lights.pointlights [ i ].att_const,
-            lights.pointlights [ i ].att_linear,
-            lights.pointlights [ i ].att_quad
+            length ( lighting.pointcoll.lights [ i ].position - fragpos ),
+            lighting.pointcoll.lights [ i ].att_const,
+            lighting.pointcoll.lights [ i ].att_linear,
+            lighting.pointcoll.lights [ i ].att_quad
         );
     }
 
@@ -209,11 +211,11 @@ vec3 compute_ambient_component ( material_struct mat, lighting_struct lights )
  * take a material and compute the diffuse component of the light hitting the fragment
  *
  * mat: the material of the fragment
- * lights: lighting_struct containing all of the light sources
+ * lighting: light_system_struct containing all of the light sources
  *
  * return: the diffuse component of the fragment
  */
-vec3 compute_diffuse_component ( material_struct mat, lighting_struct lights )
+vec3 compute_diffuse_component ( material_struct mat, light_system_struct lighting )
 {
     /* evaluate the diffuse stack */
     vec3 base_color = evaluate_stack ( mat, mat.diffuse_stack );
@@ -225,27 +227,27 @@ vec3 compute_diffuse_component ( material_struct mat, lighting_struct lights )
     vec3 diffuse_color = vec3 ( 0.0, 0.0, 0.0 );
 
     /* loop over lights and apply attenuation where necesarry */
-    for ( int i = 0; i < lights.dirlights_size; ++i )
+    for ( int i = 0; i < lighting.dircoll.size; ++i )
     {
         /* get diffuse multiplier */
-        float diff = max ( dot ( normal, -lights.dirlights [ i ].direction ), 0.0 );
+        float diff = max ( dot ( normal, -lighting.dircoll.lights [ i ].direction ), 0.0 );
         /* add diffuse light from directional source */
-        diffuse_color += base_color * lights.dirlights [ i ].diffuse_color * diff;
+        diffuse_color += base_color * lighting.dircoll.lights [ i ].diffuse_color * diff;
     }
 
-    for ( int i = 0; i < lights.pointlights_size; ++i )
+    for ( int i = 0; i < lighting.pointcoll.size; ++i )
     {
         /* get normalised vector from fragment to light */
-        vec3 fraglightdir = normalize ( lights.pointlights [ i ].position - fragpos );
+        vec3 fraglightdir = normalize ( lighting.pointcoll.lights [ i ].position - fragpos );
         /* get diffuse multiplier */
         float diff = max ( dot ( normal, fraglightdir ), 0.0 );
         /* add diffuse light from point source, including attenuation */
-        diffuse_color += base_color * lights.pointlights [ i ].diffuse_color * diff * compute_attenuation
+        diffuse_color += base_color * lighting.pointcoll.lights [ i ].diffuse_color * diff * compute_attenuation
         (
-            length ( lights.pointlights [ i ].position - fragpos ),
-            lights.pointlights [ i ].att_const,
-            lights.pointlights [ i ].att_linear,
-            lights.pointlights [ i ].att_quad
+            length ( lighting.pointcoll.lights [ i ].position - fragpos ),
+            lighting.pointcoll.lights [ i ].att_const,
+            lighting.pointcoll.lights [ i ].att_linear,
+            lighting.pointcoll.lights [ i ].att_quad
         );
     }
 
@@ -260,11 +262,11 @@ vec3 compute_diffuse_component ( material_struct mat, lighting_struct lights )
  * take a material and compute the specular component of the light hitting the fragment
  *
  * mat: the material of the fragment
- * lights: lighting_struct containing all of the light sources
+ * lighting: lighting_system_struct containing all of the light sources
  *
  * return: the specular component of the fragment
  */
-vec3 compute_specular_component ( material_struct mat, lighting_struct lights )
+vec3 compute_specular_component ( material_struct mat, light_system_struct lighting )
 {
     /* evaluate the specular stack */
     vec3 base_color = evaluate_stack ( mat, mat.specular_stack );
@@ -279,31 +281,31 @@ vec3 compute_specular_component ( material_struct mat, lighting_struct lights )
     vec3 fragviewdir = normalize ( trans.viewpos - fragpos );
 
     /* loop over lights and apply attenuation where necesarry */
-    for ( int i = 0; i < lights.dirlights_size; ++i )
+    for ( int i = 0; i < lighting.dircoll.size; ++i )
     {
         /* reflect the light off of the fragment */
-        vec3 reflectlightdir = normalize ( reflect ( -lights.dirlights [ i ].direction, normal ) );
+        vec3 reflectlightdir = normalize ( reflect ( -lighting.dircoll.lights [ i ].direction, normal ) );
         /* get specular multiplier */
         float spec = pow ( max ( dot ( fragviewdir, reflectlightdir ), 0.0 ), material.shininess );
         /* add specular light from directional source */
-        specular_color += base_color * lights.dirlights [ i ].specular_color * spec;
+        specular_color += base_color * lighting.dircoll.lights [ i ].specular_color * spec;
     }
 
-    for ( int i = 0; i < lights.pointlights_size; ++i )
+    for ( int i = 0; i < lighting.pointcoll.size; ++i )
     {
         /* get normalised vector from fragment to light */
-        vec3 fraglightdir = normalize ( lights.pointlights [ i ].position - fragpos );
+        vec3 fraglightdir = normalize ( lighting.pointcoll.lights [ i ].position - fragpos );
         /* reflect the light off of the fragment */
         vec3 reflectlightdir = normalize ( reflect ( fraglightdir, normal ) );
         /* get specular multiplier */
         float spec = pow ( max ( dot ( fragviewdir, reflectlightdir ), 0.0 ), material.shininess );
         /* add specular light from point source, including attenuation */
-        specular_color += base_color * lights.pointlights [ i ].specular_color * spec * compute_attenuation
+        specular_color += base_color * lighting.pointcoll.lights [ i ].specular_color * spec * compute_attenuation
         (
-            length ( lights.pointlights [ i ].position - fragpos ),
-            lights.pointlights [ i ].att_const,
-            lights.pointlights [ i ].att_linear,
-            lights.pointlights [ i ].att_quad
+            length ( lighting.pointcoll.lights [ i ].position - fragpos ),
+            lighting.pointcoll.lights [ i ].att_const,
+            lighting.pointcoll.lights [ i ].att_linear,
+            lighting.pointcoll.lights [ i ].att_quad
         );
     }
 
@@ -316,9 +318,9 @@ vec3 compute_specular_component ( material_struct mat, lighting_struct lights )
 /* main */
 void main ()
 {
-    vec3 ambient = compute_ambient_component ( material, lighting );
-    vec3 diffuse = compute_diffuse_component ( material, lighting );
-    vec3 specular = compute_specular_component ( material, lighting );
+    vec3 ambient = compute_ambient_component ( material, light_system );
+    vec3 diffuse = compute_diffuse_component ( material, light_system );
+    vec3 specular = compute_specular_component ( material, light_system );
 
     fragcolor = vec4 ( ambient + diffuse + specular, 1.0 );
     //fragcolor = vec4 ( evaluate_stack ( material, material.specular_stack ), 1.0 );
