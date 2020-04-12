@@ -223,6 +223,13 @@ private:
 
 /* VECTOR OPERATORS DECLARATIONS */
 
+/* operator== and operator!=
+ *
+ * compare the values of two vectors of the same size
+ */
+template<unsigned M> bool operator== ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
+template<unsigned M> bool operator!= ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
+
 /* operator+(=)
  *
  * addition operations on vectors include:
@@ -499,6 +506,27 @@ template<unsigned M> inline double glh::math::angle ( const vector<M>& lhs, cons
 
 
 /* VECTOR OPERATORS IMPLEMENTATION */
+
+/* operator== and operator!=
+ *
+ * compare the values of two vectors of the same size
+ */
+template<unsigned M> inline bool operator== ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+{
+    /* return false if any elements differ */
+    for ( unsigned i = 0; i < M; ++i ) if ( lhs.at ( i ) != rhs.at ( i ) ) return false;
+
+    /* else return true */
+    return true;
+}
+template<unsigned M> inline bool operator!= ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+{
+    /* return true if any elements differ */
+    for ( unsigned i = 0; i < M; ++i ) if ( lhs.at ( i ) != rhs.at ( i ) ) return true;
+
+    /* else return false */
+    return false;
+}
 
 /* operator+(=)
  *

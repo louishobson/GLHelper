@@ -218,6 +218,13 @@ private:
 
 /* MATRIX OPERATORS DECLARATIONS */
 
+/* operator== and operator!=
+ *
+ * compares two matrices of the same size value by value
+ */
+template<unsigned M, unsigned N> bool operator== ( const glh::math::matrix<M, N>& lhs, const glh::math::matrix<M, N>& rhs );
+template<unsigned M, unsigned N> bool operator!= ( const glh::math::matrix<M, N>& lhs, const glh::math::matrix<M, N>& rhs );
+
 /* operator+(=)
  *
  * addition operations on matrices include:
@@ -577,6 +584,27 @@ template<> inline glh::math::matrix<1> glh::math::inverse<1> ( const matrix<1>& 
 
 
 /* MATRIX OPERATORS IMPLEMENTATION */
+
+/* operator== and operator!=
+ *
+ * compares two matrices of the same size value by value
+ */
+template<unsigned M, unsigned N> inline bool operator== ( const glh::math::matrix<M, N>& lhs, const glh::math::matrix<M, N>& rhs )
+{
+    /* return false if any elements differ */
+    for ( unsigned i = 0; i < M * N; ++i ) if ( lhs.at ( i ) != rhs.at ( i ) ) return false;
+
+    /* else return true */
+    return true;
+}
+template<unsigned M, unsigned N> inline bool operator!= ( const glh::math::matrix<M, N>& lhs, const glh::math::matrix<M, N>& rhs )
+{
+    /* return true if any elements differ */
+    for ( unsigned i = 0; i < M * N; ++i ) if ( lhs.at ( i ) != rhs.at ( i ) ) return true;
+
+    /* else return false */
+    return false;
+}
 
 /* operator+(=)
  *
