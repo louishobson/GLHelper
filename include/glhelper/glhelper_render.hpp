@@ -42,6 +42,9 @@
 /* include glhelper_texture.hpp */
 #include <glhelper/glhelper_texture.hpp>
 
+/* include glhelper_math.hpp */
+#include <glhelper/glhelper_math.hpp>
+
 
 
 /* NAMESPACE FORWARD DECLARATIONS */
@@ -110,15 +113,14 @@ public:
     static void draw_elements ( const GLenum mode, const GLint count, const GLenum type, const GLvoid * start_index )
     { glDrawElements ( mode, count, type, start_index ); }
 
-    /* clear_color
+    /* get/set_clear_color
      *
-     * set the clear color
+     * get.set the clear color
      * 
-     * r,g,b,a: components for the new clear color
+     * color: vec4 containing rgba components of clear color
      */
-    static void clear_color ( const double r, const double g, const double b, const double a )
-    { glClearColor ( r, g, b, a ); }
-
+    static const math::vec4& get_clear_color () { return clear_color; }
+    static void set_clear_color ( const math::vec4& color );
     /* clear
      *
      * clears the screen
@@ -130,39 +132,53 @@ public:
      * 
      * enable or disable depth testing
      */
-    static void enable_depth_test () { glEnable ( GL_DEPTH_TEST ); }
-    static void disable_depth_test () { glDisable ( GL_DEPTH_TEST ); }
+    static void enable_depth_test ();
+    static void disable_depth_test ();
 
-    /* depth_mask
+    /* depth_test_enabled
      *
-     * set the depth mask
+     * returns true if depth testing is enabled
+     */
+    static bool depth_test_enabled () { return depth_test_state; }
+
+    /* get/set_depth_mask
+     *
+     * get/set the depth mask
      * 
      * mask: boolean defining if the depth buffer is written to for each fragment
      */
-    static void depth_mask ( const GLboolean mask ) { glDepthMask ( mask ); }
+    static GLboolean get_depth_mask () { return depth_mask; }
+    static void set_depth_mask ( const GLboolean mask );
 
-    /* depth_func
+    /* set_depth_func
      *
      * set the function to use for depth testing
      * 
      * func: the function to use (GL_LESS is the default)
      */
-    static void depth_func ( const GLenum func ) { glDepthFunc ( func ); }
+    static void set_depth_func ( const GLenum func ) { glDepthFunc ( func ); }
 
     /* enable/disable_stencil_test
      *
      * enavle or disable stencil testing
      */
-    static void enable_stencil_test () { glEnable ( GL_STENCIL_TEST ); }
-    static void disable_stencil_text () { glDisable ( GL_STENCIL_TEST ); }
+    static void enable_stencil_test ();
+    static void disable_stencil_test ();
 
-    /* stencil_mask
+    /* stencil_test_enabled
      *
-     * set the stencil mask
+     * return true is stencil test is enabled
+     */
+    static bool stencil_test_enabled () { return stencil_test_state; }
+
+    /* get/set_stencil_mask
+     *
+     * get/set the stencil mask
      * 
      * mask: a bit mask to define which bits are writen to the stencil buffer
      */
-    static void stencil_mask ( const GLuint mask ) { glStencilMask ( mask ); }
+    static GLuint get_stencil_mask () { return stencil_mask; }
+    static void set_stencil_mask ( const GLuint mask );
 
     /* stencil_func
      *
@@ -183,15 +199,21 @@ public:
      * dpfail: what to do when the stencil test passes, but depth test fails
      * dppass: what to do when the stencil and depth tests pass
      */
-    static void stencil_func ( const GLenum sfail, const GLenum dpfail, const GLenum dppass )
+    static void stencil_op ( const GLenum sfail, const GLenum dpfail, const GLenum dppass )
     { glStencilOp ( sfail, dpfail, dppass ); }
 
     /* enable/disable_blend
      *
      * enable/disable blending
      */
-    static void enable_blend () { glEnable ( GL_BLEND ); }
-    static void disable_blend () { glDisable ( GL_BLEND ); }
+    static void enable_blend ();
+    static void disable_blend ();
+
+    /* blend_enabled
+     *
+     * retirn true if blending is enabled
+     */
+    static bool blend_enabled () { return blend_state; }
 
     /* blend_func
      *
@@ -224,12 +246,108 @@ public:
      */
     static void blend_equation ( const GLenum equ ) { glBlendEquation ( equ ); }
 
+    /* enable/disable_face_culling
+     *
+     * enable/disable face culling
+     */
+    static void enable_face_culling ();
+    static void disable_face_culling ();
+
+    /* face_culling_enabled
+     *
+     * return true if face culling is enabled
+     */
+    static bool face_culling_enabled () { return face_culling_state; }
+
+    /* get/set_cull_face
+     *
+     * get/set the face currently being culled
+     * 
+     * face: the face to be culled
+     */
+    static GLenum get_cull_face () { return cull_face; }
+    static void set_cull_face ( const GLenum face );
+
+    /* get/set_front_face
+     *
+     * set whether the front face is defined by a clockwise or counter clockwise winding order
+     */
+    static GLenum get_front_face () { return front_face; }
+    static void set_front_face ( const GLenum winding );
+
     /* viewport
      *
      * set the viewport size
      */
     static void viewport ( GLint x, GLint y, GLsizei width, GLsizei height )
     { glViewport ( x, y, width, height ); }
+
+
+
+private:
+
+    /* clear_color
+     *
+     * the current clear color for the screen
+     * defaults to black
+     */
+    static math::vec4 clear_color;
+
+    /* depth_test_state
+     *
+     * whether depth testing is enabled
+     * defaults to false
+     */
+    static bool depth_test_state;
+
+    /* depth_mask
+     *
+     * the mask currently being used for depth testing
+     * defaults to GL_TRUE
+     */
+    static GLboolean depth_mask;
+
+    /* stencil_test_state
+     *
+     * whether stencil testing is enabled
+     * defaults to false
+     */
+    static bool stencil_test_state;
+
+    /* stencil_mask
+     *
+     * the mask currently being used for stencil testing
+     * defaults to 0xff
+     */
+    static GLuint stencil_mask;
+
+    /* blend_state
+     *
+     * whether blending is enabled
+     * defaults to false
+     */
+    static bool blend_state;
+
+    /* face_culling_state
+     *
+     * whether face culling is enabled
+     * defaults to false
+     */
+    static bool face_culling_state;
+
+    /* cull_face
+     *
+     * the face(s) currently being culled
+     * defaults to GL_BACK
+     */
+    static GLenum cull_face;
+
+    /* front_face
+     *
+     * which winding order to use to define the dront face
+     * defaults to GL_CCW
+     */
+    static GLenum front_face;
 
 };
 
