@@ -58,7 +58,7 @@ glh::model::model::model ( const std::string& _directory, const std::string& _en
  * transform: the overall model transformation to apply (identity by default)
  * transparent_only: only render meshes with possible transparent elements (false by default)
  */
-void glh::model::model::render ( const struct_uniform& material_uni, const uniform& model_uni, const math::mat4& transform, const bool transparent_only ) const
+void glh::model::model::render ( const struct_uniform& material_uni, const uniform& model_uni, const math::mat4& transform, const bool transparent_only )
 {
     /* reload the cache of material uniforms  */
     cache_material_uniforms ( material_uni );
@@ -87,7 +87,7 @@ void glh::model::model::render ( const math::mat4& transform, const bool transpa
  * 
  * material_uni: the uniform to cache
  */
-void glh::model::model::cache_material_uniforms ( const struct_uniform& material_uni ) const
+void glh::model::model::cache_material_uniforms ( const struct_uniform& material_uni )
 {
     /* cache material uniform if not already cached */
     if ( !cached_material_uniforms || cached_material_uniforms->material_uni != material_uni )
@@ -118,7 +118,7 @@ void glh::model::model::cache_material_uniforms ( const struct_uniform& material
  * 
  * model_uni: the uniform to cache
  */
-void glh::model::model::cache_model_uniform ( const uniform& model_uni ) const
+void glh::model::model::cache_model_uniform ( const uniform& model_uni )
 {
     /* cache model uniform if not already cached */
     if ( !cached_model_uniform || * cached_model_uniform != model_uni )
@@ -132,7 +132,7 @@ void glh::model::model::cache_model_uniform ( const uniform& model_uni ) const
  * material_uni: the material uniform to cache
  * model_uni: model uniform to cache
  */
-void glh::model::model::cache_uniforms ( const struct_uniform& material_uni, const uniform& model_uni ) const
+void glh::model::model::cache_uniforms ( const struct_uniform& material_uni, const uniform& model_uni )
 {
     /* cache all uniforms */
     cache_material_uniforms ( material_uni );
@@ -534,6 +534,10 @@ void glh::model::model::render_mesh ( const mesh& _mesh ) const
     /* don't draw if transparent only is set and material is definitely opaque */
     if ( draw_transparent_only && _mesh.properties->definitely_opaque ) return;
 
+    /* get if face culling is on, and disable if mesh is two sided */
+    const bool culling_active = glh::renderer::face_culling_enabled ();
+    if ( culling_active && _mesh.properties->two_sided ) glh::renderer::disable_face_culling ();
+
     /* set the stack sizes */
     cached_material_uniforms->ambient_stack_size_uni.set_int ( _mesh.properties->ambient_stack.levels.size () );
     cached_material_uniforms->diffuse_stack_size_uni.set_int ( _mesh.properties->diffuse_stack.levels.size () );
@@ -616,4 +620,7 @@ void glh::model::model::render_mesh ( const mesh& _mesh ) const
 
     /* unbind the vao */
     _mesh.array_object.unbind ();
+
+    /* re-enable face culling if was previously disabled */
+    if ( culling_active && _mesh.properties->two_sided ) glh::renderer::enable_face_culling ();
 }

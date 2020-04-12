@@ -456,7 +456,7 @@ public:
      * transform: the overall model transformation to apply (identity by default)
      * transparent_only: only render meshes with possible transparent elements (false by default)
      */
-    void render ( const struct_uniform& material_uni, const uniform& model_uni, const math::mat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
+    void render ( const struct_uniform& material_uni, const uniform& model_uni, const math::mat4& transform = math::identity<4> (), const bool transparent_only = false );
     void render ( const math::mat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
 
     /* cache_material_uniforms
@@ -465,7 +465,7 @@ public:
      * 
      * material_uni: the uniform to cache
      */
-    void cache_material_uniforms ( const struct_uniform& material_uni ) const;
+    void cache_material_uniforms ( const struct_uniform& material_uni );
 
     /* cache_model_uniform
      *
@@ -473,7 +473,7 @@ public:
      * 
      * model_uni: the uniform to cache
      */
-    void cache_model_uniform ( const uniform& model_uni ) const;
+    void cache_model_uniform ( const uniform& model_uni );
 
     /* cache_uniforms
      *
@@ -482,7 +482,7 @@ public:
      * material_uni: the material uniform to cache
      * model_uni: model uniform to cache
      */
-    void cache_uniforms ( const struct_uniform& material_uni, const uniform& model_uni ) const;
+    void cache_uniforms ( const struct_uniform& material_uni, const uniform& model_uni );
 
 
 
