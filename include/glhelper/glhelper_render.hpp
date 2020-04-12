@@ -186,6 +186,44 @@ public:
     static void stencil_func ( const GLenum sfail, const GLenum dpfail, const GLenum dppass )
     { glStencilOp ( sfail, dpfail, dppass ); }
 
+    /* enable/disable_blend
+     *
+     * enable/disable blending
+     */
+    static void enable_blend () { glEnable ( GL_BLEND ); }
+    static void disable_blend () { glDisable ( GL_BLEND ); }
+
+    /* blend_func
+     *
+     * set where to revieve the factors from for blending
+     * 
+     * sfactor: where to recieve the source factor from
+     * dfactor: where to recieve the destination factor from
+     */
+    static void blend_func ( const GLenum sfactor, const GLenum dfactor )
+    { glBlendFunc ( sfactor, dfactor ); }
+
+    /* blend_func_separate
+     *
+     * set where to revieve the factors from for blending
+     * different values can be set for the rgb and alpha components
+     *
+     * srgbfact: where to recieve the source factor for rgb components
+     * drgbfact: where to recieve the destination factor for rgb components
+     * salphafact: where to recieve the source factor for the alpha component
+     * dalphafact: where to recieve the destination factor for the alpha component
+     */
+    static void blend_func_separate ( const GLenum srgbfact, const GLenum drgbfact, const GLenum salphafact, const GLenum dalphafact )
+    { glBlendFuncSeparate ( srgbfact, drgbfact, salphafact, dalphafact ); }
+    
+    /* blend_equation
+     *
+     * set the equation to use for blending
+     * 
+     * equ: the equation to use
+     */
+    static void blend_equation ( const GLenum equ ) { glBlendEquation ( equ ); }
+
     /* viewport
      *
      * set the viewport size
