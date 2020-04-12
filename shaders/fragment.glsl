@@ -320,13 +320,16 @@ void main ()
     vec4 diffuse = evaluate_stack ( material, material.diffuse_stack );
     vec4 specular = evaluate_stack ( material, material.specular_stack );
 
+    /* if is completely transparent, discard regardless of whether in transparent mode */
+    if ( ambient.a + diffuse.a == 0.0 ) discard;
+
     /* discard if opaque/transparent */
     if ( transparent_mode )
     {
-        if ( ambient.a + diffuse.a >= 0.95 ) discard;
+        if ( ambient.a + diffuse.a >= 1.0 ) discard;
     } else
     {
-        if ( ambient.a + diffuse.a < 0.95 ) discard;
+        if ( ambient.a + diffuse.a < 1.0 ) discard;
     }
 
     /* calculate lighting colors */
