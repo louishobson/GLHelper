@@ -23,7 +23,8 @@
 
 /* constructor */
 glh::shader::shader ( const GLenum _target, const std::string& _path )
-    : target { _target }
+    : object { glh::object_manager::generate_shader ( _target ) }
+    , target { _target }
     , path { _path }
 {
     /* try to open the shader */
@@ -38,7 +39,6 @@ glh::shader::shader ( const GLenum _target, const std::string& _path )
     if ( source.empty () ) throw shader_exception { "imported shader source is empty at path " + path };
 
     /* generate shader object, attach the source and compile */
-    id = glCreateShader ( target );
     const char * source_ptr = source.c_str ();
     glShaderSource ( id, 1, &source_ptr, NULL );
     glCompileShader ( id );
@@ -60,22 +60,6 @@ glh::shader::shader ( const GLenum _target, const std::string& _path )
     }
 }
 
-/* destroy
- *
- * destroys the shader, setting its id to 0
- * any program using this shader will still function
- */
-void glh::shader::destroy ()
-{
-    /* if is valid */
-    if ( is_valid () )
-    {
-        /* destroy and set id to 0 */
-        glDeleteShader ( id );
-        id = 0;
-    }   
-}
-
 
 
 /* PROGRAM IMPLEMENTATION */
@@ -86,12 +70,10 @@ void glh::shader::destroy ()
  * NOTE: the shader program remains valid even when linked shaders are destroyed
  */
 glh::program::program ( const vshader& vs, const gshader& gs, const fshader& fs )
+    : object { glh::object_manager::generate_program () }
 {
     /* check shaders are valid */
     if ( !vs.is_valid () || gs.is_valid () || !fs.is_valid () ) throw shader_exception { "cannot create shader program from invalid shaders" };
-
-    /* generate program */
-    id = glCreateProgram ();
 
     /* attach shaders */
     glAttachShader ( id, vs.internal_id () );
@@ -112,8 +94,7 @@ glh::program::program ( const vshader& vs, const gshader& gs, const fshader& fs 
         glGetProgramInfoLog ( id, GLH_SHADER_LOG_SIZE, NULL, link_log );
         /* print log info to stderr */
         std::cerr << link_log;
-        /* destroy the program and throw */
-        destroy ();
+        /* throw exception */
         throw shader_exception { "program linking failed" };
     }
 }
@@ -150,8 +131,7 @@ glh::program::program ( const vshader& vs, const fshader& fs )
         glGetProgramInfoLog ( id, GLH_SHADER_LOG_SIZE, NULL, link_log );
         /* print log info to stderr */
         std::cerr << link_log;
-        /* destroy the program and throw */
-        destroy ();
+        /* throw exception */
         throw shader_exception { "program linking failed" };
     }
 }
@@ -230,48 +210,6 @@ const glh::struct_2d_array_uniform glh::program::get_struct_2d_array_uniform ( c
     return struct_2d_array_uniform { name, const_cast<program&> ( * this ) };
 }
 
-/* destroy
- *
- * destroys the shader program, setting id to 0
- */
-void glh::program::destroy ()
-{
-    /* if is valid */
-    if ( is_valid () )
-    {
-        /* destroy and set id to 0 */
-        glDeleteProgram ( id );
-        id = 0;
-    }    
-}
-
-/* use
- *
- * use the shader program for the following OpenGL function calls
- * will not call glUseProgram if already in use
- */
-void glh::program::use () const
-{ 
-    /* if program is not valid, throw error */
-    if ( !is_valid () ) throw shader_exception { "cannot use invalid shader program" };
-
-    /* use program, if not already in use */
-    if ( !is_in_use () ) glUseProgram ( id );
-}
-
-/* is_in_use
- *
- * return: boolean for if the program is in use
- */
-bool glh::program::is_in_use () const 
-{
-    /* get program currently in use */
-    GLint program_in_use;
-    glGetIntegerv ( GL_CURRENT_PROGRAM, &program_in_use ); 
-    /* return boolean for if is valid and is in use */
-    return ( is_valid () && program_in_use == id ); 
-}
-
 /* get_uniform_location
  *
  * get the location of a uniform
@@ -291,7 +229,7 @@ GLint glh::program::get_uniform_location ( const std::string& name ) const
         /* try to get location */
         const GLint location = glGetUniformLocation ( id, name.c_str () );
         /* if -1, throw */
-        if ( location == -1 ) throw shader_exception { "failed to find uniform with name " + name };
+        if ( location == -1 ) throw uniform_exception { "failed to find uniform with name " + name };
         /* add uniform to map */
         uniform_locations.insert ( { name, location } );
         /* return the location */
@@ -310,7 +248,7 @@ GLint glh::program::get_uniform_location ( const std::string& name ) const
 void glh::uniform::check_is_program_in_use () const 
 {
     /* if not in use, throw */ 
-    if ( !prog.is_in_use () ) throw shader_exception { "associated program of shader is not in use" };
+    if ( !prog.is_in_use () ) throw uniform_exception { "associated program of uniform is not in use" };
 }
 
 

@@ -24,6 +24,9 @@
 /* include glhelper_glad.hpp */
 #include <glhelper/glhelper_glad.hpp>
 
+/* include glhelper_manager.hpp */
+#include <glhelper/glhelper_manager.hpp>
+
 /* include glhelper_glfw.hpp */
 #include <glhelper/glhelper_glfw.hpp>
 

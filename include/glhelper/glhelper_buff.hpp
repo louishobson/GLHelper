@@ -30,6 +30,9 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
+/* include glhelper_manager.hpp */
+#include <glhelper/glhelper_manager.hpp>
+
 
 
 /* NAMESPACE FORWARD DECLARATIONS */
@@ -59,12 +62,6 @@ namespace glh
      * vertex array object
      */
     class vao;
-
-    /* class buffer_exception : exception
-     *
-     * for exceptions related to buffers
-     */
-    class buffer_exception;
 }
 
 
@@ -85,7 +82,11 @@ public:
      * 
      * _target: the target for the buffer
      */
-    buffer ( const GLenum _target, const GLenum _reverse_target );
+    buffer ( const GLenum _target, const GLenum _reverse_target )
+        : object { glh::object_manager::generate_buffer () }
+        , target { _target }
+        , reverse_target { _reverse_target }
+    {}
 
     /* construct and immediately buffer data
      *
@@ -146,29 +147,25 @@ public:
      *
      * destroys the object, setting id to 0
      */
-    void destroy () override;
+    void destroy () override { glh::object_manager::destroy_buffer ( id ); id = 0; }
 
     /* bind
      *
      * bind the buffer
-     * 
-     * return: the target it is bound to
      */
-    const GLenum& bind () const;
+    virtual void bind () const = 0;
 
     /* unbind
      *
      * unbind the buffer's target
-     * 
-     * return: the target just unbound
      */
-    const GLenum& unbind () const;
+    virtual void unbind () const = 0;
 
     /* is_bound
      *
      * checks if the buffer is bound
      */
-    bool is_bound () const;
+    virtual bool is_bound () const = 0;
 
 
 
@@ -247,6 +244,25 @@ public:
     /* default destructor */
     ~vbo () = default;
 
+
+
+    /* bind
+     *
+     * bind the buffer
+     */
+    void bind () const { glh::object_manager::bind_vbo ( id ); }
+
+    /* unbind
+     *
+     * unbind the buffer's target
+     */
+    void unbind () const { glh::object_manager::unbind_vbo ( id ); }
+
+    /* is_bound
+     *
+     * checks if the buffer is bound
+     */
+    bool is_bound () const { return glh::object_manager::is_vbo_bound ( id ); }
 };
 
 
@@ -299,6 +315,25 @@ public:
     /* default destructor */
     ~ebo () = default;
 
+
+
+    /* bind
+     *
+     * bind the buffer
+     */
+    void bind () const { glh::object_manager::bind_ebo ( id ); }
+
+    /* unbind
+     *
+     * unbind the buffer's target
+     */
+    void unbind () const { glh::object_manager::unbind_ebo ( id ); }
+
+    /* is_bound
+     *
+     * checks if the buffer is bound
+     */
+    bool is_bound () const { return glh::object_manager::is_ebo_bound ( id ); }
 };
 
 
@@ -317,7 +352,9 @@ public:
      *
      * creates a vertex array object without any vbo or ebo bound
      */
-    vao ();
+    vao ()
+        : object { glh::object_manager::generate_vao () }
+    {}
 
     /* deleted copy constructor */
     vao ( const vao& other ) = delete;
@@ -378,58 +415,27 @@ public:
      *
      * destroys the object, setting id to 0
      */
-    void destroy () override;
+    void destroy () override { glh::object_manager::destroy_vao ( id ); id = 0; }
 
     /* bind
      *
      * bind the vertex array object
      */
-    void bind () const;
+    void bind () const { glh::object_manager::bind_vao ( id ); }
 
     /* unbind
      *
      * unbind the vertex array object
      */
-    void unbind () const;
+    void unbind () const { glh::object_manager::unbind_vao ( id ); }
 
     /* is_bound
      *
      * checks if the vao is bound
      */
-    bool is_bound () const;
+    bool is_bound () const { return glh::object_manager::is_vao_bound ( id ); }
 
 };
-
-
-
-/* BUFFER_EXCEPTION DEFINITION */
-
-/* class buffer_exception : exception
- *
- * for exceptions related to buffers
- */
-class glh::buffer_exception : public exception
-{
-public:
-
-    /* full constructor
-     *
-     * __what: description of the exception
-     */
-    explicit buffer_exception ( const std::string& __what )
-        : exception ( __what )
-    {}
-
-    /* default zero-parameter constructor
-     *
-     * construct buffer_exception with no descrption
-     */
-    buffer_exception () = default;
-
-    /* default everything else and inherits what () function */
-
-};
-
 
 
 

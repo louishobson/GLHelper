@@ -87,6 +87,12 @@ public:
      */
     static void load ();
 
+    /* is_loaded
+     *
+     * returns true if glad has been loaded
+     */
+    static bool is_loaded () { return active_window; }
+
     /* is_window_loaded
      *
      * checks whether window is currently loaded to glad

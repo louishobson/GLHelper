@@ -32,6 +32,9 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
+/* glhelper_manager.hpp */
+#include <glhelper/glhelper_manager.hpp>
+
 /* include glhelper_math.hpp */
 #include <glhelper/glhelper_math.hpp>
 
@@ -117,6 +120,12 @@ namespace glh
      * for exceptions related to shaders
      */
     class shader_exception;
+
+    /* class uniform_exception : exception
+     *
+     * for exceptions related to uniforms
+     */
+    class uniform_exception;
 }
 
 
@@ -132,10 +141,10 @@ class glh::shader : public object
 public:
 
     /* constructor */
-    explicit shader ( const GLenum _target, const std::string& _path );
+    shader ( const GLenum _target, const std::string& _path );
 
     /* deleted zero-parameter constructor */
-    explicit shader () = delete;
+    shader () = delete;
 
     /* deleted copy constructor */
     shader ( const shader& other ) = delete;
@@ -156,7 +165,7 @@ public:
      * destroys the shader, setting its id to 0
      * any program using this shader will still function
      */
-    void destroy () override;
+    void destroy () override { glh::object_manager::destroy_shader ( id ); id = 0; }
 
 
 
@@ -373,20 +382,20 @@ public:
      *
      * destroys the shader program, setting id to 0
      */
-    void destroy () override;
+    void destroy () override { glh::object_manager::destroy_program ( id ); id = 0; }
 
     /* use
      *
      * use the shader program for the following OpenGL function calls
      * will not call glUseProgram if already in use
      */
-    void use () const;
+    void use () const { glh::object_manager::use_program ( id ); }
 
     /* is_in_use
      *
      * return: boolean for if the program is in use
      */
-    bool is_in_use () const;
+    bool is_in_use () const { return glh::object_manager::is_program_in_use ( id ); }
 
 
 
@@ -877,6 +886,36 @@ public:
      * construct shader_exception with no descrption
      */
     shader_exception () = default;
+
+    /* default everything else and inherits what () function */
+
+};
+
+
+
+/* UNIFORM_EXCEPTION DEFINITION */
+
+/* class uniform_exception : exception
+ *
+ * for exceptions related to uniforms
+ */
+class glh::uniform_exception : public exception
+{
+public:
+
+    /* full constructor
+     *
+     * __what: description of the exception
+     */
+    explicit uniform_exception ( const std::string& __what )
+        : exception ( __what )
+    {}
+
+    /* default zero-parameter constructor
+     *
+     * construct uniform_exception with no descrption
+     */
+    uniform_exception () = default;
 
     /* default everything else and inherits what () function */
 

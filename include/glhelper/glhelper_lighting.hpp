@@ -169,12 +169,6 @@ namespace glh
      * several collection of lights for each type
      */
     class light_system;
-
-    /* class lighting_exception : exception
-     *
-     * exception relating to lighting
-     */
-    class lighting_exception;
 }
 
 
@@ -729,36 +723,6 @@ private:
 
 
 
-/* LIGHTING_EXCEPTION DEFINITION */
-
-/* class lighting_exception : exception
- *
- * exception relating to lighting
- */
-class glh::lighting_exception : public exception
-{
-public:
-
-    /* full constructor
-     *
-     * __what: description of the exception
-     */
-    explicit lighting_exception ( const std::string& __what )
-        : exception ( __what )
-    {}
-
-    /* default zero-parameter constructor
-     *
-     * construct lighting_exception with no descrption
-     */
-    lighting_exception () = default;
-
-    /* default everything else and inherits what () function */
-
-};
-
-
-
 /* LIGHT_COLLECTION IMPLEMENTATION */
 
 /* apply
@@ -780,7 +744,7 @@ template<class T>
 inline void glh::light_collection<T>::apply () const
 {
     /* throw if no uniform is cached */
-    if ( !cached_uniforms ) throw lighting_exception { "attempted to apply light_collection to uniform with out a complete uniform cache" };
+    if ( !cached_uniforms ) throw uniform_exception { "attempted to apply light_collection to uniform with out a complete uniform cache" };
 
     /* set uniforms */
     cached_uniforms->size_uni.set_int ( lights.size () );

@@ -31,12 +31,11 @@
  * default settings are applied
  * 
  * _path: path to the image for the texture
- * _texture_unit: the texture unit to bind to (integer 0-31)
  */
-glh::texture2d::texture2d ( const std::string& _path, const GLenum _texture_unit )
-    : path { _path }
+glh::texture2d::texture2d ( const std::string& _path )
+    : object { glh::object_manager::generate_texture () }
+    , path { _path }
     , format { GL_RGBA }
-    , texture_unit { _texture_unit }
 {
     /* load the image */
     unsigned char * image_data = stbi_load ( path.c_str (), &width, &height, &channels, 4 );
@@ -45,7 +44,6 @@ glh::texture2d::texture2d ( const std::string& _path, const GLenum _texture_unit
     if ( !image_data ) throw texture_exception { "failed to load texture from file at path " + path };
 
     /* generate texture object and bind it */
-    glGenTextures ( 1, &id );
     bind ();
 
     /* set the texture and generate mipmap
@@ -114,66 +112,4 @@ void glh::texture2d::set_wrap ( const GLenum opt )
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, opt ); 
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, opt );
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, opt );
-}
-
-
-
-/* destroy
- *
- * destroys the texture, setting its id to 0
- */
-void glh::texture2d::destroy ()
-{
-    /* if is valid */
-    if ( is_valid () )
-    {
-        /* destroy and set id to 0 */
-        glDeleteShader ( id );
-        id = 0;
-    }    
-}
-
-
-
-/* bind
- *
- * bind the texture to a texture unit
- * 
- * _texture_unit: the texture unit to bind to, or the last one
- */
-GLenum glh::texture2d::bind () const
-{
-    /* check the object is valid */
-    if ( !is_valid () )  throw texture_exception { "attempted bind operation on invalid 2D texture object imported from path " + path };    
-
-    /* bind the texture, if not already bound
-     * texture unit gets activated by is_bound ()
-     */
-    if ( !is_bound () ) glBindTexture ( GL_TEXTURE_2D, id );
-
-    /* return the target */
-    return GL_TEXTURE_2D;
-}
-GLenum glh::texture2d::bind ( const unsigned _texture_unit )
-{
-    /* set new texture unit */
-    texture_unit = _texture_unit;
-
-    /* bind */
-    return bind ();
-}
-
-/* is_bound
- *
- * return boolean for if the texture is bound
- */
-bool glh::texture2d::is_bound () const
-{
-    /* activate the texture unit */
-    glActiveTexture ( GL_TEXTURE0 + texture_unit );
-    /* get texture currently bound to unit */
-    GLint bound_texture;
-    glGetIntegerv ( GL_TEXTURE_BINDING_2D, &bound_texture ); 
-    /* return boolean for if is valid and is in use */
-    return ( is_valid () && bound_texture == id ); 
 }

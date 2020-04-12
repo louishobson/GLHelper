@@ -34,6 +34,9 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
+/* include glhelper_manager.hpp */
+#include <glhelper/glhelper_manager.hpp>
+
 /* indlude stb_image.h without implementation */
 #include <stb/stb_image.h>
 
@@ -71,9 +74,8 @@ public:
      * default settings are applied
      * 
      * _path: path to the image for the texture
-     * _texture_unit: the texture unit to bind to (integer 0-31)
      */
-    texture2d ( const std::string& _path, const GLenum _texture_unit = 0 );
+    texture2d ( const std::string& _path );
 
     /* deleted zero-parameter constructor
      *
@@ -117,22 +119,23 @@ public:
      *
      * destroys the texture, setting its id to 0
      */
-    void destroy () override;
+    void destroy () override { glh::object_manager::destroy_texture ( id ); id = 0; }
 
     /* bind
      *
      * bind the texture to a texture unit
      * 
-     * _texture_unit: the texture unit to bind to, or the last one
+     * texture_unit: the texture unit to bind to, or the last one
      */
-    GLenum bind () const;
-    GLenum bind ( const unsigned _texture_unit );
+    void bind ( const unsigned texture_unit = 0 ) const { glh::object_manager::bind_texture ( id, texture_unit ); }
 
     /* is_bound
      *
+     * texture_unit: the texture unit to check if it is bound to
+     * 
      * return boolean for if the texture is bound
      */
-    bool is_bound () const;
+    bool is_bound ( const unsigned texture_unit = 0 ) const { return glh::object_manager::is_texture_bound ( id, texture_unit ); }
 
 
 
@@ -141,15 +144,6 @@ public:
      * get the path the texture was originally imported from
      */
     const std::string& get_path () const { return path; }
-
-    /* get/set_texture_unit
-     *
-     * get/change the texture unit and then bind to it
-     * 
-     * _texture_unit: the new texture unit
-     */
-    const unsigned& get_texture_unit () const { return texture_unit; };
-    void set_texture_unit ( const unsigned _texture_unit ) { texture_unit = _texture_unit; }
 
     /* get_width/height
      *
@@ -179,13 +173,6 @@ private:
      * the format of the texture (e.g. GL_RGB)
      */
     GLenum format;
-
-    /* texture_unit
-     *
-     * the texture unit to bind to
-     * not one of GL_TEXTURE0 + x, rather just the x-value
-     */
-    unsigned texture_unit;
 
     /* widith, height, channels
      *

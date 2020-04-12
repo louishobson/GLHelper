@@ -49,21 +49,6 @@ void glh::glad_loader::load ()
     active_window = win;
 }
 
-/* is_window_loaded
- *
- * checks whether window is currently loaded to glad
- * 
- * win: window to check
- * 
- * return: boolean representing if is currently loaded
- */
-bool glh::glad_loader::is_window_loaded ( const window& win ) 
-{ 
-    return ( win.internal_ptr () == active_window ); 
-}
-
-
-
 /* GLFWwindow * active_window
  *
  * a pointer to the currently active window

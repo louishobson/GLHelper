@@ -56,7 +56,7 @@ void glh::light::apply ( const struct_uniform& light_uni ) const
 void glh::light::apply () const
 {
     /* throw if no uniform is cached */
-    if ( !cached_uniforms ) throw lighting_exception { "attempted to apply light to uniform with out a complete uniform cache" };
+    if ( !cached_uniforms ) throw uniform_exception { "attempted to apply light to uniform with out a complete uniform cache" };
 
     /* now set all of the uniform values */
     cached_uniforms->position_uni.set_vector ( position );
@@ -122,7 +122,7 @@ void glh::light_system::apply ( const struct_uniform& light_system_uni ) const
 void glh::light_system::apply () const
 {
     /* throw if no uniform is cached */
-    if ( !cached_uniforms ) throw lighting_exception { "attempted to apply light_system to uniform with out a complete uniform cache" };
+    if ( !cached_uniforms ) throw uniform_exception { "attempted to apply light_system to uniform with out a complete uniform cache" };
 
     /* apply each light collection in turn */
     dircoll.apply ( cached_uniforms->dircoll_uni );

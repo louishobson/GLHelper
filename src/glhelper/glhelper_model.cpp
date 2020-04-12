@@ -72,7 +72,7 @@ void glh::model::model::render ( const struct_uniform& material_uni, const unifo
 void glh::model::model::render ( const math::mat4& transform, const bool transparent_only ) const
 {
     /* throw if uniforms are not already cached */
-    if ( !cached_material_uniforms || !cached_model_uniform ) throw model_exception { "attempted to render model without a complete uniform cache" };
+    if ( !cached_material_uniforms || !cached_model_uniform ) throw uniform_exception { "attempted to render model without a complete uniform cache" };
 
     /* set transparent_only flag */
     draw_transparent_only = transparent_only;
@@ -548,55 +548,34 @@ void glh::model::model::render_mesh ( const mesh& _mesh ) const
     cached_material_uniforms->diffuse_stack_base_color_uni.set_vector ( _mesh.properties->diffuse_stack.base_color );
     cached_material_uniforms->specular_stack_base_color_uni.set_vector ( _mesh.properties->specular_stack.base_color ); 
 
-    /* array of ids of bound textures */
-    GLuint bound_textures [ _mesh.properties->ambient_stack.levels.size () + _mesh.properties->diffuse_stack.levels.size () + _mesh.properties->specular_stack.levels.size () ];
-
     /* bind the textures and set the sampler values */
     unsigned i = 0, offset = 0;
-    for ( i = 0; i < _mesh.properties->ambient_stack.levels.size (); ++i ) 
+    for ( i = 0; i < _mesh.properties->ambient_stack.levels.size (); ++i, ++offset ) 
     {
-        if ( _mesh.properties->ambient_stack.levels.at ( i ).texture->get_texture_unit () < offset && _mesh.properties->ambient_stack.levels.at ( i ).texture->internal_id () == bound_textures [ offset ] )
-        cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( _mesh.properties->ambient_stack.levels.at ( i ).texture->get_texture_unit () );
-        else
-        {
-            bound_textures [ offset ] = _mesh.properties->ambient_stack.levels.at ( i ).texture->internal_id ();
-            _mesh.properties->ambient_stack.levels.at ( i ).texture->bind ( offset );
-            _mesh.properties->ambient_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( _mesh.properties->ambient_stack.levels.at ( i ).wrapping_u ) );
-            _mesh.properties->ambient_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( _mesh.properties->ambient_stack.levels.at ( i ).wrapping_v ) );
-            cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( offset++ );
-        }
+        _mesh.properties->ambient_stack.levels.at ( i ).texture->bind ( offset );
+        _mesh.properties->ambient_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( _mesh.properties->ambient_stack.levels.at ( i ).wrapping_u ) );
+        _mesh.properties->ambient_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( _mesh.properties->ambient_stack.levels.at ( i ).wrapping_v ) );
+        cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( offset++ );
         cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "blend_operation" ).set_int ( _mesh.properties->ambient_stack.levels.at ( i ).blend_operation );
         cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "blend_strength" ).set_float ( _mesh.properties->ambient_stack.levels.at ( i ).blend_strength );
         cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "uvwsrc" ).set_int ( _mesh.properties->ambient_stack.levels.at ( i ).uvwsrc );
     }
-    for ( i = 0; i < _mesh.properties->diffuse_stack.levels.size (); ++i ) 
+    for ( i = 0; i < _mesh.properties->diffuse_stack.levels.size (); ++i, ++offset ) 
     {
-        if ( _mesh.properties->diffuse_stack.levels.at ( i ).texture->get_texture_unit () < offset && _mesh.properties->diffuse_stack.levels.at ( i ).texture->internal_id () == bound_textures [ offset ] )
-        cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( _mesh.properties->diffuse_stack.levels.at ( i ).texture->get_texture_unit () );
-        else
-        {
-            bound_textures [ offset ] = _mesh.properties->diffuse_stack.levels.at ( i ).texture->internal_id ();
-            _mesh.properties->diffuse_stack.levels.at ( i ).texture->bind ( offset );
-            _mesh.properties->diffuse_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( _mesh.properties->diffuse_stack.levels.at ( i ).wrapping_u ) );
-            _mesh.properties->diffuse_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( _mesh.properties->diffuse_stack.levels.at ( i ).wrapping_v ) );
-            cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( offset++ );
-        }
+        _mesh.properties->diffuse_stack.levels.at ( i ).texture->bind ( offset );
+        _mesh.properties->diffuse_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( _mesh.properties->diffuse_stack.levels.at ( i ).wrapping_u ) );
+        _mesh.properties->diffuse_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( _mesh.properties->diffuse_stack.levels.at ( i ).wrapping_v ) );
+        cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( offset++ );
         cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "blend_operation" ).set_int ( _mesh.properties->diffuse_stack.levels.at ( i ).blend_operation );
         cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "blend_strength" ).set_float ( _mesh.properties->diffuse_stack.levels.at ( i ).blend_strength );
         cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "uvwsrc" ).set_int ( _mesh.properties->diffuse_stack.levels.at ( i ).uvwsrc );
     }
-    for ( i = 0; i < _mesh.properties->specular_stack.levels.size (); ++i ) 
+    for ( i = 0; i < _mesh.properties->specular_stack.levels.size (); ++i, ++offset ) 
     {
-        if ( _mesh.properties->specular_stack.levels.at ( i ).texture->get_texture_unit () < offset && _mesh.properties->specular_stack.levels.at ( i ).texture->internal_id () == bound_textures [ offset ] )
-        cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( _mesh.properties->specular_stack.levels.at ( i ).texture->get_texture_unit () );
-        else
-        {
-            bound_textures [ offset ] = _mesh.properties->specular_stack.levels.at ( i ).texture->internal_id ();
-            _mesh.properties->specular_stack.levels.at ( i ).texture->bind ( offset );
-            _mesh.properties->specular_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( _mesh.properties->specular_stack.levels.at ( i ).wrapping_u ) );
-            _mesh.properties->specular_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( _mesh.properties->specular_stack.levels.at ( i ).wrapping_v ) );
-            cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( offset++ );
-        }
+        _mesh.properties->specular_stack.levels.at ( i ).texture->bind ( offset );
+        _mesh.properties->specular_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( _mesh.properties->specular_stack.levels.at ( i ).wrapping_u ) );
+        _mesh.properties->specular_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( _mesh.properties->specular_stack.levels.at ( i ).wrapping_v ) );
+        cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( offset++ );
         cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "blend_operation" ).set_int ( _mesh.properties->specular_stack.levels.at ( i ).blend_operation );
         cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "blend_strength" ).set_float ( _mesh.properties->specular_stack.levels.at ( i ).blend_strength );
         cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "uvwsrc" ).set_int ( _mesh.properties->specular_stack.levels.at ( i ).uvwsrc );

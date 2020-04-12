@@ -21,20 +21,6 @@
 
 /* BUFFER IMPLEMENTATION */
 
-/* constructor
- *
- * generates a buffer
- */
-glh::buffer::buffer ( const GLenum _target, const GLenum _reverse_target )
-    : target { _target }
-    , reverse_target { _reverse_target }
-{
-    /* allocate the buffer */
-    glGenBuffers ( 1, &id );
-}
-
-
-
 /* buffer_data
  *
  * buffer data into the buffer
@@ -69,83 +55,7 @@ void glh::buffer::clear_data ()
 
 
 
-/* destroy
- *
- * destroys the object, setting id to 0
- */
-void glh::buffer::destroy ()
-{
-    /* destroy buffer */
-    if ( is_valid () ) glDeleteBuffers ( 1, &id );
-    
-    /* set id to 0 */
-    id = 0;
-}
-
-/* bind
- *
- * bind the buffer
- * 
- * return: the target it is bound to
- */
-const GLenum& glh::buffer::bind () const 
-{ 
-    /* check object is valid */
-    if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid buffer object" };
-    
-    /* bind the buffer, if not bound already */
-    if ( !is_bound () ) glBindBuffer ( target, id );
-
-    /* return the target */
-    return target;
-}
-
-/* unbind
- *
- * unbind the buffer's target
- * 
- * return: the target just unbound
- */
-const GLenum& glh::buffer::unbind () const
-{ 
-    /* check object is valid */
-    if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid buffer object" };
-    
-    /* unbind the buffer, if bound */
-    if ( is_bound () ) glBindBuffer ( target, 0 );
-
-    /* return the target */
-    return target;
-}
-
-/* is_bound
- *
- * checks if the buffer is bound
- */
-bool glh::buffer::is_bound () const
-{
-    /* get currently bound buffer */
-    GLint bound_buffer;
-    glGetIntegerv ( reverse_target, &bound_buffer ); 
-    /* return boolean for if is valid and is bound */
-    return ( is_valid () && bound_buffer == id ); 
-}
-
-
-
 /* VAO IMPLEMENTATION */
-
-/* constructor
- *
- * creates a vertex array object without any vbo or ebo bound
- */
-glh::vao::vao ()
-{
-    /* generate vao */
-    glGenVertexArrays ( 1, &id );
-}
-
-
 
 /* set_vertex_attrib
  *
@@ -221,64 +131,4 @@ void glh::vao::bind_ebo ( const ebo& buff )
     /* unbind vao, then ebo */
     unbind ();
     buff.unbind ();
-}
-
-
-
-/* destroy
- *
- * destroys the object, setting id to 0
- */
-void glh::vao::destroy ()
-{
-    /* if object is valid */
-    if ( is_valid () )
-    {
-        /* delete vao */
-        glDeleteVertexArrays ( 1, &id );
-
-        /* set id to 0 */
-        id = 0;
-    }
-}
-
-
-
-/* bind
- *
- * bind the vertex array object
- */
-void glh::vao::bind () const
-{
-    /* check object is valid */
-    if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid vertex array object" };
-
-    /* bind the vao, if not bound already */
-    if ( !is_bound () ) glBindVertexArray ( id );
-}
-
-/* unbind
- *
- * unbind the vertex array object
- */
-void glh::vao::unbind () const
-{
-    /* check object is valid */
-    if ( !is_valid () ) throw buffer_exception { "attempted bind operation on invalid vertex array object" };
-
-    /* unbind the vao, if bound */
-    if ( is_bound () ) glBindVertexArray ( 0 );
-}
-
-/* is_bound
- *
- * checks if the vao is bound
- */
-bool glh::vao::is_bound () const
-{
-    /* get currently bound vao */
-    GLint bound_vao;
-    glGetIntegerv ( GL_VERTEX_ARRAY_BINDING, &bound_vao ); 
-    /* return boolean for if is valid and is bound */
-    return ( is_valid () && bound_vao == id ); 
 }

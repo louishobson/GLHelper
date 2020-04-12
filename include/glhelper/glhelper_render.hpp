@@ -6,7 +6,8 @@
  * 
  * include/glhelper/glhelper_render.hpp
  * 
- * constructs for rendering to a window in OpenGL
+ * defines renderer class to change and keep track of rendering settings
+ * also wraps the rendering functions
  * 
  */
 
@@ -27,21 +28,6 @@
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
-/* include glhelper_exception.hpp */
-#include <glhelper/glhelper_exception.hpp>
-
-/* include glhelper_glfw.hpp */
-#include <glhelper/glhelper_glfw.hpp>
-
-/* include glhelper_buff.hpp */
-#include <glhelper/glhelper_buff.hpp>
-
-/* include glhelper_shader.hpp */
-#include <glhelper/glhelper_shader.hpp>
-
-/* include glhelper_texture.hpp */
-#include <glhelper/glhelper_texture.hpp>
-
 /* include glhelper_math.hpp */
 #include <glhelper/glhelper_math.hpp>
 
@@ -58,7 +44,6 @@ namespace glh
      * contains static methods to configure OpenGL
      */
     class renderer;
-
 }
 
 
