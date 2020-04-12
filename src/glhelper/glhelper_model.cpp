@@ -56,8 +56,9 @@ glh::model::model::model ( const std::string& _directory, const std::string& _en
  * material_uni: material uniform to cache and set the material properties to
  * model_uni: a 4x4 matrix uniform to cache and apply set the model transformations to
  * transform: the overall model transformation to apply (identity by default)
+ * transparent_only: only render meshes with possible transparent elements (false by default)
  */
-void glh::model::model::render ( const struct_uniform& material_uni, const uniform& model_uni, const math::mat4& transform ) const
+void glh::model::model::render ( const struct_uniform& material_uni, const uniform& model_uni, const math::mat4& transform, const bool transparent_only ) const
 {
     /* reload the cache of material uniforms  */
     cache_material_uniforms ( material_uni );
@@ -66,12 +67,15 @@ void glh::model::model::render ( const struct_uniform& material_uni, const unifo
     cache_model_uniform ( model_uni );
 
     /* render */
-    render ( transform );
+    render ( transform, transparent_only );
 }
-void glh::model::model::render ( const math::mat4& transform ) const
+void glh::model::model::render ( const math::mat4& transform, const bool transparent_only ) const
 {
     /* throw if uniforms are not already cached */
     if ( !cached_material_uniforms || !cached_model_uniform ) throw model_exception { "attempted to render model without a complete uniform cache" };
+
+    /* set transparent_only flag */
+    draw_transparent_only = transparent_only;
 
     /* render the root node */
     render_node ( root_node, transform );
@@ -254,6 +258,9 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
     if ( aimaterial.Get ( AI_MATKEY_SHADING_MODEL, temp_int ) == aiReturn_SUCCESS )
     _material.shading_model = temp_int; else _material.shading_model = 0;
 
+    /* set definitely opaque flag */
+    _material.definitely_opaque = is_definitely_opaque ( _material );
+
     /* return the material */
     return _material;
 }
@@ -318,6 +325,31 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack_
 
     /* return texture reference */
     return _texture_stack_level;
+}
+
+/* is_definitely_opaque
+ *
+ * determines if a material is definitely opaque
+ * see struct material for more info
+ * 
+ * _material: the material to check
+ *
+ * return: boolean for if is definitely opaque
+ */
+bool glh::model::model::is_definitely_opaque ( const material& _material )
+{
+    /* if opacity != 1.0, return false */
+    if ( _material.opacity != 1.0 ) return false;
+
+    /* loop through all textures and return false if any have 4 channels
+     * use index rather than texture pointer in stack level as they have not yet been assigned
+     */
+    for ( const texture_stack_level& tsl: _material.ambient_stack.levels ) if ( textures.at ( tsl.index ).get_channels () >= 4 ) return false;
+    for ( const texture_stack_level& tsl: _material.diffuse_stack.levels ) if ( textures.at ( tsl.index ).get_channels () >= 4 ) return false;
+    for ( const texture_stack_level& tsl: _material.specular_stack.levels ) if ( textures.at ( tsl.index ).get_channels () >= 4 ) return false;
+
+    /* otherwise the material is definitely opaque */
+    return true;
 }
 
 /* add_mesh
@@ -499,6 +531,9 @@ void glh::model::model::render_node ( const node& _node, const math::mat4& trans
  */
 void glh::model::model::render_mesh ( const mesh& _mesh ) const
 {
+    /* don't draw if transparent only is set and material is definitely opaque */
+    if ( draw_transparent_only && _mesh.properties->definitely_opaque ) return;
+
     /* set the stack sizes */
     cached_material_uniforms->ambient_stack_size_uni.set_int ( _mesh.properties->ambient_stack.levels.size () );
     cached_material_uniforms->diffuse_stack_size_uni.set_int ( _mesh.properties->diffuse_stack.levels.size () );

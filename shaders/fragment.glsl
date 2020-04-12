@@ -105,6 +105,9 @@ uniform light_system_struct light_system;
 /* transformation matrices */
 uniform trans_struct trans;
 
+/* boolean for whether to render opaque or transparent fragments */
+uniform bool transparent_mode;
+
 
 
 /* evaluate_stack
@@ -116,16 +119,16 @@ uniform trans_struct trans;
  *
  * return: the overall color of the fragment of the stack
  */
-vec3 evaluate_stack ( material_struct mat, texture_stack_struct stack )
+vec4 evaluate_stack ( material_struct mat, texture_stack_struct stack )
 {
     /* get base color */
-    vec3 stack_color = stack.base_color;
+    vec4 stack_color = vec4 ( stack.base_color, material.opacity );
 
     /* loop through the stack */
     for ( int i = 0; i < stack.stack_size; ++i )
     {
         /* get the level color from the texture */
-        vec3 level_color = texture ( stack.levels [ i ].texunit, texcoords [ stack.levels [ i ].uvwsrc ] ).rgb;
+        vec4 level_color = texture ( stack.levels [ i ].texunit, texcoords [ stack.levels [ i ].uvwsrc ] );
         /* multiply by blend strength */
         level_color *= stack.levels [ i ].blend_strength;
         /* add to the stack */
@@ -163,18 +166,16 @@ float compute_attenuation ( float dist, float att_const, float att_linear, float
 
 /* compute_ambient_component
  *
- * take a material and compute the ambient component of the light hitting the fragment
+ * take a base color, material and light system and compute the ambient component of the light hitting the fragment
  *
+ * base_color: the color of the fragment the light is hitting
  * mat: the material of the fragment
  * lighting: light_system_struct containing all of the light sources
  *
  * return: the ambient component of the fragment
  */
-vec3 compute_ambient_component ( material_struct mat, light_system_struct lighting )
+vec3 compute_ambient_component ( vec3 base_color, material_struct mat, light_system_struct lighting )
 {
-    /* evaluate the ambient stack */
-    vec3 base_color = evaluate_stack ( mat, mat.ambient_stack );
-
     /* if base colour is black, return */
     if ( base_color == vec3 ( 0.0, 0.0, 0.0 ) ) return base_color;
 
@@ -208,18 +209,16 @@ vec3 compute_ambient_component ( material_struct mat, light_system_struct lighti
 
 /* compute_diffuse_component
  *
- * take a material and compute the diffuse component of the light hitting the fragment
+ * take a base color, material and light system and compute the diffuse component of the light hitting the fragment
  *
+ * base_color: the color of the fragment the light is hitting
  * mat: the material of the fragment
  * lighting: light_system_struct containing all of the light sources
  *
  * return: the diffuse component of the fragment
  */
-vec3 compute_diffuse_component ( material_struct mat, light_system_struct lighting )
+vec3 compute_diffuse_component ( vec3 base_color, material_struct mat, light_system_struct lighting )
 {
-    /* evaluate the diffuse stack */
-    vec3 base_color = evaluate_stack ( mat, mat.diffuse_stack );
-
     /* if base colour is black, return */
     if ( base_color == vec3 ( 0.0, 0.0, 0.0 ) ) return base_color;
 
@@ -259,18 +258,16 @@ vec3 compute_diffuse_component ( material_struct mat, light_system_struct lighti
 
 /* compute_specular_component
  *
- * take a material and compute the specular component of the light hitting the fragment
+ * take a base color, material and light system and compute the specular component of the light hitting the fragment
  *
+ * base_color: the color of the fragment the light is hitting
  * mat: the material of the fragment
  * lighting: lighting_system_struct containing all of the light sources
  *
  * return: the specular component of the fragment
  */
-vec3 compute_specular_component ( material_struct mat, light_system_struct lighting )
+vec3 compute_specular_component ( vec3 base_color, material_struct mat, light_system_struct lighting )
 {
-    /* evaluate the specular stack */
-    vec3 base_color = evaluate_stack ( mat, mat.specular_stack );
-
     /* if base colour is black, return */
     if ( base_color == vec3 ( 0.0, 0.0, 0.0 ) ) return base_color;
 
@@ -318,10 +315,30 @@ vec3 compute_specular_component ( material_struct mat, light_system_struct light
 /* main */
 void main ()
 {
-    vec3 ambient = compute_ambient_component ( material, light_system );
-    vec3 diffuse = compute_diffuse_component ( material, light_system );
-    vec3 specular = compute_specular_component ( material, light_system );
+    /* evaluate stacks */
+    vec4 ambient = evaluate_stack ( material, material.ambient_stack );
+    vec4 diffuse = evaluate_stack ( material, material.diffuse_stack );
+    vec4 specular = evaluate_stack ( material, material.specular_stack );
 
-    fragcolor = vec4 ( ambient + diffuse + specular, 1.0 );
-    //fragcolor = vec4 ( evaluate_stack ( material, material.specular_stack ), 1.0 );
+    /* if is completely transparent, discard regardless of whether in transparent mode */
+    if ( ambient.a + diffuse.a == 0.0 ) discard;
+
+    /* discard if opaque/transparent */
+    if ( transparent_mode )
+    {
+        if ( ambient.a + diffuse.a >= 1.0 ) discard;
+    } else
+    {
+        if ( ambient.a + diffuse.a < 1.0 ) discard;
+    }
+
+    /* calculate lighting colors */
+    ambient.rgb = compute_ambient_component ( ambient.rgb, material, light_system );
+    diffuse.rgb = compute_diffuse_component ( diffuse.rgb, material, light_system );
+    specular.rgb = compute_specular_component ( specular.rgb, material, light_system );
+
+    /* set output color */
+    if ( transparent_mode ) fragcolor = vec4 ( ambient.rgb + diffuse.rgb + specular.rgb, ambient.a + diffuse.a );
+    else fragcolor = vec4 ( ambient.rgb + diffuse.rgb + specular.rgb, 1.0 );
+    
 }

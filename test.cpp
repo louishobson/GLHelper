@@ -29,27 +29,18 @@ int main ()
     glh::window window;
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
 
-    glh::model::model nanosuit { "./assets/nanosuit", "nanosuit.obj" };
-    glh::model::model factory { "./assets/factory", "scene.gltf" };
-
     glh::vshader vshader { "shaders/vertex.glsl" };
     glh::fshader fshader { "shaders/fragment.glsl" };
     glh::program program { vshader, fshader };
+    program.use ();
     auto trans_uni = program.get_struct_uniform ( "trans" );
-
-    factory.cache_uniforms ( program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
-    nanosuit.cache_uniforms ( program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
+    auto transparent_mode_uni = program.get_uniform ( "transparent_mode" );
     
     glh::camera_perspective camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 500.0 };
     camera.enable_restrictive_mode ();
-    
-    glh::renderer::clear_color ( 1.0, 1.0, 1.0, 1.0 );
-    glh::renderer::enable_depth_test ();
-
-    program.use ();
 
     glh::light_system light_system;
-    light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 0.3 }, glh::math::vec3 { 0.7 }, glh::math::vec3 { 1.0 } );
+    light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 0.2 }, glh::math::vec3 { 0.8 }, glh::math::vec3 { 1.0 } );
     light_system.cache_uniforms ( program.get_struct_uniform ( "light_system" ) );
 
     window.get_mouseinfo ();
@@ -57,6 +48,15 @@ int main ()
     camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
     trans_uni.get_uniform ( "proj" ).set_matrix ( camera.get_proj () );
     glh::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
+
+    glh::model::model factory { "./assets/factory", "scene.gltf" };
+    factory.cache_uniforms ( program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
+
+    glh::math::mat4 model_matrix = glh::math::translate ( glh::math::resize<4> ( glh::math::rotate ( glh::math::enlarge ( glh::math::identity<3> (), 0.1 ), glh::math::rad ( 90 ), 1, 2 ) ), glh::math::vec3 { -20.0, 0.0, -20.0 } );
+
+    glh::renderer::clear_color ( 1.0, 1.0, 1.0, 1.0 );
+    glh::renderer::enable_depth_test ();
+    glh::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
     while ( !window.should_close () ) 
     {
@@ -91,10 +91,18 @@ int main ()
        
         light_system.apply ();
 
+        transparent_mode_uni.set_int ( 0 );
+        glh::renderer::disable_blend ();
+        glh::renderer::depth_mask ( GL_TRUE );
         glh::renderer::clear ();
+        
+        factory.render ( model_matrix, false );
 
-        //nanosuit.render ( glh::math::translate ( glh::math::resize<4> ( glh::math::enlarge ( glh::math::identity<3> (), 1 ) ), glh::math::vec3 { 0.0, 0.0, 0.0 } ) );
-        factory.render ( glh::math::translate ( glh::math::resize<4> ( glh::math::rotate ( glh::math::enlarge ( glh::math::identity<3> (), 0.1 ), glh::math::rad ( 90 ), 1, 2 ) ), glh::math::vec3 { -20.0, 0.0, -20.0 } ) );
+        glh::renderer::enable_blend ();
+        glh::renderer::depth_mask ( GL_FALSE );
+        transparent_mode_uni.set_int ( 1 );
+
+        factory.render ( model_matrix, true );
 
         window.swap_buffers ();
         window.poll_events ();

@@ -318,6 +318,13 @@ struct glh::model::material
      * else use Gourad
      */
     int shading_model;
+
+    /* definitely opaque
+     *
+     * a boolean which is true if the material is definitely opaque
+     * defined by all textures being <4 channel and opacity equalling 1
+     */
+    bool definitely_opaque;
 };
 
 
@@ -447,9 +454,10 @@ public:
      * material_uni: material uniform to cache and set the material properties to
      * model_uni: a 4x4 matrix uniform to cache and apply set the model transformations to
      * transform: the overall model transformation to apply (identity by default)
+     * transparent_only: only render meshes with possible transparent elements (false by default)
      */
-    void render ( const struct_uniform& material_uni, const uniform& model_uni, const math::mat4& transform = math::identity<4> () ) const;
-    void render ( const math::mat4& transform = math::identity<4> () ) const;
+    void render ( const struct_uniform& material_uni, const uniform& model_uni, const math::mat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
+    void render ( const math::mat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
 
     /* cache_material_uniforms
      *
@@ -528,6 +536,9 @@ private:
     mutable std::unique_ptr<cached_material_uniforms_struct> cached_material_uniforms;
     mutable std::unique_ptr<uniform> cached_model_uniform;
 
+    /* transparent_only flag */
+    mutable bool draw_transparent_only;
+
 
 
     /* cast_vector
@@ -603,6 +614,17 @@ private:
      */
     texture_stack_level& add_texture ( texture_stack_level& _texture_stack_level, const aiMaterial& aimaterial, const unsigned index, const aiTextureType aitexturetype );
 
+    /* is_definitely_opaque
+     *
+     * determines if a material is definitely opaque
+     * see struct material for more info
+     * 
+     * _material: the material to check
+     * 
+     * return: boolean for if is definitely opaque
+     */
+    bool is_definitely_opaque ( const material& _material );
+
     /* add_mesh
      *
      * add a mesh to a node
@@ -651,6 +673,7 @@ private:
      * 
      * _node: the node to render
      * transform: the current model transformation from all the previous nodes
+     * transparent_only: only render meshes with possible transparent elements (false by default)
      */
     void render_node ( const node& _node, const math::mat4& transform ) const;
 
@@ -659,6 +682,7 @@ private:
      * render a mesh
      * 
      * _mesh: the mesh to render
+     * transparent_only: only render meshes with possible transparent elements (false by default)
      */
     void render_mesh ( const mesh& _mesh ) const;
 

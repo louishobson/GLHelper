@@ -124,7 +124,7 @@ public:
      * clears the screen
      */
     static void clear ()
-    { glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ); }
+    { glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT ); }
 
     /* enable/disable_depth_test
      * 
@@ -132,6 +132,97 @@ public:
      */
     static void enable_depth_test () { glEnable ( GL_DEPTH_TEST ); }
     static void disable_depth_test () { glDisable ( GL_DEPTH_TEST ); }
+
+    /* depth_mask
+     *
+     * set the depth mask
+     * 
+     * mask: boolean defining if the depth buffer is written to for each fragment
+     */
+    static void depth_mask ( const GLboolean mask ) { glDepthMask ( mask ); }
+
+    /* depth_func
+     *
+     * set the function to use for depth testing
+     * 
+     * func: the function to use (GL_LESS is the default)
+     */
+    static void depth_func ( const GLenum func ) { glDepthFunc ( func ); }
+
+    /* enable/disable_stencil_test
+     *
+     * enavle or disable stencil testing
+     */
+    static void enable_stencil_test () { glEnable ( GL_STENCIL_TEST ); }
+    static void disable_stencil_text () { glDisable ( GL_STENCIL_TEST ); }
+
+    /* stencil_mask
+     *
+     * set the stencil mask
+     * 
+     * mask: a bit mask to define which bits are writen to the stencil buffer
+     */
+    static void stencil_mask ( const GLuint mask ) { glStencilMask ( mask ); }
+
+    /* stencil_func
+     *
+     * set the function to use for stencil testing
+     * 
+     * func: the function to use (GL_LESS is the default)
+     * ref: the value to compare the stencil buffer value against
+     * mask: another bit mask applied to both the stencil buffer and ref value
+     */
+    static void stencil_func ( const GLenum func, const GLint ref, const GLuint mask )
+    { glStencilFunc ( func, ref, mask ); }
+
+    /* stencil_op
+     *
+     * set the options under which the stencil buffer should be updated
+     *
+     * sfail: what to do when the stencil test fails
+     * dpfail: what to do when the stencil test passes, but depth test fails
+     * dppass: what to do when the stencil and depth tests pass
+     */
+    static void stencil_func ( const GLenum sfail, const GLenum dpfail, const GLenum dppass )
+    { glStencilOp ( sfail, dpfail, dppass ); }
+
+    /* enable/disable_blend
+     *
+     * enable/disable blending
+     */
+    static void enable_blend () { glEnable ( GL_BLEND ); }
+    static void disable_blend () { glDisable ( GL_BLEND ); }
+
+    /* blend_func
+     *
+     * set where to revieve the factors from for blending
+     * 
+     * sfactor: where to recieve the source factor from
+     * dfactor: where to recieve the destination factor from
+     */
+    static void blend_func ( const GLenum sfactor, const GLenum dfactor )
+    { glBlendFunc ( sfactor, dfactor ); }
+
+    /* blend_func_separate
+     *
+     * set where to revieve the factors from for blending
+     * different values can be set for the rgb and alpha components
+     *
+     * srgbfact: where to recieve the source factor for rgb components
+     * drgbfact: where to recieve the destination factor for rgb components
+     * salphafact: where to recieve the source factor for the alpha component
+     * dalphafact: where to recieve the destination factor for the alpha component
+     */
+    static void blend_func_separate ( const GLenum srgbfact, const GLenum drgbfact, const GLenum salphafact, const GLenum dalphafact )
+    { glBlendFuncSeparate ( srgbfact, drgbfact, salphafact, dalphafact ); }
+    
+    /* blend_equation
+     *
+     * set the equation to use for blending
+     * 
+     * equ: the equation to use
+     */
+    static void blend_equation ( const GLenum equ ) { glBlendEquation ( equ ); }
 
     /* viewport
      *
