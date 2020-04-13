@@ -45,7 +45,7 @@ glh::light& glh::light::operator= ( const light& other )
  * 
  * light_uni: the uniform to apply the light to (which will be cached)
  */
-void glh::light::apply ( const struct_uniform& light_uni ) const
+void glh::light::apply ( const struct_uniform& light_uni )
 {
     /* cache uniform */
     cache_uniforms ( light_uni );
@@ -78,7 +78,7 @@ void glh::light::apply () const
  * 
  * light_uni: the uniform to cache
  */
-void glh::light::cache_uniforms ( const struct_uniform& light_uni ) const
+void glh::light::cache_uniforms ( const struct_uniform& light_uni )
 {
     /* cache uniform, if not already cached */
     if ( !cached_uniforms || cached_uniforms->light_uni != light_uni )
@@ -111,7 +111,7 @@ void glh::light::cache_uniforms ( const struct_uniform& light_uni ) const
  * 
  * light_system_uni: the uniform to apply the lights to
  */
-void glh::light_system::apply ( const struct_uniform& light_system_uni ) const
+void glh::light_system::apply ( const struct_uniform& light_system_uni )
 {
     /* cache uniform */
     cache_uniforms ( light_system_uni );
@@ -125,9 +125,9 @@ void glh::light_system::apply () const
     if ( !cached_uniforms ) throw uniform_exception { "attempted to apply light_system to uniform with out a complete uniform cache" };
 
     /* apply each light collection in turn */
-    dircoll.apply ( cached_uniforms->dircoll_uni );
-    pointcoll.apply ( cached_uniforms->pointcoll_uni );
-    spotcoll.apply ( cached_uniforms->spotcoll_uni );
+    dircoll.apply ();
+    pointcoll.apply ();
+    spotcoll.apply ();
 }
 
 /* cache_uniforms
@@ -136,11 +136,12 @@ void glh::light_system::apply () const
  * 
  * light_system_uni: the uniform to cache
  */
-void glh::light_system::cache_uniforms ( const struct_uniform& light_system_uni ) const
+void glh::light_system::cache_uniforms ( const struct_uniform& light_system_uni )
 {
     /* if not already cached, cache uniforms */
     if ( !cached_uniforms || cached_uniforms->light_system_uni != light_system_uni )
     {
+        /* cache own uniforms */
         cached_uniforms.reset ( new cached_uniforms_struct
         {
             light_system_uni,
@@ -149,4 +150,18 @@ void glh::light_system::cache_uniforms ( const struct_uniform& light_system_uni 
             light_system_uni.get_struct_uniform ( "spotcoll" )
         } );
     }
+    /* get light collections to cache their uniforms */
+    dircoll.cache_uniforms ( cached_uniforms->dircoll_uni );
+    pointcoll.cache_uniforms ( cached_uniforms->pointcoll_uni );
+    spotcoll.cache_uniforms ( cached_uniforms->spotcoll_uni );
+}
+
+/* reload_uniforms
+ *
+ * reload the light collections based on the currently cached uniforms
+ */
+void glh::light_system::reload_uniforms ()
+{
+    /* recache uniforms */
+    cache_uniforms ( cached_uniforms->light_system_uni );
 }

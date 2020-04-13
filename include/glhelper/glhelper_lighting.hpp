@@ -242,7 +242,7 @@ public:
      * 
      * light_uni: the uniform to apply the light to (which will be cached)
      */
-    void apply ( const struct_uniform& light_uni ) const;
+    void apply ( const struct_uniform& light_uni );
     void apply () const;
 
     /* cache_uniforms
@@ -251,7 +251,7 @@ public:
      * 
      * light_uni: the uniform to cache
      */
-    void cache_uniforms ( const struct_uniform& light_uni ) const;
+    void cache_uniforms ( const struct_uniform& light_uni );
 
 
 
@@ -294,8 +294,18 @@ public:
      * get/set color components
      */
     const math::vec3& get_ambient_color () const { return ambient_color; }
+    const void set_ambient_color ( const glh::math::vec3& _ambient_color ) { ambient_color = _ambient_color; }
     const math::vec3& get_diffuse_color () const { return diffuse_color; }
+    const void set_diffuse_color ( const glh::math::vec3& _diffuse_color ) { diffuse_color = _diffuse_color; }
     const math::vec3& get_specular_color () const { return specular_color; }
+    const void set_specular_color ( const glh::math::vec3& _specular_color ) { specular_color = _specular_color; }
+
+    /* enable/disable
+     *
+     * enable/disable the light
+     */
+    void enable () { enabled = true; }
+    void disable () { enabled = false; }
 
 
 
@@ -342,7 +352,7 @@ private:
     };
 
     /* cached uniforms */
-    mutable std::unique_ptr<cached_uniforms_struct> cached_uniforms;
+    std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 
 };
 
@@ -609,7 +619,7 @@ public:
      * 
      * light_collection_uni: the uniform to apply the lights to
      */
-    void apply ( const struct_uniform& light_collection_uni ) const;
+    void apply ( const struct_uniform& light_collection_uni );
     void apply () const;
 
     /* cache_uniforms
@@ -618,7 +628,13 @@ public:
      * 
      * light_collection_uni: the uniform to cache
      */
-    void cache_uniforms ( const struct_uniform& light_collection_uni ) const;
+    void cache_uniforms ( const struct_uniform& light_collection_uni );
+
+    /* reload_uniforms
+     *
+     * reload the lights uniform caches based on current uniform cache
+     */
+    void reload_uniforms ();
 
 
 
@@ -633,7 +649,7 @@ private:
     };
 
     /* cached uniforms */
-    mutable std::unique_ptr<cached_uniforms_struct> cached_uniforms;
+    std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 };
 
 
@@ -692,7 +708,7 @@ public:
      * 
      * light_system_uni: the uniform to apply the lights to
      */
-    void apply ( const struct_uniform& light_system_uni ) const;
+    void apply ( const struct_uniform& light_system_uni );
     void apply () const;
 
     /* cache_uniforms
@@ -701,7 +717,13 @@ public:
      * 
      * light_system_uni: the uniform to cache
      */
-    void cache_uniforms ( const struct_uniform& light_system_uni ) const;
+    void cache_uniforms ( const struct_uniform& light_system_uni );
+
+    /* reload_uniforms
+     *
+     * reload the light collections based on the currently cached uniforms
+     */
+    void reload_uniforms ();
 
 
 
@@ -717,7 +739,7 @@ private:
     };
 
     /* cached uniforms */
-    mutable std::unique_ptr<cached_uniforms_struct> cached_uniforms;
+    std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 
 };
 
@@ -732,7 +754,7 @@ private:
  * light_collection_uni: the uniform to apply the lights to
  */
 template<class T>
-inline void glh::light_collection<T>::apply ( const struct_uniform& light_collection_uni ) const
+inline void glh::light_collection<T>::apply ( const struct_uniform& light_collection_uni )
 {
     /* cache uniform */
     cache_uniforms ( light_collection_uni );
@@ -748,7 +770,7 @@ inline void glh::light_collection<T>::apply () const
 
     /* set uniforms */
     cached_uniforms->size_uni.set_int ( lights.size () );
-    for ( unsigned i = 0; i < lights.size (); ++i ) lights.at ( i ).apply ( cached_uniforms->lights_uni.at ( i ) );
+    for ( unsigned i = 0; i < lights.size (); ++i ) lights.at ( i ).apply ();
 }
 
 /* cache_uniforms
@@ -758,11 +780,12 @@ inline void glh::light_collection<T>::apply () const
  * light_collection_uni: the uniform to cache
  */
 template<class T>
-inline void glh::light_collection<T>::cache_uniforms ( const struct_uniform& light_collection_uni ) const
+inline void glh::light_collection<T>::cache_uniforms ( const struct_uniform& light_collection_uni )
 {
     /* if not already cached, cache uniforms */
     if ( !cached_uniforms || cached_uniforms->light_collection_uni != light_collection_uni )
     {
+        /* cache this objects uniforms */
         cached_uniforms.reset ( new cached_uniforms_struct
         {
             light_collection_uni,
@@ -770,6 +793,20 @@ inline void glh::light_collection<T>::cache_uniforms ( const struct_uniform& lig
             light_collection_uni.get_struct_array_uniform ( "lights" )
         } );
     }
+    /* cache each light's uniforms */
+    for ( unsigned i = 0; i < lights.size (); ++i ) lights.at ( i ).cache_uniforms ( cached_uniforms->lights_uni.at ( i ) );
+
+}
+
+/* reload_uniforms
+ *
+ * reload the lights uniform caches based on current uniform cache
+ */
+template <class T>
+inline void glh::light_collection<T>::reload_uniforms ()
+{
+    /* recache uniforms */
+    cache_uniforms ( cached_uniforms->light_collection_uni );
 }
 
 
