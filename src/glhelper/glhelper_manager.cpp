@@ -44,8 +44,8 @@ void glh::object_manager::destroy_buffer ( const GLuint id )
     /* if not zero, remove bind entry if bound and then destroy */
     if ( id > 0 )
     {
-        if ( bound_vbo == id ) bound_vbo = 0;
-        if ( bound_ebo == id ) bound_ebo = 0;
+        if ( id == bound_vbo ) bound_vbo = 0;
+        if ( id == bound_vbo ) bound_ebo = 0;
         glDeleteBuffers ( 1, &id );
     }
 }
@@ -146,8 +146,8 @@ void glh::object_manager::destroy_vao ( const GLuint id )
     /* if not zero, remove bind entry if bound and then destroy */
     if ( id > 0 )
     {
-        if ( bound_vao == id ) bound_vao = 0;
-        glDeleteBuffers ( 1, &id );
+        if ( id == bound_vao ) bound_vao = 0;
+        glDeleteVertexArrays ( 1, &id );
     }
 }
 
@@ -288,7 +288,7 @@ GLuint glh::object_manager::generate_texture ()
 
 /* destroy_texture
  *
- * destroy a texture object, unbindint it from its texture unit
+ * destroy a texture object, unbinding it from any texture units
  */
 void glh::object_manager::destroy_texture ( const GLuint id )
 {
@@ -340,6 +340,69 @@ void glh::object_manager::unbind_texture ( const GLuint id, const unsigned unit 
 
 
 
+/* FRAMEBUFFER OBJECTS */
+
+/* generate_fbo
+ *
+ * generate a framebuffer object
+ */
+GLuint glh::object_manager::generate_fbo ()
+{
+    /* generate and return framebuffer */
+    GLuint id;
+    glGenFramebuffers ( 1, &id );
+    return id;
+}
+
+/* destroy_fbo
+ *
+ * destroy a framebuffer object, unbinding it if bound
+ */
+void glh::object_manager::destroy_fbo ( const GLuint id )
+{
+    /* if not zero, remove bind entry if bound and then destroy */
+    if ( id > 0 )
+    {
+        if ( id == bound_fbo ) bound_fbo = 0;
+        glDeleteFramebuffers ( 1, &id );
+    }
+}
+
+
+/* bind_fbo
+ *
+ * bind a framebuffer object
+ */
+void glh::object_manager::bind_fbo ( const GLuint id )
+{
+    /* throw if invalid object */
+    if ( id == 0 ) throw object_management_exception { "attempted bind operation on invalid framebuffer object" };    
+
+    /* if not already bound, bind and record */
+    if ( id != bound_fbo )
+    {
+        glBindFramebuffer ( GL_FRAMEBUFFER, id );
+        bound_fbo = id;
+    }
+}
+
+/* bind_default_framebuffer
+ *
+ * bind the default framebuffer
+ * this replaces the unbind_framebuffer method, as framebuffer id=0 is the default framebuffer
+ */
+void glh::object_manager::bind_default_fbo ()
+{
+    /* if not already default, set to default */
+    if ( 0 == bound_fbo )
+    {
+        glBindFramebuffer ( GL_FRAMEBUFFER, 0 );
+        bound_fbo = 0;
+    }
+}
+
+
+
 /* STATIC MEMBERS DEFINITIONS */
 
 /* currently bound vbo */
@@ -356,3 +419,6 @@ GLuint glh::object_manager::in_use_program { 0 };
 
 /* array of texture units and their respectively bound textures */
 std::array<GLuint, GLH_MAX_TEXTURE_UNITS> glh::object_manager::bound_textures { 0 };
+
+/* currently bound framebuffer */
+GLuint glh::object_manager::bound_fbo { 0 };

@@ -232,7 +232,7 @@ public:
 
     /* destroy_texture
      *
-     * destroy a texture object, unbindint it from its texture unit
+     * destroy a texture object, unbinding it from any texture units
      */
     static void destroy_texture ( const GLuint id );
 
@@ -262,6 +262,41 @@ public:
 
 
 
+    /* FRAMEBUFFER OBJECTS */
+
+    /* generate_framebuffer
+     *
+     * generate a framebuffer object
+     */
+    static GLuint generate_fbo ();
+
+    /* destroy_fbo
+     *
+     * destroy a framebuffer object, unbinding it if bound
+     */
+    static void destroy_fbo ( const GLuint id );
+
+    /* bind_framebuffer
+     *
+     * bind a framebuffer object
+     */
+    static void bind_fbo ( const GLuint id );
+
+    /* bind_default_fbo
+     *
+     * bind the default framebuffer
+     * this replaces the unbind_framebuffer method, as framebuffer id=0 is the default framebuffer
+     */
+    static void bind_default_fbo ();
+
+    /* is_framebuffer_bound
+     *
+     * return true if the framebuffer is bound
+     */
+    static bool is_fbo_bound ( const GLuint id ) { return ( id == bound_fbo ); }
+
+
+
 
 private:
 
@@ -279,6 +314,9 @@ private:
 
     /* array of texture units and their respectively bound textures */
     static std::array<GLuint, GLH_MAX_TEXTURE_UNITS> bound_textures;
+
+    /* currently bound framebuffer */
+    static GLuint bound_fbo;
 
 };
 
