@@ -40,7 +40,7 @@ int main ()
     camera.enable_restrictive_mode ();
 
     glh::light_system light_system;
-    light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 0.4 }, glh::math::vec3 { 0.8 }, glh::math::vec3 { 1.0 } );
+    light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 0.5 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
     light_system.cache_uniforms ( program.get_struct_uniform ( "light_system" ) );
 
     window.get_mouseinfo ();
@@ -49,16 +49,22 @@ int main ()
     trans_uni.get_uniform ( "proj" ).set_matrix ( camera.get_proj () );
     glh::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
 
-    glh::model::model factory { "./assets/factory", "scene.gltf" };
-    factory.cache_uniforms ( program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
-
     glh::math::mat4 model_matrix = glh::math::translate ( glh::math::resize<4> ( glh::math::rotate ( glh::math::enlarge ( glh::math::identity<3> (), 0.1 ), glh::math::rad ( 90 ), 1, 2 ) ), glh::math::vec3 { -20.0, 0.0, -20.0 } );
 
     glh::renderer::set_clear_color ( glh::math::vec4 { 0.0 } );
     glh::renderer::enable_depth_test ();
     glh::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
     glh::renderer::enable_face_culling ();
+
+
+
+    glh::model::model factory { "./assets/factory", "scene.gltf" };
+    factory.cache_uniforms ( program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
+
+    glh::model::model forest { "./assets/forest", "scene.gltf" };
+    forest.cache_uniforms ( program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
+
+
 
     while ( !window.should_close () ) 
     {
@@ -98,13 +104,15 @@ int main ()
         glh::renderer::set_depth_mask ( GL_TRUE );
         glh::renderer::clear ();
         
-        factory.render ( model_matrix, false );
+        //factory.render ( model_matrix, false );
+        forest.render ( glh::math::identity<4> (), false );
 
         glh::renderer::enable_blend ();
         glh::renderer::set_depth_mask ( GL_FALSE );
         transparent_mode_uni.set_int ( 1 );
 
-        factory.render ( model_matrix, true );
+        //factory.render ( model_matrix, true );
+        forest.render ( glh::math::identity<4> (), true );
 
         window.swap_buffers ();
         window.poll_events ();
