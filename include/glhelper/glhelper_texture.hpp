@@ -68,7 +68,7 @@ class glh::texture2d : public object
 {
 public:
 
-    /* full constructor
+    /* image constructor
      *
      * load a 2D texture from an image file
      * default settings are applied
@@ -76,6 +76,18 @@ public:
      * _path: path to the image for the texture
      */
     texture2d ( const std::string& _path );
+
+    /* empty texture constructor
+     *
+     * create an texture of a given size with supplied data
+     * 
+     * _width/_height: the width and height of the texture
+     * __internal_format: the internal format of the data (e.g. specific bit arrangements)
+     * _format: the format of the data (e.g. what the data will be used for)
+     * _type: the type of the data (specific type macro with bit arrangements)
+     * data: the data to put in the texture (defaults to NULL)
+     */
+    texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL );
 
     /* deleted zero-parameter constructor
      *
@@ -112,6 +124,12 @@ public:
     void set_t_wrap ( const GLenum opt );
     void set_r_wrap ( const GLenum opt );
     void set_wrap ( const GLenum opt );
+
+    /* generate_mipmap
+     *
+     * generate texture mipmap
+     */
+    void generate_mipmap ();
 
 
 
@@ -168,11 +186,18 @@ private:
      */
     const std::string path;
 
-    /* format
+    /* (internal_)format
      *
-     * the format of the texture (e.g. GL_RGB)
+     * the (internal) format of the texture (e.g. GL_RGB)
      */
+    GLenum internal_format;
     GLenum format;
+
+    /* type
+     *
+     * the type of the data stored in the texture
+     */
+    GLenum type;
 
     /* widith, height, channels
      *
