@@ -209,6 +209,77 @@ const glh::math::vec3& glh::camera_perspective::roll ( const double arg )
     return position;
 }
 
+/* apply
+ *
+ * apply the camera to view and projection matrices
+ * 
+ * view_uni: 4x4 matrix uniform for the view matrix
+ * proj_uni: 4x4 matrix uniform for the projection matrix
+ */
+void glh::camera_perspective::apply ( const uniform& view_uni, const uniform& proj_uni )
+{
+    /* cache the uniforms */
+    cache_view_uniform ( view_uni );
+    cache_proj_uniform ( proj_uni );
+
+    /* apply */
+    apply ();
+}
+void glh::camera_perspective::apply () const
+{
+    /* throw if uniforms are not already cached */
+    if ( !cached_view_uniform || !cached_proj_uniform ) throw uniform_exception { "attempted to apply camera without a complete uniform cache" };
+
+    /* set the matrices */
+    cached_view_uniform->set_matrix ( get_view () );
+    cached_proj_uniform->set_matrix ( get_proj () );
+}
+
+/* cache_view_uniform
+ *
+ * cache the view matrix uniform
+ * 
+ * view_uni: 4x4 matrix uniform for the view matrix
+ */
+void glh::camera_perspective::cache_view_uniform ( const uniform& view_uni )
+{
+    /* cache uniform if not already cached */
+    if ( !cached_view_uniform || * cached_view_uniform != view_uni )
+    {
+        cached_view_uniform.reset ( new uniform { view_uni } );
+        view_change = true;
+    }
+}
+
+/* cache_proj_uniform
+ *
+ * cache the projection matrix uniform
+ * 
+ * proj_uni: 4x4 matrix uniform for the projection matrix
+ */
+void glh::camera_perspective::cache_proj_uniform ( const uniform& proj_uni )
+{
+    /* cache uniform if not already cached */
+    if ( !cached_proj_uniform || * cached_proj_uniform != proj_uni )
+    {
+        cached_proj_uniform.reset ( new uniform { proj_uni } );
+        proj_change = true;
+    }
+}
+/* cache_uniforms
+ *
+ * cache all uniforms simultaneously
+ *
+ * view_uni: 4x4 matrix uniform for the view matrix
+ * proj_uni: 4x4 matrix uniform for the projection matrix
+ */
+void glh::camera_perspective::cache_uniforms ( const uniform& view_uni, const uniform& proj_uni )
+{
+    /* cache both uniforms */
+    cache_view_uniform ( view_uni );
+    cache_proj_uniform ( proj_uni );
+}
+
 /* get_view
  *
  * get the view matrix

@@ -22,6 +22,7 @@
 
 /* include core headers */
 #include <iostream>
+#include <memory>
 
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
@@ -31,6 +32,9 @@
 
 /* include glhelper_math.hpp */
 #include <glhelper/glhelper_math.hpp>
+
+/* include glhelper_shader.hpp */
+#include <glhelper/glhelper_shader.hpp>
 
 
 
@@ -131,6 +135,44 @@ public:
     const math::vec3& pitch ( const double arg );
     const math::vec3& yaw ( const double arg );
     const math::vec3& roll ( const double arg );
+
+
+
+    /* apply
+     *
+     * apply the camera to view and projection matrices
+     * 
+     * view_uni: 4x4 matrix uniform for the view matrix
+     * proj_uni: 4x4 matrix uniform for the projection matrix
+     */
+    void apply ( const uniform& view_uni, const uniform& proj_uni );
+    void apply () const;
+
+    /* cache_view_uniform
+     *
+     * cache the view matrix uniform
+     * 
+     * view_uni: 4x4 matrix uniform for the view matrix
+     */
+    void cache_view_uniform ( const uniform& view_uni );
+
+    /* cache_proj_uniform
+     *
+     * cache the projection matrix uniform
+     * 
+     * proj_uni: 4x4 matrix uniform for the projection matrix
+     */
+    void cache_proj_uniform ( const uniform& proj_uni );
+
+    /* cache_uniforms
+     *
+     * cache all uniforms simultaneously
+     *
+     * view_uni: 4x4 matrix uniform for the view matrix
+     * proj_uni: 4x4 matrix uniform for the projection matrix
+     */
+    void cache_uniforms ( const uniform& view_uni, const uniform& proj_uni );
+
 
 
 
@@ -239,6 +281,14 @@ private:
      * the current combination of the view and projection matrix
      */
     mutable math::mat4 trans;
+
+   
+
+    /* cached uniforms */
+    std::unique_ptr<uniform> cached_view_uniform;
+    std::unique_ptr<uniform> cached_proj_uniform;
+
+    
 
     /* update_view
      *
