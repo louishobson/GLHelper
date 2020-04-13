@@ -536,8 +536,8 @@ private:
     };
 
     /* cached uniforms */
-    mutable std::unique_ptr<cached_material_uniforms_struct> cached_material_uniforms;
-    mutable std::unique_ptr<uniform> cached_model_uniform;
+    std::unique_ptr<cached_material_uniforms_struct> cached_material_uniforms;
+    std::unique_ptr<uniform> cached_model_uniform;
 
     /* transparent_only flag */
     mutable bool draw_transparent_only;
