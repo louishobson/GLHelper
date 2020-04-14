@@ -265,9 +265,43 @@ public:
 
 
 
+    /* RENDERBUFFER OBJECTS */
+
+    /* generate_rbo
+     *
+     * generate a renderbuffer object
+     */
+    static GLuint generate_rbo ();
+
+    /* destroy_rbo
+     *
+     * destroy a renderbuffer object, unbindint it if bound
+     */
+    static void destroy_rbo ( const GLuint id );
+
+    /* bind_rbo
+     *
+     * bind a renderbuffer object
+     */
+    static void bind_rbo ( const GLuint id );
+
+    /* unbind_rbo
+     *
+     * unbind an renderbuffer object, if already bound
+     */
+    static void unbind_rbo ( const GLuint id );
+
+    /* is_rbo_bound
+     *
+     * return true if the rbo is bound
+     */
+    static bool is_rbo_bound ( const GLuint id ) { return ( id == bound_rbo ); }
+
+
+
     /* FRAMEBUFFER OBJECTS */
 
-    /* generate_framebuffer
+    /* generate_fbo
      *
      * generate a framebuffer object
      */
@@ -279,7 +313,7 @@ public:
      */
     static void destroy_fbo ( const GLuint id );
 
-    /* bind_framebuffer
+    /* bind_fbo
      *
      * bind a framebuffer object
      */
@@ -298,7 +332,7 @@ public:
      */
     static void bind_default_fbo ();
 
-    /* is_framebuffer_bound
+    /* is_fbo_bound
      *
      * return true if the framebuffer is bound
      */
@@ -323,6 +357,9 @@ private:
 
     /* array of texture units and their respectively bound textures */
     static std::array<GLuint, GLH_MAX_TEXTURE_UNITS> bound_textures;
+
+    /* currently bound renderbuffer */
+    static GLuint bound_rbo;
 
     /* currently bound framebuffer */
     static GLuint bound_fbo;

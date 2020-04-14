@@ -355,6 +355,73 @@ void glh::object_manager::unbind_texture ( const GLuint id, const unsigned unit 
 
 
 
+/* RENDERBUFFER OBJECTS */
+
+/* generate_rbo
+ *
+ * generate a renderbuffer object
+ */
+GLuint glh::object_manager::generate_rbo ()
+{
+    /* assert opengl is loaded */
+    asset_opengl_loaded ();
+
+    /* generate rbo and return */
+    GLuint id;
+    glGenRenderbuffers ( 1, &id );
+    return id;
+}
+
+/* destroy_rbo
+ *
+ * destroy a renderbuffer object, unbindint it if bound
+ */
+void glh::object_manager::destroy_rbo ( const GLuint id )
+{
+    /* if not zero, remove bind entry if bound and then destroy */
+    if ( id > 0 )
+    {
+        if ( id == bound_rbo ) bound_rbo = 0;
+        glDeleteRenderbuffers ( 1, &id );
+    }
+}
+
+/* bind_rbo
+ *
+ * bind a renderbuffer object
+ */
+void glh::object_manager::bind_rbo ( const GLuint id )
+{
+    /* throw if invalid object */
+    if ( id == 0 ) throw object_management_exception { "attempted bind operation on invalid renderbuffer object" };    
+
+    /* if not already bound, bind and record */
+    if ( id != bound_rbo )
+    {
+        glBindRenderbuffer ( GL_RENDERBUFFER, id );
+        bound_rbo = id;
+    }
+}
+
+/* unbind_rbo
+ *
+ * unbind an renderbuffer object, if already bound
+ */
+void glh::object_manager::unbind_rbo ( const GLuint id )
+{
+    /* throw if invalid object */
+    if ( id == 0 ) throw object_management_exception { "attempted unbind operation on invalid renderbuffer object" };    
+
+    /* if already bound, unbind and record */
+    if ( id == bound_rbo )
+    {
+        glBindRenderbuffer ( GL_FRAMEBUFFER, 0 );
+        bound_rbo = 0;
+    } 
+}
+
+
+
 /* FRAMEBUFFER OBJECTS */
 
 /* generate_fbo
@@ -385,7 +452,6 @@ void glh::object_manager::destroy_fbo ( const GLuint id )
         glDeleteFramebuffers ( 1, &id );
     }
 }
-
 
 /* bind_fbo
  *
@@ -453,6 +519,9 @@ GLuint glh::object_manager::in_use_program { 0 };
 
 /* array of texture units and their respectively bound textures */
 std::array<GLuint, GLH_MAX_TEXTURE_UNITS> glh::object_manager::bound_textures { 0 };
+
+/* currently bound renderbuffer */
+GLuint glh::object_manager::bound_rbo { 0 };
 
 /* currently bound framebuffer */
 GLuint glh::object_manager::bound_fbo { 0 };
