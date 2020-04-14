@@ -29,6 +29,9 @@
  */
 GLuint glh::object_manager::generate_buffer ()
 {
+    /* assert opengl is loaded */
+    asset_opengl_loaded ();
+
     /* generate and return object */
     GLuint id;
     glGenBuffers ( 1, &id );
@@ -130,6 +133,9 @@ void glh::object_manager::unbind_ebo ( const GLuint id )
  */
 GLuint glh::object_manager::generate_vao ()
 {
+    /* assert opengl is loaded */
+    asset_opengl_loaded ();
+
     /* generate and return object */
     GLuint id;
     glGenVertexArrays ( 1, &id );
@@ -198,6 +204,9 @@ void glh::object_manager::unbind_vao ( const GLuint id )
  */
 GLuint glh::object_manager::generate_shader ( const GLenum type )
 {
+    /* assert opengl is loaded */
+    asset_opengl_loaded ();
+
     /* generate and return object */
     return glCreateShader ( type );
 }
@@ -218,6 +227,9 @@ void glh::object_manager::destroy_shader ( const GLuint id )
  */
 GLuint glh::object_manager::generate_program ()
 {
+    /* assert opengl is loaded */
+    asset_opengl_loaded ();
+
     /* generate and return object */
     return glCreateProgram ();
 }
@@ -280,6 +292,9 @@ void glh::object_manager::unuse_program ( const GLuint id )
  */
 GLuint glh::object_manager::generate_texture ()
 {
+    /* assert opengl is loaded */
+    asset_opengl_loaded ();
+
     /* generate texture and return */
     GLuint id;
     glGenTextures ( 1, &id );
@@ -348,6 +363,9 @@ void glh::object_manager::unbind_texture ( const GLuint id, const unsigned unit 
  */
 GLuint glh::object_manager::generate_fbo ()
 {
+    /* assert opengl is loaded */
+    asset_opengl_loaded ();
+
     /* generate and return framebuffer */
     GLuint id;
     glGenFramebuffers ( 1, &id );

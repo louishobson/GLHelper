@@ -31,6 +31,9 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
+/* include glhelper_glad.hpp */
+#include <glhelper/glhelper_glad.hpp>
+
 
 
 /* MACROS */
@@ -317,6 +320,14 @@ private:
 
     /* currently bound framebuffer */
     static GLuint bound_fbo;
+
+
+
+    /* assert_opengl_loaded
+     *
+     * throw if opengl has not been loaded
+     */
+    static void asset_opengl_loaded () { if ( !glh::glad_loader::is_loaded () ) throw glh::glad_exception { "attempted to create object without GLAD being loaded" }; }
 
 };
 
