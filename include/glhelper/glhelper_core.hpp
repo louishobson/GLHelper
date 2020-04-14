@@ -67,7 +67,7 @@ public:
      *
      * in this case, id is initialised to 0
      */
-    explicit object ()
+    object ()
         : id { 0 }
     {}
 
