@@ -351,9 +351,9 @@ void main ()
     }
 
     /* calculate lighting colors */
-    ambient = vec4 ( compute_ambient_component ( ambient.rgb, material, light_system ), ambient.a );
-    diffuse = vec4 ( compute_diffuse_component ( diffuse.rgb, material, light_system ), diffuse.a );
-    specular = vec4 ( compute_specular_component ( specular.rgb, material, light_system ), specular.a );
+    ambient.rgb = compute_ambient_component ( ambient.rgb, material, light_system );
+    diffuse.rgb = compute_diffuse_component ( diffuse.rgb, material, light_system );
+    specular.rgb = compute_specular_component ( specular.rgb, material, light_system );
 
     /* set output color */
     if ( transparent_mode ) fragcolor = vec4 ( ambient.rgb + diffuse.rgb + specular.rgb, ambient.a + diffuse.a );
