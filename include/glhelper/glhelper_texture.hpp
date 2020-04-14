@@ -137,7 +137,7 @@ public:
      *
      * destroys the texture, setting its id to 0
      */
-    void destroy () override { glh::object_manager::destroy_texture ( id ); id = 0; }
+    void destroy () { glh::object_manager::destroy_texture ( id ); id = 0; }
 
     /* bind
      *

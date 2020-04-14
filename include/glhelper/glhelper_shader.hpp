@@ -165,7 +165,7 @@ public:
      * destroys the shader, setting its id to 0
      * any program using this shader will still function
      */
-    void destroy () override { glh::object_manager::destroy_shader ( id ); id = 0; }
+    void destroy () { glh::object_manager::destroy_shader ( id ); id = 0; }
 
 
 
@@ -382,7 +382,7 @@ public:
      *
      * destroys the shader program, setting id to 0
      */
-    void destroy () override { glh::object_manager::destroy_program ( id ); id = 0; }
+    void destroy () { glh::object_manager::destroy_program ( id ); id = 0; }
 
     /* use
      *

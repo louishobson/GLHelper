@@ -147,7 +147,7 @@ public:
      *
      * destroys the object, setting id to 0
      */
-    void destroy () override { glh::object_manager::destroy_buffer ( id ); id = 0; }
+    void destroy () { glh::object_manager::destroy_buffer ( id ); id = 0; }
 
     /* bind
      *
@@ -415,7 +415,7 @@ public:
      *
      * destroys the object, setting id to 0
      */
-    void destroy () override { glh::object_manager::destroy_vao ( id ); id = 0; }
+    void destroy () { glh::object_manager::destroy_vao ( id ); id = 0; }
 
     /* bind
      *
