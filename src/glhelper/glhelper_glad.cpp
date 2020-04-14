@@ -33,7 +33,7 @@ void glh::glad_loader::load ()
     GLFWwindow * win = glfwGetCurrentContext ();
 
     /* produce error if no context set */
-    if ( !win ) throw glad_exception { "GLH ERROR: tried to load GLAD with no context set" };
+    if ( !win ) throw glad_exception { "attempted to load GLAD with no context set" };
 
     /* if window is already loaded, return true without reloading glad */
     if ( win == active_window ) return;
