@@ -44,7 +44,7 @@ glad: src/glad/glad.o
 #
 # compile glhelper to a library
 glhelper: src/glhelper/glhelper.a
-src/glhelper/glhelper.a: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o src/glhelper/glhelper_buffer.o src/glhelper/glhelper_shader.o src/glhelper/glhelper_texture.o src/glhelper/glhelper_camera.o src/glhelper/glhelper_model.o src/glhelper/glhelper_lighting.o src/glhelper/glhelper_render.o src/glhelper/glhelper_manager.o
+src/glhelper/glhelper.a: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o src/glhelper/glhelper_buffer.o src/glhelper/glhelper_shader.o src/glhelper/glhelper_texture.o src/glhelper/glhelper_camera.o src/glhelper/glhelper_model.o src/glhelper/glhelper_lighting.o src/glhelper/glhelper_render.o src/glhelper/glhelper_manager.o src/glhelper/glhelper_framebuffer.o
 	$(AR) $(ARFLAGS) $@ $^
 
 # test
