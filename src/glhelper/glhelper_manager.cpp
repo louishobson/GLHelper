@@ -404,10 +404,26 @@ void glh::object_manager::bind_fbo ( const GLuint id )
     }
 }
 
+/* unbind_fbo
+ *
+ * if the fbo is bound, bind the default fbo instead
+ */
+void glh::object_manager::unbind_fbo ( const GLuint id )
+{
+    /* throw if invalid object */
+    if ( id == 0 ) throw object_management_exception { "attempted unbind operation on invalid framebuffer object" };    
+
+    /* if already bound, unbind and record */
+    if ( id == bound_fbo )
+    {
+        glBindFramebuffer ( GL_FRAMEBUFFER, 0 );
+        bound_fbo = 0;
+    } 
+}
+
 /* bind_default_framebuffer
  *
  * bind the default framebuffer
- * this replaces the unbind_framebuffer method, as framebuffer id=0 is the default framebuffer
  */
 void glh::object_manager::bind_default_fbo ()
 {

@@ -285,6 +285,12 @@ public:
      */
     static void bind_fbo ( const GLuint id );
 
+    /* unbind_fbo
+     *
+     * if the fbo is bound, bind the default fbo instead
+     */
+    static void unbind_fbo ( const GLuint id );
+
     /* bind_default_fbo
      *
      * bind the default framebuffer
