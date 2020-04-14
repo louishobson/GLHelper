@@ -340,7 +340,7 @@ template<unsigned _M> inline glh::math::vector<M>::vector ( const vector<_M>& ot
     : vector { 0. }
 {
     /* loop for whichever vector is smaller, copying values accordingly */
-    for ( unsigned iti = 0; iti < M && iti < _M; ++iti ) at ( iti ) = other.at ( iti );
+    for ( unsigned i = 0; i < M && i < _M; ++i ) at ( i ) = other.at ( i );
 }
 
 /* at
@@ -370,7 +370,7 @@ template<unsigned M> std::array<float, M> glh::math::vector<M>::export_data () c
     std::array<float, M> new_data;
 
     /* copy elements over */
-    for ( unsigned iti = 0; iti < M; ++iti ) new_data.at ( iti ) = at ( iti );
+    for ( unsigned i = 0; i < M; ++i ) new_data.at ( i ) = at ( i );
 
     /* return the float data */
     return new_data;
@@ -391,8 +391,8 @@ template<unsigned M0, unsigned M1> inline glh::math::vector<M0 + M1> glh::math::
     
     /* loop for the vectors */
     unsigned conci = 0;
-    for ( unsigned iti = 0; iti < M0; ++iti ) conc.at ( conci++ ) = lhs.at ( iti );
-    for ( unsigned iti = 0; iti < M1; ++iti ) conc.at ( conci++ ) = rhs.at ( iti );
+    for ( unsigned i = 0; i < M0; ++i ) conc.at ( conci++ ) = lhs.at ( i );
+    for ( unsigned i = 0; i < M1; ++i ) conc.at ( conci++ ) = rhs.at ( i );
 
     /* return new vector */
     return conc;
@@ -404,7 +404,7 @@ template<unsigned M> inline glh::math::vector<M + 1> glh::math::concatenate ( co
 
     /* loop for the vector */
     unsigned conci  = 0;
-    for ( unsigned iti = 0; iti < M; ++iti ) conc.at ( conci++ ) = lhs.at ( iti );
+    for ( unsigned i = 0; i < M; ++i ) conc.at ( conci++ ) = lhs.at ( i );
     conc.at ( conci++ ) = rhs;
 
     /* return new vector */
@@ -418,7 +418,7 @@ template<unsigned M> inline glh::math::vector<M + 1> glh::math::concatenate ( co
     /* loop for the vector */
     unsigned conci  = 0;
     conc.at ( conci++ ) = lhs;
-    for ( unsigned iti = 0; iti < M; ++iti ) conc.at ( conci++ ) = rhs.at ( iti );
+    for ( unsigned i = 0; i < M; ++i ) conc.at ( conci++ ) = rhs.at ( i );
 
     /* return new vector */
     return conc;
@@ -446,7 +446,7 @@ template<unsigned M> double glh::math::dot ( const vector<M>& lhs, const vector<
     double result;
 
     /* loop to calculate */
-    for ( unsigned iti = 0; iti < M; ++iti ) result += ( lhs.at ( iti ) * rhs.at ( iti ) );
+    for ( unsigned i = 0; i < M; ++i ) result += ( lhs.at ( i ) * rhs.at ( i ) );
 
     /* return result */
     return result;
@@ -477,7 +477,7 @@ template<unsigned M> inline double glh::math::modulus ( const vector<M>& vec )
     double mod = 0;
 
     /* keep adding to the modulus */
-    for ( unsigned iti = 0; iti < M; ++iti ) mod += vec.at ( iti ) * vec.at ( iti );
+    for ( unsigned i = 0; i < M; ++i ) mod += vec.at ( i ) * vec.at ( i );
 
     /* return the sqrt of the modulus */
     return std::sqrt ( mod );
@@ -541,7 +541,7 @@ template<unsigned M> inline glh::math::vector<M> operator+ ( const glh::math::ve
     glh::math::vector<M> result;
 
     /* iterate for each value in result */
-    for ( unsigned iti = 0; iti < M; ++iti ) result.at ( iti ) = lhs.at ( iti ) + rhs.at ( iti );
+    for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) + rhs.at ( i );
 
     /* return the new vector */
     return result;
@@ -565,7 +565,7 @@ template<unsigned M> inline glh::math::vector<M> operator- ( const glh::math::ve
     glh::math::vector<M> result;
 
     /* iterate for each value in result */
-    for ( unsigned iti = 0; iti < M; ++iti ) result.at ( iti ) = lhs.at ( iti ) - rhs.at ( iti );
+    for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) - rhs.at ( i );
 
     /* return the new vector */
     return result;
@@ -594,7 +594,7 @@ template<unsigned M> inline glh::math::vector<M> operator* ( const glh::math::ve
     glh::math::vector<M> result;
 
     /* iterate for each value in result */
-    for ( unsigned iti = 0; iti < M; ++iti ) result.at ( iti ) = lhs.at ( iti ) * rhs.at ( iti );
+    for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) * rhs.at ( i );
 
     /* return the new vector */
     return result;
@@ -605,7 +605,7 @@ template<unsigned M> inline glh::math::vector<M> operator* ( const glh::math::ve
     glh::math::vector<M> result;
 
     /* iterate for each value in result */
-    for ( unsigned iti = 0; iti < M; ++iti ) result.at ( iti ) = lhs.at ( iti ) * rhs;
+    for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) * rhs;
 
     /* return the new vector */
     return result;
@@ -643,7 +643,7 @@ template<unsigned M> inline glh::math::vector<M> operator/ ( const glh::math::ve
     glh::math::vector<M> result;
 
     /* iterate for each value in result */
-    for ( unsigned iti = 0; iti < M; ++iti ) result.at ( iti ) = lhs.at ( iti ) / rhs.at ( iti );
+    for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) / rhs.at ( i );
 
     /* return the new vector */
     return result;
@@ -654,7 +654,7 @@ template<unsigned M> inline glh::math::vector<M> operator/ ( const glh::math::ve
     glh::math::vector<M> result;
 
     /* iterate for each value in result */
-    for ( unsigned iti = 0; iti < M; ++iti ) result.at ( iti ) = lhs.at ( iti ) / rhs;
+    for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) / rhs;
 
     /* return the new vector */
     return result;
@@ -683,7 +683,7 @@ template<unsigned M> inline glh::math::vector<M> operator- ( const glh::math::ve
     glh::math::vector<M> result { lhs };
 
     /* negate all the values */
-    for ( unsigned iti = 0; iti < M; ++iti ) result.at ( iti ) = - result.at ( iti );
+    for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = - result.at ( i );
 
     /* return the result */
     return result;
@@ -698,12 +698,12 @@ template<unsigned M> inline std::ostream& operator<< ( std::ostream& os, const g
     /* stream intro into ostream */
     os << "glh::vector<" << M << ">{";
     /* loop for each value */
-    for ( unsigned iti = 0; iti < M; ++iti )
+    for ( unsigned i = 0; i < M; ++i )
     {
         /* stream the value */
-        os << _vector.at ( iti );
+        os << _vector.at ( i );
         /* if not end of stream, stream comma */
-        if ( iti + 1 < M ) os << ",";
+        if ( i + 1 < M ) os << ",";
     }
     /* stream closing } */
     os << "}";
