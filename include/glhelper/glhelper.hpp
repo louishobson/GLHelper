@@ -59,3 +59,6 @@
 
 /* glhelper_lighting.hpp */
 #include <glhelper/glhelper_lighting.hpp>
+
+/* glhelper_framebuffer.hpp */
+#include <glhelper/glhelper_framebuffer.hpp>
