@@ -4,9 +4,9 @@
  * Distributed under MIT licence as a part of the GLHelper C++ library.
  * For details, see: https://github.com/louishobson/GLHelper/blob/master/LICENSE
  * 
- * src/glhelper/glhelper_buff.cpp
+ * src/glhelper/glhelper_buffer.cpp
  * 
- * implementation of include/glhelper/glhelper_buff.hpp
+ * implementation of include/glhelper/glhelper_buffer.hpp
  * 
  */
 
@@ -14,8 +14,8 @@
 
 /* INCLUDES */
 
-/* include glhelper_buff.hpp */
-#include <glhelper/glhelper_buff.hpp>
+/* include glhelper_buffer.hpp */
+#include <glhelper/glhelper_buffer.hpp>
 
 
 

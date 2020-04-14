@@ -4,7 +4,7 @@
  * Distributed under MIT licence as a part of the GLHelper C++ library.
  * For details, see: https://github.com/louishobson/GLHelper/blob/master/LICENSE
  * 
- * include/glhelper/glhelper_buff.hpp
+ * include/glhelper/glhelper_buffer.hpp
  * 
  * declares buffer handling constructs
  * 
@@ -13,8 +13,8 @@
 
 
 /* HEADER GUARD */
-#ifndef GLHELPER_BUFF_HPP_INCLUDED
-#define GLHELPER_BUFF_HPP_INCLUDED
+#ifndef GLHELPER_BUFFER_HPP_INCLUDED
+#define GLHELPER_BUFFER_HPP_INCLUDED
 
 
 
@@ -439,5 +439,5 @@ public:
 
 
 
-/* #ifndef GLHELPER_BUFF_HPP_INCLUDED */
+/* #ifndef GLHELPER_BUFFER_HPP_INCLUDED */
 #endif

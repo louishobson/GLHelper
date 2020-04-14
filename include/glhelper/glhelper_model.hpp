@@ -132,8 +132,8 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
-/* include glhelper_buff.hpp */
-#include <glhelper/glhelper_buff.hpp>
+/* include glhelper_buffer.hpp */
+#include <glhelper/glhelper_buffer.hpp>
 
 /* include glhelper_texture.hpp */
 #include <glhelper/glhelper_texture.hpp>

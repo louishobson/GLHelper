@@ -40,9 +40,6 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
-/* include glhelper_buff.hpp */
-#include <glhelper/glhelper_buff.hpp>
-
 /* include glhelper_shader.hpp */
 #include <glhelper/glhelper_shader.hpp>
 
@@ -52,12 +49,6 @@
 
 namespace glh
 {
-    /* class program
-     *
-     * forward declaration for use by window class
-     */
-    class program;
-
     /* glad_loader due to circular dependancy */
     class glad_loader;
      
