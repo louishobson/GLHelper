@@ -40,9 +40,6 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
-/* include glhelper_shader.hpp */
-#include <glhelper/glhelper_shader.hpp>
-
 
 
 /* NAMESPACE FORWARD DECLARATIONS */
