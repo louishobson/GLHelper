@@ -650,7 +650,7 @@ inline glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vecto
      * r = norm ( wup x d )
      * u = d x r
      */
-    const vector<3> d = norm ( p - t );
+    const vector<3> d = normalise ( p - t );
     const vector<3> r = cross ( wup, d );
     const vector<3> u = cross ( d, r );
     /* return the camera matrix */

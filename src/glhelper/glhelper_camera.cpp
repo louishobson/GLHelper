@@ -42,8 +42,8 @@ glh::camera_perspective::camera_perspective ( const math::vec3& _position, const
     , proj_change { true }
 {
     /* set x, y, z, restrict_x, restrict_y and restrict_z */
-    z = math::norm ( - _direction );
-    x = math::cross ( math::norm ( _world_y ), z );
+    z = math::normalise ( - _direction );
+    x = math::cross ( math::normalise ( _world_y ), z );
     y = math::cross ( z, x );
     restrict_x = x;
     restrict_y = y;
