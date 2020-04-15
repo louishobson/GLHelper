@@ -84,12 +84,15 @@ glh::texture2d::texture2d ( const unsigned _width, const unsigned _height, const
     , internal_format { _internal_format }
     , format { _format }
     , type { _type }
+    , width { ( int ) _width }
+    , height { ( int ) _height }
+    , channels { 4 }
 {
     /* bind texture object */
     bind ();
 
     /* set texture data */
-    glTexImage2D ( GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, data );
+    glTexImage2D ( GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, NULL );
 
     /* set mag/min options */
     set_mag_filter ( GL_LINEAR );
