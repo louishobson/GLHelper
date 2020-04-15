@@ -98,7 +98,9 @@ public:
      * usage: the storage method for the data
      */
     buffer ( const GLenum _target, const GLenum _reverse_target, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
-        : buffer { _target, _reverse_target }
+        : object { glh::object_manager::generate_buffer () }
+        , target { _target }
+        , reverse_target { _reverse_target }
     { buffer_data ( size, data, usage ); }
 
     /* deleted zero-parameter constructor */
@@ -147,25 +149,24 @@ public:
      *
      * destroys the object, setting id to 0
      */
-    void destroy () { glh::object_manager::destroy_buffer ( id ); id = 0; }
+    void destroy () { object_manager::destroy_buffer ( id ); id = 0; }
 
     /* bind
      *
      * bind the buffer
      */
-    virtual void bind () const = 0;
-
+    void bind () const;
     /* unbind
      *
      * unbind the buffer's target
      */
-    virtual void unbind () const = 0;
+    void unbind () const;
 
     /* is_bound
      *
      * checks if the buffer is bound
      */
-    virtual bool is_bound () const = 0;
+    bool is_bound () const;
 
 
 
@@ -244,25 +245,6 @@ public:
     /* default destructor */
     ~vbo () = default;
 
-
-
-    /* bind
-     *
-     * bind the buffer
-     */
-    void bind () const { glh::object_manager::bind_vbo ( id ); }
-
-    /* unbind
-     *
-     * unbind the buffer's target
-     */
-    void unbind () const { glh::object_manager::unbind_vbo ( id ); }
-
-    /* is_bound
-     *
-     * checks if the buffer is bound
-     */
-    bool is_bound () const { return glh::object_manager::is_vbo_bound ( id ); }
 };
 
 
@@ -315,25 +297,6 @@ public:
     /* default destructor */
     ~ebo () = default;
 
-
-
-    /* bind
-     *
-     * bind the buffer
-     */
-    void bind () const { glh::object_manager::bind_ebo ( id ); }
-
-    /* unbind
-     *
-     * unbind the buffer's target
-     */
-    void unbind () const { glh::object_manager::unbind_ebo ( id ); }
-
-    /* is_bound
-     *
-     * checks if the buffer is bound
-     */
-    bool is_bound () const { return glh::object_manager::is_ebo_bound ( id ); }
 };
 
 
@@ -415,25 +378,25 @@ public:
      *
      * destroys the object, setting id to 0
      */
-    void destroy () { glh::object_manager::destroy_vao ( id ); id = 0; }
+    void destroy () { object_manager::destroy_vao ( id ); id = 0; }
 
     /* bind
      *
      * bind the vertex array object
      */
-    void bind () const { glh::object_manager::bind_vao ( id ); }
+    void bind () const { object_manager::bind_vao ( id ); }
 
     /* unbind
      *
      * unbind the vertex array object
      */
-    void unbind () const { glh::object_manager::unbind_vao ( id ); }
+    void unbind () const { object_manager::unbind_vao ( id ); }
 
     /* is_bound
      *
      * checks if the vao is bound
      */
-    bool is_bound () const { return glh::object_manager::is_vao_bound ( id ); }
+    bool is_bound () const { return object_manager::is_vao_bound ( id ); }
 
 };
 
