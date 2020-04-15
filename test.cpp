@@ -29,9 +29,11 @@ int main ()
     glh::window window;
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
 
-    glh::vshader model_vshader { "shaders/vertex.model.glsl" };
+    glh::vshader basic_vshader { "shaders/vertex.basic.glsl" };
     glh::fshader model_fshader { "shaders/fragment.model.glsl" };
-    glh::program model_program { model_vshader, model_fshader };
+
+
+    glh::program model_program { basic_vshader, model_fshader };
     model_program.use ();
     auto trans_uni = model_program.get_struct_uniform ( "trans" );
     auto transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );

@@ -1,7 +1,7 @@
 /*
  * vertex.model.glsl
  * 
- * model vertex shader
+ * basic vertex shader
  */
 
 #version 330 core
