@@ -461,11 +461,11 @@ void glh::model::model::configure_buffers ( mesh& _mesh )
     _mesh.index_data.buffer_data ( sizeof ( indices ), indices, GL_STATIC_DRAW );
 
     /* configure the vao */
-    _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, components_per_vertex * sizeof ( GLfloat ), ( GLvoid * ) 0 );
-    _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, components_per_vertex * sizeof ( GLfloat ), ( GLvoid * ) ( 3 * sizeof ( GLfloat ) ) );
+    _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, components_per_vertex * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 0 ) );
+    _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, components_per_vertex * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 3 * sizeof ( GLfloat ) ) );
     for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
     {
-        _mesh.array_object.set_vertex_attrib ( 2 + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, components_per_vertex * sizeof ( GLfloat ), ( GLvoid * ) ( ( ( i * 3 ) + 6 ) * sizeof ( GLfloat ) ) );
+        _mesh.array_object.set_vertex_attrib ( 2 + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, components_per_vertex * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( ( ( i * 3 ) + 6 ) * sizeof ( GLfloat ) ) );
     }
     _mesh.array_object.bind_ebo ( _mesh.index_data );
 }
