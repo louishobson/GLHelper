@@ -1,7 +1,7 @@
 /*
- * vertex.glsl
+ * vertex.model.glsl
  * 
- * vertex shader for testing
+ * model vertex shader
  */
 
 #version 330 core

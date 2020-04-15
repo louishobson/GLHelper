@@ -1,7 +1,7 @@
 /*
- * fragment.glsl
+ * fragment.model.glsl
  * 
- * fragment shader
+ * model fragment shader
  */
 
 #version 330 core
