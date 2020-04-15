@@ -29,12 +29,12 @@ int main ()
     glh::window window;
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
 
-    glh::vshader vshader { "shaders/vertex.glsl" };
-    glh::fshader fshader { "shaders/fragment.glsl" };
-    glh::program program { vshader, fshader };
-    program.use ();
-    auto trans_uni = program.get_struct_uniform ( "trans" );
-    auto transparent_mode_uni = program.get_uniform ( "transparent_mode" );
+    glh::vshader model_vshader { "shaders/vertex.model.glsl" };
+    glh::fshader model_fshader { "shaders/fragment.model.glsl" };
+    glh::program model_program { model_vshader, model_fshader };
+    model_program.use ();
+    auto trans_uni = model_program.get_struct_uniform ( "trans" );
+    auto transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
     
     glh::camera_perspective camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 500.0 };
     camera.cache_uniforms ( trans_uni.get_uniform ( "view" ), trans_uni.get_uniform ( "proj" ) );
@@ -42,7 +42,7 @@ int main ()
 
     glh::light_system light_system;
     light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
-    light_system.cache_uniforms ( program.get_struct_uniform ( "light_system" ) );
+    light_system.cache_uniforms ( model_program.get_struct_uniform ( "light_system" ) );
 
     window.get_mouseinfo ();
     auto dimensions = window.get_dimensions ();
@@ -57,14 +57,14 @@ int main ()
 
 
     //glh::model::model factory { "./assets/factory", "scene.gltf" };
-    //factory.cache_uniforms ( program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
+    //factory.cache_uniforms ( model_program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
     glh::math::mat4 factory_matrix = glh::math::translate3d ( glh::math::rotate3d ( glh::math::enlarge3d ( glh::math::identity<4> (), 0.1 ), glh::math::rad ( 90 ), glh::math::vec3 { 1.0, 0.0, 0.0 } ), glh::math::vec3 { -20.0, 0.0, -20.0 } );
 
     //glh::model::model forest { "./assets/forest", "scene.gltf" };
-    //forest.cache_uniforms ( program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
+    //forest.cache_uniforms ( model_program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
 
     glh::model::model island { "./assets/island", "scene.gltf" };
-    island.cache_uniforms ( program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
+    island.cache_uniforms ( model_program.get_struct_uniform ( "material" ), trans_uni.get_uniform ( "model" ) );
     glh::math::mat4 island_matrix = glh::math::enlarge3d ( glh::math::identity<4> (), 0.2 );
 
 
