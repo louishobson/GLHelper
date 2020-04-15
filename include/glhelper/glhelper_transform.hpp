@@ -223,6 +223,20 @@ namespace glh
         matrix<4> translate3d ( const matrix<4>& trans, const vector<3>& translation );
         vector<4> translate3d ( const vector<4>& vec, const vector<3>& translation );
 
+        /* reflect3d
+         *
+         * reflect in a plane at the origin described by a unit vector
+         * 
+         * trans/vec: the transformation matrix/vector to reflect
+         * norm: a normal unit vector on the plane
+         *
+         * return: the new transformation matrix/vector
+         */
+        matrix<3> reflect3d ( const matrix<3>& trans, const vector<3>& norm );
+        vector<3> reflect3d ( const vector<3>& vec, const vector<3>& norm );
+        matrix<4> reflect3d ( const matrix<4>& trans, const vector<3>& norm );
+        vector<4> reflect3d ( const vector<4>& vec, const vector<3>& norm );
+
 
 
         /* perspective
@@ -709,6 +723,67 @@ inline glh::math::vector<4> glh::math::translate3d ( const vector<4>& vec, const
 {
     /* return the sum of the two vectors */
     return vec + vector<4> { translation, 0.0 };
+}
+
+/* reflect3d
+ *
+ * reflect in a plane at the origin described by a unit vector
+ * 
+ * trans/vec: the transformation matrix/vector to reflect
+ * norm: a norm unit vector on the plane
+ *
+ * return: the new transformation matrix/vector
+ */
+inline glh::math::matrix<3> glh::math::reflect3d ( const matrix<3>& trans, const vector<3>& norm )
+{
+    /* return the reflection matrix */
+    return matrix<3>
+    {
+        1 - ( 2 * norm.at ( 0 ) * norm.at ( 0 ) ),
+        - ( 2 * norm.at ( 0 ) * norm.at ( 1 ) ),
+        - ( 2 * norm.at ( 0 ) * norm.at ( 2 ) ),
+
+        - ( 2 * norm.at ( 0 ) * norm.at ( 1 ) ),
+        1 - ( 2 * norm.at ( 1 ) * norm.at ( 1 ) ),
+        - ( 2 * norm.at ( 1 ) * norm.at ( 2 ) ),
+
+        - ( 2 * norm.at ( 0 ) * norm.at ( 2 ) ),
+        - ( 2 * norm.at ( 1 ) * norm.at ( 2 ) ),
+        1 - ( 2 * norm.at ( 2 ) * norm.at ( 2 ) )
+    } * trans;
+}
+inline glh::math::vector<3> glh::math::reflect3d ( const vector<3>& vec, const vector<3>& norm )
+{
+    /* reflect using matrix */
+    return reflect3d ( identity<3> (), norm ) * vec;
+}
+inline glh::math::matrix<4> glh::math::reflect3d ( const matrix<4>& trans, const vector<3>& norm )
+{
+    /* return the reflection matrix */
+    return matrix<4>
+    {
+        1 - ( 2 * norm.at ( 0 ) * norm.at ( 0 ) ),
+        - ( 2 * norm.at ( 0 ) * norm.at ( 1 ) ),
+        - ( 2 * norm.at ( 0 ) * norm.at ( 2 ) ),
+        0,
+
+        - ( 2 * norm.at ( 0 ) * norm.at ( 1 ) ),
+        1 - ( 2 * norm.at ( 1 ) * norm.at ( 1 ) ),
+        - ( 2 * norm.at ( 1 ) * norm.at ( 2 ) ),
+        0,
+
+        - ( 2 * norm.at ( 0 ) * norm.at ( 2 ) ),
+        - ( 2 * norm.at ( 1 ) * norm.at ( 2 ) ),
+        1 - ( 2 * norm.at ( 2 ) * norm.at ( 2 ) ),
+        0,
+
+        0, 0, 0, 1
+    } * trans;
+}
+inline glh::math::vector<4> glh::math::reflect3d ( const vector<4>& vec, const vector<3>& norm )
+{
+    /* reflect using matrix */
+    return reflect3d ( identity<4> (), norm ) * vec;
 }
 
 
