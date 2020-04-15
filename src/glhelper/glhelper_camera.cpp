@@ -145,8 +145,8 @@ const glh::math::vec3& glh::camera_perspective::pitch ( const double arg )
     /* if non-restrictive, rotate y and z around x axis */
     if ( !restrictive_mode )
     {
-        y = math::rotate ( y, arg, x );
-        z = math::rotate ( z, arg, x );
+        y = math::rotate3d ( y, arg, x );
+        z = math::rotate3d ( z, arg, x );
     } else
     /* otherwise, rotate y and z around the restrict_x axis */
     {
@@ -154,17 +154,17 @@ const glh::math::vec3& glh::camera_perspective::pitch ( const double arg )
         double pitch_angle = math::angle ( restrict_y, z );
         if ( pitch_angle + arg > math::rad ( 180 ) )
         {
-            y = math::rotate ( y, math::rad ( 180 ) - pitch_angle, restrict_x );
-            z = math::rotate ( z, math::rad ( 180 ) - pitch_angle, restrict_x );
+            y = math::rotate3d ( y, math::rad ( 180 ) - pitch_angle, restrict_x );
+            z = math::rotate3d ( z, math::rad ( 180 ) - pitch_angle, restrict_x );
         } else
         if ( pitch_angle + arg < math::rad ( 0 ) )
         {
-            y = math::rotate ( y, math::rad ( 0 ) - pitch_angle, restrict_x );
-            z = math::rotate ( z, math::rad ( 0 ) - pitch_angle, restrict_x );
+            y = math::rotate3d ( y, math::rad ( 0 ) - pitch_angle, restrict_x );
+            z = math::rotate3d ( z, math::rad ( 0 ) - pitch_angle, restrict_x );
         } else
         {        
-            y = math::rotate ( y, arg, restrict_x );
-            z = math::rotate ( z, arg, restrict_x );
+            y = math::rotate3d ( y, arg, restrict_x );
+            z = math::rotate3d ( z, arg, restrict_x );
         }
     }
 
@@ -177,16 +177,16 @@ const glh::math::vec3& glh::camera_perspective::yaw ( const double arg )
     /* if non-restrictive, rotate x and z around the y axis */
     if ( !restrictive_mode )
     {
-        x = math::rotate ( x, arg, y );
-        z = math::rotate ( z, arg, y );
+        x = math::rotate3d ( x, arg, y );
+        z = math::rotate3d ( z, arg, y );
     } else
     /* otherwise, rotate x, restict_x, y, z and restrict_z around the restrict_y axis */
     {
-        x = math::rotate ( x, arg, restrict_y );
-        restrict_x = math::rotate ( restrict_x, arg, restrict_y );
-        y = math::rotate ( y, arg, restrict_y );
-        z = math::rotate ( z, arg, restrict_y );
-        restrict_z = math::rotate ( restrict_z, arg, restrict_y );
+        x = math::rotate3d ( x, arg, restrict_y );
+        restrict_x = math::rotate3d ( restrict_x, arg, restrict_y );
+        y = math::rotate3d ( y, arg, restrict_y );
+        z = math::rotate3d ( z, arg, restrict_y );
+        restrict_z = math::rotate3d ( restrict_z, arg, restrict_y );
     }    
 
     /* set view as changed and return */
@@ -198,8 +198,8 @@ const glh::math::vec3& glh::camera_perspective::roll ( const double arg )
     /* if non-restrictive, rotate x and y around the z axis */
     if ( !restrictive_mode )
     {
-        x = math::rotate ( x, arg, z );
-        y = math::rotate ( y, arg, z );
+        x = math::rotate3d ( x, arg, z );
+        y = math::rotate3d ( y, arg, z );
     }
     /* otherwise return position without change */
     else return position;
