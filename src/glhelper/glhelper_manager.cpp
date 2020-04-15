@@ -415,7 +415,7 @@ void glh::object_manager::unbind_rbo ( const GLuint id )
     /* if already bound, unbind and record */
     if ( id == bound_rbo )
     {
-        glBindRenderbuffer ( GL_FRAMEBUFFER, 0 );
+        glBindRenderbuffer ( GL_RENDERBUFFER, 0 );
         bound_rbo = 0;
     } 
 }
@@ -494,7 +494,7 @@ void glh::object_manager::unbind_fbo ( const GLuint id )
 void glh::object_manager::bind_default_fbo ()
 {
     /* if not already default, set to default */
-    if ( 0 == bound_fbo )
+    if ( 0 != bound_fbo )
     {
         glBindFramebuffer ( GL_FRAMEBUFFER, 0 );
         bound_fbo = 0;
