@@ -53,6 +53,43 @@ void glh::buffer::clear_data ()
     unbind ();
 }
 
+/* bind
+ *
+ * bind the buffer
+ */
+void glh::buffer::bind () const
+{
+    /* split for different targets */
+    if ( target == GL_ARRAY_BUFFER ) object_manager::bind_vbo ( id ); else
+    if ( target == GL_ELEMENT_ARRAY_BUFFER ) object_manager::bind_ebo ( id ); else
+    throw object_management_exception { "attempted to bind unknown buffer object" };
+}
+
+/* unbind
+ *
+ * unbind the buffer's target
+ */
+void glh::buffer::unbind () const
+{
+    /* split for different targets */
+    if ( target == GL_ARRAY_BUFFER ) object_manager::unbind_vbo ( id ); else
+    if ( target == GL_ELEMENT_ARRAY_BUFFER ) object_manager::unbind_ebo ( id ); else
+    throw object_management_exception { "attempted to unbind unknown buffer object" };
+}
+
+/* is_bound
+ *
+ * checks if the buffer is bound
+ */
+bool glh::buffer::is_bound () const
+{
+    /* split for different targets */
+    if ( target == GL_ARRAY_BUFFER ) return object_manager::is_vbo_bound ( id ); else
+    if ( target == GL_ELEMENT_ARRAY_BUFFER ) return object_manager::is_ebo_bound ( id ); else
+    throw object_management_exception { "attempted to check binding of unknown buffer object" };
+}
+
+
 
 
 /* VAO IMPLEMENTATION */
