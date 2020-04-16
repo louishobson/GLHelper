@@ -42,22 +42,30 @@
 
 namespace glh
 {
-    /* class camera_perspective
+    /* class camera
      *
-     * encapsulates a camera and perspective matrix, abstracting movement control
+     * handles both the view and projection matrix
+     * abstracts movement and rotation
      */
-    class camera_perspective;
+    class camera;
+
+    /* class mirror_camera
+     *
+     * takes a camera and mirror dimensions and position to make a camera for the mirror surface
+     */
+    class mirror_camera;
 }
 
 
 
-/* CAMERA_PERSPECTIVE DEFINITION */
+/* CAMERA DEFINITION */
 
-/* class camera_perspective
+/* class camera
  *
- * encapsulates a camera and perspective matrix, abstracting movement control
+ * handles both the view and projection matrix
+ * abstracts movement and rotation
  */
-class glh::camera_perspective
+class glh::camera
 {
 public:
 
@@ -65,29 +73,29 @@ public:
      *
      * give parameters for look_towards and perspective_fov
      */
-    camera_perspective ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far );
+    camera ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far );
 
     /* minimal constructor
      *
      * create a default view matrix and give parameters for perspective_fov
      */
-    camera_perspective ( const double _fov, const double _aspect, const double _near, const double _far )
-        : camera_perspective { math::vec3 { 0.0, 0.0, 0.0 }, math::vec3 { 0.0, 0.0, -1.0 }, math::vec3 { 0.0, 1.0, 0.0 }, _fov, _aspect, _near, _far } {}
+    camera ( const double _fov, const double _aspect, const double _near, const double _far )
+        : camera { math::vec3 { 0.0, 0.0, 0.0 }, math::vec3 { 0.0, 0.0, -1.0 }, math::vec3 { 0.0, 1.0, 0.0 }, _fov, _aspect, _near, _far } {}
         
     /* zero parameter constructor
      *
      * produce a default view and projection matrix
      */
-    camera_perspective () : camera_perspective { math::rad ( 60.0 ), 16.0 / 9.0, 0.1, 200.0 } {}
+    camera () : camera { math::rad ( 60.0 ), 16.0 / 9.0, 0.1, 200.0 } {}
 
     /* default copy constructor */
-    camera_perspective ( const camera_perspective& other ) = default;
+    camera ( const camera& other ) = default;
 
     /* default assignment operator */
-    camera_perspective& operator= ( const camera_perspective& other ) = default;
+    camera& operator= ( const camera& other ) = default;
 
     /* default destructor */
-    ~camera_perspective () = default;
+    ~camera () = default;
 
 
 
@@ -309,6 +317,33 @@ private:
      * return: bool for if any changes were applied
      */
     bool update_trans () const;
+
+};
+
+
+
+/* MIRROR_CAMERA DEFINITION */
+
+/* class mirror_camera
+ *
+ * takes a camera and mirror dimensions and position to make a camera for the mirror surface
+ */
+class glh::mirror_camera
+{
+public:
+
+    /* full constructor
+     *
+     * takes another camera and mirror positioning
+     *
+     * _cam: the viewer camera
+     * _pos: the position of the centre of the mirror
+     * _norm: the normal to the mirror
+     * _width: the width of the mirror
+     * _height: the height of the mirror
+     * _wup: the world up vector (defaults to 0,1,0)
+     */
+    //mirror_camera ( const camera& _cam, const math::vec3&  )
 
 };
 
