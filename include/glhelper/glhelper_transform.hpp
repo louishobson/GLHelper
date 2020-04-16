@@ -290,7 +290,7 @@ namespace glh
          */
         matrix<4> look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& wup );
 
-        /* look_towards
+        /* look_along
          *
          * produce a camera matrix based on a camera position, direction of viewing and up vector
          * 
@@ -300,7 +300,7 @@ namespace glh
          * 
          * return: camera matrix based on vectors provided
          */
-        matrix<4> look_towards ( const vector<3>& p, const vector<3>& d, const vector<3>& wup );
+        matrix<4> look_along ( const vector<3>& p, const vector<3>& d, const vector<3>& wup );
 
         /* normal
          *
@@ -882,7 +882,7 @@ inline glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vecto
     return camera ( p, d, r, u );
 }
 
-/* look_towards
+/* look_along
  *
  * produce a camera matrix based on a camera position, direction of viewing and up vector
  * 
@@ -892,7 +892,7 @@ inline glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vecto
  * 
  * return: camera matrix based on vectors provided
  */
-inline glh::math::matrix<4> glh::math::look_towards ( const vector<3>& p, const vector<3>& d, const vector<3>& wup )
+inline glh::math::matrix<4> glh::math::look_along ( const vector<3>& p, const vector<3>& d, const vector<3>& wup )
 {
     /* r = wup x d
      * u = d x r
