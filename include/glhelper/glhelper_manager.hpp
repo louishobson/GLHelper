@@ -50,18 +50,24 @@
 
 namespace glh
 {
-    /* class object_manager
-     *
-     * responsible for generating and destroying OpenGL objects
-     * also tracks bindings and avoids rebinds
-     */
-    class object_manager;
+    namespace core
+    {
+        /* class object_manager
+         *
+         * responsible for generating and destroying OpenGL objects
+         * also tracks bindings and avoids rebinds
+         */
+        class object_manager;
+    }
 
-    /* class object_management_exception : exception
-     *
-     * exception relating to object management
-     */
-    class object_management_exception;
+    namespace exception
+    {
+        /* class object_management_exception : exception
+         *
+         * exception relating to object management
+         */
+        class object_management_exception;
+    }
 }
 
 
@@ -73,7 +79,7 @@ namespace glh
  * responsible for generating and destroying OpenGL objects
  * also tracks bindings and avoids rebinds
  */
-class glh::object_manager
+class glh::core::object_manager
 {
 public:
 
@@ -370,7 +376,7 @@ private:
      *
      * throw if opengl has not been loaded
      */
-    static void asset_opengl_loaded () { if ( !glh::glad_loader::is_loaded () ) throw glh::glad_exception { "attempted to create object without GLAD being loaded" }; }
+    static void asset_opengl_loaded () { if ( !core::glad_loader::is_loaded () ) throw exception::glad_exception { "attempted to create object without GLAD being loaded" }; }
 
 };
 
@@ -382,7 +388,7 @@ private:
  *
  * for exceptions related to textures
  */
-class glh::object_management_exception : public exception
+class glh::exception::object_management_exception : public exception
 {
 public:
 

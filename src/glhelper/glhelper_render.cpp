@@ -27,7 +27,7 @@
  * 
  * color: vec4 containing rgba components of clear color
  */
-void glh::renderer::set_clear_color ( const math::vec4& color )
+void glh::core::renderer::set_clear_color ( const math::vec4& color )
 { 
     /* if is a new clear color run the function */
     if ( color != clear_color )
@@ -41,7 +41,7 @@ void glh::renderer::set_clear_color ( const math::vec4& color )
  * 
  * enable or disable depth testing
  */
-void glh::renderer::enable_depth_test () 
+void glh::core::renderer::enable_depth_test () 
 {
     /* enable if not already enabled */
     if ( !depth_test_state )
@@ -50,7 +50,7 @@ void glh::renderer::enable_depth_test ()
         depth_test_state = true; 
     } 
 }
-void glh::renderer::disable_depth_test ()
+void glh::core::renderer::disable_depth_test ()
 {
     /* disable if not already disabled */
     if ( depth_test_state )
@@ -66,7 +66,7 @@ void glh::renderer::disable_depth_test ()
  * 
  * mask: boolean defining if the depth buffer is written to for each fragment
  */
-void glh::renderer::set_depth_mask ( const GLboolean mask )
+void glh::core::renderer::set_depth_mask ( const GLboolean mask )
 { 
     /* if is a different mask */
     if ( mask != depth_mask )
@@ -80,7 +80,7 @@ void glh::renderer::set_depth_mask ( const GLboolean mask )
  *
  * enavle or disable stencil testing
  */
-void glh::renderer::enable_stencil_test ()
+void glh::core::renderer::enable_stencil_test ()
 {
     /* enable if not already enabled */
     if ( !stencil_test_state )
@@ -89,7 +89,7 @@ void glh::renderer::enable_stencil_test ()
         stencil_test_state = true; 
     } 
 }
-void glh::renderer::disable_stencil_test ()
+void glh::core::renderer::disable_stencil_test ()
 {
     /* disable if not already disabled */
     if ( stencil_test_state )
@@ -106,7 +106,7 @@ void glh::renderer::disable_stencil_test ()
  * mask: a bit mask to define which bits are writen to the stencil buffer
  */
 
-void glh::renderer::set_stencil_mask ( const GLuint mask )
+void glh::core::renderer::set_stencil_mask ( const GLuint mask )
 {
     /* if mask differs, set new mask */
     if ( mask != stencil_mask )
@@ -120,7 +120,7 @@ void glh::renderer::set_stencil_mask ( const GLuint mask )
  *
  * enable/disable blending
  */
-void glh::renderer::enable_blend ()
+void glh::core::renderer::enable_blend ()
 {
     /* enable if not already enabled */
     if ( !blend_state )
@@ -129,7 +129,7 @@ void glh::renderer::enable_blend ()
         blend_state = true; 
     } 
 }
-void glh::renderer::disable_blend ()
+void glh::core::renderer::disable_blend ()
 {
     /* disable if not already disabled */
     if ( blend_state )
@@ -143,7 +143,7 @@ void glh::renderer::disable_blend ()
  *
  * enable/disable face culling
  */
-void glh::renderer::enable_face_culling ()
+void glh::core::renderer::enable_face_culling ()
 {
     /* enable if not already enabled */
     if ( !face_culling_state )
@@ -152,7 +152,7 @@ void glh::renderer::enable_face_culling ()
         face_culling_state = true; 
     } 
 }
-void glh::renderer::disable_face_culling ()
+void glh::core::renderer::disable_face_culling ()
 {
     /* disable if not already disable */
     if ( face_culling_state )
@@ -168,7 +168,7 @@ void glh::renderer::disable_face_culling ()
  * 
  * face: the face to be culled
  */
-void glh::renderer::set_cull_face ( const GLenum face )
+void glh::core::renderer::set_cull_face ( const GLenum face )
 {
     /* if a different face, set the new face */
     if ( face != cull_face )
@@ -182,7 +182,7 @@ void glh::renderer::set_cull_face ( const GLenum face )
  *
  * set whether the front face is defined by a clockwise or counter clockwise winding order
  */
-void glh::renderer::set_front_face ( const GLenum winding )
+void glh::core::renderer::set_front_face ( const GLenum winding )
 {
     /* if a different front face, set the new face */
     if ( winding != front_face )
@@ -197,28 +197,28 @@ void glh::renderer::set_front_face ( const GLenum winding )
 /* RENDERER STATIC MEMBERS DEFINITIONS */
 
 /* clear color is black by default */
-glh::math::vec4 glh::renderer::clear_color { 0.0, 0.0, 0.0, 1.0 };
+glh::math::vec4 glh::core::renderer::clear_color { 0.0, 0.0, 0.0, 1.0 };
 
 /* depth testing disabled by default */
-bool glh::renderer::depth_test_state { false };
+bool glh::core::renderer::depth_test_state { false };
 
 /* depth mask is GL_TRUE by default */
-GLboolean glh::renderer::depth_mask { GL_TRUE };
+GLboolean glh::core::renderer::depth_mask { GL_TRUE };
 
 /* stencil testing disabled by default */
-bool glh::renderer::stencil_test_state { false };
+bool glh::core::renderer::stencil_test_state { false };
 
 /* stencil mask is 0xff by default */
-GLuint glh::renderer::stencil_mask { 0xff };
+GLuint glh::core::renderer::stencil_mask { 0xff };
 
 /* blending is disabled by default */
-bool glh::renderer::blend_state { false };
+bool glh::core::renderer::blend_state { false };
 
 /* face culling is disabled by default */
-bool glh::renderer::face_culling_state { false };
+bool glh::core::renderer::face_culling_state { false };
 
 /* cull face is GL_BACK by default */
-GLenum glh::renderer::cull_face { GL_BACK };
+GLenum glh::core::renderer::cull_face { GL_BACK };
 
 /* front face is GL_CCW by default */
-GLenum glh::renderer::front_face ( GL_CCW );
+GLenum glh::core::renderer::front_face ( GL_CCW );

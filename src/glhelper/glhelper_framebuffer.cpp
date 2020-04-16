@@ -28,8 +28,8 @@
  * width/height: the width/height of the renderbuffer
  * format: the storage format of the renderbuffer
  */
-glh::rbo::rbo ( const unsigned width, const unsigned height, const GLenum format )
-    : object { glh::object_manager::generate_rbo () }
+glh::core::rbo::rbo ( const unsigned width, const unsigned height, const GLenum format )
+    : object { object_manager::generate_rbo () }
 {
     /* bind, set the storage, unbind */
     bind ();
@@ -49,7 +49,7 @@ glh::rbo::rbo ( const unsigned width, const unsigned height, const GLenum format
  * attachment: which attachment the texture should be used as
  * mipmap: the mipmap level to attach (defaults to 0)
  */
-void glh::fbo::attach_texture2d ( const texture2d& texture, const GLenum attachment, GLint mipmap )
+void glh::core::fbo::attach_texture2d ( const texture2d& texture, const GLenum attachment, GLint mipmap )
 {
     /* bind the fbo */
     bind ();
@@ -68,7 +68,7 @@ void glh::fbo::attach_texture2d ( const texture2d& texture, const GLenum attachm
  * _rbo: the renderbuffer to attach
  * attachment: which attachment the rbo should be used as
  */
-void glh::fbo::attach_rbo ( const rbo& _rbo, const GLenum attachment )
+void glh::core::fbo::attach_rbo ( const rbo& _rbo, const GLenum attachment )
 {
     /* bind the fb */
     bind ();
@@ -84,7 +84,7 @@ void glh::fbo::attach_rbo ( const rbo& _rbo, const GLenum attachment )
  *
  * return true if the framebuffer is complete
  */
-bool glh::fbo::is_complete () const
+bool glh::core::fbo::is_complete () const
 {
     /* bind, check if is complete, unbind and return */
     bind ();

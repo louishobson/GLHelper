@@ -25,7 +25,7 @@
  *
  * non-default for the same reason as copy constructor
  */
-glh::light& glh::light::operator= ( const light& other )
+glh::lighting::light& glh::lighting::light::operator= ( const light& other )
 {
     /* set all values, ignoring cached uniform */
     position = other.position; direction = other.direction;
@@ -45,7 +45,7 @@ glh::light& glh::light::operator= ( const light& other )
  * 
  * light_uni: the uniform to apply the light to (which will be cached)
  */
-void glh::light::apply ( const struct_uniform& light_uni )
+void glh::lighting::light::apply ( const core::struct_uniform& light_uni )
 {
     /* cache uniform */
     cache_uniforms ( light_uni );
@@ -53,10 +53,10 @@ void glh::light::apply ( const struct_uniform& light_uni )
     /* now apply the cached uniform */
     apply ();
 }
-void glh::light::apply () const
+void glh::lighting::light::apply () const
 {
     /* throw if no uniform is cached */
-    if ( !cached_uniforms ) throw uniform_exception { "attempted to apply light to uniform with out a complete uniform cache" };
+    if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to apply light to uniform with out a complete uniform cache" };
 
     /* now set all of the uniform values */
     cached_uniforms->position_uni.set_vector ( position );
@@ -78,7 +78,7 @@ void glh::light::apply () const
  * 
  * light_uni: the uniform to cache
  */
-void glh::light::cache_uniforms ( const struct_uniform& light_uni )
+void glh::lighting::light::cache_uniforms ( const core::struct_uniform& light_uni )
 {
     /* cache uniform, if not already cached */
     if ( !cached_uniforms || cached_uniforms->light_uni != light_uni )
@@ -111,7 +111,7 @@ void glh::light::cache_uniforms ( const struct_uniform& light_uni )
  * 
  * light_system_uni: the uniform to apply the lights to
  */
-void glh::light_system::apply ( const struct_uniform& light_system_uni )
+void glh::lighting::light_system::apply ( const core::struct_uniform& light_system_uni )
 {
     /* cache uniform */
     cache_uniforms ( light_system_uni );
@@ -119,10 +119,10 @@ void glh::light_system::apply ( const struct_uniform& light_system_uni )
     /* apply */
     apply ();
 }
-void glh::light_system::apply () const
+void glh::lighting::light_system::apply () const
 {
     /* throw if no uniform is cached */
-    if ( !cached_uniforms ) throw uniform_exception { "attempted to apply light_system to uniform with out a complete uniform cache" };
+    if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to apply light_system to uniform with out a complete uniform cache" };
 
     /* apply each light collection in turn */
     dircoll.apply ();
@@ -136,7 +136,7 @@ void glh::light_system::apply () const
  * 
  * light_system_uni: the uniform to cache
  */
-void glh::light_system::cache_uniforms ( const struct_uniform& light_system_uni )
+void glh::lighting::light_system::cache_uniforms ( const core::struct_uniform& light_system_uni )
 {
     /* if not already cached, cache uniforms */
     if ( !cached_uniforms || cached_uniforms->light_system_uni != light_system_uni )
@@ -160,7 +160,7 @@ void glh::light_system::cache_uniforms ( const struct_uniform& light_system_uni 
  *
  * reload the light collections based on the currently cached uniforms
  */
-void glh::light_system::reload_uniforms ()
+void glh::lighting::light_system::reload_uniforms ()
 {
     /* recache uniforms */
     cache_uniforms ( cached_uniforms->light_system_uni );

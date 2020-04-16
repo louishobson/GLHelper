@@ -29,7 +29,7 @@
  * data: pointer to data
  * usage: the storage method for the data
  */
-void glh::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage ) 
+void glh::core::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage ) 
 {
     /* bind the buffer */
     bind ();
@@ -43,7 +43,7 @@ void glh::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data, cons
  *
  * clear the data from the buffer
  */
-void glh::buffer::clear_data ()
+void glh::core::buffer::clear_data ()
 {
     /* bind the buffer */
     bind ();
@@ -57,36 +57,36 @@ void glh::buffer::clear_data ()
  *
  * bind the buffer
  */
-void glh::buffer::bind () const
+void glh::core::buffer::bind () const
 {
     /* split for different targets */
     if ( target == GL_ARRAY_BUFFER ) object_manager::bind_vbo ( id ); else
     if ( target == GL_ELEMENT_ARRAY_BUFFER ) object_manager::bind_ebo ( id ); else
-    throw object_management_exception { "attempted to bind unknown buffer object" };
+    throw exception::object_management_exception { "attempted to bind unknown buffer object" };
 }
 
 /* unbind
  *
  * unbind the buffer's target
  */
-void glh::buffer::unbind () const
+void glh::core::buffer::unbind () const
 {
     /* split for different targets */
     if ( target == GL_ARRAY_BUFFER ) object_manager::unbind_vbo ( id ); else
     if ( target == GL_ELEMENT_ARRAY_BUFFER ) object_manager::unbind_ebo ( id ); else
-    throw object_management_exception { "attempted to unbind unknown buffer object" };
+    throw exception::object_management_exception { "attempted to unbind unknown buffer object" };
 }
 
 /* is_bound
  *
  * checks if the buffer is bound
  */
-bool glh::buffer::is_bound () const
+bool glh::core::buffer::is_bound () const
 {
     /* split for different targets */
     if ( target == GL_ARRAY_BUFFER ) return object_manager::is_vbo_bound ( id ); else
     if ( target == GL_ELEMENT_ARRAY_BUFFER ) return object_manager::is_ebo_bound ( id ); else
-    throw object_management_exception { "attempted to check binding of unknown buffer object" };
+    throw exception::object_management_exception { "attempted to check binding of unknown buffer object" };
 }
 
 
@@ -107,7 +107,7 @@ bool glh::buffer::is_bound () const
  * stride: offset between consecutive vertices in bytes
  * offset: the offset from the start of the vertex data in bytes
  */
-void glh::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, const GLint size, const GLenum type, const GLboolean norm, const GLsizei stride, const GLvoid * offset )
+void glh::core::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, const GLint size, const GLenum type, const GLboolean norm, const GLsizei stride, const GLvoid * offset )
 {
     /* bind vao */
     bind ();
@@ -131,7 +131,7 @@ void glh::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, const G
  * 
  * attrib: the attribute to configure (>=0)
  */
-void glh::vao::enable_vertex_attrib ( const GLuint attrib )
+void glh::core::vao::enable_vertex_attrib ( const GLuint attrib )
 {
     /* bind vao, enable, unbind */
     bind ();
@@ -145,7 +145,7 @@ void glh::vao::enable_vertex_attrib ( const GLuint attrib )
  * 
  * attrib: the attribute to configure (>=0)
  */
-void glh::vao::disable_vertex_attrib ( const GLuint attrib )
+void glh::core::vao::disable_vertex_attrib ( const GLuint attrib )
 {
     /* bind vao, disable, unbind */
     bind ();
@@ -159,7 +159,7 @@ void glh::vao::disable_vertex_attrib ( const GLuint attrib )
  *
  * buff: the ebo to bind
  */
-void glh::vao::bind_ebo ( const ebo& buff )
+void glh::core::vao::bind_ebo ( const ebo& buff )
 {
     /* bind vao, then ebo */
     bind ();

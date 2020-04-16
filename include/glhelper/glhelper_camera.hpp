@@ -42,18 +42,21 @@
 
 namespace glh
 {
-    /* class camera
-     *
-     * handles both the view and projection matrix
-     * abstracts movement and rotation
-     */
-    class camera;
+    namespace camera
+    {
+        /* class camera
+         *
+         * handles both the view and projection matrix
+         * abstracts movement and rotation
+         */
+        class camera;
 
-    /* class mirror_camera
-     *
-     * takes a camera and mirror dimensions and position to make a camera for the mirror surface
-     */
-    class mirror_camera;
+        /* class mirror_camera
+         *
+         * takes a camera and mirror dimensions and position to make a camera for the mirror surface
+         */
+        class mirror_camera;
+    }
 }
 
 
@@ -65,7 +68,7 @@ namespace glh
  * handles both the view and projection matrix
  * abstracts movement and rotation
  */
-class glh::camera
+class glh::camera::camera
 {
 public:
 
@@ -153,7 +156,7 @@ public:
      * view_uni: 4x4 matrix uniform for the view matrix
      * proj_uni: 4x4 matrix uniform for the projection matrix
      */
-    void apply ( const uniform& view_uni, const uniform& proj_uni );
+    void apply ( const core::uniform& view_uni, const core::uniform& proj_uni );
     void apply () const;
 
     /* cache_view_uniform
@@ -162,7 +165,7 @@ public:
      * 
      * view_uni: 4x4 matrix uniform for the view matrix
      */
-    void cache_view_uniform ( const uniform& view_uni );
+    void cache_view_uniform ( const core::uniform& view_uni );
 
     /* cache_proj_uniform
      *
@@ -170,7 +173,7 @@ public:
      * 
      * proj_uni: 4x4 matrix uniform for the projection matrix
      */
-    void cache_proj_uniform ( const uniform& proj_uni );
+    void cache_proj_uniform ( const core::uniform& proj_uni );
 
     /* cache_uniforms
      *
@@ -179,7 +182,7 @@ public:
      * view_uni: 4x4 matrix uniform for the view matrix
      * proj_uni: 4x4 matrix uniform for the projection matrix
      */
-    void cache_uniforms ( const uniform& view_uni, const uniform& proj_uni );
+    void cache_uniforms ( const core::uniform& view_uni, const core::uniform& proj_uni );
 
 
 
@@ -293,8 +296,8 @@ private:
    
 
     /* cached uniforms */
-    std::unique_ptr<uniform> cached_view_uniform;
-    std::unique_ptr<uniform> cached_proj_uniform;
+    std::unique_ptr<core::uniform> cached_view_uniform;
+    std::unique_ptr<core::uniform> cached_proj_uniform;
 
     
 
@@ -328,7 +331,7 @@ private:
  *
  * takes a camera and mirror dimensions and position to make a camera for the mirror surface
  */
-class glh::mirror_camera
+class glh::camera::mirror_camera
 {
 public:
 

@@ -32,8 +32,8 @@
  * 
  * _path: path to the image for the texture
  */
-glh::texture2d::texture2d ( const std::string& _path )
-    : object { glh::object_manager::generate_texture () }
+glh::core::texture2d::texture2d ( const std::string& _path )
+    : object { object_manager::generate_texture () }
     , path { _path }
     , internal_format ( GL_RGBA )
     , format { GL_RGBA }
@@ -43,7 +43,7 @@ glh::texture2d::texture2d ( const std::string& _path )
     unsigned char * image_data = stbi_load ( path.c_str (), &width, &height, &channels, 4 );
 
     /* check for error */
-    if ( !image_data ) throw texture_exception { "failed to load texture from file at path " + path };
+    if ( !image_data ) throw exception::texture_exception { "failed to load texture from file at path " + path };
 
     /* bind texture object */
     bind ();
@@ -78,8 +78,8 @@ glh::texture2d::texture2d ( const std::string& _path )
  * _type: the type of the data (specific type macro with bit arrangements)
  * data: the data to put in the texture (defaults to NULL)
  */
-glh::texture2d::texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data )
-    : object { glh::object_manager::generate_texture () }
+glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data )
+    : object { object_manager::generate_texture () }
     , path {}
     , internal_format { _internal_format }
     , format { _format }
@@ -104,13 +104,13 @@ glh::texture2d::texture2d ( const unsigned _width, const unsigned _height, const
  *
  * set the texture filtering parameters of magnified/minified texture
  */
-void glh::texture2d::set_mag_filter ( const GLenum opt ) 
+void glh::core::texture2d::set_mag_filter ( const GLenum opt ) 
 { 
     /* bind, set paramater, unbind */
     bind (); 
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, opt ); 
 }
-void glh::texture2d::set_min_filter ( const GLenum opt ) 
+void glh::core::texture2d::set_min_filter ( const GLenum opt ) 
 { 
     /* bind, set paramater, unbind */
     bind (); 
@@ -121,25 +121,25 @@ void glh::texture2d::set_min_filter ( const GLenum opt )
  *
  * set the wrapping options for each coordinate axis, or all at once
  */
-void glh::texture2d::set_s_wrap ( const GLenum opt ) 
+void glh::core::texture2d::set_s_wrap ( const GLenum opt ) 
 { 
     /* bind, set paramater, unbind */
     bind (); 
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, opt );
 }
-void glh::texture2d::set_t_wrap ( const GLenum opt ) 
+void glh::core::texture2d::set_t_wrap ( const GLenum opt ) 
 { 
     /* bind, set paramater, unbind */
     bind (); 
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, opt );
 }
-void glh::texture2d::set_r_wrap ( const GLenum opt ) 
+void glh::core::texture2d::set_r_wrap ( const GLenum opt ) 
 { 
     /* bind, set paramater, unbind */
     bind (); 
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, opt );
 }
-void glh::texture2d::set_wrap ( const GLenum opt ) 
+void glh::core::texture2d::set_wrap ( const GLenum opt ) 
 {
     /* bind, set paramaters, unbind */
     bind (); 
@@ -152,7 +152,7 @@ void glh::texture2d::set_wrap ( const GLenum opt )
  *
  * generate texture mipmap
  */
-void glh::texture2d::generate_mipmap ()
+void glh::core::texture2d::generate_mipmap ()
 {
     /* bind and generate mipmap */
     bind ();

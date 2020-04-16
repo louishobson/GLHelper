@@ -59,12 +59,6 @@ namespace glh
         typedef vector<3> vec3;
         typedef vector<4> vec4;
 
-        /* class vector_exception : exception
-        *
-        * for exceptions related to vectors
-        */
-        class vector_exception;
-
         
 
         /* MATRIX MODIFIER FUNCTIONS DECLARATIONS */
@@ -108,6 +102,15 @@ namespace glh
          */
         template<unsigned M> double angle ( const vector<M>& lhs, const vector<M>& rhs );
 
+    }
+
+    namespace exception
+    {
+        /* class vector_exception : exception
+         *
+         * for exceptions related to vectors
+         */
+        class vector_exception;
     }
 }
 
@@ -303,7 +306,7 @@ template<unsigned M> std::ostream& operator<< ( std::ostream& os, const glh::mat
  *
  * for exceptions related to vectors
  */
-class glh::math::vector_exception : public exception
+class glh::exception::vector_exception : public exception
 {
 public:
 
@@ -350,13 +353,13 @@ template<unsigned _M> inline glh::math::vector<M>::vector ( const vector<_M>& ot
 template<unsigned M> inline double& glh::math::vector<M>::at ( const unsigned i )
 {
     /* check bounds then return if valid */
-    if ( i >= M ) throw vector_exception { "vector indices are out of bounds" };
+    if ( i >= M ) throw exception::vector_exception { "vector indices are out of bounds" };
     return data.at ( i );
 }
 template<unsigned M> inline const double& glh::math::vector<M>::at ( const unsigned i ) const
 {
     /* check bounds then return if valid */
-    if ( i >= M ) throw matrix_exception { "vector indices are out of bounds" };
+    if ( i >= M ) throw exception::vector_exception { "vector indices are out of bounds" };
     return data.at ( i );
 }
 

@@ -42,17 +42,20 @@
 
 namespace glh
 {
-    /* class rbo : object
-     *
-     * renderbuffer class
-     */
-    class rbo;
+    namespace core
+    {
+        /* class rbo : object
+         *
+         * renderbuffer class
+         */
+        class rbo;
 
-    /* class fbo : object
-     *
-     * framebuffer class
-     */
-    class fbo;
+        /* class fbo : object
+         *
+         * framebuffer class
+         */
+        class fbo;
+    }
 }
 
 
@@ -63,7 +66,7 @@ namespace glh
  *
  * renderbuffer class
  */
-class glh::rbo : public object
+class glh::core::rbo : public object
 {
 public:
 
@@ -97,25 +100,25 @@ public:
      *
      * destroy the renderbuffer
      */
-    void destroy () { glh::object_manager::destroy_rbo ( id ); id = 0; }
+    void destroy () { object_manager::destroy_rbo ( id ); id = 0; }
 
     /* bind
      *
      * bind the renderbuffer
      */
-    void bind () const { glh::object_manager::bind_rbo ( id ); }
+    void bind () const { object_manager::bind_rbo ( id ); }
 
     /* unbind
      *
      * unbind the renderbuffer, if already bound
      */
-    void unbind () const { glh::object_manager::unbind_rbo ( id ); }
+    void unbind () const { object_manager::unbind_rbo ( id ); }
 
     /* is_bound
      *
      * return true if the renderbuffer is bound
      */
-    bool is_bound () const { return glh::object_manager::is_rbo_bound ( id ); }
+    bool is_bound () const { return object_manager::is_rbo_bound ( id ); }
 };
 
 
@@ -126,7 +129,7 @@ public:
  *
  * framebuffer class
  */
-class glh::fbo : public object
+class glh::core::fbo : public object
 {
 public: 
 
@@ -135,7 +138,7 @@ public:
      * construct empty framebuffer
      */
     fbo ()
-        : object { glh::object_manager::generate_fbo () }
+        : object { object_manager::generate_fbo () }
     {}
 
     /* deleted copy constructor */
@@ -185,25 +188,25 @@ public:
      *
      * destroys the object, setting its id to 0
      */
-    void destroy () { glh::object_manager::destroy_fbo ( id ); id = 0; }
+    void destroy () { object_manager::destroy_fbo ( id ); id = 0; }
 
     /* bind
      *
      * bind the fbo
      */
-    void bind () const { glh::object_manager::bind_fbo ( id ); }
+    void bind () const { object_manager::bind_fbo ( id ); }
 
     /* unbind
      *
      * unbind the fbo, if bound
      */
-    void unbind () const { glh::object_manager::unbind_fbo ( id ); }
+    void unbind () const { object_manager::unbind_fbo ( id ); }
 
     /* is_bound
      *
      * return true if the fbo is bound
      */
-    bool is_bound () const { return glh::object_manager::is_fbo_bound ( id ); }
+    bool is_bound () const { return object_manager::is_fbo_bound ( id ); }
 
 };
 

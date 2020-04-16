@@ -39,20 +39,29 @@
 
 namespace glh
 {
-    /* forward declaration of window due to circular dependancy */
-    class window;
+    namespace glfw
+    {
+        /* forward declaration of window due to circular dependancy */
+        class window;
+    }
 
-    /* class glad_loader, object glad
-     *
-     * controls glad
-     */
-    class glad_loader;
+    namespace core
+    {
+        /* class glad_loader, object glad
+         *
+         * controls glad
+         */
+        class glad_loader;
+    }
 
-    /* class glad_exception : exception
-     *
-     * for exceptions related to glad
-     */
-    class glad_exception;
+    namespace exception
+    {
+        /* class glad_exception : exception
+         *
+         * for exceptions related to glad
+         */
+        class glad_exception;
+    }
 }
 
 
@@ -63,7 +72,7 @@ namespace glh
  *
  * controls glad
  */
-class glh::glad_loader
+class glh::core::glad_loader
 {
 public:    
 
@@ -101,7 +110,7 @@ public:
      * 
      * return: boolean representing if is currently loaded
      */
-    static bool is_window_loaded ( const window& win );
+    static bool is_window_loaded ( const glfw::window& win );
 
 
 
@@ -121,7 +130,7 @@ private:
  *
  * for exceptions related to glad
  */
-class glh::glad_exception : public exception
+class glh::exception::glad_exception : public exception
 {
 public:
 

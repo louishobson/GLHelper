@@ -25,7 +25,7 @@
  *
  * give parameters for look_at and perspective_fov
  */
-glh::camera::camera ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far )
+glh::camera::camera::camera ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far )
     : position { _position }
     , x { 0. }
     , y { 0. }
@@ -62,7 +62,7 @@ glh::camera::camera ( const math::vec3& _position, const math::vec3& _direction,
  * when restricted, roll is disabled, and movement occures irrespective of pitch
  * pitch is limited to 90 degrees up and down
  */
-void glh::camera::enable_restrictive_mode ()
+void glh::camera::camera::camera::enable_restrictive_mode ()
 {
     /* set to true */
     restrictive_mode = true;
@@ -72,7 +72,7 @@ void glh::camera::enable_restrictive_mode ()
     restrict_y = y;
     restrict_z = z;
 }
-void glh::camera::disable_restrictive_mode () 
+void glh::camera::camera::camera::disable_restrictive_mode () 
 {
     /* purely set to false */ 
     restrictive_mode = false;
@@ -88,7 +88,7 @@ void glh::camera::disable_restrictive_mode ()
  *
  * return: new position vector
  */
-const glh::math::vec3& glh::camera::move ( const math::vec3& vec )
+const glh::math::vec3& glh::camera::camera::camera::move ( const math::vec3& vec )
 {
     
     /* move position
@@ -122,7 +122,7 @@ const glh::math::vec3& glh::camera::move ( const math::vec3& vec )
  * 
  * return: new position vector
  */
-const glh::math::vec3& glh::camera::move_global ( const math::vec3& vec )
+const glh::math::vec3& glh::camera::camera::camera::move_global ( const math::vec3& vec )
 {
     /* set view as changed */
     view_change = true;
@@ -140,7 +140,7 @@ const glh::math::vec3& glh::camera::move_global ( const math::vec3& vec )
  * 
  * return: the position vector
  */
-const glh::math::vec3& glh::camera::pitch ( const double arg )
+const glh::math::vec3& glh::camera::camera::camera::pitch ( const double arg )
 {
     /* if non-restrictive, rotate y and z around x axis */
     if ( !restrictive_mode )
@@ -172,7 +172,7 @@ const glh::math::vec3& glh::camera::pitch ( const double arg )
     view_change = true;
     return position;
 }
-const glh::math::vec3& glh::camera::yaw ( const double arg )
+const glh::math::vec3& glh::camera::camera::camera::yaw ( const double arg )
 {
     /* if non-restrictive, rotate x and z around the y axis */
     if ( !restrictive_mode )
@@ -193,7 +193,7 @@ const glh::math::vec3& glh::camera::yaw ( const double arg )
     view_change = true;
     return position;
 }
-const glh::math::vec3& glh::camera::roll ( const double arg )
+const glh::math::vec3& glh::camera::camera::camera::roll ( const double arg )
 {
     /* if non-restrictive, rotate x and y around the z axis */
     if ( !restrictive_mode )
@@ -216,7 +216,7 @@ const glh::math::vec3& glh::camera::roll ( const double arg )
  * view_uni: 4x4 matrix uniform for the view matrix
  * proj_uni: 4x4 matrix uniform for the projection matrix
  */
-void glh::camera::apply ( const uniform& view_uni, const uniform& proj_uni )
+void glh::camera::camera::camera::apply ( const core::uniform& view_uni, const core::uniform& proj_uni )
 {
     /* cache the uniforms */
     cache_view_uniform ( view_uni );
@@ -225,10 +225,10 @@ void glh::camera::apply ( const uniform& view_uni, const uniform& proj_uni )
     /* apply */
     apply ();
 }
-void glh::camera::apply () const
+void glh::camera::camera::camera::apply () const
 {
     /* throw if uniforms are not already cached */
-    if ( !cached_view_uniform || !cached_proj_uniform ) throw uniform_exception { "attempted to apply camera without a complete uniform cache" };
+    if ( !cached_view_uniform || !cached_proj_uniform ) throw exception::uniform_exception { "attempted to apply camera without a complete uniform cache" };
 
     /* set the matrices */
     cached_view_uniform->set_matrix ( get_view () );
@@ -241,12 +241,12 @@ void glh::camera::apply () const
  * 
  * view_uni: 4x4 matrix uniform for the view matrix
  */
-void glh::camera::cache_view_uniform ( const uniform& view_uni )
+void glh::camera::camera::camera::cache_view_uniform ( const core::uniform& view_uni )
 {
     /* cache uniform if not already cached */
     if ( !cached_view_uniform || * cached_view_uniform != view_uni )
     {
-        cached_view_uniform.reset ( new uniform { view_uni } );
+        cached_view_uniform.reset ( new core::uniform { view_uni } );
         view_change = true;
     }
 }
@@ -257,12 +257,12 @@ void glh::camera::cache_view_uniform ( const uniform& view_uni )
  * 
  * proj_uni: 4x4 matrix uniform for the projection matrix
  */
-void glh::camera::cache_proj_uniform ( const uniform& proj_uni )
+void glh::camera::camera::camera::cache_proj_uniform ( const core::uniform& proj_uni )
 {
     /* cache uniform if not already cached */
     if ( !cached_proj_uniform || * cached_proj_uniform != proj_uni )
     {
-        cached_proj_uniform.reset ( new uniform { proj_uni } );
+        cached_proj_uniform.reset ( new core::uniform { proj_uni } );
         proj_change = true;
     }
 }
@@ -273,7 +273,7 @@ void glh::camera::cache_proj_uniform ( const uniform& proj_uni )
  * view_uni: 4x4 matrix uniform for the view matrix
  * proj_uni: 4x4 matrix uniform for the projection matrix
  */
-void glh::camera::cache_uniforms ( const uniform& view_uni, const uniform& proj_uni )
+void glh::camera::camera::camera::cache_uniforms ( const core::uniform& view_uni, const core::uniform& proj_uni )
 {
     /* cache both uniforms */
     cache_view_uniform ( view_uni );
@@ -284,7 +284,7 @@ void glh::camera::cache_uniforms ( const uniform& view_uni, const uniform& proj_
  *
  * get the view matrix
  */
-const glh::math::mat4& glh::camera::get_view () const
+const glh::math::mat4& glh::camera::camera::camera::get_view () const
 {
     /* update and return view */
     update_view ();
@@ -295,7 +295,7 @@ const glh::math::mat4& glh::camera::get_view () const
  *
  * get the projection matrix
  */
-const glh::math::mat4& glh::camera::get_proj () const
+const glh::math::mat4& glh::camera::camera::get_proj () const
 {
     /* update and return proj */
     update_proj ();
@@ -306,7 +306,7 @@ const glh::math::mat4& glh::camera::get_proj () const
  *
  * recieve the transformation
  */
-const glh::math::mat4& glh::camera::get_trans () const
+const glh::math::mat4& glh::camera::camera::get_trans () const
 {
     /* update and return trans */
     update_trans ();
@@ -317,7 +317,7 @@ const glh::math::mat4& glh::camera::get_trans () const
  *
  * update the view matrix
  */
-bool glh::camera::update_view () const
+bool glh::camera::camera::update_view () const
 {
     /* if view has been changed, update */
     if ( view_change )
@@ -335,7 +335,7 @@ bool glh::camera::update_view () const
  *
  * update the projection matrix
  */
-bool glh::camera::update_proj () const
+bool glh::camera::camera::update_proj () const
 {
     /* if proj has been changed, update */
     if ( proj_change )
@@ -356,7 +356,7 @@ bool glh::camera::update_proj () const
  * 
  * return: bool for if any changes were applied
  */
-bool glh::camera::update_trans () const
+bool glh::camera::camera::update_trans () const
 {
     /* if any change occured in updating view and proj, update trans */
     bool view_update = update_view ();

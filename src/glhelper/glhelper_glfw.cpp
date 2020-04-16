@@ -28,7 +28,7 @@
  * creates a working glfw window
  * glad will be implicity loaded to the window's context
  */
-glh::window::window ( const std::string& title, const int width, const int height )
+glh::glfw::window::window ( const std::string& title, const int width, const int height )
     : managed { true }
 {
     /* register object */
@@ -41,7 +41,7 @@ glh::window::window ( const std::string& title, const int width, const int heigh
     if ( !winptr )
     {
         /* failed to create window, so produce error */
-        throw glfw_exception { "GLH ERROR: failed to create GLFW window" };
+        throw exception::glfw_exception { "GLH ERROR: failed to create GLFW window" };
     }
 
     /* make window current */
@@ -64,7 +64,7 @@ glh::window::window ( const std::string& title, const int width, const int heigh
  * _winptr: pointer to GLFWwindow
  * _managed: whether the window should be deleted on destruction of the object (defaults to true)
  */
-glh::window::window ( GLFWwindow * _winptr, const bool _managed )
+glh::glfw::window::window ( GLFWwindow * _winptr, const bool _managed )
     : winptr { _winptr }
     , managed { _managed }
 {
@@ -75,12 +75,12 @@ glh::window::window ( GLFWwindow * _winptr, const bool _managed )
     if ( !winptr )
     {
         /* window is invalid, so produce exception */
-        throw glfw_exception { "GLH ERROR: failed to copy valid GLFW window" };
+        throw exception::glfw_exception { "GLH ERROR: failed to copy valid GLFW window" };
     }    
 }
 
 /* destructor */
-glh::window::~window ()
+glh::glfw::window::~window ()
 {
     /* if managed, destroy window */
     if ( managed ) glfwDestroyWindow ( winptr );
@@ -98,7 +98,7 @@ glh::window::~window ()
  * run any callbacks set for events which have occured since the last poll
  * immediately return even if no events have occured
  */
-void glh::window::poll_events ()
+void glh::glfw::window::poll_events ()
 {
     /* make window current, poll events and return */
     make_current ();
@@ -112,7 +112,7 @@ void glh::window::poll_events ()
  * 
  * timeout: seconds to wait for events before returning (or 0 for infinite timeout)
  */
-void glh::window::wait_events ( const double timeout )
+void glh::glfw::window::wait_events ( const double timeout )
 {
     /* make window current */
     make_current ();
@@ -127,7 +127,7 @@ void glh::window::wait_events ( const double timeout )
  *
  * post an empty event to cause wait event function to return
  */
-void glh::window::post_empty_event ()
+void glh::glfw::window::post_empty_event ()
 {
     /* make window current */
     make_current ();
@@ -140,7 +140,7 @@ void glh::window::post_empty_event ()
  *
  * return: boolean as to whether the window should close or not
  */
-bool glh::window::should_close () const
+bool glh::glfw::window::should_close () const
 {
     /* return if window should close */
     return glfwWindowShouldClose ( winptr );
@@ -150,7 +150,7 @@ bool glh::window::should_close () const
  *
  * set close flag on window
  */
-void glh::window::set_should_close ()
+void glh::glfw::window::set_should_close ()
 {
     /* set should close */
     glfwWindowShouldClose ( winptr );
@@ -162,7 +162,7 @@ void glh::window::set_should_close ()
  * 
  * return: dimensions_t containing dimensions info
  */
-glh::window::dimensions_t glh::window::get_dimensions () const
+glh::glfw::window::dimensions_t glh::glfw::window::get_dimensions () const
 {
     /* generate dimension info */
     dimensions_t dimensions;
@@ -188,7 +188,7 @@ glh::window::dimensions_t glh::window::get_dimensions () const
  * 
  * return: GLFW_TRUE/FALSE for if the key has been pressed since last poll
  */
-glh::window::keyinfo_t glh::window::get_key ( const int key ) const
+glh::glfw::window::keyinfo_t glh::glfw::window::get_key ( const int key ) const
 {
     /* generate the keyinfo */
     keyinfo_t keyinfo;
@@ -207,7 +207,7 @@ glh::window::keyinfo_t glh::window::get_key ( const int key ) const
  * 
  * return: mouseinfo_t containing mouse info
  */
-glh::window::mouseinfo_t glh::window::get_mouseinfo () const
+glh::glfw::window::mouseinfo_t glh::glfw::window::get_mouseinfo () const
 {
     /* generate raw mouseinfo */
     mouseinfo_t mouseinfo;
@@ -237,7 +237,7 @@ glh::window::mouseinfo_t glh::window::get_mouseinfo () const
  *
  * return: timeinfo_t containing info about poll times
  */
-glh::window::timeinfo_t glh::window::get_timeinfo () const
+glh::glfw::window::timeinfo_t glh::glfw::window::get_timeinfo () const
 {
     /* generate timeinfo */
     timeinfo_t timeinfo;
@@ -264,7 +264,7 @@ glh::window::timeinfo_t glh::window::get_timeinfo () const
  * mode: the mode to change
  * value: the value to change it to
  */
-void glh::window::set_input_mode ( const int mode, const int value )
+void glh::glfw::window::set_input_mode ( const int mode, const int value )
 {
     /* set the input mode */
     glfwSetInputMode ( winptr, mode, value );
@@ -278,7 +278,7 @@ void glh::window::set_input_mode ( const int mode, const int value )
  *
  * makes the window current
  */
-void glh::window::make_current () const
+void glh::glfw::window::make_current () const
 { 
     /* if window not already current */
     if ( !is_current () )
@@ -286,7 +286,7 @@ void glh::window::make_current () const
         /* make the context current */
         glfwMakeContextCurrent ( winptr );
         /* tell the glad loader to load to the current context */
-        glad_loader::load ();
+        core::glad_loader::load ();
     }
 }
 
@@ -294,7 +294,7 @@ void glh::window::make_current () const
  *
  * checks if the window is current
  */
-bool glh::window::is_current () const
+bool glh::glfw::window::is_current () const
 {
     /* return true of context is current */
     return ( glfwGetCurrentContext () == winptr );
@@ -304,7 +304,7 @@ bool glh::window::is_current () const
  *
  * swap the GLFW buffers
  */
-void glh::window::swap_buffers () 
+void glh::glfw::window::swap_buffers () 
 { 
     /* swap the buffers */
     glfwSwapBuffers ( winptr ); 
@@ -320,13 +320,13 @@ void glh::window::swap_buffers ()
  * is used to know when to initialise or terminate glfw
  * automatically initialised to 0
  */
-int glh::window::object_count = 0;
+int glh::glfw::window::object_count = 0;
 
 /* register_object
  *
  * increment object_count and initialise glfw if necessary
  */
-void glh::window::register_object ()
+void glh::glfw::window::register_object ()
 {
     /* increment object count and initialise glfw if was zero */
     if ( object_count++ == 0 ) 
@@ -344,7 +344,7 @@ void glh::window::register_object ()
  *
  * decrement object_count and terminate glfw if necessary
  */
-void glh::window::unregister_object ()
+void glh::glfw::window::unregister_object ()
 {
     /* decrement object count and terminate glfw if is now zero */
     if ( --object_count == 0 ) 

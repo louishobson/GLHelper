@@ -36,11 +36,14 @@
 
 namespace glh
 {
-    /* class object
-     *
-     * abstract base class to represent any OpenGL object
-     */
-    class object;
+    namespace core
+    {
+        /* class object
+         *
+         * abstract base class to represent any OpenGL object
+         */
+        class object;
+    }
 }
 
 
@@ -51,7 +54,7 @@ namespace glh
  *
  * abstract base class to represent any OpenGL object
  */
-class glh::object
+class glh::core::object
 {
 public:
 
@@ -145,8 +148,8 @@ protected:
  * 
  * return: boolean representing equality
  */
-bool inline operator== ( const glh::object& lhs, const glh::object& rhs ) { return ( lhs.internal_id () == rhs.internal_id () ); }
-bool inline operator!= ( const glh::object& lhs, const glh::object& rhs ) { return ( lhs.internal_id () != rhs.internal_id () ); }
+bool inline operator== ( const glh::core::object& lhs, const glh::core::object& rhs ) { return ( lhs.internal_id () == rhs.internal_id () ); }
+bool inline operator!= ( const glh::core::object& lhs, const glh::core::object& rhs ) { return ( lhs.internal_id () != rhs.internal_id () ); }
 
 
 

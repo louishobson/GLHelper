@@ -39,29 +39,32 @@
 
 namespace glh
 {
-    /* class buffer : object
-     *
-     * base class for storing a buffer
-     */
-    class buffer;
+    namespace core
+    {
+        /* class buffer : object
+         *
+         * base class for storing a buffer
+         */
+        class buffer;
 
-    /* class vbo : buffer
-     *
-     * vertex buffer object
-     */
-    class vbo;
+        /* class vbo : buffer
+         *
+         * vertex buffer object
+         */
+        class vbo;
 
-    /* class ebo : buffer
-     *
-     * element buffer object
-     */
-    class ebo;
+        /* class ebo : buffer
+         *
+         * element buffer object
+         */
+        class ebo;
 
-    /* class vao : object
-     *
-     * vertex array object
-     */
-    class vao;
+        /* class vao : object
+         *
+         * vertex array object
+         */
+        class vao;
+    }
 }
 
 
@@ -72,7 +75,7 @@ namespace glh
  *
  * base class for storing a buffer
  */
-class glh::buffer : public object
+class glh::core::buffer : public object
 {
 public:
 
@@ -83,7 +86,7 @@ public:
      * _target: the target for the buffer
      */
     buffer ( const GLenum _target, const GLenum _reverse_target )
-        : object { glh::object_manager::generate_buffer () }
+        : object { object_manager::generate_buffer () }
         , target { _target }
         , reverse_target { _reverse_target }
     {}
@@ -98,7 +101,7 @@ public:
      * usage: the storage method for the data
      */
     buffer ( const GLenum _target, const GLenum _reverse_target, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
-        : object { glh::object_manager::generate_buffer () }
+        : object { object_manager::generate_buffer () }
         , target { _target }
         , reverse_target { _reverse_target }
     { buffer_data ( size, data, usage ); }
@@ -203,7 +206,7 @@ private:
  *
  * vertex buffer object
  */
-class glh::vbo : public buffer 
+class glh::core::vbo : public buffer 
 {
 public:
 
@@ -255,7 +258,7 @@ public:
  *
  * element buffer object
  */
-class glh::ebo : public buffer 
+class glh::core::ebo : public buffer 
 {
 public:
 
@@ -307,7 +310,7 @@ public:
  *
  * vertex array object
  */
-class glh::vao : public object
+class glh::core::vao : public object
 {
 public:
 
@@ -316,7 +319,7 @@ public:
      * creates a vertex array object without any vbo or ebo bound
      */
     vao ()
-        : object { glh::object_manager::generate_vao () }
+        : object { object_manager::generate_vao () }
     {}
 
     /* deleted copy constructor */

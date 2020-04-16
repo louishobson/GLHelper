@@ -37,13 +37,16 @@
 
 namespace glh
 {
-    /* class renderer
-     *
-     * base class for renderable objects
-     * indented to be inherited from to create more complex classes
-     * contains static methods to configure OpenGL
-     */
-    class renderer;
+    namespace core
+    {
+        /* class renderer
+         *
+         * base class for renderable objects
+         * indented to be inherited from to create more complex classes
+         * contains static methods to configure OpenGL
+         */
+        class renderer;
+    }
 }
 
 
@@ -56,7 +59,7 @@ namespace glh
  * indented to be inherited from to create more complex classes
  * contains static methods to configure OpenGL
  */
-class glh::renderer
+class glh::core::renderer
 {
 public:
 

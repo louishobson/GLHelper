@@ -36,11 +36,14 @@
 
 namespace glh
 {
-    /* class exception : std::exception
-     *
-     * base class for exceptions in glh
-     */
-    class exception;
+    namespace exception
+    {
+        /* class exception : std::exception
+         *
+         * base class for exceptions in glh
+         */
+        class exception;
+    }
 }
 
 
@@ -51,7 +54,7 @@ namespace glh
  *
  * base class for exceptions in glh
  */
-class glh::exception : public std::exception
+class glh::exception::exception : public std::exception
 {
 public:
     

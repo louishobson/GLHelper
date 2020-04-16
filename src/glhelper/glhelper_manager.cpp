@@ -27,7 +27,7 @@
  *
  * generate a buffer object
  */
-GLuint glh::object_manager::generate_buffer ()
+GLuint glh::core::object_manager::generate_buffer ()
 {
     /* assert opengl is loaded */
     asset_opengl_loaded ();
@@ -42,7 +42,7 @@ GLuint glh::object_manager::generate_buffer ()
  *
  * destroy a buffer object, unbinding it from any bindings
  */
-void glh::object_manager::destroy_buffer ( const GLuint id )
+void glh::core::object_manager::destroy_buffer ( const GLuint id )
 {
     /* if not zero, remove bind entry if bound and then destroy */
     if ( id > 0 )
@@ -59,10 +59,10 @@ void glh::object_manager::destroy_buffer ( const GLuint id )
  *
  * bind a buffer object as a vbo
  */
-void glh::object_manager::bind_vbo ( const GLuint id )
+void glh::core::object_manager::bind_vbo ( const GLuint id )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted bind operation on invalid vbo object" };
+    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid vbo object" };
 
     /* if not already bound, bind and record */
     if ( id != bound_vbo )
@@ -76,10 +76,10 @@ void glh::object_manager::bind_vbo ( const GLuint id )
  *
  * unbind the vbo, only if it is already bound
  */
-void glh::object_manager::unbind_vbo ( const GLuint id )
+void glh::core::object_manager::unbind_vbo ( const GLuint id )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted unbind operation on invalid vbo object" };
+    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid vbo object" };
 
     /* if bound, unbind and record */
     if ( id == bound_vbo )
@@ -93,10 +93,10 @@ void glh::object_manager::unbind_vbo ( const GLuint id )
  *
  * bind a buffer object as an ebo
  */
-void glh::object_manager::bind_ebo ( const GLuint id )
+void glh::core::object_manager::bind_ebo ( const GLuint id )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted bind operation on invalid ebo object" };
+    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid ebo object" };
 
     /* if not already bound, bind and record */
     if ( id != bound_ebo )
@@ -110,10 +110,10 @@ void glh::object_manager::bind_ebo ( const GLuint id )
  *
  * unbind the ebo, only if it is alreay bound
  */
-void glh::object_manager::unbind_ebo ( const GLuint id )
+void glh::core::object_manager::unbind_ebo ( const GLuint id )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted unbind operation on invalid ebo object" };
+    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid ebo object" };
 
     /* if bound, unbind and record */
     if ( id == bound_ebo )
@@ -131,7 +131,7 @@ void glh::object_manager::unbind_ebo ( const GLuint id )
  *
  * generate a vertex array object
  */
-GLuint glh::object_manager::generate_vao ()
+GLuint glh::core::object_manager::generate_vao ()
 {
     /* assert opengl is loaded */
     asset_opengl_loaded ();
@@ -147,7 +147,7 @@ GLuint glh::object_manager::generate_vao ()
  *
  * destroy a vao, unbinding it if is bound
  */
-void glh::object_manager::destroy_vao ( const GLuint id )
+void glh::core::object_manager::destroy_vao ( const GLuint id )
 {
     /* if not zero, remove bind entry if bound and then destroy */
     if ( id > 0 )
@@ -162,10 +162,10 @@ void glh::object_manager::destroy_vao ( const GLuint id )
  *
  * bind a vao
  */
-void glh::object_manager::bind_vao ( const GLuint id )
+void glh::core::object_manager::bind_vao ( const GLuint id )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted bind operation on invalid vao object" };
+    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid vao object" };
 
     /* if not already bound, bind and record */
     if ( id != bound_vao )
@@ -179,10 +179,10 @@ void glh::object_manager::bind_vao ( const GLuint id )
  *
  * unbind the vao, only if it is already bound
  */
-void glh::object_manager::unbind_vao ( const GLuint id )
+void glh::core::object_manager::unbind_vao ( const GLuint id )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted unbind operation on invalid vao object" };
+    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid vao object" };
 
     /* if bound, unbind and record */
     if ( id == bound_vao )
@@ -202,7 +202,7 @@ void glh::object_manager::unbind_vao ( const GLuint id )
  * 
  * type: the type of the shader
  */
-GLuint glh::object_manager::generate_shader ( const GLenum type )
+GLuint glh::core::object_manager::generate_shader ( const GLenum type )
 {
     /* assert opengl is loaded */
     asset_opengl_loaded ();
@@ -215,7 +215,7 @@ GLuint glh::object_manager::generate_shader ( const GLenum type )
  *
  * destroy a shader object
  */
-void glh::object_manager::destroy_shader ( const GLuint id )
+void glh::core::object_manager::destroy_shader ( const GLuint id )
 {
     /* if not zero destroy object */
     if ( id > 0 ) glDeleteShader ( id );
@@ -225,7 +225,7 @@ void glh::object_manager::destroy_shader ( const GLuint id )
  *
  * generate a program object
  */
-GLuint glh::object_manager::generate_program ()
+GLuint glh::core::object_manager::generate_program ()
 {
     /* assert opengl is loaded */
     asset_opengl_loaded ();
@@ -238,7 +238,7 @@ GLuint glh::object_manager::generate_program ()
  * 
  * destroy a program object, making it not in use in the progrss
  */
-void glh::object_manager::destroy_program ( const GLuint id )
+void glh::core::object_manager::destroy_program ( const GLuint id )
 {
     /* if not zero, remove in use entry and then destroy */
     if ( id > 0 )
@@ -252,10 +252,10 @@ void glh::object_manager::destroy_program ( const GLuint id )
  *
  * make a program currently in use
  */
-void glh::object_manager::use_program ( const GLuint id )
+void glh::core::object_manager::use_program ( const GLuint id )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted to use invalid program" };
+    if ( id == 0 ) throw exception::object_management_exception { "attempted to use invalid program" };
 
     /* if not alreay in use, use and record */
     if ( id != in_use_program )
@@ -269,10 +269,10 @@ void glh::object_manager::use_program ( const GLuint id )
  *
  * unuse the program, only if it is already in use
  */
-void glh::object_manager::unuse_program ( const GLuint id )
+void glh::core::object_manager::unuse_program ( const GLuint id )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted to unuse invalid program" };
+    if ( id == 0 ) throw exception::object_management_exception { "attempted to unuse invalid program" };
 
     /* if in use, unuse and record */
     if ( id == in_use_program )
@@ -290,7 +290,7 @@ void glh::object_manager::unuse_program ( const GLuint id )
  * 
  * generate a texture object
  */
-GLuint glh::object_manager::generate_texture ()
+GLuint glh::core::object_manager::generate_texture ()
 {
     /* assert opengl is loaded */
     asset_opengl_loaded ();
@@ -305,7 +305,7 @@ GLuint glh::object_manager::generate_texture ()
  *
  * destroy a texture object, unbinding it from any texture units
  */
-void glh::object_manager::destroy_texture ( const GLuint id )
+void glh::core::object_manager::destroy_texture ( const GLuint id )
 {
     /* unbind the texture from any texture units and return */
     for ( unsigned i = 0; i < GLH_MAX_TEXTURE_UNITS; ++i ) if ( id == bound_textures.at ( i ) ) bound_textures.at ( i ) = 0;
@@ -318,10 +318,10 @@ void glh::object_manager::destroy_texture ( const GLuint id )
  * 
  * unit: the texture unit to bind it to
  */
-void glh::object_manager::bind_texture ( const GLuint id, const unsigned unit )
+void glh::core::object_manager::bind_texture ( const GLuint id, const unsigned unit )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted bind operation on invalid texture object" };    
+    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid texture object" };    
 
     /* if not already bound, bind and record */
     if ( id != bound_textures.at ( unit ) )
@@ -339,10 +339,10 @@ void glh::object_manager::bind_texture ( const GLuint id, const unsigned unit )
  * 
  * unit: the texture unit to unbind it from
  */
-void glh::object_manager::unbind_texture ( const GLuint id, const unsigned unit )
+void glh::core::object_manager::unbind_texture ( const GLuint id, const unsigned unit )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted unbind operation on invalid texture object" };
+    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid texture object" };
         
     /* if already bound, unbind and record */
     if ( id == bound_textures.at ( unit ) )
@@ -361,7 +361,7 @@ void glh::object_manager::unbind_texture ( const GLuint id, const unsigned unit 
  *
  * generate a renderbuffer object
  */
-GLuint glh::object_manager::generate_rbo ()
+GLuint glh::core::object_manager::generate_rbo ()
 {
     /* assert opengl is loaded */
     asset_opengl_loaded ();
@@ -376,7 +376,7 @@ GLuint glh::object_manager::generate_rbo ()
  *
  * destroy a renderbuffer object, unbindint it if bound
  */
-void glh::object_manager::destroy_rbo ( const GLuint id )
+void glh::core::object_manager::destroy_rbo ( const GLuint id )
 {
     /* if not zero, remove bind entry if bound and then destroy */
     if ( id > 0 )
@@ -390,10 +390,10 @@ void glh::object_manager::destroy_rbo ( const GLuint id )
  *
  * bind a renderbuffer object
  */
-void glh::object_manager::bind_rbo ( const GLuint id )
+void glh::core::object_manager::bind_rbo ( const GLuint id )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted bind operation on invalid renderbuffer object" };    
+    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid renderbuffer object" };    
 
     /* if not already bound, bind and record */
     if ( id != bound_rbo )
@@ -407,10 +407,10 @@ void glh::object_manager::bind_rbo ( const GLuint id )
  *
  * unbind an renderbuffer object, if already bound
  */
-void glh::object_manager::unbind_rbo ( const GLuint id )
+void glh::core::object_manager::unbind_rbo ( const GLuint id )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted unbind operation on invalid renderbuffer object" };    
+    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid renderbuffer object" };    
 
     /* if already bound, unbind and record */
     if ( id == bound_rbo )
@@ -428,7 +428,7 @@ void glh::object_manager::unbind_rbo ( const GLuint id )
  *
  * generate a framebuffer object
  */
-GLuint glh::object_manager::generate_fbo ()
+GLuint glh::core::object_manager::generate_fbo ()
 {
     /* assert opengl is loaded */
     asset_opengl_loaded ();
@@ -443,7 +443,7 @@ GLuint glh::object_manager::generate_fbo ()
  *
  * destroy a framebuffer object, unbinding it if bound
  */
-void glh::object_manager::destroy_fbo ( const GLuint id )
+void glh::core::object_manager::destroy_fbo ( const GLuint id )
 {
     /* if not zero, remove bind entry if bound and then destroy */
     if ( id > 0 )
@@ -457,10 +457,10 @@ void glh::object_manager::destroy_fbo ( const GLuint id )
  *
  * bind a framebuffer object
  */
-void glh::object_manager::bind_fbo ( const GLuint id )
+void glh::core::object_manager::bind_fbo ( const GLuint id )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted bind operation on invalid framebuffer object" };    
+    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid framebuffer object" };    
 
     /* if not already bound, bind and record */
     if ( id != bound_fbo )
@@ -474,10 +474,10 @@ void glh::object_manager::bind_fbo ( const GLuint id )
  *
  * if the fbo is bound, bind the default fbo instead
  */
-void glh::object_manager::unbind_fbo ( const GLuint id )
+void glh::core::object_manager::unbind_fbo ( const GLuint id )
 {
     /* throw if invalid object */
-    if ( id == 0 ) throw object_management_exception { "attempted unbind operation on invalid framebuffer object" };    
+    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid framebuffer object" };    
 
     /* if already bound, unbind and record */
     if ( id == bound_fbo )
@@ -491,7 +491,7 @@ void glh::object_manager::unbind_fbo ( const GLuint id )
  *
  * bind the default framebuffer
  */
-void glh::object_manager::bind_default_fbo ()
+void glh::core::object_manager::bind_default_fbo ()
 {
     /* if not already default, set to default */
     if ( 0 != bound_fbo )
@@ -506,22 +506,22 @@ void glh::object_manager::bind_default_fbo ()
 /* STATIC MEMBERS DEFINITIONS */
 
 /* currently bound vbo */
-GLuint glh::object_manager::bound_vbo { 0 };
+GLuint glh::core::object_manager::bound_vbo { 0 };
 
 /* currently bound ebo */
-GLuint glh::object_manager::bound_ebo { 0 };
+GLuint glh::core::object_manager::bound_ebo { 0 };
 
 /* currently bound vao */
-GLuint glh::object_manager::bound_vao { 0 };
+GLuint glh::core::object_manager::bound_vao { 0 };
 
 /* currently in-use program */
-GLuint glh::object_manager::in_use_program { 0 };
+GLuint glh::core::object_manager::in_use_program { 0 };
 
 /* array of texture units and their respectively bound textures */
-std::array<GLuint, GLH_MAX_TEXTURE_UNITS> glh::object_manager::bound_textures { 0 };
+std::array<GLuint, GLH_MAX_TEXTURE_UNITS> glh::core::object_manager::bound_textures { 0 };
 
 /* currently bound renderbuffer */
-GLuint glh::object_manager::bound_rbo { 0 };
+GLuint glh::core::object_manager::bound_rbo { 0 };
 
 /* currently bound framebuffer */
-GLuint glh::object_manager::bound_fbo { 0 };
+GLuint glh::core::object_manager::bound_fbo { 0 };

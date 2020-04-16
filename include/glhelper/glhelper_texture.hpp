@@ -46,25 +46,31 @@
 
 namespace glh
 {
-    /* class texture2c : object
-     *
-     * represents a 2D texture
-     * automatically loads the texture given a path, and creates a mipmap
-     */
-    class texture2d;
+    namespace core
+    {
+        /* class texture2c : object
+         *
+         * represents a 2D texture
+         * automatically loads the texture given a path, and creates a mipmap
+         */
+        class texture2d;
+    }
 
-    /* class texture_exception : exception
-     *
-     * exception relating to textures
-     */
-    class texture_exception;
+    namespace exception
+    {
+        /* class texture_exception : exception
+         *
+         * exception relating to textures
+         */
+        class texture_exception;
+    }
 }
 
 
 
 /* TEXTURE2D DEFINITION */
 
-class glh::texture2d : public object
+class glh::core::texture2d : public object
 {
 public:
 
@@ -137,7 +143,7 @@ public:
      *
      * destroys the texture, setting its id to 0
      */
-    void destroy () { glh::object_manager::destroy_texture ( id ); id = 0; }
+    void destroy () { object_manager::destroy_texture ( id ); id = 0; }
 
     /* bind
      *
@@ -145,7 +151,7 @@ public:
      * 
      * texture_unit: the texture unit to bind to, or the last one
      */
-    void bind ( const unsigned texture_unit = 0 ) const { glh::object_manager::bind_texture ( id, texture_unit ); }
+    void bind ( const unsigned texture_unit = 0 ) const { object_manager::bind_texture ( id, texture_unit ); }
 
     /* is_bound
      *
@@ -153,7 +159,7 @@ public:
      * 
      * return boolean for if the texture is bound
      */
-    bool is_bound ( const unsigned texture_unit = 0 ) const { return glh::object_manager::is_texture_bound ( id, texture_unit ); }
+    bool is_bound ( const unsigned texture_unit = 0 ) const { return object_manager::is_texture_bound ( id, texture_unit ); }
 
 
 
@@ -217,7 +223,7 @@ private:
  *
  * for exceptions related to textures
  */
-class glh::texture_exception : public exception
+class glh::exception::texture_exception : public exception
 {
 public:
 

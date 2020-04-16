@@ -54,78 +54,86 @@
 
 namespace glh
 {
-    /* class shader : object
-     *
-     * base class for any type of shader
-     */
-    class shader;
+    namespace core
+    {
+        /* class shader : object
+         *
+         * base class for any type of shader
+         */
+        class shader;
 
-    /* class v/g/fshader : shader
-     *
-     * derived classes for specific shader types
-     */
-    class vshader;
-    class gshader;
-    class fshader;
+        /* class v/g/fshader : shader
+         *
+         * derived classes for specific shader types
+         */
+        class vshader;
+        class gshader;
+        class fshader;
 
-    /* class program : object
-     *
-     * shader program
-     */
-    class program;
+        /* class program : object
+         *
+         * shader program
+         */
+        class program;
 
-    /* struct is_uniform
-     *
-     * is_uniform::value is true if the type is a uniform
-     */
-    template<class T> struct is_uniform;
+        /* class uniform
+         *
+         * a reference to a uniform in a program
+         * can set the uniform without querying its name
+         */
+        class uniform;
 
-    /* class uniform
-     *
-     * a reference to a uniform in a program
-     * can set the uniform without querying its name
-     */
-    class uniform;
+        /* class complex_uniform
+         *
+         * a base class for a uniform which stores other uniforms
+         */
+        class complex_uniform;
 
-    /* class complex_uniform
-     *
-     * a base class for a uniform which stores other uniforms
-     */
-    class complex_uniform;
+        /* class struct_uniform : complex_uniform
+         *
+         * a reference to a structure uniform in a program
+         */
+        class struct_uniform;
 
-    /* class struct_uniform : complex_uniform
-     *
-     * a reference to a structure uniform in a program
-     */
-    class struct_uniform;
+        /* class array_uniform : complex_uniform
+         *
+         * a reference to an array uniform in a program
+         */
+        template<class T> class array_uniform;
 
-    /* class array_uniform : complex_uniform
-     *
-     * a reference to an array uniform in a program
-     */
-    template<class T> class array_uniform;
+        /* using declaration for array uniform types
+         *
+         * simplify common types of array uniforms a bit
+         */
+        using uniform_array_uniform = array_uniform<uniform>;
+        using struct_array_uniform = array_uniform<struct_uniform>;
+        using uniform_2d_array_uniform = array_uniform<array_uniform<uniform>>;
+        using struct_2d_array_uniform = array_uniform<array_uniform<struct_uniform>>;
+    }
 
-    /* using declaration for array uniform types
-     *
-     * simplify common types of array uniforms a bit
-     */
-    using uniform_array_uniform = array_uniform<uniform>;
-    using struct_array_uniform = array_uniform<struct_uniform>;
-    using uniform_2d_array_uniform = array_uniform<array_uniform<uniform>>;
-    using struct_2d_array_uniform = array_uniform<array_uniform<struct_uniform>>;
+    namespace meta
+    {
+        /* struct is_uniform
+         *
+         * is_uniform::value is true if the type is a uniform
+         */
+        template<class T> struct is_uniform;
+    }
 
-    
-    /* class shader_exception : exception
-     *
-     * for exceptions related to shaders
-     */
-    class shader_exception;
+    namespace exception
+    {
+        /* class shader_exception : exception
+         *
+         * for exceptions related to shaders
+         */
+        class shader_exception;
 
-    /* class uniform_exception : exception
-     *
-     * for exceptions related to uniforms
-     */
-    class uniform_exception;
+        /* class uniform_exception : exception
+         *
+         * for exceptions related to uniforms
+         */
+        class uniform_exception;
+    }    
 }
 
 
@@ -136,7 +144,7 @@ namespace glh
  *
  * base class for any type of shader
  */
-class glh::shader : public object
+class glh::core::shader : public object
 {
 public:
 
@@ -165,7 +173,7 @@ public:
      * destroys the shader, setting its id to 0
      * any program using this shader will still function
      */
-    void destroy () { glh::object_manager::destroy_shader ( id ); id = 0; }
+    void destroy () { object_manager::destroy_shader ( id ); id = 0; }
 
 
 
@@ -210,7 +218,7 @@ private:
  *
  * derived class for a vertex shader
  */
-class glh::vshader : public shader
+class glh::core::vshader : public shader
 {
 public:
 
@@ -244,7 +252,7 @@ public:
  *
  * derived class for a geometry shader
  */
-class glh::gshader : public shader
+class glh::core::gshader : public shader
 {
 public:
 
@@ -278,7 +286,7 @@ public:
  *
  * derived class for a fragment shader
  */
-class glh::fshader : public shader
+class glh::core::fshader : public shader
 {
 public:
 
@@ -312,7 +320,7 @@ public:
  *
  * shader program
  */
-class glh::program : public object
+class glh::core::program : public object
 {
 public:
 
@@ -382,20 +390,20 @@ public:
      *
      * destroys the shader program, setting id to 0
      */
-    void destroy () { glh::object_manager::destroy_program ( id ); id = 0; }
+    void destroy () { object_manager::destroy_program ( id ); id = 0; }
 
     /* use
      *
      * use the shader program for the following OpenGL function calls
      * will not call glUseProgram if already in use
      */
-    void use () const { glh::object_manager::use_program ( id ); }
+    void use () const { object_manager::use_program ( id ); }
 
     /* is_in_use
      *
      * return: boolean for if the program is in use
      */
-    bool is_in_use () const { return glh::object_manager::is_program_in_use ( id ); }
+    bool is_in_use () const { return object_manager::is_program_in_use ( id ); }
 
 
 
@@ -428,22 +436,22 @@ private:
  *
  * is_uniform::value is true if the type is a uniform
  */
-template<class T> struct glh::is_uniform
+template<class T> struct glh::meta::is_uniform
 {
     static const bool value = false;
     operator bool () { return value; }
 };
-template<> struct glh::is_uniform<glh::uniform>
+template<> struct glh::meta::is_uniform<glh::core::uniform>
 {
     static const bool value = true;
     operator bool () { return value; }
 };
-template<> struct glh::is_uniform<glh::struct_uniform>
+template<> struct glh::meta::is_uniform<glh::core::struct_uniform>
 {
     static const bool value = true;
     operator bool () { return value; }
 };
-template<> template<class _T> struct glh::is_uniform<glh::array_uniform<_T>>
+template<> template<class _T> struct glh::meta::is_uniform<glh::core::array_uniform<_T>>
 {
     static const bool value = is_uniform<_T>::value;
     operator bool () { return value; }
@@ -457,7 +465,7 @@ template<> template<class _T> struct glh::is_uniform<glh::array_uniform<_T>>
  * a reference to a uniform in a program
  * can set the uniform without querying its name
  */
-class glh::uniform
+class glh::core::uniform
 {
 public:
 
@@ -619,8 +627,8 @@ private:
 };
 
 /* comparison operators */
-inline bool operator== ( const glh::uniform& lhs, const glh::uniform& rhs ) { return ( lhs.get_location () == rhs.get_location () && lhs.get_program () == rhs.get_program () ); }
-inline bool operator!= ( const glh::uniform& lhs, const glh::uniform& rhs ) { return ( lhs.get_location () != rhs.get_location () || lhs.get_program () != rhs.get_program () ); }
+inline bool operator== ( const glh::core::uniform& lhs, const glh::core::uniform& rhs ) { return ( lhs.get_location () == rhs.get_location () && lhs.get_program () == rhs.get_program () ); }
+inline bool operator!= ( const glh::core::uniform& lhs, const glh::core::uniform& rhs ) { return ( lhs.get_location () != rhs.get_location () || lhs.get_program () != rhs.get_program () ); }
 
 
 
@@ -628,7 +636,7 @@ inline bool operator!= ( const glh::uniform& lhs, const glh::uniform& rhs ) { re
  *
  * a base class for a uniform which stores other uniforms
  */
-class glh::complex_uniform
+class glh::core::complex_uniform
 {
 public:
 
@@ -702,11 +710,11 @@ protected:
 };
 
 /* make destructor default */
-inline glh::complex_uniform::~complex_uniform () = default;
+inline glh::core::complex_uniform::~complex_uniform () = default;
 
 /* comparison operators */
-inline bool operator== ( const glh::complex_uniform& lhs, const glh::complex_uniform& rhs ) { return ( lhs.get_name () == rhs.get_name () && lhs.get_program () == rhs.get_program () ); }
-inline bool operator!= ( const glh::complex_uniform& lhs, const glh::complex_uniform& rhs ) { return ( lhs.get_name () != rhs.get_name () || lhs.get_program () != rhs.get_program () ); }
+inline bool operator== ( const glh::core::complex_uniform& lhs, const glh::core::complex_uniform& rhs ) { return ( lhs.get_name () == rhs.get_name () && lhs.get_program () == rhs.get_program () ); }
+inline bool operator!= ( const glh::core::complex_uniform& lhs, const glh::core::complex_uniform& rhs ) { return ( lhs.get_name () != rhs.get_name () || lhs.get_program () != rhs.get_program () ); }
 
 
 
@@ -714,7 +722,7 @@ inline bool operator!= ( const glh::complex_uniform& lhs, const glh::complex_uni
  *
  * a reference to a structure uniform in a program
  */
-class glh::struct_uniform : public complex_uniform
+class glh::core::struct_uniform : public complex_uniform
 {
 public:
 
@@ -776,10 +784,10 @@ public:
  *
  * a reference to an array uniform in a program
  */
-template<class T = glh::uniform> class glh::array_uniform : public complex_uniform
+template<class T = glh::core::uniform> class glh::core::array_uniform : public complex_uniform
 {
     /* static assert that T is a uniform */
-    static_assert ( is_uniform<T>::value, "cannot create array_uniform object containing non-uniform type" );
+    static_assert ( meta::is_uniform<T>::value, "cannot create array_uniform object containing non-uniform type" );
 
 public:
 
@@ -818,10 +826,10 @@ public:
     const T operator[] ( const unsigned i ) const { return at ( i ); }
 
 };
-template<> class glh::array_uniform<glh::uniform> : public complex_uniform
+template<> class glh::core::array_uniform<glh::core::uniform> : public complex_uniform
 {
     /* static assert that T is a uniform */
-    static_assert ( is_uniform<glh::uniform>::value, "cannot create array_uniform object containing non-uniform type" );
+    static_assert ( meta::is_uniform<glh::core::uniform>::value, "cannot create array_uniform object containing non-uniform type" );
 
 public:
 
@@ -869,7 +877,7 @@ public:
  *
  * for exceptions related to shaders
  */
-class glh::shader_exception : public exception
+class glh::exception::shader_exception : public exception
 {
 public:
 
@@ -899,7 +907,7 @@ public:
  *
  * for exceptions related to uniforms
  */
-class glh::uniform_exception : public exception
+class glh::exception::uniform_exception : public exception
 {
 public:
 
