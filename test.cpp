@@ -39,7 +39,7 @@ int main ()
     auto model_trans_uni = model_program.get_struct_uniform ( "trans" );
     auto model_transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
     
-    glh::camera_perspective camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 500.0 };
+    glh::camera camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 500.0 };
     camera.cache_uniforms ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
     camera.enable_restrictive_mode ();
 
@@ -139,7 +139,7 @@ int main ()
 
 
         model_program.use ();
-        mirror_fbo.bind ();
+        //mirror_fbo.bind ();
 
         glh::renderer::enable_face_culling ();
         glh::renderer::disable_blend ();
@@ -158,7 +158,7 @@ int main ()
         //forest.render ( glh::math::identity<4> (), true );
         island.render ( island_matrix, true );
 
-
+/*
 
         basic_program.use ();
         mirror_fbo.unbind ();
@@ -172,7 +172,7 @@ int main ()
         mirror_tex.bind ( 0 );
         glh::renderer::draw_elements ( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 
-        
+        */
 
         window.swap_buffers ();
         window.poll_events ();
