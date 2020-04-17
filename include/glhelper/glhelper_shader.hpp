@@ -828,9 +828,6 @@ public:
 };
 template<> class glh::core::array_uniform<glh::core::uniform> : public complex_uniform
 {
-    /* static assert that T is a uniform */
-    static_assert ( meta::is_uniform<glh::core::uniform>::value, "cannot create array_uniform object containing non-uniform type" );
-
 public:
 
     /* constructor
