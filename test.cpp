@@ -84,6 +84,10 @@ int main ()
     mirror_fbo.attach_texture2d ( mirror_tex, GL_COLOR_ATTACHMENT0 );
     mirror_fbo.attach_rbo ( mirror_rbo, GL_DEPTH_STENCIL_ATTACHMENT );
 
+    glh::math::mat4 mirror_matrix = glh::math::translate3d ( glh::math::enlarge3d ( glh::math::identity<4> (), 5.0 ), glh::math::vec3 { 0.0, 30.0, -100.0 } );
+
+    glh::camera::mirror_camera mirror_camera { camera, glh::math::vec3 { 0.0, 30.0, -100.0 }, glh::math::vec3 { 0.0, 0.0, 1.0 }, 10.0, 10.0 };
+    
 
 
     //glh::model::model factory { "./assets/factory", "scene.gltf" };
@@ -108,71 +112,86 @@ int main ()
         if ( dimensions.deltawidth != 0.0 || dimensions.deltaheight != 0.0 ) 
         {
             camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
-            glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
         }
 
-        if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0., 0., -15. } );
-        if ( window.get_key ( GLFW_KEY_A ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { -15, 0., 0. } );
-        if ( window.get_key ( GLFW_KEY_S ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0., 0., 15. } );
-        if ( window.get_key ( GLFW_KEY_D ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 15, 0., 0. } );
+        if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0.0, 0.0, -15.0 } );
+        if ( window.get_key ( GLFW_KEY_A ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { -15.0, 0.0, 0.0 } );
+        if ( window.get_key ( GLFW_KEY_S ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0.0, 0.0, 15.0 } );
+        if ( window.get_key ( GLFW_KEY_D ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 15.0, 0.0, 0.0 } );
 
-        if ( window.get_key ( GLFW_KEY_SPACE ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0., 15., 0. } );
-        if ( window.get_key ( GLFW_KEY_LEFT_SHIFT ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0., -15., 0. } );
+        if ( window.get_key ( GLFW_KEY_SPACE ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0.0, 15.0, 0.0 } );
+        if ( window.get_key ( GLFW_KEY_LEFT_SHIFT ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0.0, -15.0, 0.0 } );
 
-        if ( window.get_key ( GLFW_KEY_Z ).action == GLFW_PRESS ) camera.roll ( timeinfo.delta * glh::math::rad ( 80 ) );
-        if ( window.get_key ( GLFW_KEY_X ).action == GLFW_PRESS ) camera.roll ( timeinfo.delta * glh::math::rad ( -80 ) ); 
+        if ( window.get_key ( GLFW_KEY_Z ).action == GLFW_PRESS ) camera.roll ( timeinfo.delta * glh::math::rad ( 80.0 ) );
+        if ( window.get_key ( GLFW_KEY_X ).action == GLFW_PRESS ) camera.roll ( timeinfo.delta * glh::math::rad ( -80.0 ) ); 
 
         camera.pitch ( mouseinfo.deltayfrac * glh::math::rad ( -80 ) );
         camera.yaw ( mouseinfo.deltaxfrac * glh::math::rad ( -80 ) );
 
+
+
         model_program.use ();
-        camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         light_system.apply ();
         model_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
         model_transparent_mode_uni.set_int ( 0 );
 
-        basic_program.use ();
-        basic_trans_uni.get_uniform ( "model" ).set_matrix ( glh::math::enlarge3d ( glh::math::identity<4> (), 50 ) );
-        camera.apply ( basic_trans_uni.get_uniform ( "view" ), basic_trans_uni.get_uniform ( "proj" ) );
-        basic_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
-
-
-
-        model_program.use ();
-        //mirror_fbo.bind ();
-
         glh::core::renderer::enable_face_culling ();
         glh::core::renderer::disable_blend ();
         glh::core::renderer::set_depth_mask ( GL_TRUE );
+                
+        mirror_fbo.unbind ();
+        glh::core::renderer::set_front_face ( GL_CCW );
         glh::core::renderer::clear ();
-        
-        //factory.render ( factory_matrix, false );
-        //forest.render ( glh::math::identity<4> (), false );
+        glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
+        camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         island.render ( island_matrix, false );
+
+        mirror_fbo.bind ();
+        glh::core::renderer::set_front_face ( GL_CW );
+        glh::core::renderer::clear ();
+        glh::core::renderer::viewport ( 0, 0, 1000, 1000 );
+        mirror_camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
+        island.render ( island_matrix, false );
+
+
 
         glh::core::renderer::enable_blend ();
         glh::core::renderer::set_depth_mask ( GL_FALSE );
         model_transparent_mode_uni.set_int ( 1 );
 
-        //factory.render ( factory_matrix, true );
-        //forest.render ( glh::math::identity<4> (), true );
+
+
+        mirror_fbo.unbind ();
+        glh::core::renderer::set_front_face ( GL_CCW );
+        glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
+        camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         island.render ( island_matrix, true );
 
-/*
+        mirror_fbo.bind ();
+        glh::core::renderer::set_front_face ( GL_CW );
+        glh::core::renderer::viewport ( 0, 0, 1000, 1000 );
+        mirror_camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
+        island.render ( island_matrix, true );
+
+
 
         basic_program.use ();
-        mirror_fbo.unbind ();
-        glh::core::object_manager::bind_default_fbo ();
+        basic_trans_uni.get_uniform ( "model" ).set_matrix ( mirror_matrix );
+        camera.apply ( basic_trans_uni.get_uniform ( "view" ), basic_trans_uni.get_uniform ( "proj" ) );
+        basic_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
+
+        
 
         glh::core::renderer::disable_face_culling ();
         glh::core::renderer::set_depth_mask ( GL_TRUE );
-        glh::core::renderer::clear ();
+        glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
 
+        mirror_fbo.unbind ();
         mirror_vao.bind ();
         mirror_tex.bind ( 0 );
         glh::core::renderer::draw_elements ( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 
-        */
+
 
         window.swap_buffers ();
         window.poll_events ();
