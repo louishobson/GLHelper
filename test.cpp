@@ -90,16 +90,13 @@ int main ()
     
 
 
-    //glh::model::model factory { "./assets/factory", "scene.gltf" };
-    //factory.cache_uniforms ( model_program.get_struct_uniform ( "material" ), model_trans_uni.get_uniform ( "model" ) );
-    glh::math::mat4 factory_matrix = glh::math::translate3d ( glh::math::rotate3d ( glh::math::enlarge3d ( glh::math::identity<4> (), 0.1 ), glh::math::rad ( 90 ), glh::math::vec3 { 1.0, 0.0, 0.0 } ), glh::math::vec3 { -20.0, 0.0, -20.0 } );
-
-    //glh::model::model forest { "./assets/forest", "scene.gltf" };
-    //forest.cache_uniforms ( model_program.get_struct_uniform ( "material" ), model_trans_uni.get_uniform ( "model" ) );
-
     glh::model::model island { "./assets/island", "scene.gltf" };
     island.cache_uniforms ( model_program.get_struct_uniform ( "material" ), model_trans_uni.get_uniform ( "model" ) );
     glh::math::mat4 island_matrix = glh::math::enlarge3d ( glh::math::identity<4> (), 0.2 );
+
+    glh::model::model chappie ( "./assets/chappie", "scene.gltf" );
+    chappie.cache_uniforms ( model_program.get_struct_uniform ( "material" ), model_trans_uni.get_uniform ( "model" ) );
+    glh::math::mat4 chappie_matrix = glh::math::enlarge3d ( glh::math::identity<4> (), 0.2 );
 
 
 
@@ -145,6 +142,7 @@ int main ()
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
         camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         island.render ( island_matrix, false );
+        chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, false );
 
         mirror_fbo.bind ();
         glh::core::renderer::set_front_face ( GL_CW );
@@ -152,6 +150,7 @@ int main ()
         glh::core::renderer::viewport ( 0, 0, 1000, 1000 );
         mirror_camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         island.render ( island_matrix, false );
+        chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, false );
 
 
 
@@ -166,12 +165,14 @@ int main ()
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
         camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         island.render ( island_matrix, true );
+        chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, true );
 
         mirror_fbo.bind ();
         glh::core::renderer::set_front_face ( GL_CW );
         glh::core::renderer::viewport ( 0, 0, 1000, 1000 );
         mirror_camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         island.render ( island_matrix, true );
+        chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, true );
 
 
 
