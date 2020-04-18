@@ -23,8 +23,10 @@
  * 
  * 0: vec3  : vertices
  * 1: vec3  : normals
+ * 2: vec4  : vertex colors
  * 2: vec3[]: UV channels of texture coordinates
- *
+ * 
+ * even if there are multiple color sets, only the first set is sent to the vertex shader
  * how many UV channels you allow (size of the array at location 2) is up to the user
  * too many is not an issue, too few will be
  * 
@@ -132,8 +134,8 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
-/* include glhelper_buff.hpp */
-#include <glhelper/glhelper_buff.hpp>
+/* include glhelper_buffer.hpp */
+#include <glhelper/glhelper_buffer.hpp>
 
 /* include glhelper_texture.hpp */
 #include <glhelper/glhelper_texture.hpp>
@@ -205,7 +207,10 @@ namespace glh
          * a class for a model
          */
         class model;
+    }
 
+    namespace exception
+    {
         /* class model_exception : exception
          *
          * exception relating to models
@@ -232,6 +237,9 @@ struct glh::model::vertex
 
     /* multiple uv channels of texture coords */
     std::vector<math::vec3> texcoords;
+
+    /* multiple color sets */
+    std::vector<math::vec4> colorsets;
 };
 
 
@@ -261,7 +269,7 @@ struct glh::model::texture_stack_level
     unsigned index;
 
     /* texture reference */
-    texture2d * texture;
+    core::texture2d * texture;
 };
 
 
@@ -375,14 +383,23 @@ struct glh::model::mesh
 
 
 
+    /* definitely opaque
+     *
+     * if true, the mesh is definitely opaque
+     * this is defined by the material being definitly opaque, and all vertex colors having an alpha of 1
+     */
+    bool definitely_opaque;
+
+
+
     /* the vbo the vertices are exported to */
-    vbo vertex_data;
+    core::vbo vertex_data;
 
     /* the ebo the indices of the faces are exported to */
-    ebo index_data;
+    core::ebo index_data;
 
     /* the vao controlling the vbo and the ebo */
-    vao array_object;
+    core::vao array_object;
 };
 
 
@@ -459,7 +476,7 @@ public:
      * transform: the overall model transformation to apply (identity by default)
      * transparent_only: only render meshes with possible transparent elements (false by default)
      */
-    void render ( const struct_uniform& material_uni, const uniform& model_uni, const math::mat4& transform = math::identity<4> (), const bool transparent_only = false );
+    void render ( const core::struct_uniform& material_uni, const core::uniform& model_uni, const math::mat4& transform = math::identity<4> (), const bool transparent_only = false );
     void render ( const math::mat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
 
     /* cache_material_uniforms
@@ -468,7 +485,7 @@ public:
      * 
      * material_uni: the uniform to cache
      */
-    void cache_material_uniforms ( const struct_uniform& material_uni );
+    void cache_material_uniforms ( const core::struct_uniform& material_uni );
 
     /* cache_model_uniform
      *
@@ -476,7 +493,7 @@ public:
      * 
      * model_uni: the uniform to cache
      */
-    void cache_model_uniform ( const uniform& model_uni );
+    void cache_model_uniform ( const core::uniform& model_uni );
 
     /* cache_uniforms
      *
@@ -485,7 +502,7 @@ public:
      * material_uni: the material uniform to cache
      * model_uni: model uniform to cache
      */
-    void cache_uniforms ( const struct_uniform& material_uni, const uniform& model_uni );
+    void cache_uniforms ( const core::struct_uniform& material_uni, const core::uniform& model_uni );
 
 
 
@@ -506,7 +523,7 @@ private:
     std::vector<material> materials;
 
     /* textures the model uses */
-    std::vector<texture2d> textures;
+    std::vector<core::texture2d> textures;
 
     /* the meshes the model uses */
     std::vector<mesh> meshes;
@@ -519,25 +536,25 @@ private:
     /* struct for cached material uniforms */
     struct cached_material_uniforms_struct
     {
-        struct_uniform material_uni;
-        uniform ambient_stack_size_uni;
-        uniform diffuse_stack_size_uni;
-        uniform specular_stack_size_uni;
-        uniform ambient_stack_base_color_uni;
-        uniform diffuse_stack_base_color_uni;
-        uniform specular_stack_base_color_uni;
-        struct_array_uniform ambient_stack_levels_uni; 
-        struct_array_uniform diffuse_stack_levels_uni; 
-        struct_array_uniform specular_stack_levels_uni;
-        uniform blending_mode_uni;
-        uniform shininess_uni;
-        uniform shininess_strength_uni;
-        uniform opacity_uni;
+        core::struct_uniform material_uni;
+        core::uniform ambient_stack_size_uni;
+        core::uniform diffuse_stack_size_uni;
+        core::uniform specular_stack_size_uni;
+        core::uniform ambient_stack_base_color_uni;
+        core::uniform diffuse_stack_base_color_uni;
+        core::uniform specular_stack_base_color_uni;
+        core::struct_array_uniform ambient_stack_levels_uni; 
+        core::struct_array_uniform diffuse_stack_levels_uni; 
+        core::struct_array_uniform specular_stack_levels_uni;
+        core::uniform blending_mode_uni;
+        core::uniform shininess_uni;
+        core::uniform shininess_strength_uni;
+        core::uniform opacity_uni;
     };
 
     /* cached uniforms */
-    mutable std::unique_ptr<cached_material_uniforms_struct> cached_material_uniforms;
-    mutable std::unique_ptr<uniform> cached_model_uniform;
+    std::unique_ptr<cached_material_uniforms_struct> cached_material_uniforms;
+    std::unique_ptr<core::uniform> cached_model_uniform;
 
     /* transparent_only flag */
     mutable bool draw_transparent_only;
@@ -619,14 +636,14 @@ private:
 
     /* is_definitely_opaque
      *
-     * determines if a material is definitely opaque
-     * see struct material for more info
+     * determines if a material or mesh is definitely opaque
      * 
-     * _material: the material to check
+     * _material/_mesh: the material/mesh to check
      * 
      * return: boolean for if is definitely opaque
      */
     bool is_definitely_opaque ( const material& _material );
+    bool is_definitely_opaque ( const mesh& _mesh );
 
     /* add_mesh
      *
@@ -699,7 +716,7 @@ private:
  *
  * exception relating to models
  */
-class glh::model::model_exception : public exception
+class glh::exception::model_exception : public exception
 {
 public:
 

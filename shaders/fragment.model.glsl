@@ -1,7 +1,7 @@
 /*
- * fragment.glsl
+ * fragment.model.glsl
  * 
- * fragment shader
+ * model fragment shader
  */
 
 #version 330 core
@@ -90,10 +90,11 @@ struct trans_struct
     vec3 viewpos;
 };
 
-/* texture coords, normal vector and position */
+/* texture coords, normal vector, position, vcolor */
 in vec2 texcoords [ MAX_UV_CHANNELS ];
 in vec3 normal;
 in vec3 fragpos;
+in vec4 vcolor;
 
 /* output color */
 out vec4 fragcolor;
@@ -185,12 +186,18 @@ vec3 compute_ambient_component ( vec3 base_color, material_struct mat, light_sys
     /* loop over lights and apply attenuation where necesarry */
     for ( int i = 0; i < lighting.dircoll.size; ++i )
     {
+        /* continue if disabled */
+        if ( !lighting.dircoll.lights [ i ].enabled ) continue;
+        
         /* add ambient light from directional source */
         ambient_color += base_color * lighting.dircoll.lights [ i ].ambient_color;
     }
 
     for ( int i = 0; i < lighting.pointcoll.size; ++i )
     {
+        /* continue if disabled */
+        if ( !lighting.pointcoll.lights [ i ].enabled ) continue;
+
         /* add ambient light from point source, including attenuation */
         ambient_color += base_color * lighting.pointcoll.lights [ i ].ambient_color * compute_attenuation
         (
@@ -228,6 +235,9 @@ vec3 compute_diffuse_component ( vec3 base_color, material_struct mat, light_sys
     /* loop over lights and apply attenuation where necesarry */
     for ( int i = 0; i < lighting.dircoll.size; ++i )
     {
+        /* continue if disabled */
+        if ( !lighting.dircoll.lights [ i ].enabled ) continue;
+
         /* get diffuse multiplier */
         float diff = max ( dot ( normal, -lighting.dircoll.lights [ i ].direction ), 0.0 );
         /* add diffuse light from directional source */
@@ -236,6 +246,9 @@ vec3 compute_diffuse_component ( vec3 base_color, material_struct mat, light_sys
 
     for ( int i = 0; i < lighting.pointcoll.size; ++i )
     {
+        /* continue if disabled */
+        if ( !lighting.pointcoll.lights [ i ].enabled ) continue;
+
         /* get normalised vector from fragment to light */
         vec3 fraglightdir = normalize ( lighting.pointcoll.lights [ i ].position - fragpos );
         /* get diffuse multiplier */
@@ -280,6 +293,9 @@ vec3 compute_specular_component ( vec3 base_color, material_struct mat, light_sy
     /* loop over lights and apply attenuation where necesarry */
     for ( int i = 0; i < lighting.dircoll.size; ++i )
     {
+        /* continue if disabled */
+        if ( !lighting.dircoll.lights [ i ].enabled ) continue;
+
         /* reflect the light off of the fragment */
         vec3 reflectlightdir = normalize ( reflect ( -lighting.dircoll.lights [ i ].direction, normal ) );
         /* get specular multiplier */
@@ -290,6 +306,9 @@ vec3 compute_specular_component ( vec3 base_color, material_struct mat, light_sy
 
     for ( int i = 0; i < lighting.pointcoll.size; ++i )
     {
+        /* continue if disabled */
+        if ( !lighting.pointcoll.lights [ i ].enabled ) continue;
+
         /* get normalised vector from fragment to light */
         vec3 fraglightdir = normalize ( lighting.pointcoll.lights [ i ].position - fragpos );
         /* reflect the light off of the fragment */
@@ -320,6 +339,11 @@ void main ()
     vec4 diffuse = evaluate_stack ( material, material.diffuse_stack );
     vec4 specular = evaluate_stack ( material, material.specular_stack );
 
+    /* if there were no textures for any stack, multiply by the vertex color */
+    if ( material.ambient_stack.stack_size == 0 ) ambient *= vcolor;
+    if ( material.diffuse_stack.stack_size == 0 ) diffuse *= vcolor;
+    if ( material.specular_stack.stack_size == 0 ) specular *= vcolor;
+
     /* if is completely transparent, discard regardless of whether in transparent mode */
     if ( ambient.a + diffuse.a == 0.0 ) discard;
 
@@ -340,5 +364,4 @@ void main ()
     /* set output color */
     if ( transparent_mode ) fragcolor = vec4 ( ambient.rgb + diffuse.rgb + specular.rgb, ambient.a + diffuse.a );
     else fragcolor = vec4 ( ambient.rgb + diffuse.rgb + specular.rgb, 1.0 );
-    
 }

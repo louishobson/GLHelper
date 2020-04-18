@@ -4,7 +4,7 @@
  * Distributed under MIT licence as a part of the GLHelper C++ library.
  * For details, see: https://github.com/louishobson/GLHelper/blob/master/LICENSE
  * 
- * include/glhelper/glhelper_buff.hpp
+ * include/glhelper/glhelper_buffer.hpp
  * 
  * declares buffer handling constructs
  * 
@@ -13,8 +13,8 @@
 
 
 /* HEADER GUARD */
-#ifndef GLHELPER_BUFF_HPP_INCLUDED
-#define GLHELPER_BUFF_HPP_INCLUDED
+#ifndef GLHELPER_BUFFER_HPP_INCLUDED
+#define GLHELPER_BUFFER_HPP_INCLUDED
 
 
 
@@ -39,29 +39,32 @@
 
 namespace glh
 {
-    /* class buffer : object
-     *
-     * base class for storing a buffer
-     */
-    class buffer;
+    namespace core
+    {
+        /* class buffer : object
+         *
+         * base class for storing a buffer
+         */
+        class buffer;
 
-    /* class vbo : buffer
-     *
-     * vertex buffer object
-     */
-    class vbo;
+        /* class vbo : buffer
+         *
+         * vertex buffer object
+         */
+        class vbo;
 
-    /* class ebo : buffer
-     *
-     * element buffer object
-     */
-    class ebo;
+        /* class ebo : buffer
+         *
+         * element buffer object
+         */
+        class ebo;
 
-    /* class vao : object
-     *
-     * vertex array object
-     */
-    class vao;
+        /* class vao : object
+         *
+         * vertex array object
+         */
+        class vao;
+    }
 }
 
 
@@ -72,7 +75,7 @@ namespace glh
  *
  * base class for storing a buffer
  */
-class glh::buffer : public object
+class glh::core::buffer : public object
 {
 public:
 
@@ -83,7 +86,7 @@ public:
      * _target: the target for the buffer
      */
     buffer ( const GLenum _target, const GLenum _reverse_target )
-        : object { glh::object_manager::generate_buffer () }
+        : object { object_manager::generate_buffer () }
         , target { _target }
         , reverse_target { _reverse_target }
     {}
@@ -98,7 +101,9 @@ public:
      * usage: the storage method for the data
      */
     buffer ( const GLenum _target, const GLenum _reverse_target, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
-        : buffer { _target, _reverse_target }
+        : object { object_manager::generate_buffer () }
+        , target { _target }
+        , reverse_target { _reverse_target }
     { buffer_data ( size, data, usage ); }
 
     /* deleted zero-parameter constructor */
@@ -147,25 +152,24 @@ public:
      *
      * destroys the object, setting id to 0
      */
-    void destroy () override { glh::object_manager::destroy_buffer ( id ); id = 0; }
+    void destroy () { object_manager::destroy_buffer ( id ); id = 0; }
 
     /* bind
      *
      * bind the buffer
      */
-    virtual void bind () const = 0;
-
+    void bind () const;
     /* unbind
      *
      * unbind the buffer's target
      */
-    virtual void unbind () const = 0;
+    void unbind () const;
 
     /* is_bound
      *
      * checks if the buffer is bound
      */
-    virtual bool is_bound () const = 0;
+    bool is_bound () const;
 
 
 
@@ -202,7 +206,7 @@ private:
  *
  * vertex buffer object
  */
-class glh::vbo : public buffer 
+class glh::core::vbo : public buffer 
 {
 public:
 
@@ -244,25 +248,6 @@ public:
     /* default destructor */
     ~vbo () = default;
 
-
-
-    /* bind
-     *
-     * bind the buffer
-     */
-    void bind () const { glh::object_manager::bind_vbo ( id ); }
-
-    /* unbind
-     *
-     * unbind the buffer's target
-     */
-    void unbind () const { glh::object_manager::unbind_vbo ( id ); }
-
-    /* is_bound
-     *
-     * checks if the buffer is bound
-     */
-    bool is_bound () const { return glh::object_manager::is_vbo_bound ( id ); }
 };
 
 
@@ -273,7 +258,7 @@ public:
  *
  * element buffer object
  */
-class glh::ebo : public buffer 
+class glh::core::ebo : public buffer 
 {
 public:
 
@@ -315,25 +300,6 @@ public:
     /* default destructor */
     ~ebo () = default;
 
-
-
-    /* bind
-     *
-     * bind the buffer
-     */
-    void bind () const { glh::object_manager::bind_ebo ( id ); }
-
-    /* unbind
-     *
-     * unbind the buffer's target
-     */
-    void unbind () const { glh::object_manager::unbind_ebo ( id ); }
-
-    /* is_bound
-     *
-     * checks if the buffer is bound
-     */
-    bool is_bound () const { return glh::object_manager::is_ebo_bound ( id ); }
 };
 
 
@@ -344,7 +310,7 @@ public:
  *
  * vertex array object
  */
-class glh::vao : public object
+class glh::core::vao : public object
 {
 public:
 
@@ -353,7 +319,7 @@ public:
      * creates a vertex array object without any vbo or ebo bound
      */
     vao ()
-        : object { glh::object_manager::generate_vao () }
+        : object { object_manager::generate_vao () }
     {}
 
     /* deleted copy constructor */
@@ -415,29 +381,29 @@ public:
      *
      * destroys the object, setting id to 0
      */
-    void destroy () override { glh::object_manager::destroy_vao ( id ); id = 0; }
+    void destroy () { object_manager::destroy_vao ( id ); id = 0; }
 
     /* bind
      *
      * bind the vertex array object
      */
-    void bind () const { glh::object_manager::bind_vao ( id ); }
+    void bind () const { object_manager::bind_vao ( id ); }
 
     /* unbind
      *
      * unbind the vertex array object
      */
-    void unbind () const { glh::object_manager::unbind_vao ( id ); }
+    void unbind () const { object_manager::unbind_vao ( id ); }
 
     /* is_bound
      *
      * checks if the vao is bound
      */
-    bool is_bound () const { return glh::object_manager::is_vao_bound ( id ); }
+    bool is_bound () const { return object_manager::is_vao_bound ( id ); }
 
 };
 
 
 
-/* #ifndef GLHELPER_BUFF_HPP_INCLUDED */
+/* #ifndef GLHELPER_BUFFER_HPP_INCLUDED */
 #endif

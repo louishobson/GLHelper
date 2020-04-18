@@ -40,38 +40,35 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
-/* include glhelper_buff.hpp */
-#include <glhelper/glhelper_buff.hpp>
-
-/* include glhelper_shader.hpp */
-#include <glhelper/glhelper_shader.hpp>
-
 
 
 /* NAMESPACE FORWARD DECLARATIONS */
 
 namespace glh
 {
-    /* class program
-     *
-     * forward declaration for use by window class
-     */
-    class program;
-
-    /* glad_loader due to circular dependancy */
-    class glad_loader;
+    namespace core
+    {
+        /* glad_loader due to circular dependancy */
+        class glad_loader;
+    }
      
-    /* class window
-     *
-     * stores a handle on a glfw window object
-     */
-    class window;
+    namespace glfw
+    {
+        /* class window
+         *
+         * stores a handle on a glfw window object
+         */
+        class window;
+    }
 
-    /* class glfw_exception : exception
-     *
-     * for exceptions related to glfw
-     */
-    class glfw_exception;
+    namespace exception
+    {
+        /* class glfw_exception : exception
+         *
+         * for exceptions related to glfw
+         */
+        class glfw_exception;
+    }
 }
 
 
@@ -82,7 +79,7 @@ namespace glh
  *
  * stores a handle on a glfw window object
  */
-class glh::window
+class glh::glfw::window
 {
 public:
 
@@ -373,8 +370,8 @@ private:
  * 
  * return: boolean representing equality
  */
-bool inline operator== ( const glh::window& lhs, const glh::window& rhs ) { return ( lhs.internal_ptr () == rhs.internal_ptr () ); }
-bool inline operator!= ( const glh::window& lhs, const glh::window& rhs ) { return ( lhs.internal_ptr () != rhs.internal_ptr () ); }
+bool inline operator== ( const glh::glfw::window& lhs, const glh::glfw::window& rhs ) { return ( lhs.internal_ptr () == rhs.internal_ptr () ); }
+bool inline operator!= ( const glh::glfw::window& lhs, const glh::glfw::window& rhs ) { return ( lhs.internal_ptr () != rhs.internal_ptr () ); }
 
 
 
@@ -382,7 +379,7 @@ bool inline operator!= ( const glh::window& lhs, const glh::window& rhs ) { retu
  *
  * for exceptions related to glfw
  */
-class glh::glfw_exception : public exception
+class glh::exception::glfw_exception : public exception
 {
 public:
 

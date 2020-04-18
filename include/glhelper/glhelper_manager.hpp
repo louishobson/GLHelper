@@ -31,6 +31,9 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
+/* include glhelper_glad.hpp */
+#include <glhelper/glhelper_glad.hpp>
+
 
 
 /* MACROS */
@@ -47,18 +50,24 @@
 
 namespace glh
 {
-    /* class object_manager
-     *
-     * responsible for generating and destroying OpenGL objects
-     * also tracks bindings and avoids rebinds
-     */
-    class object_manager;
+    namespace core
+    {
+        /* class object_manager
+         *
+         * responsible for generating and destroying OpenGL objects
+         * also tracks bindings and avoids rebinds
+         */
+        class object_manager;
+    }
 
-    /* class object_management_exception : exception
-     *
-     * exception relating to object management
-     */
-    class object_management_exception;
+    namespace exception
+    {
+        /* class object_management_exception : exception
+         *
+         * exception relating to object management
+         */
+        class object_management_exception;
+    }
 }
 
 
@@ -70,7 +79,7 @@ namespace glh
  * responsible for generating and destroying OpenGL objects
  * also tracks bindings and avoids rebinds
  */
-class glh::object_manager
+class glh::core::object_manager
 {
 public:
 
@@ -232,7 +241,7 @@ public:
 
     /* destroy_texture
      *
-     * destroy a texture object, unbindint it from its texture unit
+     * destroy a texture object, unbinding it from any texture units
      */
     static void destroy_texture ( const GLuint id );
 
@@ -262,6 +271,81 @@ public:
 
 
 
+    /* RENDERBUFFER OBJECTS */
+
+    /* generate_rbo
+     *
+     * generate a renderbuffer object
+     */
+    static GLuint generate_rbo ();
+
+    /* destroy_rbo
+     *
+     * destroy a renderbuffer object, unbindint it if bound
+     */
+    static void destroy_rbo ( const GLuint id );
+
+    /* bind_rbo
+     *
+     * bind a renderbuffer object
+     */
+    static void bind_rbo ( const GLuint id );
+
+    /* unbind_rbo
+     *
+     * unbind an renderbuffer object, if already bound
+     */
+    static void unbind_rbo ( const GLuint id );
+
+    /* is_rbo_bound
+     *
+     * return true if the rbo is bound
+     */
+    static bool is_rbo_bound ( const GLuint id ) { return ( id == bound_rbo ); }
+
+
+
+    /* FRAMEBUFFER OBJECTS */
+
+    /* generate_fbo
+     *
+     * generate a framebuffer object
+     */
+    static GLuint generate_fbo ();
+
+    /* destroy_fbo
+     *
+     * destroy a framebuffer object, unbinding it if bound
+     */
+    static void destroy_fbo ( const GLuint id );
+
+    /* bind_fbo
+     *
+     * bind a framebuffer object
+     */
+    static void bind_fbo ( const GLuint id );
+
+    /* unbind_fbo
+     *
+     * if the fbo is bound, bind the default fbo instead
+     */
+    static void unbind_fbo ( const GLuint id );
+
+    /* bind_default_fbo
+     *
+     * bind the default framebuffer
+     * this replaces the unbind_framebuffer method, as framebuffer id=0 is the default framebuffer
+     */
+    static void bind_default_fbo ();
+
+    /* is_fbo_bound
+     *
+     * return true if the framebuffer is bound
+     */
+    static bool is_fbo_bound ( const GLuint id ) { return ( id == bound_fbo ); }
+
+
+
 
 private:
 
@@ -280,6 +364,20 @@ private:
     /* array of texture units and their respectively bound textures */
     static std::array<GLuint, GLH_MAX_TEXTURE_UNITS> bound_textures;
 
+    /* currently bound renderbuffer */
+    static GLuint bound_rbo;
+
+    /* currently bound framebuffer */
+    static GLuint bound_fbo;
+
+
+
+    /* assert_opengl_loaded
+     *
+     * throw if opengl has not been loaded
+     */
+    static void asset_opengl_loaded () { if ( !core::glad_loader::is_loaded () ) throw exception::glad_exception { "attempted to create object without GLAD being loaded" }; }
+
 };
 
 
@@ -290,7 +388,7 @@ private:
  *
  * for exceptions related to textures
  */
-class glh::object_management_exception : public exception
+class glh::exception::object_management_exception : public exception
 {
 public:
 

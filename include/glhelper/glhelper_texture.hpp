@@ -46,29 +46,35 @@
 
 namespace glh
 {
-    /* class texture2c : object
-     *
-     * represents a 2D texture
-     * automatically loads the texture given a path, and creates a mipmap
-     */
-    class texture2d;
+    namespace core
+    {
+        /* class texture2c : object
+         *
+         * represents a 2D texture
+         * automatically loads the texture given a path, and creates a mipmap
+         */
+        class texture2d;
+    }
 
-    /* class texture_exception : exception
-     *
-     * exception relating to textures
-     */
-    class texture_exception;
+    namespace exception
+    {
+        /* class texture_exception : exception
+         *
+         * exception relating to textures
+         */
+        class texture_exception;
+    }
 }
 
 
 
 /* TEXTURE2D DEFINITION */
 
-class glh::texture2d : public object
+class glh::core::texture2d : public object
 {
 public:
 
-    /* full constructor
+    /* image constructor
      *
      * load a 2D texture from an image file
      * default settings are applied
@@ -76,6 +82,18 @@ public:
      * _path: path to the image for the texture
      */
     texture2d ( const std::string& _path );
+
+    /* empty texture constructor
+     *
+     * create an texture of a given size with supplied data
+     * 
+     * _width/_height: the width and height of the texture
+     * __internal_format: the internal format of the data (e.g. specific bit arrangements)
+     * _format: the format of the data (e.g. what the data will be used for)
+     * _type: the type of the data (specific type macro with bit arrangements)
+     * data: the data to put in the texture (defaults to NULL)
+     */
+    texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL );
 
     /* deleted zero-parameter constructor
      *
@@ -113,13 +131,19 @@ public:
     void set_r_wrap ( const GLenum opt );
     void set_wrap ( const GLenum opt );
 
+    /* generate_mipmap
+     *
+     * generate texture mipmap
+     */
+    void generate_mipmap ();
+
 
 
     /* destroy
      *
      * destroys the texture, setting its id to 0
      */
-    void destroy () override { glh::object_manager::destroy_texture ( id ); id = 0; }
+    void destroy () { object_manager::destroy_texture ( id ); id = 0; }
 
     /* bind
      *
@@ -127,7 +151,7 @@ public:
      * 
      * texture_unit: the texture unit to bind to, or the last one
      */
-    void bind ( const unsigned texture_unit = 0 ) const { glh::object_manager::bind_texture ( id, texture_unit ); }
+    void bind ( const unsigned texture_unit = 0 ) const { object_manager::bind_texture ( id, texture_unit ); }
 
     /* is_bound
      *
@@ -135,7 +159,7 @@ public:
      * 
      * return boolean for if the texture is bound
      */
-    bool is_bound ( const unsigned texture_unit = 0 ) const { return glh::object_manager::is_texture_bound ( id, texture_unit ); }
+    bool is_bound ( const unsigned texture_unit = 0 ) const { return object_manager::is_texture_bound ( id, texture_unit ); }
 
 
 
@@ -168,11 +192,18 @@ private:
      */
     const std::string path;
 
-    /* format
+    /* (internal_)format
      *
-     * the format of the texture (e.g. GL_RGB)
+     * the (internal) format of the texture (e.g. GL_RGB)
      */
+    GLenum internal_format;
     GLenum format;
+
+    /* type
+     *
+     * the type of the data stored in the texture
+     */
+    GLenum type;
 
     /* widith, height, channels
      *
@@ -192,7 +223,7 @@ private:
  *
  * for exceptions related to textures
  */
-class glh::texture_exception : public exception
+class glh::exception::texture_exception : public exception
 {
 public:
 

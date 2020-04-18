@@ -120,55 +120,61 @@
 
 namespace glh
 {
-    /* class light
-     *
-     * abstract base class for any type of light
-     */
-    class light;
+    namespace lighting
+    {
+        /* class light
+         *
+         * abstract base class for any type of light
+         */
+        class light;
 
-    /* is_light
-     *
-     * is_light::value is true, if the type is a light
-     */
-    template<class T> struct is_light;
+        /* class dirlight : light
+         *
+         * directional light class
+         */
+        class dirlight;
 
-    /* class dirlight : light
-     *
-     * directional light class
-     */
-    class dirlight;
+        /* class pointlight : light
+         *
+         * point light class
+         */
+        class pointlight;
 
-    /* class pointlight : light
-     *
-     * point light class
-     */
-    class pointlight;
+        /* class spotlight : light
+         *
+         * spotlight class
+         */
+        class spotlight;
 
-    /* class spotlight : light
-     *
-     * spotlight class
-     */
-    class spotlight;
+        /* class light_collection
+         *
+         * class to store multiple lights of the same type
+         */
+        template<class T> class light_collection;
 
-    /* class light_collection
-     *
-     * class to store multiple lights of the same type
-     */
-    template<class T> class light_collection;
+        /* using declarations for light_collection
+         *
+         * simplifies template
+         */
+        using dirlight_collection = light_collection<dirlight>;
+        using pointlight_collection = light_collection<pointlight>;
+        using spotlight_collection = light_collection<spotlight>;
 
-    /* using declarations for light_collection
-     *
-     * simplifies template
-     */
-    using dirlight_collection = light_collection<dirlight>;
-    using pointlight_collection = light_collection<pointlight>;
-    using spotlight_collection = light_collection<spotlight>;
+        /* class light_system
+         *
+         * several collection of lights for each type
+         */
+        class light_system;
+    }
 
-    /* class light_system
-     *
-     * several collection of lights for each type
-     */
-    class light_system;
+    namespace meta
+    {
+        /* is_light
+         *
+         * is_light::value is true, if the type is a light
+         */
+        template<class T> struct is_light;
+    }
 }
 
 
@@ -179,7 +185,7 @@ namespace glh
  *
  * abstract base class for any type of light
  */
-class glh::light
+class glh::lighting::light
 {
 public:
 
@@ -242,7 +248,7 @@ public:
      * 
      * light_uni: the uniform to apply the light to (which will be cached)
      */
-    void apply ( const struct_uniform& light_uni ) const;
+    void apply ( const core::struct_uniform& light_uni );
     void apply () const;
 
     /* cache_uniforms
@@ -251,7 +257,7 @@ public:
      * 
      * light_uni: the uniform to cache
      */
-    void cache_uniforms ( const struct_uniform& light_uni ) const;
+    void cache_uniforms ( const core::struct_uniform& light_uni );
 
 
 
@@ -294,8 +300,18 @@ public:
      * get/set color components
      */
     const math::vec3& get_ambient_color () const { return ambient_color; }
+    const void set_ambient_color ( const glh::math::vec3& _ambient_color ) { ambient_color = _ambient_color; }
     const math::vec3& get_diffuse_color () const { return diffuse_color; }
+    const void set_diffuse_color ( const glh::math::vec3& _diffuse_color ) { diffuse_color = _diffuse_color; }
     const math::vec3& get_specular_color () const { return specular_color; }
+    const void set_specular_color ( const glh::math::vec3& _specular_color ) { specular_color = _specular_color; }
+
+    /* enable/disable
+     *
+     * enable/disable the light
+     */
+    void enable () { enabled = true; }
+    void disable () { enabled = false; }
 
 
 
@@ -327,22 +343,22 @@ private:
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
-        struct_uniform light_uni;
-        uniform position_uni;
-        uniform direction_uni;
-        uniform inner_cone_uni;
-        uniform outer_cone_uni;
-        uniform att_const_uni;
-        uniform att_linear_uni;
-        uniform att_quad_uni;
-        uniform ambient_color_uni;
-        uniform diffuse_color_uni;
-        uniform specular_color_uni;
-        uniform enabled_uni;
+        core::struct_uniform light_uni;
+        core::uniform position_uni;
+        core::uniform direction_uni;
+        core::uniform inner_cone_uni;
+        core::uniform outer_cone_uni;
+        core::uniform att_const_uni;
+        core::uniform att_linear_uni;
+        core::uniform att_quad_uni;
+        core::uniform ambient_color_uni;
+        core::uniform diffuse_color_uni;
+        core::uniform specular_color_uni;
+        core::uniform enabled_uni;
     };
 
     /* cached uniforms */
-    mutable std::unique_ptr<cached_uniforms_struct> cached_uniforms;
+    std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 
 };
 
@@ -354,22 +370,22 @@ private:
  *
  * is_light::value is true if the type is a light
  */
-template<class T> struct glh::is_light
+template<class T> struct glh::meta::is_light
 {
     static const bool value = false;
     operator bool () { return value; } 
 };
-template<> struct glh::is_light<glh::dirlight>
+template<> struct glh::meta::is_light<glh::lighting::dirlight>
 {
     static const bool value = true;
     operator bool () { return value; } 
 };
-template<> struct glh::is_light<glh::pointlight>
+template<> struct glh::meta::is_light<glh::lighting::pointlight>
 {
     static const bool value = true;
     operator bool () { return value; } 
 };
-template<> struct glh::is_light<glh::spotlight>
+template<> struct glh::meta::is_light<glh::lighting::spotlight>
 {
     static const bool value = true;
     operator bool () { return value; } 
@@ -383,7 +399,7 @@ template<> struct glh::is_light<glh::spotlight>
  *
  * directional light class
  */
-class glh::dirlight : public light
+class glh::lighting::dirlight : public light
 {
 public:
 
@@ -453,7 +469,7 @@ private:
  *
  * point light class
  */
-class glh::pointlight : public light
+class glh::lighting::pointlight : public light
 {
 public:
 
@@ -516,7 +532,7 @@ private:
  *
  * spotlight class
  */
-class glh::spotlight : public light
+class glh::lighting::spotlight : public light
 {
 public:
 
@@ -565,10 +581,10 @@ public:
  *
  * class to store multiple lights of the same type
  */
-template<class T = glh::light> class glh::light_collection
+template<class T = glh::lighting::light> class glh::lighting::light_collection
 {
     /* static assert that T is a light */
-    static_assert ( is_light<T>::value, "cannot create light_collection object containing non-light type" );
+    static_assert ( meta::is_light<T>::value, "cannot create light_collection object containing non-light type" );
 
 public:
 
@@ -609,7 +625,7 @@ public:
      * 
      * light_collection_uni: the uniform to apply the lights to
      */
-    void apply ( const struct_uniform& light_collection_uni ) const;
+    void apply ( const core::struct_uniform& light_collection_uni );
     void apply () const;
 
     /* cache_uniforms
@@ -618,7 +634,13 @@ public:
      * 
      * light_collection_uni: the uniform to cache
      */
-    void cache_uniforms ( const struct_uniform& light_collection_uni ) const;
+    void cache_uniforms ( const core::struct_uniform& light_collection_uni );
+
+    /* reload_uniforms
+     *
+     * reload the lights uniform caches based on current uniform cache
+     */
+    void reload_uniforms ();
 
 
 
@@ -627,13 +649,13 @@ private:
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
-        struct_uniform light_collection_uni;
-        uniform size_uni;
-        struct_array_uniform lights_uni;
+        core::struct_uniform light_collection_uni;
+        core::uniform size_uni;
+        core::struct_array_uniform lights_uni;
     };
 
     /* cached uniforms */
-    mutable std::unique_ptr<cached_uniforms_struct> cached_uniforms;
+    std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 };
 
 
@@ -644,7 +666,7 @@ private:
  *
  * several collection of lights for each type
  */
-class glh::light_system
+class glh::lighting::light_system
 {
 public:
 
@@ -692,7 +714,7 @@ public:
      * 
      * light_system_uni: the uniform to apply the lights to
      */
-    void apply ( const struct_uniform& light_system_uni ) const;
+    void apply ( const core::struct_uniform& light_system_uni );
     void apply () const;
 
     /* cache_uniforms
@@ -701,7 +723,13 @@ public:
      * 
      * light_system_uni: the uniform to cache
      */
-    void cache_uniforms ( const struct_uniform& light_system_uni ) const;
+    void cache_uniforms ( const core::struct_uniform& light_system_uni );
+
+    /* reload_uniforms
+     *
+     * reload the light collections based on the currently cached uniforms
+     */
+    void reload_uniforms ();
 
 
 
@@ -710,14 +738,14 @@ private:
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
-        struct_uniform light_system_uni;
-        struct_uniform dircoll_uni;
-        struct_uniform pointcoll_uni;
-        struct_uniform spotcoll_uni;
+        core::struct_uniform light_system_uni;
+        core::struct_uniform dircoll_uni;
+        core::struct_uniform pointcoll_uni;
+        core::struct_uniform spotcoll_uni;
     };
 
     /* cached uniforms */
-    mutable std::unique_ptr<cached_uniforms_struct> cached_uniforms;
+    std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 
 };
 
@@ -732,7 +760,7 @@ private:
  * light_collection_uni: the uniform to apply the lights to
  */
 template<class T>
-inline void glh::light_collection<T>::apply ( const struct_uniform& light_collection_uni ) const
+inline void glh::lighting::light_collection<T>::apply ( const core::struct_uniform& light_collection_uni )
 {
     /* cache uniform */
     cache_uniforms ( light_collection_uni );
@@ -741,14 +769,14 @@ inline void glh::light_collection<T>::apply ( const struct_uniform& light_collec
     apply ();
 }
 template<class T>
-inline void glh::light_collection<T>::apply () const
+inline void glh::lighting::light_collection<T>::apply () const
 {
     /* throw if no uniform is cached */
-    if ( !cached_uniforms ) throw uniform_exception { "attempted to apply light_collection to uniform with out a complete uniform cache" };
+    if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to apply light_collection to uniform with out a complete uniform cache" };
 
     /* set uniforms */
     cached_uniforms->size_uni.set_int ( lights.size () );
-    for ( unsigned i = 0; i < lights.size (); ++i ) lights.at ( i ).apply ( cached_uniforms->lights_uni.at ( i ) );
+    for ( unsigned i = 0; i < lights.size (); ++i ) lights.at ( i ).apply ();
 }
 
 /* cache_uniforms
@@ -758,11 +786,12 @@ inline void glh::light_collection<T>::apply () const
  * light_collection_uni: the uniform to cache
  */
 template<class T>
-inline void glh::light_collection<T>::cache_uniforms ( const struct_uniform& light_collection_uni ) const
+inline void glh::lighting::light_collection<T>::cache_uniforms ( const core::struct_uniform& light_collection_uni )
 {
     /* if not already cached, cache uniforms */
     if ( !cached_uniforms || cached_uniforms->light_collection_uni != light_collection_uni )
     {
+        /* cache this objects uniforms */
         cached_uniforms.reset ( new cached_uniforms_struct
         {
             light_collection_uni,
@@ -770,6 +799,20 @@ inline void glh::light_collection<T>::cache_uniforms ( const struct_uniform& lig
             light_collection_uni.get_struct_array_uniform ( "lights" )
         } );
     }
+    /* cache each light's uniforms */
+    for ( unsigned i = 0; i < lights.size (); ++i ) lights.at ( i ).cache_uniforms ( cached_uniforms->lights_uni.at ( i ) );
+
+}
+
+/* reload_uniforms
+ *
+ * reload the lights uniform caches based on current uniform cache
+ */
+template <class T>
+inline void glh::lighting::light_collection<T>::reload_uniforms ()
+{
+    /* recache uniforms */
+    cache_uniforms ( cached_uniforms->light_collection_uni );
 }
 
 

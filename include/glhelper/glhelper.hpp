@@ -30,8 +30,8 @@
 /* include glhelper_glfw.hpp */
 #include <glhelper/glhelper_glfw.hpp>
 
-/* include glhelper_buff.hpp */
-#include <glhelper/glhelper_buff.hpp>
+/* include glhelper_buffer.hpp */
+#include <glhelper/glhelper_buffer.hpp>
 
 /* include glhelper_shader.hpp */
 #include <glhelper/glhelper_shader.hpp>
@@ -59,3 +59,6 @@
 
 /* glhelper_lighting.hpp */
 #include <glhelper/glhelper_lighting.hpp>
+
+/* glhelper_framebuffer.hpp */
+#include <glhelper/glhelper_framebuffer.hpp>

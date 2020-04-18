@@ -27,13 +27,13 @@
  * 
  * return: true for success, false for failure
  */
-void glh::glad_loader::load ()
+void glh::core::glad_loader::load ()
 {
     /* get the window from the current context */
     GLFWwindow * win = glfwGetCurrentContext ();
 
     /* produce error if no context set */
-    if ( !win ) throw glad_exception { "GLH ERROR: tried to load GLAD with no context set" };
+    if ( !win ) throw exception::glad_exception { "attempted to load GLAD with no context set" };
 
     /* if window is already loaded, return true without reloading glad */
     if ( win == active_window ) return;
@@ -42,7 +42,7 @@ void glh::glad_loader::load ()
     if ( !gladLoadGLLoader ( ( GLADloadproc ) glfwGetProcAddress ) )
     {
         /* failed to initialise OpenGL, so produce an exception */
-        throw glad_exception { "GLH ERROR: failed to load glad" };
+        throw exception::glad_exception { "GLH ERROR: failed to load glad" };
     }
 
     /* set new active window */
@@ -53,4 +53,4 @@ void glh::glad_loader::load ()
  *
  * a pointer to the currently active window
  */
-const GLFWwindow * glh::glad_loader::active_window = NULL;
+const GLFWwindow * glh::core::glad_loader::active_window = NULL;
