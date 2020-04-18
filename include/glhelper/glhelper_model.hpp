@@ -23,8 +23,10 @@
  * 
  * 0: vec3  : vertices
  * 1: vec3  : normals
+ * 2: vec4  : vertex colors
  * 2: vec3[]: UV channels of texture coordinates
- *
+ * 
+ * even if there are multiple color sets, only the first set is sent to the vertex shader
  * how many UV channels you allow (size of the array at location 2) is up to the user
  * too many is not an issue, too few will be
  * 
@@ -235,6 +237,9 @@ struct glh::model::vertex
 
     /* multiple uv channels of texture coords */
     std::vector<math::vec3> texcoords;
+
+    /* multiple color sets */
+    std::vector<math::vec4> colorsets;
 };
 
 
@@ -375,6 +380,15 @@ struct glh::model::mesh
 
     /* an array of faces */
     std::vector<face> faces;
+
+
+
+    /* definitely opaque
+     *
+     * if true, the mesh is definitely opaque
+     * this is defined by the material being definitly opaque, and all vertex colors having an alpha of 1
+     */
+    bool definitely_opaque;
 
 
 
@@ -622,14 +636,14 @@ private:
 
     /* is_definitely_opaque
      *
-     * determines if a material is definitely opaque
-     * see struct material for more info
+     * determines if a material or mesh is definitely opaque
      * 
-     * _material: the material to check
+     * _material/_mesh: the material/mesh to check
      * 
      * return: boolean for if is definitely opaque
      */
     bool is_definitely_opaque ( const material& _material );
+    bool is_definitely_opaque ( const mesh& _mesh );
 
     /* add_mesh
      *
