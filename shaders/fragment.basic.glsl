@@ -23,6 +23,6 @@ uniform sampler2D texunit;
 void main ()
 {
     /* sample texture and return */
-    fragcolor = texture ( texunit, texcoords [ 0 ] );
-    //fragcolor = vec4 ( 1.0, 0.0, 0.0, 1.0 );
+    fragcolor = pow ( texture ( texunit, texcoords [ 0 ] ) + vec4 ( 0.03, 0.03, 0.03, 0.0 ), vec4 ( 0.8, 0.8, 0.8, 1 ) );
+    //fragcolor = texture ( texunit, texcoords [ 0 ] );
 }
