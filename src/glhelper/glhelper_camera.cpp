@@ -392,17 +392,16 @@ bool glh::camera::camera::update_trans () const
  */
 bool glh::camera::mirror_camera::update_view () const
 {
-    /* reflect in the plane found by the normal of the mirror */
-    math::vec3 pos { math::reflect3d ( cam.get_position (), normal, position ) };
+    /* true means cam pos is same side as normal to mirror */
+    const bool sign = !std::signbit ( math::dot ( normal, cam.get_position () - position ) );
 
-    /* get signbit: true means camera pos is same side as normal */
-    const bool sign = std::signbit ( math::dot ( normal, cam.get_position () - position ) );
+    /* if cam pos is on the same side as the normal,
+     * reflect cam pos in the plane found by the normal of the mirror */
+    math::vec3 pos { cam.get_position () };
+    if ( sign ) pos = math::reflect3d ( pos, normal, position );
 
-    /* view matrix created by looking along the normal of the mirror */
+    /* view matrix created by reflecting position in the mirror and looking towards it */
     view = math::look_along ( pos, normal, wup );
-
-    /* if sign is negative, reflect the matrix */
-    if ( sign ) view = math::reflect3d ( view, normal );
 
     /* return true */
     return true;
@@ -420,12 +419,11 @@ bool glh::camera::mirror_camera::update_proj () const
     /* apply view matrix to the mirror position */
     math::vec3 mirror_pos { view_matrix * glh::math::vec4 { position, 1.0 } };
 
-    /* 1 means same side as normal, -1 means opposite */
-    const double sign = ( std::signbit ( math::dot ( normal, cam.get_position () - position ) ) ? -1.0 : 1.0 );
-
-    /* create projection matrix */
-    proj = math::perspective ( mirror_pos.at ( 0 ) - half_width, mirror_pos.at ( 0 ) + half_width, mirror_pos.at ( 1 ) - half_height, mirror_pos.at ( 1 ) + half_height, -mirror_pos.at ( 2 ), cam.get_far () );
-
+    /* create projection matrix
+     * notice the sign of the half_widths vs the half_heights
+     * we reflect the texture in the x-axis
+     */
+    proj = math::perspective ( mirror_pos.at ( 0 ) + half_width, mirror_pos.at ( 0 ) - half_width, mirror_pos.at ( 1 ) - half_height, mirror_pos.at ( 1 ) + half_height, -mirror_pos.at ( 2 ), cam.get_far () );
     /* return true */
     return true;
 

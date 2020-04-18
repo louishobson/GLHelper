@@ -408,7 +408,10 @@ public:
 
     /* full constructor
      *
-     * takes another camera and mirror positioning
+     * takes another camera and mirror positioning to form a second camera from the mirror's perspective
+     * the normal should be pointing out of the side the texture will be rendered on
+     * given this, the mirror will act as normal when looking from the side of the normal, and be transparent on the other
+     * take care with winding orders, as when looking at either side of the mirror, the winding order is reversed for its contents
      *
      * _cam: the viewer camera
      * _position: the position of the centre of the mirror
@@ -420,6 +423,38 @@ public:
     mirror_camera ( const camera& _cam, const math::vec3& _position, const math::vec3& _normal, const double _width, const double _height, const math::vec3& _wup = math::vec3 { 0.0, 1.0, 0.0 })
         : cam { _cam }, position { _position }, normal { math::normalise ( _normal ) }, half_width { _width / 2.0 }, half_height { _height / 2.0 }, wup { math::normalise ( _wup ) }
     {}
+
+
+
+    /* get/set_position
+     *
+     * get/set the position of the mirror
+     */
+    const math::vec3& get_position () const { return position; }
+    void set_position ( const math::vec3& _position ) { position = _position; }
+    
+    /* get/set_normal
+     *
+     * get/set the normal vector of the mirror
+     */
+    const math::vec3& get_normal () const { return normal; }
+    void set_normal ( const math::vec3& _normal ) { normal = math::normalise ( _normal ); }
+
+    /* get/set_width/height
+     *
+     * get/set the width/height of the mirror
+     */
+    double get_width () const { return half_width * 2; }
+    void set_width ( const double _width ) { half_width = _width / 2.0; }
+    double get_height () const { return half_height * 2; }
+    void set_height ( const double _height ) { half_height = _height / 2.0; }
+
+    /* get/set_wup
+     *
+     * get/set the world up vector
+     */
+    const math::vec3& get_wup () const { return wup; }
+    void set_wup ( const math::vec3& _wup ) { wup = math::normalise ( _wup ); }
 
 
 
