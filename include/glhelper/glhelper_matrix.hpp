@@ -461,18 +461,18 @@ template<unsigned M, unsigned N> inline glh::math::matrix<M - 1, N - 1> glh::mat
     matrix<M - 1, N - 1> submat;
 
     /* i loop */
-    for ( unsigned i = 0, subiti = 0; i < M; ++i )
+    for ( unsigned iti = 0, subiti = 0; iti < M; ++iti )
     {
         /* if is the row we need to ignore, continue without incramenting subiti */
-        if ( i == i ) continue;
+        if ( iti == i ) continue;
         /* j loop */
-        for ( unsigned j = 0, subitj = 0; j < N; ++j )
+        for ( unsigned itj = 0, subitj = 0; itj < N; ++itj )
         {
             /* if is the collumn we need to ignore, continue without incramenting subitj */
-            if ( j == j ) continue;
+            if ( itj == j ) continue;
             /* otherwise set the new value */
-            submat.at ( subiti, subitj ) = _matrix.at ( i, j );
-            /* incrament subitij */
+            submat.at ( subiti, subitj ) = _matrix.at ( iti, itj );
+            /* incrament subitj */
             ++subitj;
         }
         /* incrament subiti */
@@ -497,13 +497,13 @@ template<unsigned M, unsigned N> inline glh::math::matrix<M - 1, N - 1> glh::mat
 template<unsigned M> inline double glh::math::det ( const matrix<M>& _matrix )
 {
     /* store the running determinant */
-    double det = 0.;
+    double det = 0.0;
 
     /* multiplier for working out the determinant
      * starts as 1, and is multiplied by -1 for each value on the top row
      * this allows for the positive negative pattern to occur
      */
-    double det_mult = 1.;
+    double det_mult = 1.0;
     
     /* loop for each value in the top row */
     for ( unsigned i = 0; i < M; ++i )
@@ -511,7 +511,7 @@ template<unsigned M> inline double glh::math::det ( const matrix<M>& _matrix )
         /* add to the determinant */
         det += ( _matrix.at ( i ) * minor ( _matrix, i ) * det_mult );
         /* multiply det_mult by -1 */
-        det_mult *= -1.;
+        det_mult *= -1.0;
     }
 
     /* return the determinant */
@@ -553,24 +553,18 @@ template<unsigned M> inline glh::math::matrix<M> glh::math::inverse ( const matr
     const double determinant = det ( _matrix );
 
     /* if the determinant is 0, throw */
-    if ( determinant == 0 ) throw exception::matrix_exception { "cannot find inverse of a singular matrix" };
+    if ( determinant == 0.0 ) throw exception::matrix_exception { "cannot find inverse of a singular matrix" };
 
     /* create the new matrix */
     matrix<M> cof;
 
-    /* multiplier for cofactors */
-    double mult = 1.;
-
     /* loop for each value in the new matrix */
-    for ( unsigned i = 0; i < M * M; ++i )
+    for ( unsigned i = 0; i < M; ++i ) for ( unsigned j = 0; j < M; ++j )
     {
         /* replace it with its cofactor value
-         * this is found by multiplying the minor of the element by mult
-         * mult switches between 1 and -1 to get the alternating sign pattern
+         * this is found by multiplying the minor of the element by (-1)^i+j
          */
-        cof.at ( i ) = minor ( _matrix, i ) * mult;
-        /* multiply mult by -1 to keep up sign-swapping pattern */
-        mult *= -1.0;
+        cof.at ( i, j ) = minor ( _matrix, i, j ) * std::pow ( -1.0, i + j );
     }
 
     /* return the transpose of the new matrix divided the determinant of the original matrix */
@@ -579,7 +573,7 @@ template<unsigned M> inline glh::math::matrix<M> glh::math::inverse ( const matr
 template<> inline glh::math::matrix<1> glh::math::inverse<1> ( const matrix<1>& _matrix )
 {
     /* if only element is 0, throw */
-    if ( _matrix.at ( 0 ) == 0 ) throw exception::matrix_exception { "cannot find inverse of a singular matrix" };
+    if ( _matrix.at ( 0 ) == 0.0 ) throw exception::matrix_exception { "cannot find inverse of a singular matrix" };
     /* return the only value in the matrix */
     return matrix<1> { 1.0 / _matrix.at ( 0 ) };
 }
@@ -719,7 +713,7 @@ template<unsigned M0, unsigned N0M1, unsigned N1> inline glh::math::matrix<M0, N
     for ( unsigned i = 0; i < M0; ++i ) for ( unsigned j = 0; j < N1; ++j )
     {
         /* another loop to add up the product of the corresponding values of lhs and rhs*/
-        for ( unsigned itk = 0; itk < N0M1; ++itk ) result.at ( i, j ) += lhs.at ( i, itk ) * rhs.at ( itk, j );
+        for ( unsigned k = 0; k < N0M1; ++k ) result.at ( i, j ) += lhs.at ( i, k ) * rhs.at ( k, j );
     }
 
     /* return result */
@@ -764,7 +758,7 @@ template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator*= ( gl
 template<unsigned M, unsigned N> inline glh::math::matrix<M, N> operator/ ( const glh::math::matrix<M, N>& lhs, const double rhs )
 {
     /* return the multiplication of lhs and 1/rhs */
-    return lhs * ( 1 / rhs );
+    return lhs * ( 1.0 / rhs );
 }
 template<unsigned M, unsigned N> inline glh::math::matrix<M, N>& operator/= ( glh::math::matrix<M, N>& lhs, const double rhs )
 {
@@ -808,10 +802,10 @@ template<unsigned M> inline glh::math::matrix<M> std::pow ( const glh::math::mat
      * not going to include glh_transform.hpp just for the identity matrix
      */
     glh::math::matrix<M> result;
-    for ( unsigned i = 0; i < M; ++i ) result.at ( i, i ) = 1.;
+    for ( unsigned i = 0; i < M; ++i ) result.at ( i, i ) = 1.0;
 
     /* apply power */
-    for ( unsigned itexp = 0; itexp < newexp; ++itexp ) result = result * newbase;
+    for ( unsigned i = 0; i < newexp; ++i ) result = result * newbase;
 
     /* return result */
     return result;
