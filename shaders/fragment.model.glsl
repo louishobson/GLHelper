@@ -358,5 +358,4 @@ void main ()
     /* set output color */
     if ( transparent_mode ) fragcolor = vec4 ( ambient.rgb + diffuse.rgb + specular.rgb, ambient.a + diffuse.a );
     else fragcolor = vec4 ( ambient.rgb + diffuse.rgb + specular.rgb, 1.0 );
-    
 }
