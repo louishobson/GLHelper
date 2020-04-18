@@ -90,10 +90,11 @@ struct trans_struct
     vec3 viewpos;
 };
 
-/* texture coords, normal vector and position */
+/* texture coords, normal vector, position, vcolor */
 in vec2 texcoords [ MAX_UV_CHANNELS ];
 in vec3 normal;
 in vec3 fragpos;
+in vec4 vcolor;
 
 /* output color */
 out vec4 fragcolor;
@@ -337,6 +338,11 @@ void main ()
     vec4 ambient = evaluate_stack ( material, material.ambient_stack );
     vec4 diffuse = evaluate_stack ( material, material.diffuse_stack );
     vec4 specular = evaluate_stack ( material, material.specular_stack );
+
+    /* if there were no textures for any stack, multiply by the vertex color */
+    if ( material.ambient_stack.stack_size == 0 ) ambient *= vcolor;
+    if ( material.diffuse_stack.stack_size == 0 ) diffuse *= vcolor;
+    if ( material.specular_stack.stack_size == 0 ) specular *= vcolor;
 
     /* if is completely transparent, discard regardless of whether in transparent mode */
     if ( ambient.a + diffuse.a == 0.0 ) discard;
