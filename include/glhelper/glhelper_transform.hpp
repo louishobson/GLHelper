@@ -876,15 +876,15 @@ inline glh::math::matrix<4> glh::math::camera ( const vector<3>& p, const vector
  */
 inline glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& wup )
 {
-    /* d = norm ( p - t )
-     * r = norm ( wup x d )
-     * u = d x r
+    /* z = norm ( p - t )
+     * X = norm ( wup x d )
+     * y = d x X
      */
-    const vector<3> d = normalise ( p - t );
-    const vector<3> r = cross ( wup, d );
-    const vector<3> u = cross ( d, r );
+    const vector<3> z = normalise ( t - p );
+    const vector<3> x = cross ( wup, z );
+    const vector<3> y = cross ( z, x );
     /* return the camera matrix */
-    return camera ( p, d, r, u );
+    return camera ( p, x, y, z );
 }
 
 /* look_along
@@ -899,13 +899,16 @@ inline glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vecto
  */
 inline glh::math::matrix<4> glh::math::look_along ( const vector<3>& p, const vector<3>& d, const vector<3>& wup )
 {
-    /* r = wup x d
-     * u = d x r
+
+    /* z = -d
+     * X = wup x z
+     * y = z x X
      */
-    const vector<3> r = cross ( wup, d );
-    const vector<3> u = cross ( d, r );
+    const vector<3> z = -d;
+    const vector<3> x = cross ( wup, z );
+    const vector<3> y = cross ( z, x );
     /* return the camera matrix */
-    return camera ( p, r, u, -d );
+    return camera ( p, x, y, z );
 }
 
 /* normal
