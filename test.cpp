@@ -60,10 +60,10 @@ int main ()
 
     const GLfloat mirror_data [] =
     {
-         1.0,  1.0, 0.0,    0.0, 0.0, 1.0,    1.0, 1.0, 0.0,
-        -1.0,  1.0, 0.0,    0.0, 0.0, 1.0,    0.0, 1.0, 0.0,
-        -1.0, -1.0, 0.0,    0.0, 0.0, 1.0,    0.0, 0.0, 0.0,
-         1.0, -1.0, 0.0,    0.0, 0.0, 1.0,    1.0, 0.0, 0.0,
+         1.0,  1.0, 0.0,    0.0, 0.0, 1.0,    1.0, 1.0, 1.0, 1.0,    1.0, 1.0, 0.0,
+        -1.0,  1.0, 0.0,    0.0, 0.0, 1.0,    1.0, 1.0, 1.0, 1.0,    0.0, 1.0, 0.0,
+        -1.0, -1.0, 0.0,    0.0, 0.0, 1.0,    1.0, 1.0, 1.0, 1.0,    0.0, 0.0, 0.0,
+         1.0, -1.0, 0.0,    0.0, 0.0, 1.0,    1.0, 1.0, 1.0, 1.0,    1.0, 0.0, 0.0,
     };
     const GLuint mirror_elems [] =
     {
@@ -73,9 +73,11 @@ int main ()
     glh::core::vbo mirror_vbo { sizeof ( mirror_data ), mirror_data, GL_STATIC_DRAW };
     glh::core::ebo mirror_ebo { sizeof ( mirror_elems ), mirror_elems, GL_STATIC_DRAW };
     glh::core::vao mirror_vao;
-    mirror_vao.set_vertex_attrib ( 0, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 9 * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 0 * sizeof ( GLfloat ) ) );
-    mirror_vao.set_vertex_attrib ( 1, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 9 * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 3 * sizeof ( GLfloat ) ) );
-    mirror_vao.set_vertex_attrib ( 2, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 9 * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 6 * sizeof ( GLfloat ) ) );
+    mirror_vao.set_vertex_attrib ( 0, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 13 * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 0 * sizeof ( GLfloat ) ) );
+    mirror_vao.set_vertex_attrib ( 1, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 13 * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 3 * sizeof ( GLfloat ) ) );
+    mirror_vao.set_vertex_attrib ( 2, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 13 * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 6 * sizeof ( GLfloat ) ) );
+    mirror_vao.set_vertex_attrib ( 3, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 13 * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 10 * sizeof ( GLfloat ) ) );
+    
     mirror_vao.bind_ebo ( mirror_ebo );
 
     glh::core::texture2d mirror_tex { 1000, 1000, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE };
@@ -96,7 +98,7 @@ int main ()
 
     glh::model::model chappie ( "./assets/chappie", "scene.gltf" );
     chappie.cache_uniforms ( model_program.get_struct_uniform ( "material" ), model_trans_uni.get_uniform ( "model" ) );
-    glh::math::mat4 chappie_matrix = glh::math::enlarge3d ( glh::math::identity<4> (), 0.2 );
+    glh::math::mat4 chappie_matrix = glh::math::translate3d ( glh::math::rotate3d ( glh::math::enlarge3d ( glh::math::identity<4> (), 0.01 ), glh::math::rad ( 180.0 ), glh::math::vec3 { 0.0, 1.0, 0.0 } ), glh::math::vec3 { 0.0, 0.0, 2.0 } );
 
 
 
