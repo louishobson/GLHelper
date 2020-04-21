@@ -42,6 +42,7 @@ int main ()
     glh::camera::camera camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 500.0 };
     camera.cache_uniforms ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
     camera.enable_restrictive_mode ();
+    camera.set_position ( glh::math::vec3 { -6.80822, 26.2452, -3.12343 } );
 
     glh::lighting::light_system light_system;
     light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
@@ -51,6 +52,8 @@ int main ()
     auto dimensions = window.get_dimensions ();
     camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
     glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
+
+
 
     glh::core::renderer::set_clear_color ( glh::math::vec4 { 0.5, 1.0, 1.0, 1.0 } );
     glh::core::renderer::enable_depth_test ();
