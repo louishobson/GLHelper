@@ -4,11 +4,11 @@
 
 # gcc setup
 CC=g++
-CFLAGS=-O3 -std=c++14 -Iinclude -static
+CFLAGS=-std=c++14 -Iinclude -static -g
 
 # g++ setup
 CPP=g++
-CPPFLAGS=-O3 -std=c++14 -Iinclude -static
+CPPFLAGS=-std=c++14 -Iinclude -static -g
 
 # ar setup
 AR=ar
