@@ -44,15 +44,15 @@ glad: src/glad/glad.o
 # glhelper
 #
 # compile glhelper to a library
-glhelper: src/glhelper/glhelper.a src/glhelper/glhelper.so
-src/glhelper/glhelper.a: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o src/glhelper/glhelper_buffer.o src/glhelper/glhelper_shader.o src/glhelper/glhelper_texture.o src/glhelper/glhelper_camera.o src/glhelper/glhelper_model.o src/glhelper/glhelper_lighting.o src/glhelper/glhelper_render.o src/glhelper/glhelper_manager.o src/glhelper/glhelper_framebuffer.o
+glhelper: src/glhelper/libglhelper.a src/glhelper/libglhelper.so
+src/glhelper/libglhelper.a: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o src/glhelper/glhelper_buffer.o src/glhelper/glhelper_shader.o src/glhelper/glhelper_texture.o src/glhelper/glhelper_camera.o src/glhelper/glhelper_model.o src/glhelper/glhelper_lighting.o src/glhelper/glhelper_render.o src/glhelper/glhelper_manager.o src/glhelper/glhelper_framebuffer.o
 	$(AR) $(ARFLAGS) $@ $^
-src/glhelper/glhelper.so: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o src/glhelper/glhelper_buffer.o src/glhelper/glhelper_shader.o src/glhelper/glhelper_texture.o src/glhelper/glhelper_camera.o src/glhelper/glhelper_model.o src/glhelper/glhelper_lighting.o src/glhelper/glhelper_render.o src/glhelper/glhelper_manager.o src/glhelper/glhelper_framebuffer.o
+src/glhelper/libglhelper.so: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o src/glhelper/glhelper_buffer.o src/glhelper/glhelper_shader.o src/glhelper/glhelper_texture.o src/glhelper/glhelper_camera.o src/glhelper/glhelper_model.o src/glhelper/glhelper_lighting.o src/glhelper/glhelper_render.o src/glhelper/glhelper_manager.o src/glhelper/glhelper_framebuffer.o
 	$(CPP) -shared -o $@ $^
 
 
 # test
 #
 # test source
-test: test.o src/glhelper/glhelper.a src/glad/glad.o
-	$(CPP) -ldl -lGL -lglfw -lassimp -lm -o $@ $^
+test: test.o glad glhelper
+	$(CPP) -Wl,-rpath=src/glhelper -Lsrc/glhelper -lglhelper -ldl -lGL -lglfw -lassimp -lm -o $@ test.o src/glad/glad.o 
