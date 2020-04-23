@@ -53,6 +53,11 @@ src/glhelper/libglhelper.so: src/glhelper/glhelper_glad.o src/glhelper/glhelper_
 
 # test
 #
-# test source
-test: test.o glad glhelper
-	$(CPP) -Wl,-rpath=src/glhelper -Lsrc/glhelper -lglhelper -ldl -lGL -lglfw -lassimp -lm -o $@ test.o src/glad/glad.o 
+# build test binary
+.PHONY: test
+test: test_shared
+test_shared: test.o src/glad/glad.o src/glhelper/libglhelper.so
+	$(CPP) $(CPPFLAGS) -Wl,-rpath=src/glhelper -Lsrc/glhelper test.o src/glad/glad.o -lglhelper -ldl -lGL -lglfw -lassimp -lm -o test
+test_static: test.o src/glad/glad.o src/glhelper/libglhelper.a
+	$(CPP) $(CPPFLAGS) test.o src/glad/glad.o src/glhelper/libglhelper.a -ldl -lGL -lglfw -lassimp -lm -o test
+
