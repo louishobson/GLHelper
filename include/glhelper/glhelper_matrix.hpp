@@ -818,7 +818,7 @@ template<unsigned M> inline glh::math::matrix<M> std::pow ( const glh::math::mat
 template<unsigned M, unsigned N> inline std::ostream& operator<< ( std::ostream& os, const glh::math::matrix<M, N>& _matrix )
 {
     /* stream intro into ostream */
-    os << "glh::matrix<" << M << "," << N << ">{";
+    os << "matrix<" << M << "," << N << ">{";
     /* loop for each value */
     for ( unsigned i = 0; i < M * N; ++i )
     {

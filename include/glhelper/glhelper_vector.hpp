@@ -699,7 +699,7 @@ template<unsigned M> inline glh::math::vector<M> operator- ( const glh::math::ve
 template<unsigned M> inline std::ostream& operator<< ( std::ostream& os, const glh::math::vector<M>& _vector )
 {
     /* stream intro into ostream */
-    os << "glh::vector<" << M << ">{";
+    os << "vector<" << M << ">{";
     /* loop for each value */
     for ( unsigned i = 0; i < M; ++i )
     {
