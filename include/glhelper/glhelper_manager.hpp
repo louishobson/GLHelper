@@ -6,8 +6,22 @@
  * 
  * include/glhelper/glhelper_manager.hpp
  * 
- * defines the object_manager class with static functions to track object lifetime
- * also handles binding and avoiding repeat binds
+ * constructs to handle OpenGL objects
+ * notable constructs include:
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::OBJECT_MANAGER
+ * 
+ * a class with static methods to create, destroy and bind many types of OpenGL objects
+ * this class is designed to be used internally, rather than by an external programmer
+ * the binding of OpenGL objects is tracked so that duplicate bind operations are avoided
+ * 
+ * 
+ * 
+ * CLASS GLH::EXCEPTION::OBJECT_MANAGEMENT_EXCEPTION
+ * 
+ * thrown when an error occurs in one of the object_manager methods (e.g. bind operation on invalid OpenGL object)
  * 
  */
 
@@ -397,7 +411,7 @@ public:
      * __what: description of the exception
      */
     explicit object_management_exception ( const std::string& __what )
-        : exception ( __what )
+        : exception { __what }
     {}
 
     /* default zero-parameter constructor

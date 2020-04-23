@@ -6,7 +6,33 @@
  * 
  * include/glhelper/glhelper_camera.hpp
  * 
- * camera movement and projection abstraction
+ * constructs for camera movement and projection abstraction
+ * notable constructs include:
+ * 
+ * 
+ * 
+ * CLASS GLH::CAMERA::CAMERA_BASE
+ * 
+ * abstract base class for all further camera classes
+ * functionality such as uniform and matrix caching and applying uniforms is common to all cameras
+ * the pure virtual methods are the update_view/proj/trans as the creation of these matrices will differ for each camera
+ * 
+ * 
+ * 
+ * CLASS GLH::CAMERA::CAMERA
+ * 
+ * the default viewer camera
+ * has methods to assist world-traversal with respect to angle of viewing
+ * NOTE: restrictive mode is disabled by default, however often it is the desired camera mode
+ * 
+ * 
+ * 
+ * CLASS GLH::CAMERA::MIRROR_CAMERA
+ * 
+ * a niche camera specifically for mirrors
+ * thie camera takes a reference to a glh::camera::camera object and produces matrices based on the position of the
+ * camera and the position of a mirror
+ * when applied, the image produced will be what should be rendered onto the mirror for it to function correctly
  * 
  */
 

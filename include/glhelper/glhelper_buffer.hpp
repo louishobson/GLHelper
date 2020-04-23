@@ -6,7 +6,31 @@
  * 
  * include/glhelper/glhelper_buffer.hpp
  * 
- * declares buffer handling constructs
+ * constructs for creating and managing buffer objects
+ * notable constructs include:
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::BUFFER
+ * 
+ * generic buffer and the base class for more specific buffer types
+ * it provides core functionality for buffering data and binding the buffer
+ * the type of buffer is defined by giving the class the bind target (e.g. GL_ARRAY_BUFFER)
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::VBO and GLH::CORE::EBO
+ * 
+ * derived from buffer base class specifically for vertex and element buffer objects
+ * purely sets defaaults for the bind target to that specific type of buffer
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::VAO
+ * 
+ * a vertex array object (does not inherit from buffer base class as a vao is not a buffer per se)
+ * one buffer can be bound to each vertex attribute using the set_vertex_attrib method
+ * one ebo can be bound to the vao using the bind_ebo method 
  * 
  */
 
@@ -95,7 +119,8 @@ public:
      *
      * generates a buffer and immediately buffers data
      * 
-     * _target: the target for the buffer
+     * _target: the target for the buffer (e.g. GL_ARRAY_BUFFER)
+     * _reverse_target: the reverse target for the buffer (e.g. GL_ARRAY_BUFFER_BINDING for a target of GL_ARRAY_BUFFER)
      * size: size of data in bytes
      * data: pointer to data
      * usage: the storage method for the data
@@ -109,25 +134,16 @@ public:
     /* deleted zero-parameter constructor */
     buffer () = delete;
 
-    /* deleted copy constructor
-     *
-     * it makes no sense to copy a buffer
-     */
+    /* deleted copy constructor */
     buffer ( const buffer& other ) = delete;
 
     /* default move constructor */
     buffer ( buffer&& other ) = default;
 
-    /* deleted copy assignment operator
-     *
-     * it makes no sense to assign the buffer after comstruction
-     */
+    /* deleted copy assignment operator */
     buffer& operator= ( const buffer& other ) = delete;
 
-    /* virtual destructor
-     *
-     * virtual in preparation for polymorphism
-     */
+    /* virtual destructor */
     virtual ~buffer () { destroy (); }
 
 
@@ -230,19 +246,13 @@ public:
         : buffer { GL_ARRAY_BUFFER, GL_ARRAY_BUFFER_BINDING, size, data, usage }
     {}
 
-    /* deleted copy constructor
-     *
-     * it makes no sense to copy a buffer
-     */
+    /* deleted copy constructor */
     vbo ( const vbo& other ) = delete;
 
     /* default move constructor */
     vbo ( vbo&& other ) = default;
 
-    /* deleted copy assignment operator
-     *
-     * it makes no sense to assign the buffer after comstruction
-     */
+    /* deleted copy assignment operator */
     vbo& operator= ( const vbo& other ) = delete;
 
     /* default destructor */
@@ -282,19 +292,13 @@ public:
         : buffer { GL_ELEMENT_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER_BINDING, size, data, usage }
     {}
 
-    /* deleted copy constructor
-     *
-     * it makes no sense to copy a buffer
-     */
+    /* deleted copy constructor */
     ebo ( const ebo& other ) = delete;
 
     /* default move constructor */
     ebo ( ebo&& other ) = default;
 
-    /* deleted copy assignment operator
-     *
-     * it makes no sense to assign the buffer after comstruction
-     */
+    /* deleted copy assignment operator */
     ebo& operator= ( const ebo& other ) = delete;
 
     /* default destructor */

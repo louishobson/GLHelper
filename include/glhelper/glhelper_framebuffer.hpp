@@ -7,6 +7,22 @@
  * include/glhelper/glhelper_framebuffer.hpp
  * 
  * declares framebuffer handling constructs
+ * notable constructs include:
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::RBO
+ * 
+ * renderbuffer class for use within a framebuffer
+ * no more complicated than that
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::FBO
+ * 
+ * framebuffer class
+ * can attach renderbuffers and textures through the attach_rbo and attach_texture2d methods
+ * one can check if the fbo is complete through the is_complete method
  * 
  */
 

@@ -7,6 +7,83 @@
  * include/glhelper/glhelper_shader.hpp
  * 
  * constructs for managing and using shaders
+ * notable constructs include:
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::SHADER
+ * 
+ * base class for any type of shader
+ * the type of shader and source code path is passed in the constructor and the shader is compiled there and then
+ * if any error orrcurs, a shader_exception will be thrown with a description of the error
+ * this shader can then be used within a shader program
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::V/G/FSHADER
+ * 
+ * derivations of the shader base class to set defaults for the shader type
+ * no more complicated than that
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::PROGRAM
+ * 
+ * class for a shader program
+ * vertex and fragment shaders are mandatory for consruction, however a geometry shader can be used as well
+ * uniforms in the program are extracted using the member functions get_..._uniform
+ * the program class remembers loactions of uniforms, although it would still ve better to not keep running get_..._uniform
+ * hence many constructs throught GLHelper use uniform caching to avoid this
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::UNIFORM
+ * 
+ * class for a defult uniform
+ * is returned by the get_uniform method of the program class
+ * this uniform directly references a variable in the shader which can be written to using the set_... methods
+ * NOTE: the parent program must be in use to set the uniform
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::COMPLEX_UNIFORM
+ * 
+ * abstract base class for more complex types of uniform
+ * a complex uniform represents a data structure in GLSL, that is, it cannot be directly written to
+ * this includes GLSL structs and arrays
+ * further uniform values must be extracted from the complex uniform until a non-complex uniform is reached
+ * for example, some_struct could be a complex uniform, but some_struct.member.values [ 0 ] would be a normal uniform
+ * this end point can then be written to like normal
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::STRUCT_UNIFORM
+ * 
+ * a derivation of complex_uniform to represent a GLSL struct
+ * further members the struct extracted via the get_..._uniform
+ * this is very similar to extracting uniforms directly out of a shader program
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::ARRAY_UNIFORM
+ * 
+ * a template derivation of complex_uniform to represent a GLSL array
+ * the template parameter must be a type of uniform, be it a normal uniform or complex uniform
+ * this will be the type of uniform the array contains
+ * the at function will then extract one of these uniforms at a specific index
+ * 
+ * 
+ * 
+ * CLASS GLH::EXCEPTION::SHADER_EXCEPTION
+ * 
+ * thrown when an error occurs in one of the shader/program methods (e.g. if shader compilation fails)
+ * 
+ * 
+ * 
+ * CLASS GLH::EXCEPTION::UNIFORM_EXCEPTION
+ * 
+ * thrown when an error occurs related to uniforms (e.g. if a uniform with a given name cannot be found)
+ * this is exception is thrown by many different classes throughout GLGelper
  * 
  */
 
@@ -883,7 +960,7 @@ public:
      * __what: description of the exception
      */
     explicit shader_exception ( const std::string& __what )
-        : exception ( __what )
+        : exception { __what }
     {}
 
     /* default zero-parameter constructor
@@ -913,7 +990,7 @@ public:
      * __what: description of the exception
      */
     explicit uniform_exception ( const std::string& __what )
-        : exception ( __what )
+        : exception { __what }
     {}
 
     /* default zero-parameter constructor
@@ -925,7 +1002,6 @@ public:
     /* default everything else and inherits what () function */
 
 };
-
 
 
 

@@ -7,6 +7,14 @@
  * include/glhelper/glhelper_exception.hpp
  * 
  * declares the basis for exception handling for the library
+ * notable constructs include:
+ * 
+ * 
+ * 
+ * CLASS GLH::EXCEPTION::EXCEPTION
+ * 
+ * base class (inheriting from std::exception) to derive all GLHelper exceptions from
+ * means that minimal effort has to be put into defining new exceptions, as this class defines most of the leg work
  * 
  */
 
@@ -21,11 +29,9 @@
 /* INCLUDES */
 
 /* include core headers */
+#include <exception>
 #include <iostream>
 #include <string>
-
-/* include exception */
-#include <exception>
 
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>

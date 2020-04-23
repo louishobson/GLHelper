@@ -7,6 +7,30 @@
  * include/glhelper/glhelper_transform.hpp
  * 
  * implements functions to aid transformation calculations
+ * notable functions include (all in namespace glh::math)
+ * 
+ * PI: multiply a double by pi
+ * RAD: convert degrees to radians
+ * DEG: convert radians to degrees
+ * ZERO_MATRIX: return a zero matrix of a supplied size
+ * IDENTITY: return an identity matrix of a supplied size
+ * RESIZE: increase of decrease the size of a square matrix, filling in the diagonal with 1s when increasing
+ * STRETCH: generic stretching of a matrix or vector
+ * STRETCH3D: strecthing specifically in 3d space
+ * ENLARGE: generic enlarging of a matrix or vector
+ * ENLARGE3D: enlarging specifically in 3d space
+ * ROTATE: generic rotation transformation of a matrix or vector
+ * ROTATE3D: rotation transformation specifically in 3d space
+ * TRANSLATE: generic translation of a vector or matrix (assime affine matrix)
+ * TRANSLATE3D: translation specifically in 3d space
+ * REFLECT3D: reflection specifically in 3d space
+ * PERSPECTIVE: generate a perspective projection matrix based on the position and size of near and far planes
+ * PERSPECTIVE_FOV: generate a perspective projection matrix based on an fov angle
+ * CAMERA: generate a view matrix based on a camera position and unit axis
+ * LOOK_AT: generate a view matrix based on a camera position, focus point and world up unit vector
+ * LOOK_ALONG: generate a view matrix based on a camera position, direction of viewing and world up unit vector
+ * NORMAL: generate a normal matrix based on a model-view matrix
+ * OPERATOR*: for multiplying vectors by matrices to apply transformations 
  * 
  */
 
@@ -47,8 +71,7 @@ namespace glh
          *
          * return: the value of pi multiplied by a constant
          */
-        inline double pi ( const double k ) { return k * acos ( -1. ); }
-        inline double pi () { return acos ( -1 ); }
+        inline double pi ( const double k = 1.0 ) { return k * acos ( -1. ); }
 
         /* rad
          *

@@ -7,64 +7,30 @@
  * include/glhelper/glhelper_model.hpp
  * 
  * importing and managing models using assimp
- * 
- * 
- * 
  * the model class expects uniform data to be formatted in a specific way to function
- * 
- * the formats and structures expected to be found in the program are explained below
- * 
+ * the formats and structures expected to be found in the shader program are explained along with the C++ classes
  * although the names of the actual structure types are not of importance,
- * the variable names within the struct cannot be modified
+ * the variable names within the structs cannot be modified
+ * although there are a lot of structs in this header, the only one which should be used is the model class
+ * the rest are used as internals to the model class, hence are not useful as stand-alone structs
  * 
  * 
  * 
- * VERTEX ATTTRIBUTES
+ * CLASS GLH::MODEL::MODEL
  * 
- * 0: vec3  : vertices
- * 1: vec3  : normals
- * 2: vec4  : vertex colors
- * 2: vec3[]: UV channels of texture coordinates
+ * stores a model in a renderable format
+ * the model is set up in the constructor and is immediately renderable after construction
+ * however, in order to render a model, the render method requires two uniform values:
  * 
- * even if there are multiple color sets, only the first set is sent to the vertex shader
- * how many UV channels you allow (size of the array at location 2) is up to the user
- * too many is not an issue, too few will be
+ * material_uni: a struct_uniform referring to a material_struct in the program (to set the material info)
+ * model_uni: a model uniform referring to a mat4 in the program (for the model matrix)
  * 
+ * the model matrix uniform is purely a mat4
+ * the material struct uniform is explained below, and the format of vertex attributes under that
  * 
+ * for information about implementing logic in shaders, see pseudocode at the bottom of: 
+ * http://assimp.sourceforge.net/lib_html/materials.html
  * 
- * TEXTURE_STACK_LEVEL_STRUCT
- *  
- * struct texture_stack_level_struct
- * {
- *     int blend_operation;
- *     float blend_strength;
- *     int uvwsrc;
- *     sampler2D texunit;
- * };
- * 
- * this structure is for a level of a texture stack
- * 
- * blend_operation: one of aiTextureOP
- * blend_strength: a multiple for each level of the stack to be multiplied by
- * uvwsrc: which UV channel the texture coordinates should be taken from
- * texunit: the sampler2D for the texture
- * 
- * 
- * 
- * TEXTURE_STACK_STRUCT
- * 
- * struct texture_stack_struct
- * {
- *     int stack_size;
- *     vec3 base_color;
- *     texture_stack_level_struct levels [];
- * };
- * 
- * this structure is for a texture stack
- * 
- * stack_size: the number of levels of the stack
- * base_color: the base color of which textures in the stack are blended with
- * levels: an array of levels of the texture stack, of user-specified size
  * 
  * 
  * 
@@ -86,7 +52,7 @@
  * 
  * this structure is for a material
  * 
- * *_stack: the texture stacks for ambient, diffuse and specular texture maps
+ * *_stack: the texture stacks for ambient, diffuse and specular texture maps (see below)
  * blending_mode: how to blend the computed fragment color with the previous color
  * shininess: the shininess value for the material
  * shininess_strength: a multiple for the specular contribution for a pixel's color
@@ -94,18 +60,59 @@
  * 
  * 
  * 
- * UNIFORMS
+ * TEXTURE_STACK_STRUCT
  * 
- * in order to render a model, the render method requires three uniform values:
+ * struct texture_stack_struct
+ * {
+ *     int stack_size;
+ *     vec3 base_color;
+ *     texture_stack_level_struct levels [];
+ * };
  * 
- * material_uni: a struct_uniform referring to a material_struct in the program (to set the material info)
- * model_uni: a normal uniform referring to a mat4 in the program (for the model matrix)
+ * this structure is for a texture stack
+ * 
+ * stack_size: the number of levels of the stack
+ * base_color: the base color of which textures in the stack are blended with
+ * levels: an array of levels of the texture stack, of user-specified size (see below)
  * 
  * 
  * 
- * for information about implementing logic in shaders, see pseudocode at the bottom of: 
- * http://assimp.sourceforge.net/lib_html/materials.html
+ * TEXTURE_STACK_LEVEL_STRUCT
+ *  
+ * struct texture_stack_level_struct
+ * {
+ *     int blend_operation;
+ *     float blend_strength;
+ *     int uvwsrc;
+ *     sampler2D texunit;
+ * };
  * 
+ * this structure is for a level of a texture stack
+ * 
+ * blend_operation: one of aiTextureOP
+ * blend_strength: a multiple for each level of the stack to be multiplied by
+ * uvwsrc: which UV channel the texture coordinates should be taken from
+ * texunit: the sampler2D for the texture
+ *
+ * 
+ * 
+ * VERTEX ATTTRIBUTES
+ * 
+ * 0: vec3  : vertices
+ * 1: vec3  : normals
+ * 2: vec4  : vertex colors
+ * 2: vec3[]: UV channels of texture coordinates
+ * 
+ * even if there are multiple color sets, only the first set is sent to the vertex shader
+ * how many UV channels you allow (size of the array at location 2) is up to the user
+ * too many is not an issue, too few will be
+ * 
+ * 
+ * 
+ * CLASS GLH::EXCEPTION::MODEL_EXCEPTION
+ * 
+ * thrown when an error occurs in one of the model methods (e.g. if the model entry file or cannot be found)
+ *
  */
 
 
@@ -728,7 +735,7 @@ public:
      * __what: description of the exception
      */
     explicit model_exception ( const std::string& __what )
-        : exception ( __what )
+        : exception { __what }
     {}
 
     /* default zero-parameter constructor

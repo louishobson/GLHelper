@@ -8,6 +8,14 @@
  * 
  * core header for glhelper library
  * sets up OpenGL headers and defines core base classes
+ * notable constructs include:
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::OBJECT
+ * 
+ * abstract base class to derive all OpenGL object classes from
+ * it provides the basis for storing the object id as well as defining several operator overloads
  * 
  */
 
@@ -77,6 +85,7 @@ public:
     /* deleted copy constructor
      *
      * it makes no sense to copy an object
+     * do you want to duplicate it, or create a reference to the same object?
      */
     object ( const object& other ) = delete;
 
@@ -88,6 +97,8 @@ public:
     /* deleted copy assignment operator
      *
      * it makes no sense to assign the object after comstruction
+     * what do you want to happen to the old object?
+     * what if its of a different object type?
      */
     object& operator= ( const object& other ) = delete;
 
@@ -125,7 +136,7 @@ public:
 
     /* pure virtual destroy
      *
-     * destroys the object, at least setting id to -1
+     * destroys the object, at least setting id to 0
      * although multiple calls to this function are valid, only the first should have effect
      */
     virtual void destroy () = 0;
@@ -136,7 +147,7 @@ protected:
 
     /* GLint id
      *
-     * the OpenGL id of the class
+     * the OpenGL id of the object
      */
     GLuint id;
 

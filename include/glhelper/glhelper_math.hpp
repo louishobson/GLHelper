@@ -7,6 +7,21 @@
  * include/glhelper/glhelper_math.hpp
  * 
  * main header for including all math-based header files
+ * files included:
+ * 
+ * 
+ * 
+ * GLHELPER/GLHELPER_MATRIX.HPP
+ * 
+ * defines the matrix class and accompanying functions
+ * 
+ * GLHELPER/GLHELPER_VECTOR.HPP
+ * 
+ * defined the vector class and accompanying functions
+ * 
+ * GLHELPER/GLHELPER_TRANSFORM.HPP
+ * 
+ * defined functions to handle mathematical transformations
  * 
  */
 

@@ -10,7 +10,22 @@
  * 
  * include/glhelper/glhelper_testure.hpp
  * 
- * handles textures for OpenGL
+ * defines constructs to handle textures
+ * notable constructs include:
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::TEXTURE2D
+ * 
+ * class for a 2d texture object
+ * the texture can be loaded from a file, or be initialised blank
+ * blank textures are useful for using as color buffers for framebuffer objects
+ * 
+ * 
+ * 
+ * CLASS GLH::EXCEPTION::TEXTURE_EXCEPTION
+ * 
+ * thrown when an error occurs in one of the texture methods (e.g. a texture file cannot be found)
  * 
  */
 
@@ -232,7 +247,7 @@ public:
      * __what: description of the exception
      */
     explicit texture_exception ( const std::string& __what )
-        : exception ( __what )
+        : exception { __what }
     {}
 
     /* default zero-parameter constructor

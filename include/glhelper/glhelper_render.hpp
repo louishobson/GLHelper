@@ -7,7 +7,14 @@
  * include/glhelper/glhelper_render.hpp
  * 
  * defines renderer class to change and keep track of rendering settings
- * also wraps the rendering functions
+ * notable constructs include:
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::RENDERER
+ * 
+ * class containing static methods to control rendering and rendering options
+ * various settings are tracked to reduce duplicate calls to set the same setting
  * 
  */
 

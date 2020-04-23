@@ -7,7 +7,35 @@
  * include/glhelper/glhelper_matrix.hpp
  * 
  * implements matrix mathematics
+ * notable constructs include:
  * 
+ * 
+ * 
+ * CLASS GLH::MATH::MATRIX
+ *
+ * template class to represent a matrix of any given size
+ * the template parameters M and N form a matrix of size MxN (M rows, N columns)
+ * hence the matrix is store in row-major order
+ * 
+ * 
+ * 
+ * MATRIX NON-MEMBER FUNCTIONS
+ * 
+ * non-member functions include (all in namespace glh::math):
+ * 
+ * OPERATORS*+-/: for matrix-matrix and matrix-scalar combinations
+ * TRANSPOSE: transpose a matrix of any size
+ * SUBMATRIX: get a submatrix by removing the row and column of a specific element
+ * DET: get the determinant of a square matrix via the adjugate method
+ * MINOR: get the minor of an element of a square matrix
+ * INVERSE: get the inverse matrix of a square matrix
+ * 
+ * 
+ * 
+ * CLASS GLH::EXCEPTION::MATRIX_EXCEPTION
+ * 
+ * thrown when an error occurs in one of the matrix methods or non-member functions (e.g. attempting to get the inverse of a singular matrix)
+ *   
  */
 
 
@@ -322,7 +350,7 @@ public:
      * __what: description of the exception
      */
     explicit matrix_exception ( const std::string& __what )
-        : exception ( __what )
+        : exception { __what }
     {}
 
     /* default zero-parameter constructor
