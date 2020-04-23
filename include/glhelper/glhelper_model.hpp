@@ -416,6 +416,9 @@ struct glh::model::node
     /* child nodes */
     std::vector<node> children;
 
+    /* parent node */
+    node * parent;
+
     /* mesh indices */
     std::vector<unsigned> mesh_indices;
 

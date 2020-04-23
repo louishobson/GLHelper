@@ -172,6 +172,7 @@ void glh::model::model::process_scene ( const aiScene& aiscene )
     }
 
     /* now recursively process all of the nodes */
+    root_node.parent = NULL;
     add_node ( root_node, * aiscene.mRootNode );
 }
 
@@ -513,7 +514,12 @@ glh::model::node& glh::model::model::add_node ( node& _node, const aiNode& ainod
 {
     /* set all of the children first */
     _node.children.resize ( ainode.mNumChildren );
-    for ( unsigned i = 0; i < ainode.mNumChildren; ++i ) add_node ( _node.children.at ( i ), * ainode.mChildren [ i ] );
+    for ( unsigned i = 0; i < ainode.mNumChildren; ++i ) 
+    {
+        /* set parent of child node and then set it up fully */
+        _node.children.at ( i ).parent = &_node;
+        add_node ( _node.children.at ( i ), * ainode.mChildren [ i ] );
+    }
 
     /* now configure the meshes */
     _node.mesh_indices.resize ( ainode.mNumMeshes );
