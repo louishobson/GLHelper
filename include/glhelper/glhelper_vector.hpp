@@ -446,7 +446,7 @@ glh::math::vector<2> inline glh::math::concatenate ( const double lhs, const dou
 template<unsigned M> double glh::math::dot ( const vector<M>& lhs, const vector<M>& rhs )
 {
     /* store cross product */
-    double result;
+    double result = 0;
 
     /* loop to calculate */
     for ( unsigned i = 0; i < M; ++i ) result += ( lhs.at ( i ) * rhs.at ( i ) );
