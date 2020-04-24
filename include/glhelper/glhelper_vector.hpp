@@ -531,7 +531,7 @@ template<unsigned M> inline glh::math::vector<M> glh::math::normalise ( const ve
 template<unsigned M> inline double glh::math::angle ( const vector<M>& lhs, const vector<M>& rhs )
 {
     /* return the arccos of ( lhs.rhs / |lhs|.|rhs| ) */
-    return acos ( dot ( lhs, rhs ) / ( modulus ( lhs ) * modulus ( rhs ) ) );
+    return std::acos ( dot ( lhs, rhs ) / ( modulus ( lhs ) * modulus ( rhs ) ) );
 }
 
 
