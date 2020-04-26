@@ -158,17 +158,11 @@ template<unsigned M> class glh::math::vector
 
 public:
 
-    /* zero-parameter constructor
-     * 
-     * creates a vector filled with 0s
-     */
-    vector () { data.fill ( 0.0 ); }
-
     /* double constructor
      *
-     * sets all values to the double provided
+     * sets all values to the double provided, defaulting to 0.0
      */
-    explicit vector ( const double val ) { data.fill ( val ); }
+    explicit vector ( const double val = 0.0 ) { data.fill ( val ); }
 
     /* vector constructor
      *
