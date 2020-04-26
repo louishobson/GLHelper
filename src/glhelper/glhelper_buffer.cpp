@@ -19,7 +19,7 @@
 
 
 
-/* BUFFER IMPLEMENTATION */
+/* BUFFER_BASE IMPLEMENTATION */
 
 /* buffer_data
  *
@@ -29,7 +29,7 @@
  * data: pointer to data
  * usage: the storage method for the data
  */
-void glh::core::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage ) 
+void glh::core::buffer_base::buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage ) 
 {
     /* bind the buffer */
     bind ();
@@ -43,7 +43,7 @@ void glh::core::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data
  *
  * clear the data from the buffer
  */
-void glh::core::buffer::clear_data ()
+void glh::core::buffer_base::clear_data ()
 {
     /* bind the buffer */
     bind ();
@@ -57,36 +57,45 @@ void glh::core::buffer::clear_data ()
  *
  * bind the buffer
  */
-void glh::core::buffer::bind () const
+void glh::core::buffer_base::bind () const
 {
-    /* split for different targets */
-    if ( target == GL_ARRAY_BUFFER ) object_manager::bind_vbo ( id ); else
-    if ( target == GL_ELEMENT_ARRAY_BUFFER ) object_manager::bind_ebo ( id ); else
-    throw exception::object_management_exception { "attempted to bind unknown buffer object" };
+    /* switch for different targets */
+    switch ( target )
+    {
+        case GL_ARRAY_BUFFER: object_manager::bind_vbo ( id ); break;
+        case GL_ELEMENT_ARRAY_BUFFER: object_manager::bind_ebo ( id ); break;
+        default: exception::object_management_exception { "attempted to bind unknown buffer object" };
+    }
 }
 
 /* unbind
  *
  * unbind the buffer's target
  */
-void glh::core::buffer::unbind () const
+void glh::core::buffer_base::unbind () const
 {
-    /* split for different targets */
-    if ( target == GL_ARRAY_BUFFER ) object_manager::unbind_vbo ( id ); else
-    if ( target == GL_ELEMENT_ARRAY_BUFFER ) object_manager::unbind_ebo ( id ); else
-    throw exception::object_management_exception { "attempted to unbind unknown buffer object" };
+    /* switch for different targets */
+    switch ( target )
+    {
+        case GL_ARRAY_BUFFER: object_manager::unbind_vbo ( id ); break;
+        case GL_ELEMENT_ARRAY_BUFFER: object_manager::unbind_ebo ( id ); break;
+        default: throw exception::object_management_exception { "attempted to unbind unknown buffer object" };
+    }
 }
 
 /* is_bound
  *
  * checks if the buffer is bound
  */
-bool glh::core::buffer::is_bound () const
+bool glh::core::buffer_base::is_bound () const
 {
-    /* split for different targets */
-    if ( target == GL_ARRAY_BUFFER ) return object_manager::is_vbo_bound ( id ); else
-    if ( target == GL_ELEMENT_ARRAY_BUFFER ) return object_manager::is_ebo_bound ( id ); else
-    throw exception::object_management_exception { "attempted to check binding of unknown buffer object" };
+    /* switch for different targets */
+    switch ( target )
+    {
+        case GL_ARRAY_BUFFER: return object_manager::is_vbo_bound ( id );
+        case GL_ELEMENT_ARRAY_BUFFER: return object_manager::is_ebo_bound ( id );
+        default: throw exception::object_management_exception { "attempted to check binding of unknown buffer object" };
+    }
 }
 
 

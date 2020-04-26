@@ -11,7 +11,7 @@
  * 
  * 
  * 
- * CLASS GLH::CORE::BUFFER
+ * CLASS GLH::CORE::BUFFER_BASE
  * 
  * generic buffer and the base class for more specific buffer types
  * it provides core functionality for buffering data and binding the buffer
@@ -65,19 +65,19 @@ namespace glh
 {
     namespace core
     {
-        /* class buffer : object
+        /* class buffer_base: object
          *
          * base class for storing a buffer
          */
-        class buffer;
+        class buffer_base;
 
-        /* class vbo : buffer
+        /* class vbo : buffer_base
          *
          * vertex buffer object
          */
         class vbo;
 
-        /* class ebo : buffer
+        /* class ebo : buffer_base
          *
          * element buffer object
          */
@@ -93,13 +93,13 @@ namespace glh
 
 
 
-/* BUFFER DEFINITION */
+/* BUFFER_BASE DEFINITION */
 
-/* class buffer : object
+/* class buffer_base : object
  *
  * base class for storing a buffer
  */
-class glh::core::buffer : public object
+class glh::core::buffer_base : public object
 {
 public:
 
@@ -109,10 +109,9 @@ public:
      * 
      * _target: the target for the buffer
      */
-    buffer ( const GLenum _target, const GLenum _reverse_target )
+    buffer_base ( const GLenum _target )
         : object { object_manager::generate_buffer () }
         , target { _target }
-        , reverse_target { _reverse_target }
     {}
 
     /* construct and immediately buffer data
@@ -120,31 +119,29 @@ public:
      * generates a buffer and immediately buffers data
      * 
      * _target: the target for the buffer (e.g. GL_ARRAY_BUFFER)
-     * _reverse_target: the reverse target for the buffer (e.g. GL_ARRAY_BUFFER_BINDING for a target of GL_ARRAY_BUFFER)
      * size: size of data in bytes
      * data: pointer to data
      * usage: the storage method for the data
      */
-    buffer ( const GLenum _target, const GLenum _reverse_target, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
+    buffer_base ( const GLenum _target, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
         : object { object_manager::generate_buffer () }
         , target { _target }
-        , reverse_target { _reverse_target }
     { buffer_data ( size, data, usage ); }
 
     /* deleted zero-parameter constructor */
-    buffer () = delete;
+    buffer_base () = delete;
 
     /* deleted copy constructor */
-    buffer ( const buffer& other ) = delete;
+    buffer_base ( const buffer_base& other ) = delete;
 
     /* default move constructor */
-    buffer ( buffer&& other ) = default;
+    buffer_base ( buffer_base&& other ) = default;
 
     /* deleted copy assignment operator */
-    buffer& operator= ( const buffer& other ) = delete;
+    buffer_base& operator= ( const buffer_base& other ) = delete;
 
     /* virtual destructor */
-    virtual ~buffer () { destroy (); }
+    virtual ~buffer_base () { destroy (); }
 
 
 
@@ -189,13 +186,11 @@ public:
 
 
 
-    /* get_(reverse)target
+    /* get_target
      *
-     * get the (reverse ) target in which the buffer is bound
+     * get the target in which the buffer is bound
      */
     const GLenum& get_target () const { return target; }
-    const GLenum& get_reverse_target () const { return reverse_target; }
-
 
 
 private:
@@ -206,23 +201,17 @@ private:
      */
     const GLenum target;
 
-    /* GLenum reverse_target
-     *
-     * the target to use when getting which buffer is bound
-     */
-    const GLenum reverse_target;
-
 };
 
 
 
 /* VBO DEFINITION */
 
-/* class vbo : buffer
+/* class vbo : buffer_base
  *
  * vertex buffer object
  */
-class glh::core::vbo : public buffer 
+class glh::core::vbo : public buffer_base 
 {
 public:
 
@@ -231,7 +220,7 @@ public:
      * generates the buffer
      */
     vbo ()
-        : buffer { GL_ARRAY_BUFFER, GL_ARRAY_BUFFER_BINDING }
+        : buffer_base { GL_ARRAY_BUFFER }
     {}
 
     /* construct and immediately buffer data
@@ -243,7 +232,7 @@ public:
      * usage: the storage method for the data
      */
     vbo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
-        : buffer { GL_ARRAY_BUFFER, GL_ARRAY_BUFFER_BINDING, size, data, usage }
+        : buffer_base { GL_ARRAY_BUFFER, size, data, usage }
     {}
 
     /* deleted copy constructor */
@@ -264,11 +253,11 @@ public:
 
 /* EBO DEFINITION */
 
-/* class ebo : buffer
+/* class ebo : buffer_base
  *
  * element buffer object
  */
-class glh::core::ebo : public buffer 
+class glh::core::ebo : public buffer_base 
 {
 public:
 
@@ -277,7 +266,7 @@ public:
      * generates the buffer
      */
     ebo ()
-        : buffer { GL_ELEMENT_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER_BINDING }
+        : buffer_base { GL_ELEMENT_ARRAY_BUFFER }
     {}
 
     /* construct and immediately buffer data
@@ -289,7 +278,7 @@ public:
      * usage: the storage method for the data
      */
     ebo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
-        : buffer { GL_ELEMENT_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER_BINDING, size, data, usage }
+        : buffer_base { GL_ELEMENT_ARRAY_BUFFER, size, data, usage }
     {}
 
     /* deleted copy constructor */
