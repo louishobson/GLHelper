@@ -89,9 +89,30 @@ int main ()
     mirror_fbo.attach_texture2d ( mirror_tex, GL_COLOR_ATTACHMENT0 );
     mirror_fbo.attach_rbo ( mirror_rbo, GL_DEPTH_STENCIL_ATTACHMENT );
 
-    glh::math::mat4 mirror_matrix = glh::math::translate3d ( glh::math::enlarge3d ( glh::math::identity<4> (), 5.0 ), glh::math::vec3 { 0.0, 30.0, -100.0 } );
+    glh::math::mat4 mirror_matrix = 
+    glh::math::translate3d 
+    ( 
+        glh::math::rotate3d
+        (
+            glh::math::enlarge3d 
+            ( 
+                glh::math::identity<4> (),
+                5.0 
+            ), 
+            glh::math::rad ( 45 ), 
+            glh::math::vec3 { 1.0, 0.0, 0.0 }
+        ), 
+        glh::math::vec3 { 0.0, 50.0, -50.0 }
+    );
 
-    glh::camera::mirror_camera mirror_camera { camera, glh::math::vec3 { 0.0, 30.0, -100.0 }, glh::math::vec3 { 0.0, 0.0, 1.0 }, 10.0, 10.0 };
+    glh::camera::mirror_camera mirror_camera 
+    { 
+        camera, 
+        glh::math::vec3 { 0.0, 50.0, -50.0 }, 
+        glh::math::normalise ( glh::math::vec3 { 0.0, -1.0, 1.0 } ), 
+        glh::math::normalise ( glh::math::vec3 { 0.0, 1.0, 1.0 } ),
+        10.0, 10.0 
+    };
     
 
 
@@ -101,7 +122,20 @@ int main ()
 
     glh::model::model chappie ( "./assets/chappie", "scene.gltf" );
     chappie.cache_uniforms ( model_program.get_struct_uniform ( "material" ), model_trans_uni.get_uniform ( "model" ) );
-    glh::math::mat4 chappie_matrix = glh::math::translate3d ( glh::math::rotate3d ( glh::math::enlarge3d ( glh::math::identity<4> (), 0.01 ), glh::math::rad ( 180.0 ), glh::math::vec3 { 0.0, 1.0, 0.0 } ), glh::math::vec3 { 0.0, 0.0, 2.0 } );
+    glh::math::mat4 chappie_matrix = 
+    glh::math::translate3d 
+    ( 
+        glh::math::rotate3d 
+        ( 
+            glh::math::enlarge3d 
+            ( 
+                glh::math::identity<4> (), 0.01
+            ), 
+            glh::math::rad ( 180.0 ), 
+            glh::math::vec3 { 0.0, 1.0, 0.0 } 
+        ), 
+        glh::math::vec3 { 0.0, 0.0, 2.0 } 
+    );
 
 
 
@@ -201,6 +235,7 @@ int main ()
 
         window.swap_buffers ();
         window.poll_events ();
+
     }
 
     return 0;
