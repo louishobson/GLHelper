@@ -401,7 +401,7 @@ bool glh::camera::mirror_camera::update_view () const
     if ( sign ) pos = math::reflect3d ( pos, normal, position );
 
     /* view matrix created by reflecting position in the mirror and looking towards it */
-    view = math::look_along ( pos, normal, wup );
+    view = math::look_along ( pos, normal, ytan );
 
     /* return true */
     return true;

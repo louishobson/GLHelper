@@ -364,11 +364,14 @@ public:
     const math::vec3& get_position () const { return position; }
     void set_position ( const math::vec3& _position ) { position = _position; view_change = true; }
 
-    /* get_direction
+    /* get_x/y/z
      *
-     * get the current viewing direction
+     * get the current coordinate axis of the camera
      */
-    math::vec3 get_direction () const { return -z; }
+    const math::vec3& get_x () const { return x; }
+    const math::vec3& get_y () const { return y; }
+    const math::vec3& get_z () const { return z; }
+
 
 
 
@@ -441,13 +444,13 @@ public:
      *
      * _cam: the viewer camera
      * _position: the position of the centre of the mirror
-     * _normal: the normal to the mirror
+     * _normal: the normal unit vector to the mirror
+     * _ytan: a tangent unit vector to the vertical axis of the mirror
      * _width: the width of the mirror
      * _height: the height of the mirror
-     * _wup: the world up vector (defaults to 0,1,0)
      */
-    mirror_camera ( const camera& _cam, const math::vec3& _position, const math::vec3& _normal, const double _width, const double _height, const math::vec3& _wup = math::vec3 { 0.0, 1.0, 0.0 })
-        : cam { _cam }, position { _position }, normal { math::normalise ( _normal ) }, half_width { _width / 2.0 }, half_height { _height / 2.0 }, wup { math::normalise ( _wup ) }
+    mirror_camera ( const camera& _cam, const math::vec3& _position, const math::vec3& _normal, const math::vec3& _ytan, const double _width, const double _height )
+        : cam { _cam }, position { _position }, normal { math::normalise ( _normal ) }, ytan { math::normalise ( _ytan ) }, half_width { _width / 2.0 }, half_height { _height / 2.0 }
     {}
 
 
@@ -475,13 +478,6 @@ public:
     double get_height () const { return half_height * 2; }
     void set_height ( const double _height ) { half_height = _height / 2.0; }
 
-    /* get/set_wup
-     *
-     * get/set the world up vector
-     */
-    const math::vec3& get_wup () const { return wup; }
-    void set_wup ( const math::vec3& _wup ) { wup = math::normalise ( _wup ); }
-
 
 
 private:
@@ -492,9 +488,9 @@ private:
     /* parameters form the mirror */
     math::vec3 position;
     math::vec3 normal;
+    math::vec3 ytan;
     double half_width;
     double half_height;
-    math::vec3 wup;
 
 
 
