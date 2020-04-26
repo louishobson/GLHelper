@@ -15,11 +15,24 @@
  * 
  * 
  * 
+ * CLASS GLH::CORE::TEXTURE_BASE
+ * 
+ * base class for all textures
+ * implements common fucntionality such as wrapping and filtering settings
+ * 
+ * 
+ * 
  * CLASS GLH::CORE::TEXTURE2D
  * 
- * class for a 2d texture object
+ * dreivation of texture_base to represent a 2d texture
  * the texture can be loaded from a file, or be initialised blank
  * blank textures are useful for using as color buffers for framebuffer objects
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::CUBEMAP
+ * 
+ * derivation of texture_base to represent a cubemap
  * 
  * 
  * 
@@ -63,12 +76,24 @@ namespace glh
 {
     namespace core
     {
-        /* class texture2c : object
+        /* class texture_base : object
+         *
+         * base class for all textures
+         */
+        class texture_base;
+
+        /* class texture2d : texture_base
          *
          * represents a 2D texture
          * automatically loads the texture given a path, and creates a mipmap
          */
         class texture2d;
+
+        /* class cubemap : texture_base
+         *
+         * represents a cubemap
+         */
+        class cubemap;
     }
 
     namespace exception
@@ -83,50 +108,45 @@ namespace glh
 
 
 
-/* TEXTURE2D DEFINITION */
+/* TEXTURE_BASE DEFINITION */
 
-class glh::core::texture2d : public object
+/* class texture_base : object
+ *
+ * base class for all textures
+ */
+class glh::core::texture_base : public object
 {
 public:
 
-    /* image constructor
+    /* full constructor
      *
-     * load a 2D texture from an image file
-     * default settings are applied
+     * only supply the texture target
      * 
-     * _path: path to the image for the texture
-     */
-    texture2d ( const std::string& _path );
-
-    /* empty texture constructor
-     *
-     * create an texture of a given size with supplied data
-     * 
-     * _width/_height: the width and height of the texture
-     * __internal_format: the internal format of the data (e.g. specific bit arrangements)
+     * _target: the target for the texture (e.g. GL_TEXTURE_2D)
+     * _internal_format: the internal format of the data (e.g. specific bit arrangements)
      * _format: the format of the data (e.g. what the data will be used for)
-     * _type: the type of the data (specific type macro with bit arrangements)
-     * data: the data to put in the texture (defaults to NULL)
+     * _width/height: width/height of the texture (defaults to 0)
      */
-    texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL );
-
-    /* deleted zero-parameter constructor
-     *
-     * a texture must be loaded to an image
-     */
-    texture2d () = delete;
+    texture_base ( const GLenum _target, const GLenum _internal_format, const GLenum _format, const int _width = 0, const int _height = 0 )
+        : object { object_manager::generate_texture () }
+        , target { _target }
+        , internal_format ( _internal_format )
+        , format ( _format )
+        , width { _width }
+        , height { _height }
+    {}
 
     /* deleted copy constructor */
-    texture2d ( const texture2d& other ) = delete;
+    texture_base ( const texture_base& other ) = delete;
 
-    /* default move copy constructor */
-    texture2d ( texture2d&& other ) = default;
+    /* default move constructor */
+    texture_base ( texture_base&& other ) = default;
 
-    /* deleted assignment operator */
-    texture2d& operator= ( const texture2d& other ) = delete;
+    /* deleted copy constructor */
+    texture_base& operator= ( const texture_base& other ) = delete;
 
     /* virtual destructor */
-    virtual ~texture2d () { destroy (); }
+    virtual ~texture_base () { destroy (); }
 
 
 
@@ -164,17 +184,105 @@ public:
      *
      * bind the texture to a texture unit
      * 
-     * texture_unit: the texture unit to bind to, or the last one
+     * texture_unit: the texture unit to bind to, defaulting to 0
      */
-    void bind ( const unsigned texture_unit = 0 ) const { object_manager::bind_texture ( id, texture_unit ); }
+    void bind ( const unsigned texture_unit = 0 ) const;
+
+    /* unbind
+     *
+     * unbind the texture from a texture unit
+     * 
+     * texture_unit: the texture unit to unbind from, defaulting to 0
+     */
+    void unbind ( const unsigned texture_unit = 0 ) const;
 
     /* is_bound
      *
-     * texture_unit: the texture unit to check if it is bound to
+     * texture_unit: the texture unit to check if it is bound to, defaulting to 0
      * 
-     * return boolean for if the texture is bound
+     * return: boolean for if the texture is bound
      */
-    bool is_bound ( const unsigned texture_unit = 0 ) const { return object_manager::is_texture_bound ( id, texture_unit ); }
+    bool is_bound ( const unsigned texture_unit = 0 ) const;
+
+
+
+    /* get_target
+     *
+     * get the target in which the texture is bound
+     */
+    const GLenum& get_target () const { return target; }
+
+
+
+protected:
+
+    /* target of the texture */
+    const GLenum target;
+
+    /* (internal_)format
+     *
+     * the (internal) format of the texture (e.g. GL_RGB)
+     */
+    const GLenum internal_format;
+    const GLenum format;
+
+    /* width/height of each face of the cube map */
+    int width;
+    int height;
+
+};
+
+
+
+/* TEXTURE2D DEFINITION */
+
+/* class texture2d : texture_base
+ *
+ * represents a 2D texture
+ * automatically loads the texture given a path, and creates a mipmap
+ */
+class glh::core::texture2d : public texture_base
+{
+public:
+
+    /* image constructor
+     *
+     * load a 2D texture from an image file
+     * default settings are applied
+     * 
+     * _path: path to the image for the texture
+     */
+    texture2d ( const std::string& _path );
+
+    /* empty texture constructor
+     *
+     * create an texture of a given size with supplied data
+     * 
+     * _width/_height: the width and height of the texture
+     * __internal_format: the internal format of the data (e.g. specific bit arrangements)
+     * _format: the format of the data (e.g. what the data will be used for)
+     * _type: the type of the pixel data (specific type macro with bit arrangements)
+     * data: the data to put in the texture (defaults to NULL)
+     */
+    texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL );
+
+    /* deleted zero-parameter constructor
+     *
+     * a texture must be loaded to an image
+     */
+    texture2d () = delete;
+
+    /* deleted copy constructor */
+    texture2d ( const texture2d& other ) = delete;
+
+    /* default move copy constructor */
+    texture2d ( texture2d&& other ) = default;
+
+    /* deleted assignment operator */
+    texture2d& operator= ( const texture2d& other ) = delete;
+
+    /* default destructor */
+    ~texture2d () = default;
 
 
 
@@ -207,26 +315,89 @@ private:
      */
     const std::string path;
 
-    /* (internal_)format
+    /* channels
      *
-     * the (internal) format of the texture (e.g. GL_RGB)
+     * stores number of channels of the texture
      */
-    GLenum internal_format;
-    GLenum format;
-
-    /* type
-     *
-     * the type of the data stored in the texture
-     */
-    GLenum type;
-
-    /* widith, height, channels
-     *
-     * stores the width, height, and number of channels of the texture
-     */
-    int width;
-    int height;
     int channels;
+
+};
+
+
+
+/* CUBEMAP DEFINITION */
+
+/* class cubemap : texture_base
+ *
+ * represents a cubemap
+ */
+class glh::core::cubemap : public texture_base
+{
+public:
+
+    /* 6-image constructor
+     *
+     * construct the cubemap from six separate images for each layer
+     * the order of the paths is the same as the order of cubemap layers
+     * 
+     * paths: array of 6 paths to the images for the cubemap faces
+     */
+    explicit cubemap ( const std::array<std::string, 6>& paths );
+
+    /* 1-image constructor
+     *
+     * construct the cubemap width one image for all six sides
+     *
+     * path: path to the image 
+     */
+    explicit cubemap ( const std::string& path );
+
+    /* deleted zero-parameter constructor */
+    cubemap () = delete;
+
+    /* deleted copy constructor */
+    cubemap ( const cubemap& other ) = delete;
+
+    /* default move constructor */
+    cubemap ( cubemap&& other ) = default;
+
+    /* deleted copy assignment operator */
+    cubemap& operator= ( const cubemap& other ) = delete;
+
+
+
+    /* get_path
+     *
+     * get the path the face at layer i was originally imported from
+     */
+    const std::string& get_path ( const unsigned i ) const { return face_textures.at ( i ).path; }
+
+    /* get_width/height
+     *
+     * get the width and height of the texture
+     */
+    const int& get_width () const { return width; }
+    const int& get_height () const { return height; }
+
+    /* get_channels
+     *
+     * get the number of channels the face at layer i orginally had
+     */
+    const int& get_channels ( const unsigned i ) const { return face_textures.at ( i ).channels; }
+
+
+
+private:
+
+    /* struct to represent a texture face of the cube */
+    struct face_texture
+    {
+        std::string path;
+        int channels;
+    };
+
+    /* array of face_texture structs to store info on each face texture */
+    std::array<face_texture, 6> face_textures;
 
 };
 
