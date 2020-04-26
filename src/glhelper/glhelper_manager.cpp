@@ -308,48 +308,88 @@ GLuint glh::core::object_manager::generate_texture ()
 void glh::core::object_manager::destroy_texture ( const GLuint id )
 {
     /* unbind the texture from any texture units and return */
-    for ( unsigned i = 0; i < GLH_MAX_TEXTURE_UNITS; ++i ) if ( id == bound_textures.at ( i ) ) bound_textures.at ( i ) = 0;
+    for ( unsigned i = 0; i < GLH_MAX_TEXTURE_UNITS; ++i ) if ( id == bound_texture2ds.at ( i ) ) bound_texture2ds.at ( i ) = 0;
     glDeleteTextures ( 1, &id );
 }
 
-/* bind_texture
+/* bind_texture2d
  *
- * bind a texture to a texture unit
+ * bind a texture2d to a texture unit
  * 
  * unit: the texture unit to bind it to
  */
-void glh::core::object_manager::bind_texture ( const GLuint id, const unsigned unit )
+void glh::core::object_manager::bind_texture2d ( const GLuint id, const unsigned unit )
 {
     /* throw if invalid object */
     if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid texture object" };    
 
     /* if not already bound, bind and record */
-    if ( id != bound_textures.at ( unit ) )
+    if ( id != bound_texture2ds.at ( unit ) )
     {
         glActiveTexture ( GL_TEXTURE0 + unit );
         glBindTexture ( GL_TEXTURE_2D, id );
-        bound_textures.at ( unit ) = id;
+        bound_texture2ds.at ( unit ) = id;
     }
 }
 
 
-/* unbind_texture
+/* unbind_texture2d
  *
- * unbind a texture from a unit, if it is already bound
+ * unbind a texture2d from a unit, if it is already bound
  * 
  * unit: the texture unit to unbind it from
  */
-void glh::core::object_manager::unbind_texture ( const GLuint id, const unsigned unit )
+void glh::core::object_manager::unbind_texture2d ( const GLuint id, const unsigned unit )
 {
     /* throw if invalid object */
     if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid texture object" };
         
     /* if already bound, unbind and record */
-    if ( id == bound_textures.at ( unit ) )
+    if ( id == bound_texture2ds.at ( unit ) )
     {
         glActiveTexture ( GL_TEXTURE0 + unit );
         glBindTexture ( GL_TEXTURE_2D, 0 );
-        bound_textures.at ( unit ) = 0;
+        bound_texture2ds.at ( unit ) = 0;
+    }
+}
+
+/* bind_cubemap
+ *
+ * bind a cubemap texture to GL_TEXTURE_CUBE_MAP, if not already bounc
+ * 
+ * unit: the texture unit to bind it to
+ */
+void glh::core::object_manager::bind_cubemap ( const GLuint id, const unsigned unit )
+{
+    /* throw if invalid object */
+    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid cubemap object" };    
+
+    /* if not already bound, bind and record */
+    if ( id != bound_cubemaps.at ( unit ) )
+    {
+        glActiveTexture ( GL_TEXTURE0 + unit );
+        glBindTexture ( GL_TEXTURE_CUBE_MAP, id );
+        bound_cubemaps.at ( unit ) = id;
+    }
+}
+
+/* unbind_cubemap
+ * 
+ * unbind a cubemap texture from GL_TEXTURE_CUBE_MAP, if already bound
+ * 
+ * unit: the texture unit to unbind it from
+ */
+void glh::core::object_manager::unbind_cubemap ( const GLuint id, const unsigned unit )
+{
+    /* throw if invalid object */
+    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid cubemap object" };
+        
+    /* if already bound, unbind and record */
+    if ( id == bound_cubemaps.at ( unit ) )
+    {
+        glActiveTexture ( GL_TEXTURE0 + unit );
+        glBindTexture ( GL_TEXTURE_CUBE_MAP, id );
+        bound_cubemaps.at ( unit ) = 0;
     }
 }
 
@@ -518,7 +558,10 @@ GLuint glh::core::object_manager::bound_vao { 0 };
 GLuint glh::core::object_manager::in_use_program { 0 };
 
 /* array of texture units and their respectively bound textures */
-std::array<GLuint, GLH_MAX_TEXTURE_UNITS> glh::core::object_manager::bound_textures { 0 };
+std::array<GLuint, GLH_MAX_TEXTURE_UNITS> glh::core::object_manager::bound_texture2ds { 0 };
+
+/* array of texture units and their respectively bound cubemaps */
+std::array<GLuint, GLH_MAX_TEXTURE_UNITS> glh::core::object_manager::bound_cubemaps { 0 };
 
 /* currently bound renderbuffer */
 GLuint glh::core::object_manager::bound_rbo { 0 };

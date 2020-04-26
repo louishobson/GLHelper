@@ -259,29 +259,53 @@ public:
      */
     static void destroy_texture ( const GLuint id );
 
-    /* bind_texture
+    /* bind_texture2d
      *
-     * bind a texture to a texture unit
+     * bind a texture2d to a texture unit
      * 
      * unit: the texture unit to bind it to
      */
-    static void bind_texture ( const GLuint id, const unsigned unit );
+    static void bind_texture2d ( const GLuint id, const unsigned unit );
 
-    /* unbind_texture
+    /* unbind_texture2d
      *
-     * unbind a texture from a unit, if it is already bound
+     * unbind a texture2d from a unit, if it is already bound
      * 
      * unit: the texture unit to unbind it from
      */
-    static void unbind_texture ( const GLuint id, const unsigned unit );
+    static void unbind_texture2d ( const GLuint id, const unsigned unit );
 
-    /* is_texture_bound
+    /* is_texture2d_bound
      *
-     * returns true if a texture is bound to the provided texture unit
+     * returns true if a texture2d is bound to the provided texture unit
      *
      * unit: the texture unit to check
      */
-    static bool is_texture_bound ( const GLuint id, const unsigned unit ) { return ( id == bound_textures.at ( unit ) ); }
+    static bool is_texture2d_bound ( const GLuint id, const unsigned unit ) { return ( id == bound_texture2ds.at ( unit ) ); }
+
+    /* bind_cubemap
+     *
+     * bind a cubemap texture to GL_TEXTURE_CUBE_MAP, if not already bounc
+     * 
+     * unit: the texture unit to bind it to
+     */
+    static void bind_cubemap ( const GLuint id, const unsigned unit );
+
+    /* unbind_cubemap
+     * 
+     * unbind a cubemap texture from GL_TEXTURE_CUBE_MAP, if already bound
+     * 
+     * unit: the texture unit to unbind it from
+     */
+    static void unbind_cubemap ( const GLuint id, const unsigned unit );
+
+    /* is_cubemap_bound
+     *
+     * returns true if a cubemap is bound to GL_TEXTURE_CUBE_MAP under the provided texture unit
+     *
+     * unit: the texture unit to check
+     */
+    static bool is_cubemap_bound ( const GLuint id, const unsigned unit ) { return ( id == bound_cubemaps.at ( unit ) ); }
 
 
 
@@ -376,7 +400,10 @@ private:
     static GLuint in_use_program;
 
     /* array of texture units and their respectively bound textures */
-    static std::array<GLuint, GLH_MAX_TEXTURE_UNITS> bound_textures;
+    static std::array<GLuint, GLH_MAX_TEXTURE_UNITS> bound_texture2ds;
+
+    /* array of texture units and their respectively bound cubemaps */
+    static std::array<GLuint, GLH_MAX_TEXTURE_UNITS> bound_cubemaps;
 
     /* currently bound renderbuffer */
     static GLuint bound_rbo;
