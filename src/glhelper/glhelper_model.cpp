@@ -489,8 +489,8 @@ void glh::model::model::configure_buffers ( mesh& _mesh )
     }
 
     /* buffer the data */
-    _mesh.vertex_data.buffer_data ( vertices.size () * sizeof ( GLfloat ), vertices.data (), GL_STATIC_DRAW );
-    _mesh.index_data.buffer_data ( indices.size () * sizeof ( GLuint ), indices.data (), GL_STATIC_DRAW );
+    _mesh.vertex_data.buffer_data ( vertices.size () * sizeof ( GLfloat ), vertices.data () );
+    _mesh.index_data.buffer_data ( indices.size () * sizeof ( GLuint ), indices.data () );
 
     /* configure the vao */
     _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), 0 );
