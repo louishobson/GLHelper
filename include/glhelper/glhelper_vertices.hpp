@@ -67,6 +67,7 @@ namespace glh
          */
         extern const std::array<GLfloat, 3 * 4 * 6> cube_vertex_data;
         extern const std::array<GLfloat, 6 * 4 * 6> cube_vertex_normal_data;
+        extern const std::array<GLfloat, 6 * 4 * 6> cube_vertex_rnormal_data;
         extern const std::array<GLfloat, 9 * 4 * 6> cube_vertex_normal_texcoord_data;
 
         /* cube_element_data
