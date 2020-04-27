@@ -91,7 +91,7 @@ struct trans_struct
 };
 
 /* texture coords, normal vector, position, vcolor */
-in vec2 texcoords [ MAX_UV_CHANNELS ];
+in vec3 texcoords [ MAX_UV_CHANNELS ];
 in vec3 normal;
 in vec3 fragpos;
 in vec4 vcolor;
@@ -129,7 +129,7 @@ vec4 evaluate_stack ( material_struct mat, texture_stack_struct stack )
     for ( int i = 0; i < stack.stack_size; ++i )
     {
         /* get the level color from the texture */
-        vec4 level_color = texture ( stack.levels [ i ].texunit, texcoords [ stack.levels [ i ].uvwsrc ] );
+        vec4 level_color = texture ( stack.levels [ i ].texunit, texcoords [ stack.levels [ i ].uvwsrc ].xy );
         /* multiply by blend strength */
         level_color *= stack.levels [ i ].blend_strength;
         /* add to the stack */
