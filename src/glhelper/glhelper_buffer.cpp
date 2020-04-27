@@ -27,7 +27,7 @@
  * 
  * size: size of data in bytes
  * data: pointer to data
- * usage: the storage method for the data
+ * usage: the storage method for the data (defaults to static draw)
  */
 void glh::core::buffer_base::buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage ) 
 {
@@ -116,7 +116,7 @@ bool glh::core::buffer_base::is_bound () const
  * stride: offset between consecutive vertices in bytes
  * offset: the offset from the start of the vertex data in bytes
  */
-void glh::core::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, const GLint size, const GLenum type, const GLboolean norm, const GLsizei stride, const GLvoid * offset )
+void glh::core::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, const GLint size, const GLenum type, const GLboolean norm, const GLsizei stride, const GLsizeiptr offset )
 {
     /* bind vao */
     bind ();
@@ -124,7 +124,7 @@ void glh::core::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, c
     buff.bind ();
 
     /* set attribute pointer */
-    glVertexAttribPointer ( attrib, size, type, norm, stride, offset );
+    glVertexAttribPointer ( attrib, size, type, norm, stride, reinterpret_cast<GLvoid *> ( offset ) );
     /* enable attribute */
     glEnableVertexAttribArray ( attrib );
 

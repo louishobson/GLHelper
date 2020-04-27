@@ -149,9 +149,9 @@ public:
      * 
      * size: size of data in bytes
      * data: pointer to data
-     * usage: the storage method for the data
+     * usage: the storage method for the data (defaults to static draw)
      */
-    void buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage );
+    void buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage = GL_STATIC_DRAW );
 
     /* clear_data
      *
@@ -342,7 +342,7 @@ public:
      * stride: offset between consecutive vertices in bytes
      * offset: the offset from the start of the vertex data in bytes
      */
-    void set_vertex_attrib ( const GLuint attrib, const vbo& buff, const GLint size, const GLenum type, const GLboolean norm, const GLsizei stride, const GLvoid * offset );
+    void set_vertex_attrib ( const GLuint attrib, const vbo& buff, const GLint size, const GLenum type, const GLboolean norm, const GLsizei stride, const GLsizeiptr offset );
 
     /* enable_vertex_attrib
      *
