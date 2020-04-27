@@ -61,26 +61,12 @@ int main ()
 
 
 
-    const GLfloat mirror_data [] =
-    {
-         1.0,  1.0, 0.0,    0.0, 0.0, 1.0,    1.0, 1.0, 1.0, 1.0,    1.0, 1.0, 0.0,
-        -1.0,  1.0, 0.0,    0.0, 0.0, 1.0,    1.0, 1.0, 1.0, 1.0,    0.0, 1.0, 0.0,
-        -1.0, -1.0, 0.0,    0.0, 0.0, 1.0,    1.0, 1.0, 1.0, 1.0,    0.0, 0.0, 0.0,
-         1.0, -1.0, 0.0,    0.0, 0.0, 1.0,    1.0, 1.0, 1.0, 1.0,    1.0, 0.0, 0.0,
-    };
-    const GLuint mirror_elems [] =
-    {
-        0, 1, 2, 0, 2, 3
-    };
-
-    glh::core::vbo mirror_vbo { sizeof ( mirror_data ), mirror_data, GL_STATIC_DRAW };
-    glh::core::ebo mirror_ebo { sizeof ( mirror_elems ), mirror_elems, GL_STATIC_DRAW };
+    glh::core::vbo mirror_vbo { glh::vertices::square_vertex_normal_texcoord_data.size () * sizeof ( GLfloat ), glh::vertices::square_vertex_normal_texcoord_data.data () };
+    glh::core::ebo mirror_ebo { glh::vertices::square_element_data.size () * sizeof ( GLuint ), glh::vertices::square_element_data.data () };
     glh::core::vao mirror_vao;
-    mirror_vao.set_vertex_attrib ( 0, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 13 * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 0 * sizeof ( GLfloat ) ) );
-    mirror_vao.set_vertex_attrib ( 1, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 13 * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 3 * sizeof ( GLfloat ) ) );
-    mirror_vao.set_vertex_attrib ( 2, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 13 * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 6 * sizeof ( GLfloat ) ) );
-    mirror_vao.set_vertex_attrib ( 3, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 13 * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 10 * sizeof ( GLfloat ) ) );
-    
+    mirror_vao.set_vertex_attrib ( 0, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 9 * sizeof ( GLfloat ), 0 * sizeof ( GLfloat ) );
+    mirror_vao.set_vertex_attrib ( 1, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 9 * sizeof ( GLfloat ), 3 * sizeof ( GLfloat ) );
+    mirror_vao.set_vertex_attrib ( 3, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 9 * sizeof ( GLfloat ), 6 * sizeof ( GLfloat ) );
     mirror_vao.bind_ebo ( mirror_ebo );
 
     glh::core::texture2d mirror_tex { 1000, 1000, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE };
@@ -97,7 +83,7 @@ int main ()
             glh::math::enlarge3d 
             ( 
                 glh::math::identity<4> (),
-                5.0 
+                10.0
             ), 
             glh::math::rad ( 45 ), 
             glh::math::vec3 { 1.0, 0.0, 0.0 }
