@@ -123,7 +123,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    buffer_base ( const GLenum _target, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
+    buffer_base ( const GLenum _target, const GLsizeiptr size, const GLvoid * data, const GLenum usage = GL_STATIC_DRAW )
         : object { object_manager::generate_buffer () }
         , target { _target }
     { buffer_data ( size, data, usage ); }
@@ -231,7 +231,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    vbo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
+    vbo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage = GL_STATIC_DRAW )
         : buffer_base { GL_ARRAY_BUFFER, size, data, usage }
     {}
 
@@ -277,7 +277,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    ebo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
+    ebo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage = GL_STATIC_DRAW )
         : buffer_base { GL_ELEMENT_ARRAY_BUFFER, size, data, usage }
     {}
 
