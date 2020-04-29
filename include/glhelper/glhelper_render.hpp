@@ -105,8 +105,8 @@ public:
      * type: the type of the data in the ebo
      * start_index: the start index of the elements
      */
-    static void draw_elements ( const GLenum mode, const GLint count, const GLenum type, const GLvoid * start_index )
-    { glDrawElements ( mode, count, type, start_index ); }
+    static void draw_elements ( const GLenum mode, const GLint count, const GLenum type, const GLsizeiptr start_index )
+    { glDrawElements ( mode, count, type, reinterpret_cast<GLvoid *> ( start_index ) ); }
 
     /* get/set_clear_color
      *
