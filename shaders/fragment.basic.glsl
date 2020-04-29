@@ -6,10 +6,10 @@
 
 #version 330 core
 
-/* texture coords, normal vector, position, vcolor */
-in vec3 texcoords;
-in vec3 normal;
+/* fragpos, normal and texture coords */
 in vec3 fragpos;
+in vec3 normal;
+in vec3 texcoords;
 
 /* output color */
 out vec4 fragcolor;
