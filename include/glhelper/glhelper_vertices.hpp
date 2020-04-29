@@ -59,16 +59,21 @@ namespace glh
         extern const std::array<GLuint, 3 * 2 * 1> square_element_data;
 
         /* cube_vertex_data
+         * cube_reverse_vertex_data
          * cube_vertex_normal_data
+         * cube_reverse_vertex_normal_data
          * cube_vertex_normal_texcoord_data
+         * cube_reverse_vertex_normal_texcoord_data
          *
          * arrays containing vertex (+ normal (+ texcoord)) data for a cube
          * all sides are length 1, centred at the origin
          */
         extern const std::array<GLfloat, 3 * 4 * 6> cube_vertex_data;
+        extern const std::array<GLfloat, 3 * 4 * 6> cube_reverse_vertex_data;
         extern const std::array<GLfloat, 6 * 4 * 6> cube_vertex_normal_data;
-        extern const std::array<GLfloat, 6 * 4 * 6> cube_vertex_rnormal_data;
+        extern const std::array<GLfloat, 6 * 4 * 6> cube_reverse_vertex_normal_data;
         extern const std::array<GLfloat, 9 * 4 * 6> cube_vertex_normal_texcoord_data;
+        extern const std::array<GLfloat, 9 * 4 * 6> cube_reverse_vertex_normal_texcoord_data;
 
         /* cube_element_data
          *
