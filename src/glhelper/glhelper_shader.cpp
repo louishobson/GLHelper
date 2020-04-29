@@ -149,7 +149,7 @@ glh::core::uniform glh::core::program::get_uniform ( const std::string& name )
     /* return the uniform */
     return uniform { get_uniform_location ( name ), * this };
 }
-const glh::core::uniform glh::core::program::get_unfiorm ( const std::string& name ) const
+const glh::core::uniform glh::core::program::get_uniform ( const std::string& name ) const
 {
     /* return the uniform */
     return uniform { get_uniform_location ( name ), const_cast<program&> ( * this ) };

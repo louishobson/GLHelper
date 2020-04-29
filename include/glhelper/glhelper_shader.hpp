@@ -442,7 +442,7 @@ public:
      * return: unfirom object
      */
     uniform get_uniform ( const std::string& name );
-    const uniform get_unfiorm ( const std::string& name ) const;
+    const uniform get_uniform ( const std::string& name ) const;
     struct_uniform get_struct_uniform ( const std::string& name );
     const struct_uniform get_struct_uniform ( const std::string& name ) const;
     template<class T> array_uniform<T> get_array_uniform ( const std::string& name ) { return array_uniform<T> { name, * this }; }
