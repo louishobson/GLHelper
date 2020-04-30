@@ -47,6 +47,7 @@
 /* include core headers */
 #include <iostream>
 #include <string>
+#include <vector>
 
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
@@ -65,11 +66,18 @@ namespace glh
 {
     namespace core
     {
-        /* class buffer_base: object
+        /* class buffer_base : object
          *
          * base class for storing a buffer
          */
         class buffer_base;
+
+        /* class buffer_map
+         *
+         * object returned by the map_buffer methods of buffer_base
+         * has operator overloads to act like an array to modify the buffer
+         */
+        template<class T> class buffer_map;
 
         /* class vbo : buffer_base
          *
@@ -88,6 +96,15 @@ namespace glh
          * vertex array object
          */
         class vao;
+    }
+
+    namespace exception
+    {
+        /* class buffer_mapping_exception : exception
+         *
+         * for exceptions related to buffer mapping
+         */
+        class buffer_mapping_exception;
     }
 }
 
@@ -112,6 +129,9 @@ public:
     buffer_base ( const GLenum _target )
         : object { object_manager::generate_buffer () }
         , target { _target }
+        , capacity { 0 }
+        , map_ptr { NULL }
+        , map_id { 0 }
     {}
 
     /* construct and immediately buffer data
@@ -123,9 +143,12 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    buffer_base ( const GLenum _target, const GLsizeiptr size, const GLvoid * data, const GLenum usage = GL_STATIC_DRAW )
+    buffer_base ( const GLenum _target, const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
         : object { object_manager::generate_buffer () }
         , target { _target }
+        , capacity { 0 }
+        , map_ptr { NULL }
+        , map_id { 0 }
     { buffer_data ( size, data, usage ); }
 
     /* deleted zero-parameter constructor */
@@ -148,16 +171,57 @@ public:
     /* buffer_data
      * 
      * size: size of data in bytes
-     * data: pointer to data
+     * data: pointer to data (defaults to NULL)
      * usage: the storage method for the data (defaults to static draw)
      */
-    void buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage = GL_STATIC_DRAW );
+    void buffer_data ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW );
+
+    /* buffer_sub_data
+     *
+     * offset: offset in bytes of where to start writing
+     * size: size of the data in bytes
+     * data: pointer to data
+     */
+    void buffer_sub_data ( const GLintptr offset, const GLsizeiptr size, const GLvoid * data );
 
     /* clear_data
      *
      * clear the data from the buffer
      */
     void clear_data ();
+
+
+
+    /* map(_ro)
+     *
+     * maps the buffer to a buffer_map, if not already mapped
+     * 
+     * return: the mapped buffer
+     */
+    template<class T> buffer_map<T> map ();
+    template<class T> buffer_map<const T> map_ro ();
+
+    /* unmap
+     *
+     * unmaps the buffer, making all existing maps invalid
+     */
+    void unmap ();
+
+    /* is_mapped
+     *
+     * with no parameters, returns true if the buffer is currently in a mapped state
+     * with a map parameter, returns true if the map supplied is currently valid
+     */
+    bool is_mapped () const { return ( is_object_valid () && map_ptr ); }
+    template<class T> bool is_mapped ( const buffer_map<T>& map ) const;
+
+    /* assert_is_not_mapped
+     *
+     * throws if the buffer is mapped
+     * 
+     * operation: description of the operation
+     */
+    void assert_is_not_mapped ( const std::string& operation = "" ) const;
 
 
 
@@ -172,6 +236,7 @@ public:
      * bind the buffer
      */
     void bind () const;
+
     /* unbind
      *
      * unbind the buffer's target
@@ -192,6 +257,13 @@ public:
      */
     const GLenum& get_target () const { return target; }
 
+    /* get_capacity
+     *
+     * return the capacity of the buffer in bytes
+     */
+    const GLsizeiptr& get_capacity () const { return capacity; }
+
+
 
 private:
 
@@ -200,6 +272,146 @@ private:
      * the target to bind the buffer to
      */
     const GLenum target;
+
+    /* GLsizeiptr capacity
+     *
+     * the number of bytes allocated to the buffer
+     */
+    GLsizeiptr capacity;
+
+    /* GLvoid * map_ptr
+     *
+     * pointer to the current map to the buffer (NULL for no map)
+     */
+    GLvoid * map_ptr;
+
+    /* unsigned map_id
+     *
+     * the map id, which is incremented every time the buffer is unmapped
+     * this ensures that outdated maps are always picked up on
+     */
+    unsigned map_id;
+
+
+
+    /* generate_map
+     *
+     * generate a mapping, if not already mapped
+     * 
+     * return: the map to the buffer, or NULL on failure
+     */
+    GLvoid * generate_map ();
+
+};
+
+
+
+/* BUFFER_MAP DEFINITION */
+
+/* class buffer_map
+ *
+ * object returned by the map_buffer methods of buffer_base
+ * has operator overloads to act like an array to modify the buffer
+ */
+template<class T = GLubyte> class glh::core::buffer_map
+{
+
+    /* friend of buffer_base */
+    friend buffer_base;
+
+public:
+
+    /* full constructor
+     *
+     * construct a buffer map from a pointer to the map, access specifier, a map id and a reference to the buffer object
+     *
+     * _ptr: a pointer to the mapped data
+     * _map_id: the id of this map (supplied by buffer_base class)
+     * _buff: the buffer object the map is for
+     */
+    buffer_map ( GLvoid * _ptr, const unsigned _map_id, buffer_base& _buff )  
+        : ptr { reinterpret_cast<T *> ( _ptr ) }
+        , map_id { _map_id }
+        , buff { _buff }
+    {}
+
+    /* deleted zero-parameter constructor */
+    buffer_map () = delete;
+
+    /* default copy constructor */
+    buffer_map ( const buffer_map& other ) = default;
+
+    /* type cast constructor */
+    template<class _T> explicit buffer_map ( const buffer_map<_T>& other )
+        : ptr { reinterpret_cast<T *> ( other.ptr ) }
+        , map_id { other.map_id }
+        , buff { other.buff }
+    {}
+
+    /* deleted copy assignment operator */
+    buffer_map& operator= ( const buffer_map& other ) = delete;
+
+    /* default destructor */
+    ~buffer_map () = default;
+
+
+
+    /* at/operator[]
+     *
+     * get elements out of the buffer
+     * will throw if the map is no longer valid
+     */
+    T& at ( const unsigned i );
+    const T& at ( const unsigned i ) const;
+    T& operator[] ( const unsigned i ) { return at ( i ); }
+    const T& operator[] ( const unsigned i ) const { return at ( i ); }
+
+
+    
+    /* is_map_valid
+     *
+     * returns true if the buffer map is valid
+     */
+    bool is_map_valid () const;
+
+    /* assert_is_map_valid
+     *
+     * throws if the map is not valid 
+     * 
+     * operation: description of the operation
+     */
+    void assert_is_map_valid ( const std::string& operation = "" ) const;
+
+
+
+    /* internal_ptr
+     *
+     * return the pointer to the map
+     * will throw if the map is no longer valid
+     */
+    T * internal_ptr ();
+    const T * internal_ptr () const;
+
+    /* get_buffer
+     *
+     * get the buffer that is mapped
+     * will throw if the map is no longer valid
+     */
+    buffer_base& get_buffer ();
+    const buffer_base& get_buffer () const;
+
+
+
+private:
+
+    /* pointer to the map */
+    T * ptr;
+
+    /* id for the map */
+    const unsigned map_id;
+
+    /* reference to the buffer that is mapped */
+    buffer_base& buff;
 
 };
 
@@ -231,7 +443,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    vbo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage = GL_STATIC_DRAW )
+    vbo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
         : buffer_base { GL_ARRAY_BUFFER, size, data, usage }
     {}
 
@@ -277,7 +489,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    ebo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage = GL_STATIC_DRAW )
+    ebo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
         : buffer_base { GL_ELEMENT_ARRAY_BUFFER, size, data, usage }
     {}
 
@@ -313,6 +525,8 @@ public:
      */
     vao ()
         : object { object_manager::generate_vao () }
+        , vertex_attribs { 8, { 0, GL_NONE, GL_NONE, 0, 0, NULL, false } }
+        , bound_ebo { NULL }
     {}
 
     /* deleted copy constructor */
@@ -370,6 +584,38 @@ public:
 
 
 
+    /* is_draw_arrays_valid
+     *
+     * returns true if it is safe to draw arrays from the vao
+     * may be false if attributes are invalid, or a buffer is mapped
+     */
+    bool is_draw_arrays_valid () const;
+
+    /* is_draw_elements_valid
+     * 
+     * returns true if it is safe to draw elements from the vao
+     * may be false if ebo is not bound
+     */
+    bool is_draw_elements_valid () const;
+
+    /* assert_is_draw_arrays_valid
+     *
+     * throws if the vao is not draw arrays valid
+     * 
+     * operation: description of the operation
+     */
+    void assert_is_draw_arrays_valid ( const std::string& operation = "" ) const;
+
+    /* assert_is_draw_elements_valid
+     *
+     * throws if the vao is not draw elements valid
+     * 
+     * operation: description of the operation
+     */
+    void assert_is_draw_elements_valid ( const std::string& operation = "" ) const;
+
+
+
     /* destroy
      *
      * destroys the object, setting id to 0
@@ -394,7 +640,143 @@ public:
      */
     bool is_bound () const { return object_manager::is_vao_bound ( id ); }
 
+
+
+private:
+
+    /* struct to represent a vertex attribute */
+    struct vertex_attrib
+    {
+        GLint size;
+        GLenum type;
+        GLenum norm;
+        GLsizei stride;
+        GLsizeiptr offset;
+        const vbo * buff;
+        bool enabled;
+    };
+
+    /* array of vertex attributes */
+    std::vector<vertex_attrib> vertex_attribs;
+
+    /* bound ebo */
+    const ebo * bound_ebo;
+
 };
+
+
+
+/* BUFFER_MAPPING_EXCEPTION DEFINITION */
+
+/* class buffer_mapping_exception : exception
+ *
+ * for exceptions related to buffer mapping
+ */
+class glh::exception::buffer_mapping_exception : public exception
+{
+public:
+
+    /* full constructor
+     *
+     * __what: description of the exception
+     */
+    explicit buffer_mapping_exception ( const std::string& __what )
+        : exception { __what }
+    {}
+
+    /* default zero-parameter constructor
+     *
+     * construct buffer_mapping_exception with no descrption
+     */
+    buffer_mapping_exception () = default;
+
+    /* default everything else and inherits what () function */
+
+};
+
+
+
+/* BUFFER_BASE TEMPLATE METHODS IMPLEMENTATION */
+
+/* map(_ro)
+ *
+ * maps the buffer to a buffer_map, if not already mapped
+ * 
+ * return: the mapped buffer
+ */
+template<class T> inline glh::core::buffer_map<T> glh::core::buffer_base::map ()
+{
+    /* return buffer_map object */
+    return buffer_map<T> { generate_map (), map_id, * this };
+}
+template<class T> inline glh::core::buffer_map<const T> glh::core::buffer_base::map_ro ()
+{
+    /* return buffer_map object */
+    return buffer_map<const T> { generate_map (), map_id, * this };
+}
+
+/* is_mapped
+ *
+ * with no parameters, returns true if the buffer is currently in a mapped state
+ * with a map parameter, returns true if the map supplied is currently valid
+ */
+template<class T> inline bool glh::core::buffer_base::is_mapped ( const buffer_map<T>& map ) const
+{
+    /* return true if is valid and ids match */
+    return ( is_mapped () && map.map_id == map_id );
+}
+
+
+
+/* BUFFER_MAP IMPLEMENTATION */
+
+/* at/operator[]
+ *
+ * get elements out of the buffer
+ */
+template<class T> inline T& glh::core::buffer_map<T>::at ( const unsigned i )
+{
+    /* throw if invalid or out of bounds */
+    assert_is_map_valid ();
+    if ( ( i + 1 ) * sizeof ( T ) > buff.get_capacity () ) throw exception::buffer_mapping_exception { "buffer map indices are out of range" };
+
+    /* otherwise return valud */
+    return * ( ptr + i );
+}
+template<class T> inline const T& glh::core::buffer_map<T>::at ( const unsigned i ) const
+{
+    /* throw if invalid or out of bounds */
+    assert_is_map_valid ();
+    if ( ( i + 1 ) * sizeof ( T ) > buff.capacity () ) throw exception::buffer_mapping_exception { "buffer map indices are out of range" };
+
+    /* otherwise return valud */
+    return * ( ptr + i );
+}
+
+/* is_map_valid
+ *
+ * returns true if the buffer map is valid
+ */
+template<class T> inline bool glh::core::buffer_map<T>::is_map_valid () const
+{
+    /* check map_ptr then use the method of buffer_base */
+    return ( ptr && buff.is_mapped ( * this ) );
+}
+
+/* assert_is_map_valid
+ *
+ * throws if the map is not valid 
+ * 
+ * operation: description of the operation
+ */
+template<class T> inline void glh::core::buffer_map<T>::assert_is_map_valid ( const std::string& operation ) const
+{
+    if ( !is_map_valid () ) 
+    {
+        if ( operation.size () > 0 ) throw exception::buffer_mapping_exception { "attempted to perform " + operation + " operation on invalid buffer map" };
+        else throw exception::buffer_mapping_exception { "attempted to perform operation on invalid buffer map" };
+    }
+}
 
 
 
