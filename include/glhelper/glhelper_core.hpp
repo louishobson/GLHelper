@@ -143,7 +143,7 @@ public:
      * 
      * operation: description of the operation
      */
-    void assert_is_object_valid ( const std::string& operation = "" ) const;
+    virtual void assert_is_object_valid ( const std::string& operation = "" ) const;
 
     /* virtual not operator
      *
