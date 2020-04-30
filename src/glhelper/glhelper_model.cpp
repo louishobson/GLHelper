@@ -454,48 +454,56 @@ glh::model::face& glh::model::model::add_face ( face& _face, mesh& _mesh, const 
  */
 void glh::model::model::configure_buffers ( mesh& _mesh )
 {
-    /* create temporary array for vertex data */
+    /* calculate the components per stride */
     const unsigned component_stride = 10 + ( 3 * _mesh.num_uv_channels );
-    std::vector<GLfloat> vertices;
-    vertices.resize ( _mesh.vertices.size () * component_stride );
+
+    /* resize the vertex buffer */
+    _mesh.vertex_data.buffer_data ( component_stride * _mesh.vertices.size () * sizeof ( GLfloat ) );
+    
+    /* map the vertex buffer and assign values */
+    auto vertex_map = _mesh.vertex_data.map<GLfloat> ();
     for ( unsigned i = 0; i < _mesh.vertices.size (); ++i )
     {
-        vertices.at ( ( i * component_stride ) + 0 ) = _mesh.vertices.at ( i ).position.at ( 0 );
-        vertices.at ( ( i * component_stride ) + 1 ) = _mesh.vertices.at ( i ).position.at ( 1 );
-        vertices.at ( ( i * component_stride ) + 2 ) = _mesh.vertices.at ( i ).position.at ( 2 );
-        vertices.at ( ( i * component_stride ) + 3 ) = _mesh.vertices.at ( i ).normal.at ( 0 );
-        vertices.at ( ( i * component_stride ) + 4 ) = _mesh.vertices.at ( i ).normal.at ( 1 );
-        vertices.at ( ( i * component_stride ) + 5 ) = _mesh.vertices.at ( i ).normal.at ( 2 );
-        vertices.at ( ( i * component_stride ) + 6 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 0 );
-        vertices.at ( ( i * component_stride ) + 7 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 1 );
-        vertices.at ( ( i * component_stride ) + 8 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 2 );
-        vertices.at ( ( i * component_stride ) + 9 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 3 );
+        vertex_map.at ( ( i * component_stride ) + 0 ) = _mesh.vertices.at ( i ).position.at ( 0 );
+        vertex_map.at ( ( i * component_stride ) + 1 ) = _mesh.vertices.at ( i ).position.at ( 1 );
+        vertex_map.at ( ( i * component_stride ) + 2 ) = _mesh.vertices.at ( i ).position.at ( 2 );
+        vertex_map.at ( ( i * component_stride ) + 3 ) = _mesh.vertices.at ( i ).normal.at ( 0 );
+        vertex_map.at ( ( i * component_stride ) + 4 ) = _mesh.vertices.at ( i ).normal.at ( 1 );
+        vertex_map.at ( ( i * component_stride ) + 5 ) = _mesh.vertices.at ( i ).normal.at ( 2 );
+        vertex_map.at ( ( i * component_stride ) + 6 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 0 );
+        vertex_map.at ( ( i * component_stride ) + 7 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 1 );
+        vertex_map.at ( ( i * component_stride ) + 8 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 2 );
+        vertex_map.at ( ( i * component_stride ) + 9 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 3 );
         for ( unsigned j = 0; j < _mesh.num_uv_channels; ++j )
         {
-            vertices.at ( ( i * component_stride ) + ( j * 3 ) + 10 ) = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 0 );
-            vertices.at ( ( i * component_stride ) + ( j * 3 ) + 11 ) = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 1 );
-            vertices.at ( ( i * component_stride ) + ( j * 3 ) + 12 ) = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 2 );
+            vertex_map.at ( ( i * component_stride ) + ( j * 3 ) + 10 ) = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 0 );
+            vertex_map.at ( ( i * component_stride ) + ( j * 3 ) + 11 ) = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 1 );
+            vertex_map.at ( ( i * component_stride ) + ( j * 3 ) + 12 ) = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 2 );
         }        
     }
 
-    /* create temporary array to store indices */
-    std::vector<GLuint> indices;
-    indices.resize (  _mesh.faces.size () * 3 );
+    /* unmap the vertex buffer */
+    _mesh.vertex_data.unmap ();
+
+    /* resize the index buffer */
+    _mesh.index_data.buffer_data ( 3 * _mesh.faces.size () * sizeof ( GLuint ) );
+
+    /* map the index buffer and assign values */
+    auto index_map = _mesh.index_data.map<GLuint> ();
     for ( unsigned i = 0; i < _mesh.faces.size (); ++i )
     {
-        indices.at ( ( i * 3 ) + 0 ) = _mesh.faces.at ( i ).indices.at ( 0 );
-        indices.at ( ( i * 3 ) + 1 ) = _mesh.faces.at ( i ).indices.at ( 1 );
-        indices.at ( ( i * 3 ) + 2 ) = _mesh.faces.at ( i ).indices.at ( 2 );
+        index_map.at ( ( i * 3 ) + 0 ) = _mesh.faces.at ( i ).indices.at ( 0 );
+        index_map.at ( ( i * 3 ) + 1 ) = _mesh.faces.at ( i ).indices.at ( 1 );
+        index_map.at ( ( i * 3 ) + 2 ) = _mesh.faces.at ( i ).indices.at ( 2 );
     }
 
-    /* buffer the data */
-    _mesh.vertex_data.buffer_data ( vertices.size () * sizeof ( GLfloat ), vertices.data () );
-    _mesh.index_data.buffer_data ( indices.size () * sizeof ( GLuint ), indices.data () );
+    /* unmap the index buffer */
+    _mesh.index_data.unmap ();
 
     /* configure the vao */
     _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), 0 );
     _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), 3 * sizeof ( GLfloat ) );
-    _mesh.array_object.set_vertex_attrib ( 2, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), 6 * sizeof ( GLfloat ) );
+    _mesh.array_object.set_vertex_attrib ( 2, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), 6 * sizeof ( GLfloat ) );
     for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
     {
         _mesh.array_object.set_vertex_attrib ( 3 + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), ( ( i * 3 ) + 10 ) * sizeof ( GLfloat ) );
@@ -629,14 +637,8 @@ void glh::model::model::render_mesh ( const mesh& _mesh ) const
     /* set opacity */
     cached_material_uniforms->opacity_uni.set_float ( _mesh.properties->opacity );
 
-    /* bind the vao */
-    _mesh.array_object.bind ();
-
     /* draw elements */
-    core::renderer::draw_elements ( GL_TRIANGLES, _mesh.faces.size () * 3, GL_UNSIGNED_INT, 0 );
-
-    /* unbind the vao */
-    _mesh.array_object.unbind ();
+    core::renderer::draw_elements ( _mesh.array_object, GL_TRIANGLES, _mesh.faces.size () * 3, GL_UNSIGNED_INT, 0 );
 
     /* re-enable face culling if was previously disabled */
     if ( culling_active && _mesh.properties->two_sided ) core::renderer::enable_face_culling ();

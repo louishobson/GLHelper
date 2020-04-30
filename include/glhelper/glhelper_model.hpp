@@ -373,11 +373,11 @@ struct glh::model::face
  */
 struct glh::model::mesh
 {
+    /* the number of uv channels the mesh consists of for each vertex */
+    unsigned num_uv_channels;
+
     /* the vertices the mesh consists of */
     std::vector<vertex> vertices;
-
-    /* the number of uv channels the mesh consists of for each vertex */
-    int num_uv_channels;
 
     /* index of the material the mesh is made from */
     unsigned properties_index;
