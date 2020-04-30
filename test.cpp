@@ -302,9 +302,8 @@ int main ()
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
 
         mirror_fbo.unbind ();
-        mirror_vao.bind ();
         mirror_tex.bind ( 0 );
-        glh::core::renderer::draw_elements ( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
+        glh::core::renderer::draw_elements ( mirror_vao, GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 
 
 
