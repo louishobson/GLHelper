@@ -38,6 +38,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+/* include glhelper_exception.hpp */
+#include <glhelper/glhelper_exception.hpp>
+
 
 
 /* NAMESPACE FORWARD DECLARATIONS */
@@ -51,6 +54,15 @@ namespace glh
          * abstract base class to represent any OpenGL object
          */
         class object;
+    }
+
+    namespace exception
+    {
+        /* class invalid_object_exception : exception
+         *
+         * for exceptions related to invalid objects
+         */
+        class invalid_object_exception;
     }
 }
 
@@ -116,23 +128,31 @@ public:
      */
     const GLuint& internal_id () const { return id; }
 
-    /* virtual is_valid
+    /* virtual is_object_valid
      *
      * determines if the object is valid (id > 0)
      * may be overloaded when derived to add more parameters to validity
      * 
      * return: boolean representing validity
      */
-    virtual bool is_valid () const { return ( id > 0 ); }
+    virtual bool is_object_valid () const { return ( id > 0 ); }
+
+    /* assert_is_object_valid
+     *
+     * throws if the object is not valid
+     * 
+     * operation: description of the operation
+     */
+    void assert_is_object_valid ( const std::string& operation = "" ) const;
 
     /* virtual not operator
      *
      * determines if the object is invalid
-     * synonymous to !object.is_valid ()
+     * synonymous to !object.is_object_valid ()
      * 
      * return: boolean representing invalidity
      */
-    virtual bool operator! () const { return !is_valid (); }
+    virtual bool operator! () const { return !is_object_valid (); }
 
     /* pure virtual destroy
      *
@@ -161,6 +181,57 @@ protected:
  */
 bool inline operator== ( const glh::core::object& lhs, const glh::core::object& rhs ) { return ( lhs.internal_id () == rhs.internal_id () ); }
 bool inline operator!= ( const glh::core::object& lhs, const glh::core::object& rhs ) { return ( lhs.internal_id () != rhs.internal_id () ); }
+
+
+
+/* INVALID_OBJECT_EXCEPTION DEFINITION */
+
+/* class invalid_object_exception : exception
+ *
+ * for exceptions related to invalid objects
+ */
+class glh::exception::invalid_object_exception : public exception
+{
+public:
+
+    /* full constructor
+     *
+     * __what: description of the exception
+     */
+    explicit invalid_object_exception ( const std::string& __what )
+        : exception { __what }
+    {}
+
+    /* default zero-parameter constructor
+     *
+     * construct invalid_object_exception with no descrption
+     */
+    invalid_object_exception () = default;
+
+    /* default everything else and inherits what () function */
+
+};
+
+
+
+
+/* OBJECT IMPLEMENTATION */
+
+/* assert_is_object_valid
+ *
+ * throws if the object is not valid
+ * 
+ * operation: description of the operation
+ */
+void inline glh::core::object::assert_is_object_valid ( const std::string& operation ) const
+{ 
+    /* throw if invalid */
+    if ( !is_object_valid () ) 
+    {
+        if ( operation.size () > 0 ) throw exception::invalid_object_exception { "attempted to perform " + operation + " operation on invalid OpenGL object" }; 
+        else throw exception::invalid_object_exception { "attempted to perform operation on invalid OpenGL object" }; 
+    }
+}
 
 
 
