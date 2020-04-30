@@ -384,6 +384,16 @@ public:
 
 
 
+    /* assert_object_is_valid
+     *
+     * throws if an object has an id of 0
+     *
+     * id: the id of the object to test
+     * operation: a description of the operation
+     */
+    static void assert_object_is_valid ( const GLuint id, const std::string& operation = "" );
+
+
 
 private:
 
@@ -410,14 +420,6 @@ private:
 
     /* currently bound framebuffer */
     static GLuint bound_fbo;
-
-
-
-    /* assert_opengl_loaded
-     *
-     * throw if opengl has not been loaded
-     */
-    static void asset_opengl_loaded () { if ( !core::glad_loader::is_loaded () ) throw exception::glad_exception { "attempted to create object without GLAD being loaded" }; }
 
 };
 

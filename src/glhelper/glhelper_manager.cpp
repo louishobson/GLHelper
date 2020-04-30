@@ -29,8 +29,8 @@
  */
 GLuint glh::core::object_manager::generate_buffer ()
 {
-    /* assert opengl is loaded */
-    asset_opengl_loaded ();
+    /* assertions */
+    glh::core::glad_loader::assert_is_loaded ();
 
     /* generate and return object */
     GLuint id;
@@ -61,8 +61,8 @@ void glh::core::object_manager::destroy_buffer ( const GLuint id )
  */
 void glh::core::object_manager::bind_vbo ( const GLuint id )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid vbo object" };
+    /* assertions */
+    assert_object_is_valid ( id, "bind vbo" );
 
     /* if not already bound, bind and record */
     if ( id != bound_vbo )
@@ -78,8 +78,8 @@ void glh::core::object_manager::bind_vbo ( const GLuint id )
  */
 void glh::core::object_manager::unbind_vbo ( const GLuint id )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid vbo object" };
+    /* assertions */
+    assert_object_is_valid ( id, "unbind vbo" );
 
     /* if bound, unbind and record */
     if ( id == bound_vbo )
@@ -95,8 +95,8 @@ void glh::core::object_manager::unbind_vbo ( const GLuint id )
  */
 void glh::core::object_manager::bind_ebo ( const GLuint id )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid ebo object" };
+    /* assertions */
+    assert_object_is_valid ( id, "bind ebo" );
 
     /* if not already bound, bind and record */
     if ( id != bound_ebo )
@@ -112,8 +112,8 @@ void glh::core::object_manager::bind_ebo ( const GLuint id )
  */
 void glh::core::object_manager::unbind_ebo ( const GLuint id )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid ebo object" };
+    /* assertions */
+    assert_object_is_valid ( id, "unbind ebo" );
 
     /* if bound, unbind and record */
     if ( id == bound_ebo )
@@ -133,8 +133,8 @@ void glh::core::object_manager::unbind_ebo ( const GLuint id )
  */
 GLuint glh::core::object_manager::generate_vao ()
 {
-    /* assert opengl is loaded */
-    asset_opengl_loaded ();
+    /* assertions */
+    glh::core::glad_loader::assert_is_loaded ();
 
     /* generate and return object */
     GLuint id;
@@ -164,8 +164,8 @@ void glh::core::object_manager::destroy_vao ( const GLuint id )
  */
 void glh::core::object_manager::bind_vao ( const GLuint id )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid vao object" };
+    /* assertions */
+    assert_object_is_valid ( id, "bind vbo" );
 
     /* if not already bound, bind and record */
     if ( id != bound_vao )
@@ -181,8 +181,8 @@ void glh::core::object_manager::bind_vao ( const GLuint id )
  */
 void glh::core::object_manager::unbind_vao ( const GLuint id )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid vao object" };
+    /* assertions */
+    assert_object_is_valid ( id, "unbind vbo" );
 
     /* if bound, unbind and record */
     if ( id == bound_vao )
@@ -204,8 +204,8 @@ void glh::core::object_manager::unbind_vao ( const GLuint id )
  */
 GLuint glh::core::object_manager::generate_shader ( const GLenum type )
 {
-    /* assert opengl is loaded */
-    asset_opengl_loaded ();
+    /* assertions */
+    glh::core::glad_loader::assert_is_loaded ();
 
     /* generate and return object */
     return glCreateShader ( type );
@@ -227,8 +227,8 @@ void glh::core::object_manager::destroy_shader ( const GLuint id )
  */
 GLuint glh::core::object_manager::generate_program ()
 {
-    /* assert opengl is loaded */
-    asset_opengl_loaded ();
+    /* assertions */
+    glh::core::glad_loader::assert_is_loaded ();
 
     /* generate and return object */
     return glCreateProgram ();
@@ -254,8 +254,8 @@ void glh::core::object_manager::destroy_program ( const GLuint id )
  */
 void glh::core::object_manager::use_program ( const GLuint id )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted to use invalid program" };
+    /* assertions */
+    assert_object_is_valid ( id, "use program" );
 
     /* if not alreay in use, use and record */
     if ( id != in_use_program )
@@ -271,8 +271,8 @@ void glh::core::object_manager::use_program ( const GLuint id )
  */
 void glh::core::object_manager::unuse_program ( const GLuint id )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted to unuse invalid program" };
+    /* assertions */
+    assert_object_is_valid ( id, "unuse program" );
 
     /* if in use, unuse and record */
     if ( id == in_use_program )
@@ -292,8 +292,8 @@ void glh::core::object_manager::unuse_program ( const GLuint id )
  */
 GLuint glh::core::object_manager::generate_texture ()
 {
-    /* assert opengl is loaded */
-    asset_opengl_loaded ();
+    /* assertions */
+    glh::core::glad_loader::assert_is_loaded ();
 
     /* generate texture and return */
     GLuint id;
@@ -320,8 +320,8 @@ void glh::core::object_manager::destroy_texture ( const GLuint id )
  */
 void glh::core::object_manager::bind_texture2d ( const GLuint id, const unsigned unit )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid texture object" };    
+    /* assertions */
+    assert_object_is_valid ( id, "bind testure2d" );   
 
     /* if not already bound, bind and record */
     if ( id != bound_texture2ds.at ( unit ) )
@@ -341,8 +341,8 @@ void glh::core::object_manager::bind_texture2d ( const GLuint id, const unsigned
  */
 void glh::core::object_manager::unbind_texture2d ( const GLuint id, const unsigned unit )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid texture object" };
+    /* assertions */
+    assert_object_is_valid ( id, "unbind texture2d" );
         
     /* if already bound, unbind and record */
     if ( id == bound_texture2ds.at ( unit ) )
@@ -361,8 +361,8 @@ void glh::core::object_manager::unbind_texture2d ( const GLuint id, const unsign
  */
 void glh::core::object_manager::bind_cubemap ( const GLuint id, const unsigned unit )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid cubemap object" };    
+    /* assertions */
+    assert_object_is_valid ( id, "bind cubemap" );  
 
     /* if not already bound, bind and record */
     if ( id != bound_cubemaps.at ( unit ) )
@@ -381,8 +381,8 @@ void glh::core::object_manager::bind_cubemap ( const GLuint id, const unsigned u
  */
 void glh::core::object_manager::unbind_cubemap ( const GLuint id, const unsigned unit )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid cubemap object" };
+    /* assertions */
+    assert_object_is_valid ( id, "unbind cubemap" );  
         
     /* if already bound, unbind and record */
     if ( id == bound_cubemaps.at ( unit ) )
@@ -403,8 +403,8 @@ void glh::core::object_manager::unbind_cubemap ( const GLuint id, const unsigned
  */
 GLuint glh::core::object_manager::generate_rbo ()
 {
-    /* assert opengl is loaded */
-    asset_opengl_loaded ();
+    /* assertions */
+    glh::core::glad_loader::assert_is_loaded ();
 
     /* generate rbo and return */
     GLuint id;
@@ -432,8 +432,8 @@ void glh::core::object_manager::destroy_rbo ( const GLuint id )
  */
 void glh::core::object_manager::bind_rbo ( const GLuint id )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid renderbuffer object" };    
+    /* assertions */
+    assert_object_is_valid ( id, "bind rbo" );  
 
     /* if not already bound, bind and record */
     if ( id != bound_rbo )
@@ -449,8 +449,8 @@ void glh::core::object_manager::bind_rbo ( const GLuint id )
  */
 void glh::core::object_manager::unbind_rbo ( const GLuint id )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid renderbuffer object" };    
+    /* assertions */
+    assert_object_is_valid ( id, "unbind rbo" );
 
     /* if already bound, unbind and record */
     if ( id == bound_rbo )
@@ -470,8 +470,8 @@ void glh::core::object_manager::unbind_rbo ( const GLuint id )
  */
 GLuint glh::core::object_manager::generate_fbo ()
 {
-    /* assert opengl is loaded */
-    asset_opengl_loaded ();
+    /* assertions */
+    glh::core::glad_loader::assert_is_loaded ();
 
     /* generate and return framebuffer */
     GLuint id;
@@ -499,8 +499,8 @@ void glh::core::object_manager::destroy_fbo ( const GLuint id )
  */
 void glh::core::object_manager::bind_fbo ( const GLuint id )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted bind operation on invalid framebuffer object" };    
+    /* assertions */
+    assert_object_is_valid ( id, "bind fbo" );    
 
     /* if not already bound, bind and record */
     if ( id != bound_fbo )
@@ -516,8 +516,8 @@ void glh::core::object_manager::bind_fbo ( const GLuint id )
  */
 void glh::core::object_manager::unbind_fbo ( const GLuint id )
 {
-    /* throw if invalid object */
-    if ( id == 0 ) throw exception::object_management_exception { "attempted unbind operation on invalid framebuffer object" };    
+    /* assertions */
+    assert_object_is_valid ( id, "unbind fbo" );    
 
     /* if already bound, unbind and record */
     if ( id == bound_fbo )
@@ -538,6 +538,25 @@ void glh::core::object_manager::bind_default_fbo ()
     {
         glBindFramebuffer ( GL_FRAMEBUFFER, 0 );
         bound_fbo = 0;
+    }
+}
+
+
+
+/* assert_object_is_valid
+ *
+ * throws if an object has an id of 0
+ *
+ * id: the id of the object to test
+ * operation: a description of the operation
+ */
+void glh::core::object_manager::assert_object_is_valid ( const GLuint id, const std::string& operation )
+{
+    /* throw if id == 0 */
+    if ( id == 0 )
+    {
+        if ( operation.size () > 0 ) throw exception::object_management_exception { "attempted to perform " + operation + " operation on an invalid object" };
+        else throw exception::object_management_exception { "attempted to perform operation on an invalid object" };
     }
 }
 
