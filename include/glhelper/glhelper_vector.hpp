@@ -7,6 +7,34 @@
  * include/glhelper/glhelper_vector.hpp
  * 
  * implements vector mathematics
+ * notable constructs include:
+ * 
+ * 
+ * 
+ * CLASS GLH::MATH::VECTOR
+ * 
+ * template class to represent a vector of any given size
+ * the template parameter M form a vector of size M
+ * 
+ * 
+ * 
+ * MATRIX NON-MEMBER FUNCTIONS
+ * 
+ * non-member functions include (all in namespace glh::math):
+ * 
+ * OPERATORS*+-/: for matrix-matrix and matrix-scalar combinations
+ * CONCATENATE: concatenate two vectors, two floats, or any combination thereof to form one vector
+ * DOT: dot/scalar product of two vectors of the same dimension
+ * CROSS: cross product of two 3d vectors
+ * MODULUS: find the modulus (length) of a vector
+ * NORMALISE: normalise a vector (to create a normal vector of the same size)
+ * ANGLE: find the angle between two vectors
+ * 
+ * 
+ * 
+ * CLASS GLH::EXCEPTION::VECTOR_EXCEPTION
+ * 
+ * thrown when an error occurs in one of the vector methods or non-member functions (e.g. out of bounds when getting a component)
  * 
  */
 
@@ -130,17 +158,11 @@ template<unsigned M> class glh::math::vector
 
 public:
 
-    /* zero-parameter constructor
-     * 
-     * creates a vector filled with 0s
-     */
-    vector () { data.fill ( 0.0 ); }
-
     /* double constructor
      *
-     * sets all values to the double provided
+     * sets all values to the double provided, defaulting to 0.0
      */
-    explicit vector ( const double val ) { data.fill ( val ); }
+    explicit vector ( const double val = 0.0 ) { data.fill ( val ); }
 
     /* vector constructor
      *
@@ -446,7 +468,7 @@ glh::math::vector<2> inline glh::math::concatenate ( const double lhs, const dou
 template<unsigned M> double glh::math::dot ( const vector<M>& lhs, const vector<M>& rhs )
 {
     /* store cross product */
-    double result;
+    double result = 0;
 
     /* loop to calculate */
     for ( unsigned i = 0; i < M; ++i ) result += ( lhs.at ( i ) * rhs.at ( i ) );
@@ -503,7 +525,7 @@ template<unsigned M> inline glh::math::vector<M> glh::math::normalise ( const ve
 template<unsigned M> inline double glh::math::angle ( const vector<M>& lhs, const vector<M>& rhs )
 {
     /* return the arccos of ( lhs.rhs / |lhs|.|rhs| ) */
-    return acos ( dot ( lhs, rhs ) / ( modulus ( lhs ) * modulus ( rhs ) ) );
+    return std::acos ( dot ( lhs, rhs ) / ( modulus ( lhs ) * modulus ( rhs ) ) );
 }
 
 
@@ -699,7 +721,7 @@ template<unsigned M> inline glh::math::vector<M> operator- ( const glh::math::ve
 template<unsigned M> inline std::ostream& operator<< ( std::ostream& os, const glh::math::vector<M>& _vector )
 {
     /* stream intro into ostream */
-    os << "glh::vector<" << M << ">{";
+    os << "vector<" << M << ">{";
     /* loop for each value */
     for ( unsigned i = 0; i < M; ++i )
     {

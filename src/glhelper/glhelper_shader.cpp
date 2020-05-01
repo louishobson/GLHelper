@@ -73,7 +73,7 @@ glh::core::program::program ( const vshader& vs, const gshader& gs, const fshade
     : object { object_manager::generate_program () }
 {
     /* check shaders are valid */
-    if ( !vs.is_valid () || gs.is_valid () || !fs.is_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
+    if ( !vs.is_object_valid () || gs.is_object_valid () || !fs.is_object_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
 
     /* attach shaders */
     glAttachShader ( id, vs.internal_id () );
@@ -108,7 +108,7 @@ glh::core::program::program ( const vshader& vs, const gshader& gs, const fshade
 glh::core::program::program ( const vshader& vs, const fshader& fs )
 {
     /* check shaders are valid */
-    if ( !vs.is_valid () || !fs.is_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
+    if ( !vs.is_object_valid () || !fs.is_object_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
 
     /* generate program */
     id = glCreateProgram ();
@@ -149,20 +149,10 @@ glh::core::uniform glh::core::program::get_uniform ( const std::string& name )
     /* return the uniform */
     return uniform { get_uniform_location ( name ), * this };
 }
-const glh::core::uniform glh::core::program::get_unfiorm ( const std::string& name ) const
-{
-    /* return the uniform */
-    return uniform { get_uniform_location ( name ), const_cast<program&> ( * this ) };
-}
 glh::core::struct_uniform glh::core::program::get_struct_uniform ( const std::string& name )
 {
     /* return the struct uniform */
     return struct_uniform { name, * this };
-}
-const glh::core::struct_uniform glh::core::program::get_struct_uniform ( const std::string& name ) const
-{
-    /* return the struct uniform */
-    return struct_uniform { name, const_cast<program&> ( * this ) };
 }
 
 /* get_..._array_uniform
@@ -174,40 +164,20 @@ glh::core::uniform_array_uniform glh::core::program::get_uniform_array_uniform (
     /* return the array uniform */
     return uniform_array_uniform { name, * this };
 }
-const glh::core::uniform_array_uniform glh::core::program::get_uniform_array_uniform ( const std::string& name ) const
-{
-    /* return the array uniform */
-    return uniform_array_uniform { name, const_cast<program&> ( * this ) };
-}
 glh::core::struct_array_uniform glh::core::program::get_struct_array_uniform ( const std::string& name )
 {
     /* return the array uniform */
     return struct_array_uniform { name, * this };
-}
-const glh::core::struct_array_uniform glh::core::program::get_struct_array_uniform ( const std::string& name ) const
-{
-    /* return the array uniform */
-    return struct_array_uniform { name, const_cast<program&> ( * this ) };
 }
 glh::core::uniform_2d_array_uniform glh::core::program::get_uniform_2d_array_uniform ( const std::string& name )
 {
     /* return the array uniform */
     return uniform_2d_array_uniform { name, * this };
 }
-const glh::core::uniform_2d_array_uniform glh::core::program::get_uniform_2d_array_uniform ( const std::string& name ) const
-{
-    /* return the array uniform */
-    return uniform_2d_array_uniform { name, const_cast<program&> ( * this ) };
-}
 glh::core::struct_2d_array_uniform glh::core::program::get_struct_2d_array_uniform ( const std::string& name )
 {
     /* return the array uniform */
     return struct_2d_array_uniform { name, * this };
-}
-const glh::core::struct_2d_array_uniform glh::core::program::get_struct_2d_array_uniform ( const std::string& name ) const
-{
-    /* return the array uniform */
-    return struct_2d_array_uniform { name, const_cast<program&> ( * this ) };
 }
 
 /* get_uniform_location
@@ -241,11 +211,11 @@ GLint glh::core::program::get_uniform_location ( const std::string& name ) const
 
 /* UNIFORM IMPLEMENTATION */
 
-/* check_is_program_in_use
+/* assert_is_program_in_use
  *
  * will throw if the associated program is not in use
  */
-void glh::core::uniform::check_is_program_in_use () const 
+void glh::core::uniform::assert_is_program_in_use () const 
 {
     /* if not in use, throw */ 
     if ( !prog.is_in_use () ) throw exception::uniform_exception { "associated program of uniform is not in use" };
@@ -259,22 +229,12 @@ void glh::core::uniform::check_is_program_in_use () const
  *
  * get a member of the struct
  */
-glh::core::uniform glh::core::struct_uniform::get_uniform ( const std::string& member )
+glh::core::uniform glh::core::struct_uniform::get_uniform ( const std::string& member ) const
 {
     /* return uniform */
     return prog.get_uniform ( name + "." + member );
 }
-const glh::core::uniform glh::core::struct_uniform::get_uniform ( const std::string& member ) const
-{
-    /* return uniform */
-    return prog.get_uniform ( name + "." + member );
-}
-glh::core::struct_uniform glh::core::struct_uniform::get_struct_uniform ( const std::string& member )
-{
-    /* return uniform */
-    return prog.get_struct_uniform ( name + "." + member );
-}
-const glh::core::struct_uniform glh::core::struct_uniform::get_struct_uniform ( const std::string& member ) const
+glh::core::struct_uniform glh::core::struct_uniform::get_struct_uniform ( const std::string& member ) const
 {
     /* return uniform */
     return prog.get_struct_uniform ( name + "." + member );
@@ -284,43 +244,37 @@ const glh::core::struct_uniform glh::core::struct_uniform::get_struct_uniform ( 
  *
  * simplified versions of get_array_uniform
  */
-glh::core::uniform_array_uniform glh::core::struct_uniform::get_uniform_array_uniform ( const std::string& member )
+glh::core::uniform_array_uniform glh::core::struct_uniform::get_uniform_array_uniform ( const std::string& member ) const
 {
     /* return the array uniform */
     return uniform_array_uniform { name + "." + member, prog };
 }
-const glh::core::uniform_array_uniform glh::core::struct_uniform::get_uniform_array_uniform ( const std::string& member ) const
-{
-    /* return the array uniform */
-    return uniform_array_uniform { name + "." + member, prog };
-}
-glh::core::struct_array_uniform glh::core::struct_uniform::get_struct_array_uniform ( const std::string& member )
+glh::core::struct_array_uniform glh::core::struct_uniform::get_struct_array_uniform ( const std::string& member ) const
 {
     /* return the array uniform */
     return struct_array_uniform { name + "." + member, prog };
 }
-const glh::core::struct_array_uniform glh::core::struct_uniform::get_struct_array_uniform ( const std::string& member ) const
-{
-    /* return the array uniform */
-    return struct_array_uniform { name + "." + member, prog };
-}
-glh::core::uniform_2d_array_uniform glh::core::struct_uniform::get_uniform_2d_array_uniform ( const std::string& member )
+glh::core::uniform_2d_array_uniform glh::core::struct_uniform::get_uniform_2d_array_uniform ( const std::string& member ) const
 {
     /* return the array uniform */
     return uniform_2d_array_uniform { name + "." + member, prog };
 }
-const glh::core::uniform_2d_array_uniform glh::core::struct_uniform::get_uniform_2d_array_uniform ( const std::string& member ) const
-{
-    /* return the array uniform */
-    return uniform_2d_array_uniform { name + "." + member, prog };
-}
-glh::core::struct_2d_array_uniform glh::core::struct_uniform::get_struct_2d_array_uniform ( const std::string& member )
+glh::core::struct_2d_array_uniform glh::core::struct_uniform::get_struct_2d_array_uniform ( const std::string& member ) const
 {
     /* return the array uniform */
     return struct_2d_array_uniform { name + "." + member, prog };
 }
-const glh::core::struct_2d_array_uniform glh::core::struct_uniform::get_struct_2d_array_uniform ( const std::string& member ) const
-{
-    /* return the array uniform */
-    return struct_2d_array_uniform { name + "." + member, prog };
+
+
+
+/* ARRAY_UNIFORM SPECIALISATION IMPLEMENTATION */
+
+/* at/operator[]
+ *
+ * return the uniform at an index
+ */
+glh::core::uniform glh::core::array_uniform<glh::core::uniform>::at ( const unsigned i ) const 
+{ 
+    /* get the uniform from the program and return it */
+    return prog.get_uniform ( name + "[" + std::to_string ( i ) + "]" ); 
 }

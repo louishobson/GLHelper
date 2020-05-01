@@ -7,7 +7,14 @@
  * include/glhelper/glhelper_render.hpp
  * 
  * defines renderer class to change and keep track of rendering settings
- * also wraps the rendering functions
+ * notable constructs include:
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::RENDERER
+ * 
+ * class containing static methods to control rendering and rendering options
+ * various settings are tracked to reduce duplicate calls to set the same setting
  * 
  */
 
@@ -30,6 +37,9 @@
 
 /* include glhelper_math.hpp */
 #include <glhelper/glhelper_math.hpp>
+
+/* include glhelper_buffer.hpp */
+#include <glhelper/glhelper_buffer.hpp>
 
 
 
@@ -82,24 +92,24 @@ public:
      * draw vertices straight from a vbo (via a vao)
      * all ebo data is ignored
      * 
+     * _vao: the vao to draw from
      * mode: the primative to render
      * start_index: the start index of the buffered data
      * count: number of vertices to draw
      */
-    static void draw_arrays ( const GLenum mode, const GLint start_index, const GLsizei count ) 
-    { glDrawArrays ( mode, start_index, count ); }
+    static void draw_arrays ( const vao& _vao, const GLenum mode, const GLint start_index, const GLsizei count );
 
     /* draw_elements
      *
      * draw vertices from an ebo (via a vao)
      * 
+     * _vao: the vao to draw from
      * mode: the primative to render
      * count: number of vertices to draw
      * type: the type of the data in the ebo
      * start_index: the start index of the elements
      */
-    static void draw_elements ( const GLenum mode, const GLint count, const GLenum type, const GLvoid * start_index )
-    { glDrawElements ( mode, count, type, start_index ); }
+    static void draw_elements ( const vao& _vao, const GLenum mode, const GLint count, const GLenum type, const GLsizeiptr start_index );
 
     /* get/set_clear_color
      *

@@ -7,19 +7,22 @@
  * include/glhelper/glhelper_lighting.hpp
  * 
  * handling of setting up lighting in shaders
- * 
- * 
- * 
  * lighting classes expects uniform data to be formatted in a specific way to function
- * 
- * the formats and structures expected to be found in the program are explained below
- * 
+ * the formats and structures expected to be found in the shader program are explained along with the C++ classes
  * although the names of the actual structure types are not of importance,
- * the variable names within the struct cannot be modified
+ * the variable names within the structs cannot be modified
+ * notable constructs include:
  * 
  * 
  * 
- * LIGHT_STRUCT
+ * CLASS GLH::LIGHTING::LIGHT
+ * 
+ * a class storing all of the possible attributes of any type of light
+ * these attributes can be applied to a light_struct struct uniform:
+ * 
+ * 
+ * 
+ * GLSL STRUCT LIGHT_STRUCT
  * 
  * struct light_struct
  * {
@@ -40,19 +43,39 @@
  *     bool enabled;
  * };
  * 
- * this structure contains a single light source of any type (directional/point/spotlight)
+ * this GLSL structure contains a single light source of any type (directional/point/spotlight)
+ * this is the structure the glh::lighting::light class expects to be supplied with to write to
  * 
  * position: the position of the light (only for point or spot lights)
  * direction: the direction of the light (only for directional or spot lights)
  * inner_cone: angle in radians of the inner cone of a spotlight (spotlight only)
  * outer_cone: angle in radians of the outer cone of a spotlight (spotlight only)
- * att_const/linear/quad: attenuation parameters for the light (only for point and spot lights)
+ * att_const/linear/quad: attenuation attributes for the light (only for point and spot lights)
  * ambient/diffuse/specular_color: the colors of the different components of light produced (all types)
  * enabled: whether the light is 'turned on' (all types)
  * 
  * 
  * 
- * LIGHT_COLLECTION_STRUCT
+ * CLASS GLH::LIGHTING::DIRLIGHT and ::POINTLIGHT and ::SPOTLIGHT
+ * 
+ * these classes are derivations of glh::lighting::light
+ * for each, the irrelevant light attributes to that type are made private
+ * this is purely for ease of use and to omit confusion about the type of light being modified
+ * the attributes made private are defaulted, but still written to the struct uniform by the base class's apply method
+ * 
+ * 
+ * 
+ * CLASS GLH::LIGHTING::LIGHT_COLLECTION
+ * 
+ * template class to store a dynamically-allocated array of lights
+ * the template parameter must be a type of light, but it defaults to glh::lighting::light
+ * there are using declarations to abstract the template (e.g. dirlight_collection)
+ * the only reason this class exists is so that applying all of the lights to uniforms is made easier
+ * the collection can be applied to a light_collection_struct struct uniform:
+ * 
+ * 
+ * 
+ * GLSL STRUCT LIGHT_COLLECTION_STRUCT
  * 
  * struct light_collection_struct
  * {
@@ -61,16 +84,25 @@
  * };
  * 
  * this structure holds an array of lights
+ * this is the structure the glh::lighting::light_collection class expects to be supplied with to write to
  * the size of the array must be large enough to store as many lights as required
  * the idea is that the lights in the array are all of the same type, however they can be any type you wish
- * one could have more than one light collection for different types of light
+ * one could have more than one light collection for different types of light, for example
  * 
  * size: the number of lights being held
  * lights: array of lights
  * 
  * 
  * 
- * LIGHT_SYSTEM_STRUCT
+ * CLASS GLH::LIGHTING::LIGHT_SYSTEM
+ * 
+ * class to store three collections: one dirlight, one pointlight and one spotlight collection
+ * similar to the theory behind the light_collection class, this simplifies applying the light collections to a uniform
+ * the collection can be applied to a light_system_struct struct uniform:
+ * 
+ * 
+ * 
+ * GLSL STRUCT LIGHT_SYSTEM_STRUCT
  * 
  * struct light_system_struct
  * {
@@ -80,6 +112,7 @@
  * };
  * 
  * this structure holds multiple types of collections of lights
+ * this is the structure the glh::lighting::light_system class expects to be supplied with to write to
  * 
  * dircoll: collection of dirrectional lights
  * pointcoll: collection of point lights

@@ -21,6 +21,56 @@
 
 /* RENDERER IMPLEMENTATION */
 
+/* draw_arrays
+ *
+ * draw vertices straight from a vbo (via a vao)
+ * all ebo data is ignored
+ * 
+ * _vao: the vao to draw from
+ * mode: the primative to render
+ * start_index: the start index of the buffered data
+ * count: number of vertices to draw
+ */
+void glh::core::renderer::draw_arrays ( const vao& _vao, const GLenum mode, const GLint start_index, const GLsizei count )
+{
+    /* assert vao is draw arrays valid */
+    _vao.assert_is_draw_arrays_valid ( "draw arrays" );
+
+    /* bind vao */
+    _vao.bind ();
+
+    /* draw arrays */
+    glDrawArrays ( mode, start_index, count );
+
+    /* unbind vao */
+    _vao.unbind ();
+}
+
+/* draw_elements
+ *
+ * draw vertices from an ebo (via a vao)
+ * 
+ * _vao: the vao to draw from
+ * mode: the primative to render
+ * count: number of vertices to draw
+ * type: the type of the data in the ebo
+ * start_index: the start index of the elements
+ */
+void glh::core::renderer::draw_elements ( const vao& _vao, const GLenum mode, const GLint count, const GLenum type, const GLsizeiptr start_index )
+{
+    /* assert vao is draw elements valid */
+    _vao.assert_is_draw_elements_valid ( "draw elements" );
+
+    /* bind vao */
+    _vao.bind ();
+
+    /* draw elements */
+    glDrawElements ( mode, count, type, reinterpret_cast<GLvoid *> ( start_index ) );
+
+    /* unbind vao */
+    _vao.unbind ();
+}
+
 /* get/set_clear_color
  *
  * get.set the clear color

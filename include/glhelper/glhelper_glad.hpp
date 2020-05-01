@@ -7,6 +7,20 @@
  * include/glhelper/glhelper_glad.hpp
  * 
  * declares glad-handling constructs
+ * notable constructs include:
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::GLAD_LOADER
+ * 
+ * class containing static methods to initialise OpenGL (using GLAD) 
+ * will also keep track of the currently loaded context, so that the same context cannot be loaded more than once
+ * 
+ * 
+ * 
+ * CLASS GLH::EXCEPTION::GLAD_EXCEPTION
+ * 
+ * thrown when an error occurs in one of the glad_loader methods (e.g. attempt to load context with no context set)
  * 
  */
 
@@ -102,6 +116,14 @@ public:
      */
     static bool is_loaded () { return active_window; }
 
+    /* assert_is_loaded
+     *
+     * throws if glad has not been loaded
+     * 
+     * operation: description of the operation
+     */
+    static void assert_is_loaded ( const std::string& operation = "" );
+
     /* is_window_loaded
      *
      * checks whether window is currently loaded to glad
@@ -139,7 +161,7 @@ public:
      * __what: description of the exception
      */
     explicit glad_exception ( const std::string& __what )
-        : exception ( __what )
+        : exception { __what }
     {}
 
     /* default zero-parameter constructor

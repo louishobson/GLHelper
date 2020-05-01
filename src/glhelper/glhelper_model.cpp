@@ -172,6 +172,7 @@ void glh::model::model::process_scene ( const aiScene& aiscene )
     }
 
     /* now recursively process all of the nodes */
+    root_node.parent = NULL;
     add_node ( root_node, * aiscene.mRootNode );
 }
 
@@ -453,49 +454,59 @@ glh::model::face& glh::model::model::add_face ( face& _face, mesh& _mesh, const 
  */
 void glh::model::model::configure_buffers ( mesh& _mesh )
 {
-    /* create temporary array for vertex data */
-    const unsigned components_per_vertex = 10 + ( 3 * _mesh.num_uv_channels );
-    GLfloat vertices [ _mesh.vertices.size () * components_per_vertex ];
+    /* calculate the components per stride */
+    const unsigned component_stride = 10 + ( 3 * _mesh.num_uv_channels );
+
+    /* resize the vertex buffer */
+    _mesh.vertex_data.buffer_data ( component_stride * _mesh.vertices.size () * sizeof ( GLfloat ) );
+    
+    /* map the vertex buffer and assign values */
+    auto vertex_map = _mesh.vertex_data.map<GLfloat> ();
     for ( unsigned i = 0; i < _mesh.vertices.size (); ++i )
     {
-        vertices [ ( i * components_per_vertex ) + 0 ] = _mesh.vertices.at ( i ).position.at ( 0 );
-        vertices [ ( i * components_per_vertex ) + 1 ] = _mesh.vertices.at ( i ).position.at ( 1 );
-        vertices [ ( i * components_per_vertex ) + 2 ] = _mesh.vertices.at ( i ).position.at ( 2 );
-        vertices [ ( i * components_per_vertex ) + 3 ] = _mesh.vertices.at ( i ).normal.at ( 0 );
-        vertices [ ( i * components_per_vertex ) + 4 ] = _mesh.vertices.at ( i ).normal.at ( 1 );
-        vertices [ ( i * components_per_vertex ) + 5 ] = _mesh.vertices.at ( i ).normal.at ( 2 );
-        vertices [ ( i * components_per_vertex ) + 6 ] = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 0 );
-        vertices [ ( i * components_per_vertex ) + 7 ] = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 1 );
-        vertices [ ( i * components_per_vertex ) + 8 ] = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 2 );
-        vertices [ ( i * components_per_vertex ) + 9 ] = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 3 );
+        vertex_map.at ( ( i * component_stride ) + 0 ) = _mesh.vertices.at ( i ).position.at ( 0 );
+        vertex_map.at ( ( i * component_stride ) + 1 ) = _mesh.vertices.at ( i ).position.at ( 1 );
+        vertex_map.at ( ( i * component_stride ) + 2 ) = _mesh.vertices.at ( i ).position.at ( 2 );
+        vertex_map.at ( ( i * component_stride ) + 3 ) = _mesh.vertices.at ( i ).normal.at ( 0 );
+        vertex_map.at ( ( i * component_stride ) + 4 ) = _mesh.vertices.at ( i ).normal.at ( 1 );
+        vertex_map.at ( ( i * component_stride ) + 5 ) = _mesh.vertices.at ( i ).normal.at ( 2 );
+        vertex_map.at ( ( i * component_stride ) + 6 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 0 );
+        vertex_map.at ( ( i * component_stride ) + 7 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 1 );
+        vertex_map.at ( ( i * component_stride ) + 8 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 2 );
+        vertex_map.at ( ( i * component_stride ) + 9 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 3 );
         for ( unsigned j = 0; j < _mesh.num_uv_channels; ++j )
         {
-            vertices [ ( i * components_per_vertex ) + ( j * 3 ) + 10 ] = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 0 );
-            vertices [ ( i * components_per_vertex ) + ( j * 3 ) + 11 ] = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 1 );
-            vertices [ ( i * components_per_vertex ) + ( j * 3 ) + 12 ] = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 2 );
+            vertex_map.at ( ( i * component_stride ) + ( j * 3 ) + 10 ) = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 0 );
+            vertex_map.at ( ( i * component_stride ) + ( j * 3 ) + 11 ) = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 1 );
+            vertex_map.at ( ( i * component_stride ) + ( j * 3 ) + 12 ) = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 2 );
         }        
     }
 
-    /* create temporary array to store indices */
-    GLuint indices [ _mesh.faces.size () * 3 ];
+    /* unmap the vertex buffer */
+    _mesh.vertex_data.unmap ();
+
+    /* resize the index buffer */
+    _mesh.index_data.buffer_data ( 3 * _mesh.faces.size () * sizeof ( GLuint ) );
+
+    /* map the index buffer and assign values */
+    auto index_map = _mesh.index_data.map<GLuint> ();
     for ( unsigned i = 0; i < _mesh.faces.size (); ++i )
     {
-        indices [ ( i * 3 ) + 0 ] = _mesh.faces.at ( i ).indices.at ( 0 );
-        indices [ ( i * 3 ) + 1 ] = _mesh.faces.at ( i ).indices.at ( 1 );
-        indices [ ( i * 3 ) + 2 ] = _mesh.faces.at ( i ).indices.at ( 2 );
+        index_map.at ( ( i * 3 ) + 0 ) = _mesh.faces.at ( i ).indices.at ( 0 );
+        index_map.at ( ( i * 3 ) + 1 ) = _mesh.faces.at ( i ).indices.at ( 1 );
+        index_map.at ( ( i * 3 ) + 2 ) = _mesh.faces.at ( i ).indices.at ( 2 );
     }
 
-    /* buffer the data */
-    _mesh.vertex_data.buffer_data ( sizeof ( vertices ), vertices, GL_STATIC_DRAW );
-    _mesh.index_data.buffer_data ( sizeof ( indices ), indices, GL_STATIC_DRAW );
+    /* unmap the index buffer */
+    _mesh.index_data.unmap ();
 
     /* configure the vao */
-    _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, components_per_vertex * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 0 ) );
-    _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, components_per_vertex * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 3 * sizeof ( GLfloat ) ) );
-    _mesh.array_object.set_vertex_attrib ( 2, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, components_per_vertex * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( 6 * sizeof ( GLfloat ) ) );
+    _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), 0 );
+    _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), 3 * sizeof ( GLfloat ) );
+    _mesh.array_object.set_vertex_attrib ( 2, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), 6 * sizeof ( GLfloat ) );
     for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
     {
-        _mesh.array_object.set_vertex_attrib ( 3 + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, components_per_vertex * sizeof ( GLfloat ), reinterpret_cast<GLvoid *> ( ( ( i * 3 ) + 10 ) * sizeof ( GLfloat ) ) );
+        _mesh.array_object.set_vertex_attrib ( 3 + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), ( ( i * 3 ) + 10 ) * sizeof ( GLfloat ) );
     }
     _mesh.array_object.bind_ebo ( _mesh.index_data );
 }
@@ -513,7 +524,12 @@ glh::model::node& glh::model::model::add_node ( node& _node, const aiNode& ainod
 {
     /* set all of the children first */
     _node.children.resize ( ainode.mNumChildren );
-    for ( unsigned i = 0; i < ainode.mNumChildren; ++i ) add_node ( _node.children.at ( i ), * ainode.mChildren [ i ] );
+    for ( unsigned i = 0; i < ainode.mNumChildren; ++i ) 
+    {
+        /* set parent of child node and then set it up fully */
+        _node.children.at ( i ).parent = &_node;
+        add_node ( _node.children.at ( i ), * ainode.mChildren [ i ] );
+    }
 
     /* now configure the meshes */
     _node.mesh_indices.resize ( ainode.mNumMeshes );
@@ -621,14 +637,8 @@ void glh::model::model::render_mesh ( const mesh& _mesh ) const
     /* set opacity */
     cached_material_uniforms->opacity_uni.set_float ( _mesh.properties->opacity );
 
-    /* bind the vao */
-    _mesh.array_object.bind ();
-
     /* draw elements */
-    core::renderer::draw_elements ( GL_TRIANGLES, _mesh.faces.size () * 3, GL_UNSIGNED_INT, 0 );
-
-    /* unbind the vao */
-    _mesh.array_object.unbind ();
+    core::renderer::draw_elements ( _mesh.array_object, GL_TRIANGLES, _mesh.faces.size () * 3, GL_UNSIGNED_INT, 0 );
 
     /* re-enable face culling if was previously disabled */
     if ( culling_active && _mesh.properties->two_sided ) core::renderer::enable_face_culling ();

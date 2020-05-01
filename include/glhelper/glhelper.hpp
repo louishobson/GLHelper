@@ -57,8 +57,11 @@
 /* include glhelper_model.hpp */
 #include <glhelper/glhelper_model.hpp>
 
-/* glhelper_lighting.hpp */
+/* include glhelper_lighting.hpp */
 #include <glhelper/glhelper_lighting.hpp>
 
-/* glhelper_framebuffer.hpp */
+/* include glhelper_framebuffer.hpp */
 #include <glhelper/glhelper_framebuffer.hpp>
+
+/* include glhelper_vertices.hpp */
+#include <glhelper/glhelper_vertices.hpp>

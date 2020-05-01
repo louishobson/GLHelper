@@ -7,6 +7,83 @@
  * include/glhelper/glhelper_shader.hpp
  * 
  * constructs for managing and using shaders
+ * notable constructs include:
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::SHADER
+ * 
+ * base class for any type of shader
+ * the type of shader and source code path is passed in the constructor and the shader is compiled there and then
+ * if any error orrcurs, a shader_exception will be thrown with a description of the error
+ * this shader can then be used within a shader program
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::V/G/FSHADER
+ * 
+ * derivations of the shader base class to set defaults for the shader type
+ * no more complicated than that
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::PROGRAM
+ * 
+ * class for a shader program
+ * vertex and fragment shaders are mandatory for consruction, however a geometry shader can be used as well
+ * uniforms in the program are extracted using the member functions get_..._uniform
+ * the program class remembers loactions of uniforms, although it would still ve better to not keep running get_..._uniform
+ * hence many constructs throught GLHelper use uniform caching to avoid this
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::UNIFORM
+ * 
+ * class for a defult uniform
+ * is returned by the get_uniform method of the program class
+ * this uniform directly references a variable in the shader which can be written to using the set_... methods
+ * NOTE: the parent program must be in use to set the uniform
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::COMPLEX_UNIFORM
+ * 
+ * abstract base class for more complex types of uniform
+ * a complex uniform represents a data structure in GLSL, that is, it cannot be directly written to
+ * this includes GLSL structs and arrays
+ * further uniform values must be extracted from the complex uniform until a non-complex uniform is reached
+ * for example, some_struct could be a complex uniform, but some_struct.member.values [ 0 ] would be a normal uniform
+ * this end point can then be written to like normal
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::STRUCT_UNIFORM
+ * 
+ * a derivation of complex_uniform to represent a GLSL struct
+ * further members the struct extracted via the get_..._uniform
+ * this is very similar to extracting uniforms directly out of a shader program
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::ARRAY_UNIFORM
+ * 
+ * a template derivation of complex_uniform to represent a GLSL array
+ * the template parameter must be a type of uniform, be it a normal uniform or complex uniform
+ * this will be the type of uniform the array contains
+ * the at function will then extract one of these uniforms at a specific index
+ * 
+ * 
+ * 
+ * CLASS GLH::EXCEPTION::SHADER_EXCEPTION
+ * 
+ * thrown when an error occurs in one of the shader/program methods (e.g. if shader compilation fails)
+ * 
+ * 
+ * 
+ * CLASS GLH::EXCEPTION::UNIFORM_EXCEPTION
+ * 
+ * thrown when an error occurs related to uniforms (e.g. if a uniform with a given name cannot be found)
+ * this is exception is thrown by many different classes throughout GLGelper
  * 
  */
 
@@ -365,24 +442,17 @@ public:
      * return: unfirom object
      */
     uniform get_uniform ( const std::string& name );
-    const uniform get_unfiorm ( const std::string& name ) const;
     struct_uniform get_struct_uniform ( const std::string& name );
-    const struct_uniform get_struct_uniform ( const std::string& name ) const;
     template<class T> array_uniform<T> get_array_uniform ( const std::string& name ) { return array_uniform<T> { name, * this }; }
-    template<class T> const array_uniform<T> get_array_uniform ( const std::string& name ) const { return array_uniform<T> { name, * this }; }
 
     /* get_..._array_uniform
      *
      * simplified versions of get_array_uniform
      */
     uniform_array_uniform get_uniform_array_uniform ( const std::string& name );
-    const uniform_array_uniform get_uniform_array_uniform ( const std::string& name ) const;
     struct_array_uniform get_struct_array_uniform ( const std::string& name );
-    const struct_array_uniform get_struct_array_uniform ( const std::string& name ) const;
     uniform_2d_array_uniform get_uniform_2d_array_uniform ( const std::string& name );
-    const uniform_2d_array_uniform get_uniform_2d_array_uniform ( const std::string& name ) const;
     struct_2d_array_uniform get_struct_2d_array_uniform ( const std::string& name );
-    const struct_2d_array_uniform get_struct_2d_array_uniform ( const std::string& name ) const;
 
 
 
@@ -502,14 +572,14 @@ public:
      * 
      * v0...: the value(s) to set the uniform to
      */
-    void set_float ( const GLfloat v0 ) 
-        { check_is_program_in_use (); glUniform1f ( location, v0 ); }
-    void set_float ( const GLfloat v0, const GLfloat v1 ) 
-        { check_is_program_in_use (); glUniform2f ( location, v0, v1 ); }
-    void set_float ( const GLfloat v0, const GLfloat v1, const GLfloat v2 ) 
-        { check_is_program_in_use (); glUniform3f ( location, v0, v1, v2 ); }
-    void set_float ( const GLfloat v0, const GLfloat v1, const GLfloat v2, const GLfloat v3 )
-        { check_is_program_in_use (); glUniform4f ( location, v0, v1, v2, v3 ); }
+    void set_float ( const GLfloat v0 ) const
+        { assert_is_program_in_use (); glUniform1f ( location, v0 ); }
+    void set_float ( const GLfloat v0, const GLfloat v1 )  const
+        { assert_is_program_in_use (); glUniform2f ( location, v0, v1 ); }
+    void set_float ( const GLfloat v0, const GLfloat v1, const GLfloat v2 ) const
+        { assert_is_program_in_use (); glUniform3f ( location, v0, v1, v2 ); }
+    void set_float ( const GLfloat v0, const GLfloat v1, const GLfloat v2, const GLfloat v3 ) const
+        { assert_is_program_in_use (); glUniform4f ( location, v0, v1, v2, v3 ); }
 
     /* set_int
      *
@@ -518,14 +588,14 @@ public:
      * 
      * v0...: the value(s) to set the uniform to
      */
-    void set_int ( const GLint v0 ) 
-        { check_is_program_in_use (); glUniform1i ( location, v0 ); }
-    void set_int ( const GLint v0, const GLint v1 ) 
-        { check_is_program_in_use (); glUniform2i ( location, v0, v1 ); }
-    void set_int ( const GLint v0, const GLint v1, const GLint v2 ) 
-        { check_is_program_in_use (); glUniform3i ( location, v0, v1, v2 ); }
-    void set_int ( const GLint v0, const GLint v1, const GLint v2, const GLint v3 )
-        { check_is_program_in_use (); glUniform4i ( location, v0, v1, v2, v3 ); }
+    void set_int ( const GLint v0 ) const
+        { assert_is_program_in_use (); glUniform1i ( location, v0 ); }
+    void set_int ( const GLint v0, const GLint v1 ) const
+        { assert_is_program_in_use (); glUniform2i ( location, v0, v1 ); }
+    void set_int ( const GLint v0, const GLint v1, const GLint v2 ) const
+        { assert_is_program_in_use (); glUniform3i ( location, v0, v1, v2 ); }
+    void set_int ( const GLint v0, const GLint v1, const GLint v2, const GLint v3 ) const
+        { assert_is_program_in_use (); glUniform4i ( location, v0, v1, v2, v3 ); }
 
     /* set_uint
      *
@@ -534,14 +604,14 @@ public:
      * 
      * v0...: the value(s) to set the uniform to
      */
-    void set_uint ( const GLuint v0 ) 
-        { check_is_program_in_use (); glUniform1ui ( location, v0 ); }
-    void set_uint ( const GLuint v0, const GLuint v1 ) 
-        { check_is_program_in_use (); glUniform2ui ( location, v0, v1 ); }
-    void set_uint ( const GLuint v0, const GLuint v1, const GLuint v2 ) 
-        { check_is_program_in_use (); glUniform3ui ( location, v0, v1, v2 ); }
-    void set_uint ( const GLuint v0, const GLuint v1, const GLuint v2, const GLuint v3 )
-        { check_is_program_in_use (); glUniform4ui ( location, v0, v1, v2, v3 ); }
+    void set_uint ( const GLuint v0 ) const
+        { assert_is_program_in_use (); glUniform1ui ( location, v0 ); }
+    void set_uint ( const GLuint v0, const GLuint v1 ) const
+        { assert_is_program_in_use (); glUniform2ui ( location, v0, v1 ); }
+    void set_uint ( const GLuint v0, const GLuint v1, const GLuint v2 ) const
+        { assert_is_program_in_use (); glUniform3ui ( location, v0, v1, v2 ); }
+    void set_uint ( const GLuint v0, const GLuint v1, const GLuint v2, const GLuint v3 ) const
+        { assert_is_program_in_use (); glUniform4ui ( location, v0, v1, v2, v3 ); }
 
     /* set_matrix
      *
@@ -551,12 +621,12 @@ public:
      * name: the name of the uniform
      * v0: the matrix to set the uniform to
      */
-    void set_matrix ( const glh::math::mat2& v0 ) 
-        { check_is_program_in_use (); glUniformMatrix2fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
-    void set_matrix ( const glh::math::mat3& v0 ) 
-        { check_is_program_in_use (); glUniformMatrix3fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
-    void set_matrix ( const glh::math::mat4& v0 )
-        { check_is_program_in_use (); glUniformMatrix4fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
+    void set_matrix ( const glh::math::mat2& v0 ) const
+        { assert_is_program_in_use (); glUniformMatrix2fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
+    void set_matrix ( const glh::math::mat3& v0 ) const
+        { assert_is_program_in_use (); glUniformMatrix3fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
+    void set_matrix ( const glh::math::mat4& v0 ) const
+        { assert_is_program_in_use (); glUniformMatrix4fv ( location, 1, GL_FALSE, v0.export_data ().data () ); }
 
     /* set_vector
      *
@@ -566,14 +636,14 @@ public:
      * 
      * v0: the vector to set the uniform to
      */
-    void set_vector ( const glh::math::vec1& v0 ) 
-        { check_is_program_in_use (); glUniform1f ( location, v0.at ( 0 ) ); }
-    void set_vector ( const glh::math::vec2& v0 ) 
-        { check_is_program_in_use (); glUniform2f ( location, v0.at ( 0 ), v0.at ( 1 ) ); }
-    void set_vector ( const glh::math::vec3& v0 ) 
-        { check_is_program_in_use (); glUniform3f ( location, v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ) ); }
-    void set_vector ( const glh::math::vec4& v0 )
-        { check_is_program_in_use (); glUniform4f ( location, v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ), v0.at ( 3 ) ); }
+    void set_vector ( const glh::math::vec1& v0 ) const
+        { assert_is_program_in_use (); glUniform1f ( location, v0.at ( 0 ) ); }
+    void set_vector ( const glh::math::vec2& v0 ) const
+        { assert_is_program_in_use (); glUniform2f ( location, v0.at ( 0 ), v0.at ( 1 ) ); }
+    void set_vector ( const glh::math::vec3& v0 ) const
+        { assert_is_program_in_use (); glUniform3f ( location, v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ) ); }
+    void set_vector ( const glh::math::vec4& v0 ) const
+        { assert_is_program_in_use (); glUniform4f ( location, v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ), v0.at ( 3 ) ); }
 
 
     
@@ -618,11 +688,11 @@ private:
      */
     program& prog;
 
-    /* check_is_program_in_use
+    /* assert_is_program_in_use
      *
      * will throw if the associated program is not in use
      */
-    void check_is_program_in_use () const;
+    void assert_is_program_in_use () const;
 
 };
 
@@ -755,26 +825,18 @@ public:
      *
      * get a member of the struct
      */
-    uniform get_uniform ( const std::string& member );
-    const uniform get_uniform ( const std::string& member ) const;
-    struct_uniform get_struct_uniform ( const std::string& member );
-    const struct_uniform get_struct_uniform ( const std::string& member ) const;
-    template<class T> array_uniform<T> get_array_uniform ( const std::string& member ) { return array_uniform<T> { name + "." + member, prog }; }
-    template<class T> const array_uniform<T> get_array_uniform ( const std::string& member ) const { return array_uniform<T> { name + "." + member, prog }; }
-
+    uniform get_uniform ( const std::string& member ) const;
+    struct_uniform get_struct_uniform ( const std::string& member ) const;
+    template<class T> array_uniform<T> get_array_uniform ( const std::string& member ) const;
+    
     /* get_..._array_uniform
      *
      * simplified versions of get_array_uniform
      */
-    uniform_array_uniform get_uniform_array_uniform ( const std::string& member );
-    const uniform_array_uniform get_uniform_array_uniform ( const std::string& member ) const;
-    struct_array_uniform get_struct_array_uniform ( const std::string& member );
-    const struct_array_uniform get_struct_array_uniform ( const std::string& member ) const;
-    uniform_2d_array_uniform get_uniform_2d_array_uniform ( const std::string& member );
-    const uniform_2d_array_uniform get_uniform_2d_array_uniform ( const std::string& member ) const;
-    struct_2d_array_uniform get_struct_2d_array_uniform ( const std::string& member );
-    const struct_2d_array_uniform get_struct_2d_array_uniform ( const std::string& member ) const;
-
+    uniform_array_uniform get_uniform_array_uniform ( const std::string& member ) const;
+    struct_array_uniform get_struct_array_uniform ( const std::string& member ) const;
+    uniform_2d_array_uniform get_uniform_2d_array_uniform ( const std::string& member ) const;
+    struct_2d_array_uniform get_struct_2d_array_uniform ( const std::string& member ) const;
 
 };
 
@@ -820,10 +882,8 @@ public:
      *
      * return the uniform at an index
      */
-    T at ( const unsigned i ) { return T { name + "[" + std::to_string ( i ) + "]", prog }; }
-    const T at ( const unsigned i ) const { return T { name + "[" + std::to_string ( i ) + "]", prog }; }
-    T operator[] ( const unsigned i ) { return at ( i ); }
-    const T operator[] ( const unsigned i ) const { return at ( i ); }
+    T at ( const unsigned i ) const;
+    T operator[] ( const unsigned i ) const { return at ( i ); }
 
 };
 template<> class glh::core::array_uniform<glh::core::uniform> : public complex_uniform
@@ -859,10 +919,8 @@ public:
      *
      * return the uniform at an index
      */
-    uniform at ( const unsigned i ) { return prog.get_uniform ( name + "[" + std::to_string ( i ) + "]" ); }
-    const uniform at ( const unsigned i ) const { return prog.get_uniform ( name + "[" + std::to_string ( i ) + "]" ); }
-    uniform operator[] ( const unsigned i ) { return at ( i ); }
-    const uniform operator[] ( const unsigned i ) const { return at ( i ); }
+    uniform at ( const unsigned i ) const;
+    uniform operator[] ( const unsigned i ) const { return at ( i ); }
 
 };
 
@@ -883,7 +941,7 @@ public:
      * __what: description of the exception
      */
     explicit shader_exception ( const std::string& __what )
-        : exception ( __what )
+        : exception { __what }
     {}
 
     /* default zero-parameter constructor
@@ -913,7 +971,7 @@ public:
      * __what: description of the exception
      */
     explicit uniform_exception ( const std::string& __what )
-        : exception ( __what )
+        : exception { __what }
     {}
 
     /* default zero-parameter constructor
@@ -926,6 +984,33 @@ public:
 
 };
 
+
+
+/* STRUCT_UNIFORM TEMPLATE METHOD IMPLEMENTATIONS */
+
+/* get_array_uniform
+ *
+ * get a member of the struct
+ */
+template<class T> inline glh::core::array_uniform<T> glh::core::struct_uniform::get_array_uniform ( const std::string& member ) const 
+{
+    /* return array_uniform object */ 
+    return array_uniform<T> { name + "." + member, prog }; 
+}
+
+
+
+/* ARRAY_UNIFORM IMPLEMENTATION */
+
+/* at/operator[]
+ *
+ * return the uniform at an index
+ */
+template<class T> inline T glh::core::array_uniform<T>::at ( const unsigned i ) const 
+{ 
+    /* return an object of type T */
+    return T { name + "[" + std::to_string ( i ) + "]", prog }; 
+}
 
 
 

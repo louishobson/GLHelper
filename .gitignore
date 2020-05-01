@@ -6,6 +6,7 @@
 # Compiled files
 *.o
 *.a
+*.so
 test
 
 # Binaries

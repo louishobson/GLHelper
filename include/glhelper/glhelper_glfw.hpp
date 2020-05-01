@@ -7,12 +7,25 @@
  * include/glhelper/glhelper_glfw.hpp
  * 
  * declares glfw-handling constructs
+ * notable constructs include:
  * 
- * the initiation and termination of glfw is handled automatically:
- * on first window object creation, glfw is initialised
- * when there are no window objects left, glfw is terminated implicitly
  * 
- * windows are also automatically destroyed on object destruction
+ * 
+ * CLASS GLH::GLFW::WINDOW
+ * 
+ * class handling a GLFW window 
+ * the initiation and termination of GLFW handled automatically:
+ * on first window object creation, GLFW is implicitly initialised, and GLAD is loaded to its context
+ * when there are no window objects left, GLFW is implicitly terminated
+ * all input handling is found as members of the window class
+ * all rendering handling is found in the glh::core::renderer class
+ * that being said, window's swap_buffers method must be run for any rendering to be applied
+ * 
+ * 
+ * 
+ * CLASS GLH::EXCEPTION::GLFW_EXCEPTION
+ * 
+ * thrown when an error occurs in one of the window methods (e.g. invalid GLFW window objects)
  * 
  */
 
@@ -388,7 +401,7 @@ public:
      * __what: description of the exception
      */
     explicit glfw_exception ( const std::string& __what )
-        : exception ( __what )
+        : exception { __what }
     {}
 
     /* default zero-parameter constructor

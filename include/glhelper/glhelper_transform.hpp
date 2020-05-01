@@ -7,6 +7,30 @@
  * include/glhelper/glhelper_transform.hpp
  * 
  * implements functions to aid transformation calculations
+ * notable functions include (all in namespace glh::math)
+ * 
+ * PI: multiply a double by pi
+ * RAD: convert degrees to radians
+ * DEG: convert radians to degrees
+ * ZERO_MATRIX: return a zero matrix of a supplied size
+ * IDENTITY: return an identity matrix of a supplied size
+ * RESIZE: increase of decrease the size of a square matrix, filling in the diagonal with 1s when increasing
+ * STRETCH: generic stretching of a matrix or vector
+ * STRETCH3D: strecthing specifically in 3d space
+ * ENLARGE: generic enlarging of a matrix or vector
+ * ENLARGE3D: enlarging specifically in 3d space
+ * ROTATE: generic rotation transformation of a matrix or vector
+ * ROTATE3D: rotation transformation specifically in 3d space
+ * TRANSLATE: generic translation of a vector or matrix (assime affine matrix)
+ * TRANSLATE3D: translation specifically in 3d space
+ * REFLECT3D: reflection specifically in 3d space
+ * PERSPECTIVE: generate a perspective projection matrix based on the position and size of near and far planes
+ * PERSPECTIVE_FOV: generate a perspective projection matrix based on an fov angle
+ * CAMERA: generate a view matrix based on a camera position and unit axis
+ * LOOK_AT: generate a view matrix based on a camera position, focus point and world up unit vector
+ * LOOK_ALONG: generate a view matrix based on a camera position, direction of viewing and world up unit vector
+ * NORMAL: generate a normal matrix based on a model-view matrix
+ * OPERATOR*: for multiplying vectors by matrices to apply transformations 
  * 
  */
 
@@ -47,8 +71,7 @@ namespace glh
          *
          * return: the value of pi multiplied by a constant
          */
-        inline double pi ( const double k ) { return k * acos ( -1. ); }
-        inline double pi () { return acos ( -1 ); }
+        inline double pi ( const double k = 1.0 ) { return k * acos ( -1. ); }
 
         /* rad
          *
@@ -286,10 +309,11 @@ namespace glh
          * p: camera (non-unit) position vector
          * t: target (non-unit) position vector
          * wup: WORLD up unit vector
+         * fbx: if the direction of viewing is along wup, this x unit vector will be used to determine the rotation
          * 
          * return: camera matrix based on vectors provided
          */
-        matrix<4> look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& wup );
+        matrix<4> look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& wup, const vector<3>& fbx = vector<3> { 1.0, 0.0, 0.0 } );
 
         /* look_along
          *
@@ -298,10 +322,11 @@ namespace glh
          * p: camera (non-unit) position vector
          * d: direction unit vector
          * wup: WORLD up unit vector
+         * fbx: if the direction of viewing is along wup, this x unit vector will be used to determine the rotation
          * 
          * return: camera matrix based on vectors provided
          */
-        matrix<4> look_along ( const vector<3>& p, const vector<3>& d, const vector<3>& wup );
+        matrix<4> look_along ( const vector<3>& p, const vector<3>& d, const vector<3>& wup, const vector<3>& fbx = vector<3> { 1.0, 0.0, 0.0 } );
 
         /* normal
          *
@@ -871,17 +896,18 @@ inline glh::math::matrix<4> glh::math::camera ( const vector<3>& p, const vector
  * p: camera (non-unit) position vector
  * t: target (non-unit) position vector
  * wup: WORLD up unit vector
+ * fbx: if the direction of viewing is along wup, this x unit vector will be used to determine the rotation
  * 
  * return: camera matrix based on vectors provided
  */
-inline glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& wup )
+inline glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vector<3>& t, const vector<3>& wup, const vector<3>& fbx )
 {
     /* z = norm ( p - t )
-     * X = norm ( wup x d )
-     * y = d x X
+     * if ( z.wup < 1.0 ) X = norm ( wup x z ) else X = fbx
+     * y = z x X
      */
     const vector<3> z = normalise ( t - p );
-    const vector<3> x = cross ( wup, z );
+    const vector<3> x = ( std::abs ( dot ( z, wup ) ) < 1.0 ? cross ( wup, z ) : fbx );
     const vector<3> y = cross ( z, x );
     /* return the camera matrix */
     return camera ( p, x, y, z );
@@ -894,18 +920,19 @@ inline glh::math::matrix<4> glh::math::look_at ( const vector<3>& p, const vecto
  * p: camera (non-unit) position vector
  * d: direction unit vector
  * wup: WORLD up unit vector
+ * fbx: if the direction of viewing is along wup, this x unit vector will be used to determine the rotation
  * 
  * return: camera matrix based on vectors provided
  */
-inline glh::math::matrix<4> glh::math::look_along ( const vector<3>& p, const vector<3>& d, const vector<3>& wup )
+inline glh::math::matrix<4> glh::math::look_along ( const vector<3>& p, const vector<3>& d, const vector<3>& wup, const vector<3>& fbx )
 {
 
     /* z = -d
-     * X = wup x z
+     * if ( z.wup < 1.0 ) X = norm ( wup x z ) else X = fbx
      * y = z x X
      */
     const vector<3> z = -d;
-    const vector<3> x = cross ( wup, z );
+    const vector<3> x = ( std::abs ( dot ( z, wup ) ) < 1.0 ? cross ( wup, z ) : fbx );
     const vector<3> y = cross ( z, x );
     /* return the camera matrix */
     return camera ( p, x, y, z );

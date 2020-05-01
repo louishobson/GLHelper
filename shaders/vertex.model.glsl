@@ -1,10 +1,13 @@
 /*
- * vertex.basic.glsl
+ * vertex.model.glsl
  * 
- * basic vertex shader
+ * model vertex shader
  */
 
 #version 330 core
+
+/* maximum number of UV channels */
+#define MAX_UV_CHANNELS 8
 
 /* transformations structure */
 struct trans_struct
@@ -18,12 +21,14 @@ struct trans_struct
 /* vertices, texture coords and normal */
 layout ( location = 0 ) in vec3 pos;
 layout ( location = 1 ) in vec3 in_normal;
-layout ( location = 2 ) in vec3 in_texcoords;
+layout ( location = 2 ) in vec4 in_vcolor;
+layout ( location = 3 ) in vec3 in_texcoords [ 8 ];
 
-/* fragpos, normal and texture coords */
-out vec3 fragpos;
+/* texture coords, normal, vcolor */
+out vec3 texcoords [ MAX_UV_CHANNELS ];
 out vec3 normal;
-out vec3 texcoords;
+out vec3 fragpos;
+out vec4 vcolor;
 
 /* transformation matrices */
 uniform trans_struct trans;
@@ -39,4 +44,6 @@ void main ()
     normal = normalize ( transpose ( inverse ( mat3 ( trans.model ) ) ) * in_normal );
     /* set fragpos */
     fragpos = vec3 ( trans.model * vec4 ( pos, 1.0 ) );
+    /* set vcolor */
+    vcolor = in_vcolor;
 }

@@ -23,6 +23,121 @@
 
 
 
+/* TEXTURE_BASE IMPLEMENTATION */
+
+/* set_mag/min_filter
+ *
+ * set the texture filtering parameters of magnified/minified texture
+ */
+void glh::core::texture_base::set_mag_filter ( const GLenum opt ) 
+{ 
+    /* bind, set paramater, unbind */
+    bind (); 
+    glTexParameteri ( target, GL_TEXTURE_MAG_FILTER, opt ); 
+}
+void glh::core::texture_base::set_min_filter ( const GLenum opt ) 
+{ 
+    /* bind, set paramater, unbind */
+    bind (); 
+    glTexParameteri ( target, GL_TEXTURE_MIN_FILTER, opt );
+}
+
+/* set_(s/t/r)_wrap
+ *
+ * set the wrapping options for each coordinate axis, or all at once
+ */
+void glh::core::texture_base::set_s_wrap ( const GLenum opt ) 
+{ 
+    /* bind, set paramater, unbind */
+    bind (); 
+    glTexParameteri ( target, GL_TEXTURE_WRAP_S, opt );
+}
+void glh::core::texture_base::set_t_wrap ( const GLenum opt ) 
+{ 
+    /* bind, set paramater, unbind */
+    bind (); 
+    glTexParameteri ( target, GL_TEXTURE_WRAP_T, opt );
+}
+void glh::core::texture_base::set_r_wrap ( const GLenum opt ) 
+{ 
+    /* bind, set paramater, unbind */
+    bind (); 
+    glTexParameteri ( target, GL_TEXTURE_WRAP_R, opt );
+}
+void glh::core::texture_base::set_wrap ( const GLenum opt ) 
+{
+    /* bind, set paramaters, unbind */
+    bind (); 
+    glTexParameteri ( target, GL_TEXTURE_WRAP_S, opt ); 
+    glTexParameteri ( target, GL_TEXTURE_WRAP_T, opt );
+    glTexParameteri ( target, GL_TEXTURE_WRAP_R, opt );
+}
+
+/* generate_mipmap
+ *
+ * generate texture mipmap
+ */
+void glh::core::texture_base::generate_mipmap ()
+{
+    /* bind and generate mipmap */
+    bind ();
+    glGenerateMipmap ( target );
+}
+
+/* bind
+ *
+ * bind the texture to a texture unit
+ * 
+ * texture_unit: the texture unit to bind to, defaulting to 0
+ */
+void glh::core::texture_base::bind ( const unsigned texture_unit ) const 
+{
+    /* switch for different targets */
+    switch ( target )
+    {
+        case GL_TEXTURE_2D: object_manager::bind_texture2d ( id, texture_unit ); break;
+        case GL_TEXTURE_CUBE_MAP: object_manager::bind_cubemap ( id, texture_unit ); break;
+        default: exception::object_management_exception { "attempted to bind unknown texture object" };
+    }
+}
+
+/* unbind
+ *
+ * unbind the texture from a texture unit
+ * 
+ * texture_unit: the texture unit to unbind from, defaulting to 0
+ */
+void glh::core::texture_base::unbind ( const unsigned texture_unit ) const
+{
+    /* switch for different targets */
+    switch ( target )
+    {
+        case GL_TEXTURE_2D: object_manager::unbind_texture2d ( id, texture_unit ); break;
+        case GL_TEXTURE_CUBE_MAP: object_manager::unbind_cubemap ( id, texture_unit ); break;
+        default: exception::object_management_exception { "attempted to unbind unknown texture object" };
+    }
+}
+
+
+/* is_bound
+ *
+ * texture_unit: the texture unit to check if it is bound to, defaulting to 0
+ * 
+ * return boolean for if the texture is bound
+ */
+bool glh::core::texture_base::is_bound ( const unsigned texture_unit ) const
+{
+    /* switch for different targets */
+    switch ( target )
+    {
+        case GL_TEXTURE_2D: return object_manager::is_texture2d_bound ( id, texture_unit ); break;
+        case GL_TEXTURE_CUBE_MAP: return object_manager::is_cubemap_bound ( id, texture_unit ); break;
+        default: throw exception::object_management_exception { "attempted to check binding of unknown texture object" };
+    }
+}
+
+
+
 /* TEXTURE2D IMPLEMENTATION */
 
 /* full constructor
@@ -33,17 +148,14 @@
  * _path: path to the image for the texture
  */
 glh::core::texture2d::texture2d ( const std::string& _path )
-    : object { object_manager::generate_texture () }
+    : texture_base { GL_TEXTURE_2D, GL_RGBA, GL_RGBA }
     , path { _path }
-    , internal_format ( GL_RGBA )
-    , format { GL_RGBA }
-    , type { GL_UNSIGNED_BYTE }
 {
     /* load the image */
     unsigned char * image_data = stbi_load ( path.c_str (), &width, &height, &channels, 4 );
 
     /* check for error */
-    if ( !image_data ) throw exception::texture_exception { "failed to load texture from file at path " + path };
+    if ( !image_data ) throw exception::texture_exception { "failed to load texture2d texture from file at path " + path };
 
     /* bind texture object */
     bind ();
@@ -52,7 +164,7 @@ glh::core::texture2d::texture2d ( const std::string& _path )
      * although the original image may not have 4 channels, by putting the last parameter as 4 in stbi_load,
      * the image is forced to have 4 channels
      */
-    glTexImage2D ( GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, image_data );
+    glTexImage2D ( target, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
     
     /* generate mipmap */
     generate_mipmap ();
@@ -79,20 +191,15 @@ glh::core::texture2d::texture2d ( const std::string& _path )
  * data: the data to put in the texture (defaults to NULL)
  */
 glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data )
-    : object { object_manager::generate_texture () }
+    : texture_base { GL_TEXTURE_2D, _internal_format, _format, ( int ) _width, ( int ) _height }
     , path {}
-    , internal_format { _internal_format }
-    , format { _format }
-    , type { _type }
-    , width { ( int ) _width }
-    , height { ( int ) _height }
     , channels { 4 }
 {
     /* bind texture object */
     bind ();
 
     /* set texture data */
-    glTexImage2D ( GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, NULL );
+    glTexImage2D ( target, 0, internal_format, width, height, 0, format, _type, NULL );
 
     /* set mag/min options */
     set_mag_filter ( GL_LINEAR );
@@ -100,61 +207,113 @@ glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height,
 }
 
 
-/* set_mag/min_filter
- *
- * set the texture filtering parameters of magnified/minified texture
- */
-void glh::core::texture2d::set_mag_filter ( const GLenum opt ) 
-{ 
-    /* bind, set paramater, unbind */
-    bind (); 
-    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, opt ); 
-}
-void glh::core::texture2d::set_min_filter ( const GLenum opt ) 
-{ 
-    /* bind, set paramater, unbind */
-    bind (); 
-    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, opt );
-}
 
-/* set_(s/t/r)_wrap
- *
- * set the wrapping options for each coordinate axis, or all at once
- */
-void glh::core::texture2d::set_s_wrap ( const GLenum opt ) 
-{ 
-    /* bind, set paramater, unbind */
-    bind (); 
-    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, opt );
-}
-void glh::core::texture2d::set_t_wrap ( const GLenum opt ) 
-{ 
-    /* bind, set paramater, unbind */
-    bind (); 
-    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, opt );
-}
-void glh::core::texture2d::set_r_wrap ( const GLenum opt ) 
-{ 
-    /* bind, set paramater, unbind */
-    bind (); 
-    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, opt );
-}
-void glh::core::texture2d::set_wrap ( const GLenum opt ) 
-{
-    /* bind, set paramaters, unbind */
-    bind (); 
-    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, opt ); 
-    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, opt );
-    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, opt );
-}
+/* CUBEMAP IMPLEMENTATION */
 
-/* generate_mipmap
+/* image constructor
  *
- * generate texture mipmap
+ * construct the cubemap from six separate images for each layer
+ * the order of the paths is the same as the order of cubemap layers
+ * 
+ * paths: array of 6 paths to the images for the cubemap faces
  */
-void glh::core::texture2d::generate_mipmap ()
+glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths )
+    : texture_base { GL_TEXTURE_CUBE_MAP, GL_RGBA, GL_RGBA }
 {
-    /* bind and generate mipmap */
+    /* bind cubemap object */
     bind ();
-    glGenerateMipmap ( GL_TEXTURE_2D );
+
+    /* loop for each face of the cube */
+    for ( unsigned i = 0; i < 6; ++i )
+    {
+        /* store width and height */
+        int _width, _height;
+
+        /* save the path and load the image for that face */
+        face_textures.at ( i ).path = paths.at ( i );
+        unsigned char * image_data = stbi_load ( face_textures.at ( i ).path.c_str (), &_width, &_height, &face_textures.at ( i ).channels, 4 );
+
+        /* check for error in image loading */
+        if ( !image_data ) throw exception::texture_exception { "failed to load cubemap texture from file at path " + face_textures.at ( i ).path };
+
+        /* if first iteration, set cubemap width and height
+         * else check that the width and height of this texture is the same as previous textures
+         */
+        if ( i == 0 )
+        {
+            width = _width;
+            height = _height;
+        } else
+        {
+            if ( width != _width || height != _height ) throw exception::texture_exception { "cubemap texture dimensions at layer " + std::to_string ( i ) + " (path " + face_textures.at ( i ).path + ") differs from the textures at previous layers" };
+        }
+
+        /* set the texture data for this face
+         * although the original image may not have 4 channels, by putting the last parameter as 4 in stbi_load,
+         * the image is forced to have 4 channels
+         */
+        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
+
+        /* free image data */
+        stbi_image_free ( image_data );
+    }
+
+    /* generate mipmap */
+    generate_mipmap ();
+
+    /* set default wrapping options */
+    set_wrap ( GL_REPEAT );
+
+    /* set mag/min options */
+    set_mag_filter ( GL_LINEAR );
+    set_min_filter ( GL_LINEAR_MIPMAP_LINEAR );
+}
+
+/* 1-image constructor
+ * 
+ * construct the cubemap width one image for all six sides
+ *
+ * path: path to the image 
+ */
+glh::core::cubemap::cubemap ( const std::string& path )
+    : texture_base { GL_TEXTURE_CUBE_MAP, GL_RGBA, GL_RGBA }
+{
+    /* bind cubemap object */
+    bind ();
+
+    /* store the number of channels */
+    int _channels;
+
+    /* load the image */
+    unsigned char * image_data = stbi_load ( path.c_str (), &width, &height, &_channels, 4 );
+
+    /* check for error in image loading */
+    if ( !image_data ) throw exception::texture_exception { "failed to load cubemap texture from file at path " + path };
+
+    /* loop for each face of the cube */
+    for ( unsigned i = 0; i < 6; ++i )
+    {
+        /* set the info about the face */
+        face_textures.at ( i ).path = path;
+        face_textures.at ( i ).channels = _channels;
+
+        /* set the texture data for this face
+         * although the original image may not have 4 channels, by putting the last parameter as 4 in stbi_load,
+         * the image is forced to have 4 channels
+         */
+        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
+    }
+
+    /* free image data */
+    stbi_image_free ( image_data );
+
+    /* generate mipmap */
+    generate_mipmap ();
+
+    /* set default wrapping options */
+    set_wrap ( GL_REPEAT );
+
+    /* set mag/min options */
+    set_mag_filter ( GL_LINEAR );
+    set_min_filter ( GL_LINEAR_MIPMAP_LINEAR );
 }
