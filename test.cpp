@@ -142,7 +142,7 @@ int main ()
 
 
 
-    glh::model::model chappie ( "./assets/chappie", "scene.gltf" );
+    glh::model::model chappie { "./assets/chappie", "scene.gltf" };
     chappie.cache_uniforms ( model_program.get_struct_uniform ( "material" ), model_trans_uni.get_uniform ( "model" ) );
     glh::math::mat4 chappie_matrix = 
     glh::math::translate3d 
@@ -158,6 +158,17 @@ int main ()
             glh::math::vec3 { 0.0, 1.0, 0.0 } 
         ), 
         glh::math::vec3 { 0.0, 0.0, 2.0 } 
+    );
+
+
+
+    glh::model::model xeno { "./assets/xenomorphe", "scene.gltf" };
+    xeno.cache_uniforms ( model_program.get_struct_uniform ( "material" ), model_trans_uni.get_uniform ( "model" ) );
+    glh::math::mat4 xeno_matrix = 
+    glh::math::enlarge3d 
+    ( 
+        glh::math::identity<4> (),
+        0.1
     );
 
 
@@ -195,7 +206,7 @@ int main ()
 
 
 
-        /*
+        
 
         cubemap_program.use ();
         cubemap_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
@@ -209,9 +220,8 @@ int main ()
         glh::core::renderer::clear ();
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
         skybox_cubemap.bind ();
-        skybox_vao.bind ();
 
-        glh::core::renderer::draw_elements ( GL_TRIANGLES, glh::vertices::cube_reverse_vertex_normal_data.size (), GL_UNSIGNED_INT, 0 );
+        glh::core::renderer::draw_elements ( skybox_vao, GL_TRIANGLES, glh::vertices::cube_reverse_vertex_normal_data.size (), GL_UNSIGNED_INT, 0 );
 
 
 
@@ -225,7 +235,8 @@ int main ()
         glh::core::renderer::enable_face_culling ();
         skybox_cubemap.bind ( 1 );
 
-        chappie.render ( chappie_matrix, false );
+        //chappie.render ( chappie_matrix, false );
+        xeno.render ( xeno_matrix, false );
 
 
 
@@ -235,11 +246,12 @@ int main ()
         glh::core::renderer::set_depth_mask ( GL_FALSE );
         skybox_cubemap.bind ( 1 );
 
-        chappie.render ( chappie_matrix, true );
-
-        */
+        //chappie.render ( chappie_matrix, true );
+        xeno.render ( xeno_matrix, true );
 
         
+
+        /*
 
         model_program.use ();
         light_system.apply ();
@@ -304,6 +316,8 @@ int main ()
         mirror_fbo.unbind ();
         mirror_tex.bind ( 0 );
         glh::core::renderer::draw_elements ( mirror_vao, GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
+
+        */
 
 
 
