@@ -329,11 +329,15 @@ vec3 compute_specular_component ( vec3 base_color, material_struct mat, light_sy
     return specular_color * material.shininess_strength;
 }
 
-
+uniform samplerCube skybox;
 
 /* main */
 void main ()
 {
+    vec3 I = normalize ( fragpos - trans.viewpos );
+    vec3 R = reflect ( I, normal );
+    vec3 S = refract ( I, normal, 1 / 1.1 );
+
     /* evaluate stacks */
     vec4 ambient = evaluate_stack ( material, material.ambient_stack );
     vec4 diffuse = evaluate_stack ( material, material.diffuse_stack );
@@ -364,4 +368,6 @@ void main ()
     /* set output color */
     if ( transparent_mode ) fragcolor = vec4 ( ambient.rgb + diffuse.rgb + specular.rgb, ambient.a + diffuse.a );
     else fragcolor = vec4 ( ambient.rgb + diffuse.rgb + specular.rgb, 1.0 );
+
+    fragcolor = texture ( skybox, S );
 }
