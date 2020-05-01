@@ -123,6 +123,74 @@ void glh::core::object_manager::unbind_ebo ( const GLuint id )
     }
 }
 
+/* bind_copy_read_buffer
+ *
+ * bind a buffer object to GL_COPY_READ_BUFFER
+ */
+void glh::core::object_manager::bind_copy_read_buffer ( const GLuint id )
+{
+    /* assertions */
+    assert_object_is_valid ( id, "bind copy read buffer" );
+
+    /* if not already bound, bind and record */
+    if ( id != bound_copy_read_buffer )
+    {
+        glBindBuffer ( GL_COPY_READ_BUFFER, id );
+        bound_copy_read_buffer = id;
+    }
+}
+
+/* unbind_copy_read_buffer
+ *
+ * unbind a buffer object from GL_COPY_READ_BUFFER
+ */
+void glh::core::object_manager::unbind_copy_read_buffer ( const GLuint id )
+{
+    /* assertions */
+    assert_object_is_valid ( id, "unbind copy read buffer" );
+
+    /* if bound, unbind and record */
+    if ( id == bound_copy_read_buffer )
+    {
+        glBindBuffer ( GL_COPY_READ_BUFFER, 0 );
+        bound_copy_read_buffer = 0;
+    }
+}
+
+/* bind_copy_write_buffer
+ *
+ * bind a buffer object to GL_COPY_WRITE_BUFFER
+ */
+void glh::core::object_manager::bind_copy_write_buffer ( const GLuint id )
+{
+    /* assertions */
+    assert_object_is_valid ( id, "bind copy write buffer" );
+
+    /* if not already bound, bind and record */
+    if ( id != bound_copy_write_buffer )
+    {
+        glBindBuffer ( GL_COPY_WRITE_BUFFER, id );
+        bound_copy_write_buffer = id;
+    }
+}
+
+/* unbind_copy_write_buffer
+ *
+ * unbind a buffer object to GL_COPY_WRITE_BUFFER
+ */
+void glh::core::object_manager::unbind_copy_write_buffer ( const GLuint id )
+{
+    /* assertions */
+    assert_object_is_valid ( id, "unbind copy write buffer" );
+
+    /* if bound, unbind and record */
+    if ( id == bound_copy_write_buffer )
+    {
+        glBindBuffer ( GL_COPY_WRITE_BUFFER, 0 );
+        bound_copy_write_buffer = 0;
+    }
+}
+
 
 
 /* VERTEX ARRAY OBJECTS */
@@ -142,7 +210,6 @@ GLuint glh::core::object_manager::generate_vao ()
     return id;
 }
 
-
 /* destroy_vao
  *
  * destroy a vao, unbinding it if is bound
@@ -156,7 +223,6 @@ void glh::core::object_manager::destroy_vao ( const GLuint id )
         glDeleteVertexArrays ( 1, &id );
     }
 }
-
 
 /* bind_vao
  *
@@ -569,6 +635,12 @@ GLuint glh::core::object_manager::bound_vbo { 0 };
 
 /* currently bound ebo */
 GLuint glh::core::object_manager::bound_ebo { 0 };
+
+/* currently bound read copy buffer */
+GLuint glh::core::object_manager::bound_copy_read_buffer { 0 };
+
+/* currently bound copy write buffer */
+GLuint glh::core::object_manager::bound_copy_write_buffer { 0 };
 
 /* currently bound vao */
 GLuint glh::core::object_manager::bound_vao { 0 };

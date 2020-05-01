@@ -161,6 +161,42 @@ public:
      */
     static bool is_ebo_bound ( const GLuint id ) { return ( id == bound_ebo ); }
 
+    /* bind_copy_read_buffer
+     *
+     * bind a buffer object to GL_COPY_READ_BUFFER
+     */
+    static void bind_copy_read_buffer ( const GLuint id );
+    
+    /* unbind_copy_read_buffer
+     *
+     * unbind a buffer object from GL_COPY_READ_BUFFER
+     */
+    static void unbind_copy_read_buffer ( const GLuint id );
+
+    /* is_copy_read_buffer_bound
+     *
+     * returns true if the buffer is bound to GL_COPY_READ_BUFFER
+     */
+    static bool is_copy_read_buffer_bound ( const GLuint id ) { return ( id == bound_copy_read_buffer ); }
+
+    /* bind_copy_write_buffer
+     *
+     * bind a buffer object to GL_COPY_WRITE_BUFFER
+     */
+    static void bind_copy_write_buffer ( const GLuint id );
+
+    /* unbind_copy_write_buffer
+     *
+     * unbind a buffer object to GL_COPY_WRITE_BUFFER
+     */
+    static void unbind_copy_write_buffer ( const GLuint id );
+
+    /* is_copy_write_buffer_bound
+     *
+     * returns true if the buffer is bound to GL_COPY_WRITE_BUFFER
+     */
+    static bool is_copy_write_buffer_bound ( const GLuint id ) { return ( id == bound_copy_write_buffer ); }
+
 
 
     /* VERTEX ARRAY OBJECTS */
@@ -402,6 +438,12 @@ private:
 
     /* currently bound ebo */
     static GLuint bound_ebo;
+
+    /* currently bound read copy buffer */
+    static GLuint bound_copy_read_buffer;
+
+    /* currently bound copy write buffer */
+    static GLuint bound_copy_write_buffer;
 
     /* currently bound vao */
     static GLuint bound_vao;
