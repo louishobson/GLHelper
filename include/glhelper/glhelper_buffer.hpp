@@ -11,11 +11,18 @@
  * 
  * 
  * 
- * CLASS GLH::CORE::BUFFER_BASE
+ * CLASS GLH::CORE::BUFFER
  * 
  * generic buffer and the base class for more specific buffer types
  * it provides core functionality for buffering data and binding the buffer
  * the type of buffer is defined by giving the class the bind target (e.g. GL_ARRAY_BUFFER)
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::BUFFER_MAP
+ * 
+ * returned by map method of buffer class so that a buffer can be accessed like an array
+ * after mapping, the buffer must be unmapped before any other modification or draw calls are made to it
  * 
  * 
  * 
@@ -66,26 +73,26 @@ namespace glh
 {
     namespace core
     {
-        /* class buffer_base : object
+        /* class buffer : object
          *
-         * base class for storing a buffer
+         * class for storing a buffer
          */
-        class buffer_base;
+        class buffer;
 
         /* class buffer_map
          *
-         * object returned by the map_buffer methods of buffer_base
+         * object returned by the map_buffer methods of buffer
          * has operator overloads to act like an array to modify the buffer
          */
         template<class T> class buffer_map;
 
-        /* class vbo : buffer_base
+        /* class vbo : buffer
          *
          * vertex buffer object
          */
         class vbo;
 
-        /* class ebo : buffer_base
+        /* class ebo : buffer
          *
          * element buffer object
          */
@@ -100,23 +107,23 @@ namespace glh
 
     namespace exception
     {
-        /* class buffer_mapping_exception : exception
+        /* class buffer_exception : exception
          *
-         * for exceptions related to buffer mapping
+         * for exceptions related to buffers
          */
-        class buffer_mapping_exception;
+        class buffer_exception;
     }
 }
 
 
 
-/* BUFFER_BASE DEFINITION */
+/* buffer DEFINITION */
 
-/* class buffer_base : object
+/* class buffer : object
  *
- * base class for storing a buffer
+ * class for storing a buffer
  */
-class glh::core::buffer_base : public object
+class glh::core::buffer : public object
 {
 public:
 
@@ -126,7 +133,7 @@ public:
      * 
      * _target: the target for the buffer
      */
-    buffer_base ( const GLenum _target )
+    buffer ( const GLenum _target )
         : object { object_manager::generate_buffer () }
         , target { _target }
         , capacity { 0 }
@@ -143,7 +150,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    buffer_base ( const GLenum _target, const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
+    buffer ( const GLenum _target, const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
         : object { object_manager::generate_buffer () }
         , target { _target }
         , capacity { 0 }
@@ -152,19 +159,19 @@ public:
     { buffer_data ( size, data, usage ); }
 
     /* deleted zero-parameter constructor */
-    buffer_base () = delete;
+    buffer () = delete;
 
     /* deleted copy constructor */
-    buffer_base ( const buffer_base& other ) = delete;
+    buffer ( const buffer& other ) = delete;
 
     /* default move constructor */
-    buffer_base ( buffer_base&& other ) = default;
+    buffer ( buffer&& other ) = default;
 
     /* deleted copy assignment operator */
-    buffer_base& operator= ( const buffer_base& other ) = delete;
+    buffer& operator= ( const buffer& other ) = delete;
 
     /* virtual destructor */
-    virtual ~buffer_base () { destroy (); }
+    virtual ~buffer () { destroy (); }
 
 
 
@@ -183,6 +190,17 @@ public:
      * data: pointer to data
      */
     void buffer_sub_data ( const GLintptr offset, const GLsizeiptr size, const GLvoid * data );
+
+    /* copy_sub_data
+     *
+     * copy data FROM ANOTHER BUFFER INTO THIS BUFFER
+     * a call to buffer_data is required to first resize this buffer to the capacity required
+     *
+     * read_buff: the buffer to read from
+     * read/write_offset: the offsets for reading and writing
+     * size: the number of bytes to copy
+     */
+    void copy_sub_data ( const buffer& read_buff, const GLintptr read_offset, const GLintptr write_offset, const GLsizeiptr size );
 
     /* clear_data
      *
@@ -236,6 +254,27 @@ public:
      * bind the buffer
      */
     void bind () const;
+
+    /* bind_copy_read/write
+     *
+     * bind the buffer to the copy read/write targets
+     */
+    void bind_copy_read () const { object_manager::bind_copy_read_buffer ( id ); }
+    void bind_copy_write () const { object_manager::bind_copy_write_buffer ( id ); }
+
+    /* unbind_copy_read/write
+     *
+     * unbind the buffer to the copy read/write targets
+     */
+    void unbind_copy_read () const { object_manager::unbind_copy_read_buffer ( id ); }
+    void unbind_copy_write () const { object_manager::unbind_copy_write_buffer ( id ); }
+
+    /* is_copy_read/write_bound
+     *
+     * check if the buffer is bound to the copy read/write targets
+     */
+    bool is_copy_read_bound () const { return object_manager::is_copy_read_buffer_bound ( id ); }
+    bool is_copy_write_bound () const { return object_manager::is_copy_write_buffer_bound ( id ); }
 
     /* unbind
      *
@@ -310,14 +349,14 @@ private:
 
 /* class buffer_map
  *
- * object returned by the map_buffer methods of buffer_base
+ * object returned by the map_buffer methods of buffer
  * has operator overloads to act like an array to modify the buffer
  */
 template<class T = GLubyte> class glh::core::buffer_map
 {
 
-    /* friend of buffer_base */
-    friend buffer_base;
+    /* friend of buffer */
+    friend buffer;
 
 public:
 
@@ -326,10 +365,10 @@ public:
      * construct a buffer map from a pointer to the map, access specifier, a map id and a reference to the buffer object
      *
      * _ptr: a pointer to the mapped data
-     * _map_id: the id of this map (supplied by buffer_base class)
+     * _map_id: the id of this map (supplied by buffer class)
      * _buff: the buffer object the map is for
      */
-    buffer_map ( GLvoid * _ptr, const unsigned _map_id, buffer_base& _buff )  
+    buffer_map ( GLvoid * _ptr, const unsigned _map_id, buffer& _buff )  
         : ptr { reinterpret_cast<T *> ( _ptr ) }
         , map_id { _map_id }
         , buff { _buff }
@@ -397,8 +436,14 @@ public:
      * get the buffer that is mapped
      * will throw if the map is no longer valid
      */
-    buffer_base& get_buffer ();
-    const buffer_base& get_buffer () const;
+    buffer& get_buffer ();
+    const buffer& get_buffer () const;
+
+    /* get_capacity
+     *
+     * get the capacity of the buffer in bytes
+     */
+    const GLsizeiptr& get_capacity () const { return buff.get_capacity (); }
 
 
 
@@ -411,7 +456,7 @@ private:
     const unsigned map_id;
 
     /* reference to the buffer that is mapped */
-    buffer_base& buff;
+    buffer& buff;
 
 };
 
@@ -419,11 +464,11 @@ private:
 
 /* VBO DEFINITION */
 
-/* class vbo : buffer_base
+/* class vbo : buffer
  *
  * vertex buffer object
  */
-class glh::core::vbo : public buffer_base 
+class glh::core::vbo : public buffer 
 {
 public:
 
@@ -432,7 +477,7 @@ public:
      * generates the buffer
      */
     vbo ()
-        : buffer_base { GL_ARRAY_BUFFER }
+        : buffer { GL_ARRAY_BUFFER }
     {}
 
     /* construct and immediately buffer data
@@ -444,7 +489,7 @@ public:
      * usage: the storage method for the data
      */
     vbo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
-        : buffer_base { GL_ARRAY_BUFFER, size, data, usage }
+        : buffer { GL_ARRAY_BUFFER, size, data, usage }
     {}
 
     /* deleted copy constructor */
@@ -465,11 +510,11 @@ public:
 
 /* EBO DEFINITION */
 
-/* class ebo : buffer_base
+/* class ebo : buffer
  *
  * element buffer object
  */
-class glh::core::ebo : public buffer_base 
+class glh::core::ebo : public buffer 
 {
 public:
 
@@ -478,7 +523,7 @@ public:
      * generates the buffer
      */
     ebo ()
-        : buffer_base { GL_ELEMENT_ARRAY_BUFFER }
+        : buffer { GL_ELEMENT_ARRAY_BUFFER }
     {}
 
     /* construct and immediately buffer data
@@ -490,7 +535,7 @@ public:
      * usage: the storage method for the data
      */
     ebo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
-        : buffer_base { GL_ELEMENT_ARRAY_BUFFER, size, data, usage }
+        : buffer { GL_ELEMENT_ARRAY_BUFFER, size, data, usage }
     {}
 
     /* deleted copy constructor */
@@ -666,13 +711,13 @@ private:
 
 
 
-/* BUFFER_MAPPING_EXCEPTION DEFINITION */
+/* BUFFER_EXCEPTION DEFINITION */
 
-/* class buffer_mapping_exception : exception
+/* class buffer_exception : exception
  *
- * for exceptions related to buffer mapping
+ * for exceptions related to buffers
  */
-class glh::exception::buffer_mapping_exception : public exception
+class glh::exception::buffer_exception : public exception
 {
 public:
 
@@ -680,15 +725,15 @@ public:
      *
      * __what: description of the exception
      */
-    explicit buffer_mapping_exception ( const std::string& __what )
+    explicit buffer_exception ( const std::string& __what )
         : exception { __what }
     {}
 
     /* default zero-parameter constructor
      *
-     * construct buffer_mapping_exception with no descrption
+     * construct buffer_exception with no descrption
      */
-    buffer_mapping_exception () = default;
+    buffer_exception () = default;
 
     /* default everything else and inherits what () function */
 
@@ -696,7 +741,7 @@ public:
 
 
 
-/* BUFFER_BASE TEMPLATE METHODS IMPLEMENTATION */
+/* buffer TEMPLATE METHODS IMPLEMENTATION */
 
 /* map(_ro)
  *
@@ -704,12 +749,12 @@ public:
  * 
  * return: the mapped buffer
  */
-template<class T> inline glh::core::buffer_map<T> glh::core::buffer_base::map ()
+template<class T> inline glh::core::buffer_map<T> glh::core::buffer::map ()
 {
     /* return buffer_map object */
     return buffer_map<T> { generate_map (), map_id, * this };
 }
-template<class T> inline glh::core::buffer_map<const T> glh::core::buffer_base::map_ro ()
+template<class T> inline glh::core::buffer_map<const T> glh::core::buffer::map_ro ()
 {
     /* return buffer_map object */
     return buffer_map<const T> { generate_map (), map_id, * this };
@@ -720,7 +765,7 @@ template<class T> inline glh::core::buffer_map<const T> glh::core::buffer_base::
  * with no parameters, returns true if the buffer is currently in a mapped state
  * with a map parameter, returns true if the map supplied is currently valid
  */
-template<class T> inline bool glh::core::buffer_base::is_mapped ( const buffer_map<T>& map ) const
+template<class T> inline bool glh::core::buffer::is_mapped ( const buffer_map<T>& map ) const
 {
     /* return true if is valid and ids match */
     return ( is_mapped () && map.map_id == map_id );
@@ -738,7 +783,7 @@ template<class T> inline T& glh::core::buffer_map<T>::at ( const unsigned i )
 {
     /* throw if invalid or out of bounds */
     assert_is_map_valid ();
-    if ( ( i + 1 ) * sizeof ( T ) > buff.get_capacity () ) throw exception::buffer_mapping_exception { "buffer map indices are out of range" };
+    if ( ( i + 1 ) * sizeof ( T ) > buff.get_capacity () ) throw exception::buffer_exception { "buffer map indices are out of range" };
 
     /* otherwise return valud */
     return * ( ptr + i );
@@ -747,7 +792,7 @@ template<class T> inline const T& glh::core::buffer_map<T>::at ( const unsigned 
 {
     /* throw if invalid or out of bounds */
     assert_is_map_valid ();
-    if ( ( i + 1 ) * sizeof ( T ) > buff.capacity () ) throw exception::buffer_mapping_exception { "buffer map indices are out of range" };
+    if ( ( i + 1 ) * sizeof ( T ) > buff.capacity () ) throw exception::buffer_exception { "buffer map indices are out of range" };
 
     /* otherwise return valud */
     return * ( ptr + i );
@@ -759,7 +804,7 @@ template<class T> inline const T& glh::core::buffer_map<T>::at ( const unsigned 
  */
 template<class T> inline bool glh::core::buffer_map<T>::is_map_valid () const
 {
-    /* check map_ptr then use the method of buffer_base */
+    /* check map_ptr then use the method of buffer */
     return ( ptr && buff.is_mapped ( * this ) );
 }
 
@@ -773,8 +818,8 @@ template<class T> inline void glh::core::buffer_map<T>::assert_is_map_valid ( co
 {
     if ( !is_map_valid () ) 
     {
-        if ( operation.size () > 0 ) throw exception::buffer_mapping_exception { "attempted to perform " + operation + " operation on invalid buffer map" };
-        else throw exception::buffer_mapping_exception { "attempted to perform operation on invalid buffer map" };
+        if ( operation.size () > 0 ) throw exception::buffer_exception { "attempted to perform " + operation + " operation on invalid buffer map" };
+        else throw exception::buffer_exception { "attempted to perform operation on invalid buffer map" };
     }
 }
 

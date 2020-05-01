@@ -19,7 +19,7 @@
 
 
 
-/* BUFFER_BASE IMPLEMENTATION */
+/* buffer IMPLEMENTATION */
 
 /* buffer_data
  *
@@ -29,13 +29,13 @@
  * data: pointer to data
  * usage: the storage method for the data (defaults to static draw)
  */
-void glh::core::buffer_base::buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage ) 
+void glh::core::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage ) 
 {
-    /* assert is not mapped */
-    assert_is_not_mapped ( "buffer data" );
-
     /* bind the buffer */
     bind ();
+
+    /* assert is not mapped */
+    assert_is_not_mapped ( "buffer data" );
 
     /* buffer data and change capacity */
     glBufferData ( target, size, data, usage );
@@ -51,13 +51,17 @@ void glh::core::buffer_base::buffer_data ( const GLsizeiptr size, const GLvoid *
  * size: size of the data in bytes
  * data: pointer to data
  */
-void glh::core::buffer_base::buffer_sub_data ( const GLintptr offset, const GLsizeiptr size, const GLvoid * data = NULL )
+void glh::core::buffer::buffer_sub_data ( const GLintptr offset, const GLsizeiptr size, const GLvoid * data = NULL )
 {
+    /* bind the buffer */
+    bind ();
+
     /* assert is not mapped */
     assert_is_not_mapped ( "buffer sub data" );
 
-    /* bind the buffer */
-    bind ();
+    /* check offsets */
+    if ( offset + size > capacity )
+    throw exception::buffer_exception { "attempted to perform buffer sub data operation with incompatible paramaters for buffer capacities" };
 
     /* buffer data */
     glBufferSubData ( target, offset, size, data );
@@ -66,19 +70,52 @@ void glh::core::buffer_base::buffer_sub_data ( const GLintptr offset, const GLsi
     unbind ();
 }
 
+/* copy_sub_data
+ *
+ * copy data FROM ANOTHER BUFFER INTO THIS BUFFER
+ * a call to buffer_data is required to first resize this buffer to the capacity required
+ *
+ * read_buff: the buffer to read from
+ * read/write_offset: the offsets for reading and writing
+ * size: the number of bytes to copy
+ */
+void glh::core::buffer::copy_sub_data ( const buffer& read_buff, const GLintptr read_offset, const GLintptr write_offset, const GLsizeiptr size )
+{
+    /* bind buffers */
+    read_buff.bind_copy_read ();
+    bind_copy_write ();
+
+    /* neither buffer is mapped */
+    read_buff.assert_is_not_mapped ( "copy buffer sub data" );
+    assert_is_not_mapped ( "copy buffer sub data" );
+
+    /* check offsets */
+    if ( read_offset + size > read_buff.get_capacity () || write_offset + size > capacity )
+    throw exception::buffer_exception { "attempted to perform copy buffer sub data operation with incompatible paramaters for buffer capacities" };
+
+    /* copy sub data */
+    glCopyBufferSubData ( GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, read_offset, write_offset, size );
+
+    /* unbind buffers */
+    unbind_copy_write ();
+    read_buff.unbind_copy_read ();
+}
+
 /* clear_data
  *
  * clear the data from the buffer
  */
-void glh::core::buffer_base::clear_data ()
+void glh::core::buffer::clear_data ()
 {
+    /* bind the buffer */
+    bind ();
+
     /* assert is not mapped */
     assert_is_not_mapped ( "clear data" );
 
-    /* bind the buffer */
-    bind ();
     /* empty buffer data */
     glBufferData ( target, 0, NULL, GL_STATIC_DRAW );
+
     /* unbind the buffer */
     unbind ();
 }
@@ -87,7 +124,7 @@ void glh::core::buffer_base::clear_data ()
  *
  * unmaps the buffer, making all existing maps invalid
  */
-void glh::core::buffer_base::unmap ()
+void glh::core::buffer::unmap ()
 {
     /* unmap only if is already mapped
      * it is not an error to call unmap multiple times
@@ -100,7 +137,7 @@ void glh::core::buffer_base::unmap ()
         
         /* unmap the buffer, throwing if fails */
         bind ();
-        if ( glUnmapBuffer ( target ) != GL_TRUE ) throw exception::buffer_mapping_exception { "failed to unmap buffer" };
+        if ( glUnmapBuffer ( target ) != GL_TRUE ) throw exception::buffer_exception { "failed to unmap buffer" };
         unbind ();
     }
 }
@@ -109,7 +146,7 @@ void glh::core::buffer_base::unmap ()
  *
  * bind the buffer
  */
-void glh::core::buffer_base::bind () const
+void glh::core::buffer::bind () const
 {
     /* switch for different targets */
     switch ( target )
@@ -124,7 +161,7 @@ void glh::core::buffer_base::bind () const
  *
  * unbind the buffer's target
  */
-void glh::core::buffer_base::unbind () const
+void glh::core::buffer::unbind () const
 {
     /* switch for different targets */
     switch ( target )
@@ -139,7 +176,7 @@ void glh::core::buffer_base::unbind () const
  *
  * checks if the buffer is bound
  */
-bool glh::core::buffer_base::is_bound () const
+bool glh::core::buffer::is_bound () const
 {
     /* switch for different targets */
     switch ( target )
@@ -156,7 +193,7 @@ bool glh::core::buffer_base::is_bound () const
  * 
  * return: the map to the buffer, or NULL on failure
  */
-GLvoid * glh::core::buffer_base::generate_map ()
+GLvoid * glh::core::buffer::generate_map ()
 {
     /* if already mapped, return that */
     if ( map_ptr ) return map_ptr;
@@ -176,13 +213,13 @@ GLvoid * glh::core::buffer_base::generate_map ()
  * 
  * operation: description of the operation
  */
-void glh::core::buffer_base::assert_is_not_mapped ( const std::string& operation ) const
+void glh::core::buffer::assert_is_not_mapped ( const std::string& operation ) const
 {
     /* if mapped, throw */
     if ( is_mapped () ) 
     {
-        if ( operation.size () > 0 ) throw exception::buffer_mapping_exception { "attempted to perform " + operation + " operation while buffer is mapped" };
-        else throw exception::buffer_mapping_exception { "attempted to perform operation while buffer is mapped" };
+        if ( operation.size () > 0 ) throw exception::buffer_exception { "attempted to perform " + operation + " operation while buffer is mapped" };
+        else throw exception::buffer_exception { "attempted to perform operation while buffer is mapped" };
     }
 }
 
@@ -346,8 +383,8 @@ void glh::core::vao::assert_is_draw_elements_valid ( const std::string& operatio
     /* throw if bound ebo is not valid */
     if ( !bound_ebo )
     {
-        if ( operation.size () > 0 ) throw exception::invalid_object_exception { "attempted to perform " + operation + " operation without an ebo being associated with a vao" };
-        else throw exception::invalid_object_exception { "attempted to perform operation without an ebo being associated with a vao" };
+        if ( operation.size () > 0 ) throw exception::buffer_exception { "attempted to perform " + operation + " operation without an ebo being associated with a vao" };
+        else throw exception::buffer_exception { "attempted to perform operation without an ebo being associated with a vao" };
     }
     bound_ebo->assert_is_object_valid ( operation );
     bound_ebo->assert_is_not_mapped ( operation );
