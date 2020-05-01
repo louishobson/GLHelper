@@ -318,11 +318,17 @@ bool glh::core::vao::is_draw_elements_valid () const
  */
 void glh::core::vao::assert_is_draw_arrays_valid ( const std::string& operation ) const
 {
-    /* throw if not draw arrays valid */
-    if ( !is_draw_arrays_valid () )
+    /* throw if invalid object */
+    assert_is_object_valid ( operation );
+
+    /* loop through enabled vertex attributes and check buffers are valid */
+    for ( const auto& att: vertex_attribs )
     {
-        if ( operation.size () > 0 ) throw exception::invalid_object_exception { "attempted " + operation + " operation on a vao with an invalid vertex attribute" };
-        else throw exception::invalid_object_exception { "attempted operation on a vao with an invalid vertex attribute" };
+        if ( att.enabled ) 
+        {
+            att.buff->assert_is_object_valid ( operation ); 
+            att.buff->assert_is_not_mapped ();
+        }
     }
 }
 
@@ -335,12 +341,14 @@ void glh::core::vao::assert_is_draw_arrays_valid ( const std::string& operation 
 void glh::core::vao::assert_is_draw_elements_valid ( const std::string& operation ) const
 {
     /* throw if not draw arrays valid */
-    assert_is_draw_arrays_valid ();
+    assert_is_draw_arrays_valid ( operation );
     
-    /* throw if not draw elements valid */
-    if ( !is_draw_elements_valid () )
+    /* throw if bound ebo is not valid */
+    if ( !bound_ebo )
     {
-        if ( operation.size () > 0 ) throw exception::invalid_object_exception { "attempted " + operation + " operation on a vao with an invalid bound ebo" };
-        else throw exception::invalid_object_exception { "attempted operation on a vao with an invalid bound ebo" };
+        if ( operation.size () > 0 ) throw exception::invalid_object_exception { "attempted to perform " + operation + " operation without an ebo being associated with a vao" };
+        else throw exception::invalid_object_exception { "attempted to perform operation without an ebo being associated with a vao" };
     }
+    bound_ebo->assert_is_object_valid ( operation );
+    bound_ebo->assert_is_not_mapped ( operation );
 }
