@@ -123,6 +123,40 @@ void glh::core::object_manager::unbind_ebo ( const GLuint id )
     }
 }
 
+/* bind_ubo
+ *
+ * bind a buffer object as a ubo
+ */
+void glh::core::object_manager::bind_ubo ( const GLuint id )
+{
+    /* assertions */
+    assert_object_is_valid ( id, "bind ubo" );
+
+    /* if not already bound, bind and record */
+    if ( id != bound_ubo )
+    {
+        glBindBuffer ( GL_UNIFORM_BUFFER, id );
+        bound_ubo = id;
+    }
+}
+
+/* unbind_ubo
+ *
+ * unbind the ubo, only if it is already bound
+ */
+void glh::core::object_manager::unbind_ubo ( const GLuint id )
+{
+    /* assertions */
+    assert_object_is_valid ( id, "unbind ubo" );
+
+    /* if bound, unbind and record */
+    if ( id == bound_ubo )
+    {
+        glBindBuffer ( GL_UNIFORM_BUFFER, 0 );
+        bound_ubo = 0;
+    }
+}
+
 /* bind_copy_read_buffer
  *
  * bind a buffer object to GL_COPY_READ_BUFFER
@@ -635,6 +669,9 @@ GLuint glh::core::object_manager::bound_vbo { 0 };
 
 /* currently bound ebo */
 GLuint glh::core::object_manager::bound_ebo { 0 };
+
+/* currently bound ubo */
+GLuint glh::core::object_manager::bound_ubo { 0 };
 
 /* currently bound read copy buffer */
 GLuint glh::core::object_manager::bound_copy_read_buffer { 0 };

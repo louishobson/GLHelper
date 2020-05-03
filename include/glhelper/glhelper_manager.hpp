@@ -151,7 +151,7 @@ public:
 
     /* unbind_ebo
      *
-     * unbind the ebo, only if it is alreay bound
+     * unbind the ebo, only if it is already bound
      */
     static void unbind_ebo ( const GLuint id );
 
@@ -160,6 +160,24 @@ public:
      * returns true if the ebo is bound
      */
     static bool is_ebo_bound ( const GLuint id ) { return ( id == bound_ebo ); }
+
+    /* bind_ubo
+     *
+     * bind a buffer object as a ubo
+     */
+    static void bind_ubo ( const GLuint id );
+
+    /* unbind_ubo
+     *
+     * unbind the ubo, only if it is already bound
+     */
+    static void unbind_ubo ( const GLuint id );
+
+    /* is_ubo_bound
+     *
+     * returns true if the ubo is bound
+     */
+    static bool is_ubo_bound ( const GLuint id ) { return ( id == bound_ubo ); }
 
     /* bind_copy_read_buffer
      *
@@ -438,6 +456,9 @@ private:
 
     /* currently bound ebo */
     static GLuint bound_ebo;
+
+    /* currently bound ubo */
+    static GLuint bound_ubo;
 
     /* currently bound read copy buffer */
     static GLuint bound_copy_read_buffer;
