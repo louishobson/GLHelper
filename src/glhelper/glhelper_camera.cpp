@@ -31,8 +31,7 @@
 void glh::camera::camera_base::apply ( const core::uniform& view_uni, const core::uniform& proj_uni )
 {
     /* cache the uniforms */
-    cache_view_uniform ( view_uni );
-    cache_proj_uniform ( proj_uni );
+    cache_uniforms ( view_uni, proj_uni );
 
     /* apply */
     apply ();
@@ -48,42 +47,13 @@ void glh::camera::camera_base::apply ( const core::uniform& view_uni, const core
 void glh::camera::camera_base::apply () const
 {
     /* throw if uniforms are not already cached */
-    if ( !cached_view_uniform || !cached_proj_uniform ) throw exception::uniform_exception { "attempted to apply camera without a complete uniform cache" };
+    if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to apply camera without a complete uniform cache" };
 
     /* set the matrices */
-    cached_view_uniform->set_matrix ( get_view () );
-    cached_proj_uniform->set_matrix ( get_proj () );
+    cached_uniforms->view_uni.set_matrix ( get_view () );
+    cached_uniforms->proj_uni.set_matrix ( get_proj () );
 }
 
-/* cache_view_uniform
- *
- * cache the view matrix uniform
- * 
- * view_uni: 4x4 matrix uniform for the view matrix
- */
-void glh::camera::camera_base::cache_view_uniform ( const core::uniform& view_uni )
-{
-    /* cache uniform if not already cached */
-    if ( !cached_view_uniform || * cached_view_uniform != view_uni )
-    {
-        cached_view_uniform.reset ( new core::uniform { view_uni } );
-    }
-}
-
-/* cache_proj_uniform
- *
- * cache the projection matrix uniform
- * 
- * proj_uni: 4x4 matrix uniform for the projection matrix
- */
-void glh::camera::camera_base::cache_proj_uniform ( const core::uniform& proj_uni )
-{
-    /* cache uniform if not already cached */
-    if ( !cached_proj_uniform || * cached_proj_uniform != proj_uni )
-    {
-        cached_proj_uniform.reset ( new core::uniform { proj_uni } );
-    }
-}
 /* cache_uniforms
  *
  * cache all uniforms simultaneously
@@ -93,9 +63,12 @@ void glh::camera::camera_base::cache_proj_uniform ( const core::uniform& proj_un
  */
 void glh::camera::camera_base::cache_uniforms ( const core::uniform& view_uni, const core::uniform& proj_uni )
 {
-    /* cache both uniforms */
-    cache_view_uniform ( view_uni );
-    cache_proj_uniform ( proj_uni );
+    /* cache uniforms */
+    cached_uniforms.reset ( new cached_uniforms_struct
+    {
+        view_uni,
+        proj_uni
+    } );
 }
 
 /* get_view

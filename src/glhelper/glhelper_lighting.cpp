@@ -80,25 +80,22 @@ void glh::lighting::light::apply () const
  */
 void glh::lighting::light::cache_uniforms ( const core::struct_uniform& light_uni )
 {
-    /* cache uniform, if not already cached */
-    if ( !cached_uniforms || cached_uniforms->light_uni != light_uni )
+    /* cache uniforms */
+    cached_uniforms.reset ( new cached_uniforms_struct
     {
-        cached_uniforms.reset ( new cached_uniforms_struct
-        {
-            light_uni,
-            light_uni.get_uniform ( "position" ),
-            light_uni.get_uniform ( "direction" ),
-            light_uni.get_uniform ( "inner_cone" ),
-            light_uni.get_uniform ( "outer_cone" ),
-            light_uni.get_uniform ( "att_const" ),
-            light_uni.get_uniform ( "att_linear" ),
-            light_uni.get_uniform ( "att_quad" ),
-            light_uni.get_uniform ( "ambient_color" ),
-            light_uni.get_uniform ( "diffuse_color" ),
-            light_uni.get_uniform ( "specular_color" ),
-            light_uni.get_uniform ( "enabled" )
-        } );
-    }
+        light_uni,
+        light_uni.get_uniform ( "position" ),
+        light_uni.get_uniform ( "direction" ),
+        light_uni.get_uniform ( "inner_cone" ),
+        light_uni.get_uniform ( "outer_cone" ),
+        light_uni.get_uniform ( "att_const" ),
+        light_uni.get_uniform ( "att_linear" ),
+        light_uni.get_uniform ( "att_quad" ),
+        light_uni.get_uniform ( "ambient_color" ),
+        light_uni.get_uniform ( "diffuse_color" ),
+        light_uni.get_uniform ( "specular_color" ),
+        light_uni.get_uniform ( "enabled" )
+    } );
 }
 
 
@@ -138,18 +135,14 @@ void glh::lighting::light_system::apply () const
  */
 void glh::lighting::light_system::cache_uniforms ( const core::struct_uniform& light_system_uni )
 {
-    /* if not already cached, cache uniforms */
-    if ( !cached_uniforms || cached_uniforms->light_system_uni != light_system_uni )
+    /* cache uniforms */
+    cached_uniforms.reset ( new cached_uniforms_struct
     {
-        /* cache own uniforms */
-        cached_uniforms.reset ( new cached_uniforms_struct
-        {
-            light_system_uni,
-            light_system_uni.get_struct_uniform ( "dircoll" ),
-            light_system_uni.get_struct_uniform ( "pointcoll" ),
-            light_system_uni.get_struct_uniform ( "spotcoll" )
-        } );
-    }
+        light_system_uni,
+        light_system_uni.get_struct_uniform ( "dircoll" ),
+        light_system_uni.get_struct_uniform ( "pointcoll" ),
+        light_system_uni.get_struct_uniform ( "spotcoll" )
+    } );
     /* get light collections to cache their uniforms */
     dircoll.cache_uniforms ( cached_uniforms->dircoll_uni );
     pointcoll.cache_uniforms ( cached_uniforms->pointcoll_uni );

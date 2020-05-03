@@ -147,8 +147,8 @@
 /* include glhelper_texture.hpp */
 #include <glhelper/glhelper_texture.hpp>
 
-/* include glhelper_shader.hpp */
-#include <glhelper/glhelper_shader.hpp>
+/* include glhelper_uniform.hpp */
+#include <glhelper/glhelper_uniform.hpp>
 
 /* include glhelper_render.hpp */
 #include <glhelper/glhelper_render.hpp>
@@ -489,25 +489,9 @@ public:
     void render ( const core::struct_uniform& material_uni, const core::uniform& model_uni, const math::mat4& transform = math::identity<4> (), const bool transparent_only = false );
     void render ( const math::mat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
 
-    /* cache_material_uniforms
-     *
-     * cache a material uniform for later use
-     * 
-     * material_uni: the uniform to cache
-     */
-    void cache_material_uniforms ( const core::struct_uniform& material_uni );
-
-    /* cache_model_uniform
-     *
-     * cache a model uniform for later sue
-     * 
-     * model_uni: the uniform to cache
-     */
-    void cache_model_uniform ( const core::uniform& model_uni );
-
     /* cache_uniforms
      *
-     * cache all uniforms simultaneously
+     * cache all uniforms
      *
      * material_uni: the material uniform to cache
      * model_uni: model uniform to cache
@@ -543,28 +527,28 @@ private:
 
 
 
-    /* struct for cached material uniforms */
-    struct cached_material_uniforms_struct
+    /* struct for cached uniforms */
+    struct cached_uniforms_struct
     {
-        core::struct_uniform material_uni;
-        core::uniform ambient_stack_size_uni;
-        core::uniform diffuse_stack_size_uni;
-        core::uniform specular_stack_size_uni;
-        core::uniform ambient_stack_base_color_uni;
-        core::uniform diffuse_stack_base_color_uni;
-        core::uniform specular_stack_base_color_uni;
-        core::struct_array_uniform ambient_stack_levels_uni; 
-        core::struct_array_uniform diffuse_stack_levels_uni; 
-        core::struct_array_uniform specular_stack_levels_uni;
-        core::uniform blending_mode_uni;
-        core::uniform shininess_uni;
-        core::uniform shininess_strength_uni;
-        core::uniform opacity_uni;
+        const core::struct_uniform& material_uni;
+        const core::uniform& ambient_stack_size_uni;
+        const core::uniform& diffuse_stack_size_uni;
+        const core::uniform& specular_stack_size_uni;
+        const core::uniform& ambient_stack_base_color_uni;
+        const core::uniform& diffuse_stack_base_color_uni;
+        const core::uniform& specular_stack_base_color_uni;
+        const core::struct_array_uniform& ambient_stack_levels_uni; 
+        const core::struct_array_uniform& diffuse_stack_levels_uni; 
+        const core::struct_array_uniform& specular_stack_levels_uni;
+        const core::uniform& blending_mode_uni;
+        const core::uniform& shininess_uni;
+        const core::uniform& shininess_strength_uni;
+        const core::uniform& opacity_uni;
+        const core::uniform& model_uni;
     };
 
     /* cached uniforms */
-    std::unique_ptr<cached_material_uniforms_struct> cached_material_uniforms;
-    std::unique_ptr<core::uniform> cached_model_uniform;
+    std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 
     /* transparent_only flag */
     mutable bool draw_transparent_only;
