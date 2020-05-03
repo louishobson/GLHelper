@@ -26,11 +26,12 @@
  * 
  * 
  * 
- * CLASS GLH::CORE::VBO and GLH::CORE::EBO
+ * CLASS GLH::CORE::VBO, GLH::CORE::EBO and GLH::CORE::UBO
  * 
  * derived from buffer base class specifically for vertex and element buffer objects
- * purely sets defaaults for the bind target to that specific type of buffer
- * 
+ * sets defaults for the bind target to that specific type of buffer and specilaised methods
+ * for details on a ubo see below
+ *
  * 
  * 
  * CLASS GLH::CORE::VAO
@@ -97,6 +98,12 @@ namespace glh
          * element buffer object
          */
         class ebo;
+
+        /* class ubo : buffer
+         *
+         * uniform buffer object
+         */
+        class ubo;
 
         /* class vao : object
          *
@@ -394,6 +401,13 @@ public:
     ~buffer_map () = default;
 
 
+    /* type
+     *
+     * typedef of T
+     */
+    typedef T type;
+
+
 
     /* at/operator[]
      *
@@ -549,6 +563,52 @@ public:
 
     /* default destructor */
     ~ebo () = default;
+
+};
+
+
+
+/* UBO DEFINITION */
+
+/* class ubo : buffer
+ *
+ * uniform buffer object
+ */
+class glh::core::ubo : public buffer
+{
+public:
+
+    /* constructor
+     *
+     * generates the buffer
+     */
+    ubo ()
+        : buffer { GL_UNIFORM_BUFFER }
+    {}
+
+    /* construct and immediately buffer data
+     *
+     * generates a buffer and immediately buffers data
+     * 
+     * size: size of data in bytes
+     * data: pointer to data
+     * usage: the storage method for the data
+     */
+    ubo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
+        : buffer { GL_UNIFORM_BUFFER, size, data, usage }
+    {}
+
+    /* deleted copy constructor */
+    ubo ( const ubo& other ) = delete;
+
+    /* default move constructor */
+    ubo ( ubo&& other ) = default;
+
+    /* deleted copy assignment operator */
+    ubo& operator= ( const ubo& other ) = delete;
+
+    /* default destructor */
+    ~ubo () = default;
 
 };
 

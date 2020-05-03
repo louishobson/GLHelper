@@ -153,6 +153,7 @@ void glh::core::buffer::bind () const
     {
         case GL_ARRAY_BUFFER: object_manager::bind_vbo ( id ); break;
         case GL_ELEMENT_ARRAY_BUFFER: object_manager::bind_ebo ( id ); break;
+        case GL_UNIFORM_BUFFER: object_manager::bind_ubo ( id ); break;
         default: exception::object_management_exception { "attempted to perform bind operation on unknown buffer object" };
     }
 }
@@ -168,6 +169,7 @@ void glh::core::buffer::unbind () const
     {
         case GL_ARRAY_BUFFER: object_manager::unbind_vbo ( id ); break;
         case GL_ELEMENT_ARRAY_BUFFER: object_manager::unbind_ebo ( id ); break;
+        case GL_UNIFORM_BUFFER: object_manager::unbind_ubo ( id ); break;
         default: throw exception::object_management_exception { "attempted to perform bind operation on unknown buffer object" };
     }
 }
@@ -183,7 +185,8 @@ bool glh::core::buffer::is_bound () const
     {
         case GL_ARRAY_BUFFER: return object_manager::is_vbo_bound ( id );
         case GL_ELEMENT_ARRAY_BUFFER: return object_manager::is_ebo_bound ( id );
-        default: throw exception::object_management_exception { "attempted to perform bind check of unknown buffer object" };
+        case GL_UNIFORM_BUFFER: return object_manager::is_ubo_bound ( id );
+        default: throw exception::object_management_exception { "attempted to perform bind check operation on unknown buffer object" };
     }
 }
 
