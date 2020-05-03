@@ -41,11 +41,12 @@ int main ()
     glh::core::program mirror_program { basic_vshader, mirror_fshader };
     glh::core::program cubemap_program { cubemap_vshader, cubemap_fshader };
 
-    auto basic_trans_uni = basic_program.get_struct_uniform ( "trans" );
-    auto model_trans_uni = model_program.get_struct_uniform ( "trans" );
-    auto mirror_trans_uni = mirror_program.get_struct_uniform ( "trans" );
-    auto cubemap_trans_uni = cubemap_program.get_struct_uniform ( "trans" );
-    auto model_transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
+    const auto& basic_trans_uni = basic_program.get_struct_uniform ( "trans" );
+    const auto& model_trans_uni = model_program.get_struct_uniform ( "trans" );
+    const auto& mirror_trans_uni = mirror_program.get_struct_uniform ( "trans" );
+    const auto& cubemap_trans_uni = cubemap_program.get_struct_uniform ( "trans" );
+    const auto& model_transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
+    const auto& test_uni = model_program.get_struct_2d_array_uniform ( "test" );
     
     glh::camera::camera camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 1000.0 };
     camera.cache_uniforms ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
@@ -206,7 +207,7 @@ int main ()
 
 
 
-        
+        /*
 
         cubemap_program.use ();
         cubemap_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
@@ -250,8 +251,8 @@ int main ()
         xeno.render ( xeno_matrix, true );
 
         
-
-        /*
+        */
+        
 
         model_program.use ();
         light_system.apply ();
@@ -317,7 +318,7 @@ int main ()
         mirror_tex.bind ( 0 );
         glh::core::renderer::draw_elements ( mirror_vao, GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 
-        */
+        
 
 
 
