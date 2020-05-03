@@ -27,50 +27,36 @@
  * 
  * 
  * 
- * CLASS GLH::CORE::PROGRAM
+ * CLASS GLH::CORE::PURE_UNIFORM
  * 
- * class for a shader program
- * vertex and fragment shaders are mandatory for consruction, however a geometry shader can be used as well
- * uniforms in the program are extracted using the member functions get_..._uniform
- * the program class remembers loactions of uniforms, although it would still ve better to not keep running get_..._uniform
- * hence many constructs throught GLHelper use uniform caching to avoid this
- * 
- * 
- * 
- * CLASS GLH::CORE::UNIFORM
- * 
- * class for a defult uniform
- * is returned by the get_uniform method of the program class
+ * derivation of uniform class to represent a normal uniform in a shader
  * this uniform directly references a variable in the shader which can be written to using the set_... methods
  * NOTE: the parent program must be in use to set the uniform
  * 
  * 
  * 
- * CLASS GLH::CORE::COMPLEX_UNIFORM
+ * CLASS GLH::CORE::PURE_ARRAY_UNIFORM
  * 
- * abstract base class for more complex types of uniform
- * a complex uniform represents a data structure in GLSL, that is, it cannot be directly written to
- * this includes GLSL structs and arrays
- * further uniform values must be extracted from the complex uniform until a non-complex uniform is reached
- * for example, some_struct could be a complex uniform, but some_struct.member.values [ 0 ] would be a normal uniform
- * this end point can then be written to like normal
+ * derivation of array_uniform to represent a normal array uniform in a shader
+ * the at method allows for elements of the array to be accessed
+ * the type of uniform returned is based on the template parameter of the pure_array_uniform class
  * 
  * 
  * 
- * CLASS GLH::CORE::STRUCT_UNIFORM
+ * CLASS GLH::CORE::PURE_STRUCT_UNIFORM
  * 
- * a derivation of complex_uniform to represent a GLSL struct
- * further members the struct extracted via the get_..._uniform
- * this is very similar to extracting uniforms directly out of a shader program
- * 
+ * derivation of struct_uniform to represent a normal struct uniform in a shader
+ * members can be accessed using the get_..._uniform methods, with a member name
  * 
  * 
- * CLASS GLH::CORE::ARRAY_UNIFORM
  * 
- * a template derivation of complex_uniform to represent a GLSL array
- * the template parameter must be a type of uniform, be it a normal uniform or complex uniform
- * this will be the type of uniform the array contains
- * the at function will then extract one of these uniforms at a specific index
+ * CLASS GLH::CORE::PROGRAM
+ * 
+ * class for a shader program
+ * vertex and fragment shaders are mandatory for consruction, however a geometry shader can be used as well
+ * uniforms in the program are extracted using the member functions get_..._uniform
+ * the program class remembers loactions of uniforms, although it would still be better to not keep running get_..._uniform
+ * hence many constructs throught GLHelper use uniform caching to avoid this
  * 
  * 
  * 
@@ -102,6 +88,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <type_traits>
 
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
@@ -111,6 +98,9 @@
 
 /* glhelper_manager.hpp */
 #include <glhelper/glhelper_manager.hpp>
+
+/* include glhelper_uniform.hpp */
+#include <glhelper/glhelper_uniform.hpp>
 
 /* include glhelper_math.hpp */
 #include <glhelper/glhelper_math.hpp>
@@ -147,54 +137,55 @@ namespace glh
         class gshader;
         class fshader;
 
+        /* class pure_uniform_storage : uniform_storage
+         *
+         * stores hard copies of pure uniforms so that pure uniform types can return references to these objects
+         */
+        template<class T> class pure_uniform_storage;
+
+        /* class pure_uniform : uniform
+         *
+         * derivation of uniform class for normal uniforms in shaders
+         */
+        class pure_uniform;
+
+        /* class pure_array_uniform : array_uniform
+         *
+         * derivation of array_uniform class for normal array uniforms in shaders
+         * declared before pure_struct_uniform because pure_struct_uniform depends on this class
+         */
+        template<class T> class pure_array_uniform;
+
+        /* class pure_struct_uniform : struct_uniform
+         *
+         * derivation of struct_uniform class for normal struct uniforms in shaders
+         */
+        class pure_struct_uniform;
+
+        /* using declaration for pure array uniform types
+         *
+         * simplify common types of array uniforms a bit
+         */
+        using pure_uniform_array_uniform = pure_array_uniform<pure_uniform>;
+        using pure_struct_array_uniform = pure_array_uniform<pure_struct_uniform>;
+        using pure_uniform_2d_array_uniform = pure_array_uniform<pure_array_uniform<pure_uniform>>;
+        using pure_struct_2d_array_uniform = pure_array_uniform<pure_array_uniform<pure_struct_uniform>>;
+
         /* class program : object
          *
          * shader program
          */
         class program;
 
-        /* class uniform
-         *
-         * a reference to a uniform in a program
-         * can set the uniform without querying its name
-         */
-        class uniform;
-
-        /* class complex_uniform
-         *
-         * a base class for a uniform which stores other uniforms
-         */
-        class complex_uniform;
-
-        /* class struct_uniform : complex_uniform
-         *
-         * a reference to a structure uniform in a program
-         */
-        class struct_uniform;
-
-        /* class array_uniform : complex_uniform
-         *
-         * a reference to an array uniform in a program
-         */
-        template<class T> class array_uniform;
-
-        /* using declaration for array uniform types
-         *
-         * simplify common types of array uniforms a bit
-         */
-        using uniform_array_uniform = array_uniform<uniform>;
-        using struct_array_uniform = array_uniform<struct_uniform>;
-        using uniform_2d_array_uniform = array_uniform<array_uniform<uniform>>;
-        using struct_2d_array_uniform = array_uniform<array_uniform<struct_uniform>>;
     }
 
     namespace meta
     {
-        /* struct is_uniform
+        /* struct is_uniform_pure
          *
-         * is_uniform::value is true if the type is a uniform
+         * is_uniform_pure::value is true if the type is a pure uniform
          */
-        template<class T> struct is_uniform;
+        template<class T> struct is_uniform_pure;
     }
 
     namespace exception
@@ -204,12 +195,6 @@ namespace glh
          * for exceptions related to shaders
          */
         class shader_exception;
-
-        /* class uniform_exception : exception
-         *
-         * for exceptions related to uniforms
-         */
-        class uniform_exception;
     }    
 }
 
@@ -391,151 +376,103 @@ public:
 
 
 
-/* PROGRAM DEFINITION */
+/* IS_UNIFORM_PURE DEFINITION */
 
-/* class program : object
+/* struct is_uniform_pure
  *
- * shader program
+ * is_uniform_pure::value is true if the type is a pure uniform
  */
-class glh::core::program : public object
+template<class T> struct glh::meta::is_uniform_pure : std::false_type {};
+template<> struct glh::meta::is_uniform_pure<glh::core::pure_uniform> : std::true_type {};
+template<> struct glh::meta::is_uniform_pure<glh::core::pure_struct_uniform> : std::true_type {};
+template<> template<class _T> struct glh::meta::is_uniform_pure<glh::core::pure_array_uniform<_T>> : glh::meta::is_uniform_pure<_T> {};
+
+
+
+/* PURE_UNIFORM_STORAGE DEFINITION */
+
+/* class pure_uniform_storage : uniform_storage
+ *
+ * stores hard copies of pure uniforms so that pure uniform types can return references to these objects
+ */
+template<class T> class glh::core::pure_uniform_storage
 {
+
+    /* static assert that T is a pure uniform */
+    static_assert ( meta::is_uniform_pure<T>::value, "class pure_uniform_storage must have a template paramater of a pure uniform type" );
+
 public:
 
-    /* three-shader constructor
+    /* full constructor 
      *
-     * link all three shaders into a program
-     * NOTE: the shader program remains valid even when linked shaders are destroyed
+     * _prefix: the prefix for any member uniforms
+     * _prog: the program the uniform storage is associated with
      */
-    program ( const vshader& vs, const gshader& gs, const fshader& fs );
-
-    /* two-shader constructor
-     *
-     * link vertex and fragment shaders into a program
-     * uses the default geometry shader
-     * NOTE: the shader program remains valid even when linked shaders are destroyed
-     */
-    program ( const vshader& vs, const fshader& fs );
+    pure_uniform_storage ( const std::string& _prefix, program& _prog )
+        : prefix { _prefix }
+        , prog { _prog }
+    {}
 
     /* deleted zero-parameter constructor */
-    program () = delete;
+    pure_uniform_storage () = delete;
 
-    /* deleted copy constructor */
-    program ( const program& other ) = delete;
-
-    /* default move constructor */
-    program ( program&& other ) = default;
+    /* default copy constructor */
+    pure_uniform_storage ( const pure_uniform_storage& other ) = default;
 
     /* deleted copy assignment operator */
-    program& operator= ( const program& other ) = delete;
+    pure_uniform_storage& operator= ( const pure_uniform_storage& other ) = delete;
 
-    /* destructor */
-    ~program () { destroy (); }
+    /* default destructor */
+    ~pure_uniform_storage () = default;
 
 
 
-    /* get_(struct_/array_)uniform
+    /* get
      *
-     * return a uniform object based on a name
+     * get a member out of the uniform storage
+     * if it does not exist, it will be created
      * 
-     * name: the name of the uniform
-     * 
-     * return: unfirom object
+     * postfix: the postfix for the member uniform
      */
-    uniform get_uniform ( const std::string& name );
-    struct_uniform get_struct_uniform ( const std::string& name );
-    template<class T> array_uniform<T> get_array_uniform ( const std::string& name ) { return array_uniform<T> { name, * this }; }
-
-    /* get_..._array_uniform
-     *
-     * simplified versions of get_array_uniform
-     */
-    uniform_array_uniform get_uniform_array_uniform ( const std::string& name );
-    struct_array_uniform get_struct_array_uniform ( const std::string& name );
-    uniform_2d_array_uniform get_uniform_2d_array_uniform ( const std::string& name );
-    struct_2d_array_uniform get_struct_2d_array_uniform ( const std::string& name );
-
-
-
-    /* destroy
-     *
-     * destroys the shader program, setting id to 0
-     */
-    void destroy () { object_manager::destroy_program ( id ); id = 0; }
-
-    /* use
-     *
-     * use the shader program for the following OpenGL function calls
-     * will not call glUseProgram if already in use
-     */
-    void use () const { object_manager::use_program ( id ); }
-
-    /* is_in_use
-     *
-     * return: boolean for if the program is in use
-     */
-    bool is_in_use () const { return object_manager::is_program_in_use ( id ); }
+    T& get ( const std::string& postfix ) { return __get ( postfix ); }
+    const T& get ( const std::string& postfix ) const { return __get ( postfix ); }
 
 
 
 private:
 
-    /* uniform_locations
+    /* the prefix for any member uniforms */
+    const std::string prefix;
+
+    /* the program the uniform storage is associated with */
+    program& prog;
+
+    /* map of uniform names to their instances
      *
-     * a map to the location of uniforms based on their names
-     * saves some time on searching for uniforms every time they are changed
+     * the key here is appended to the prefix member
+     * so if prefix = "test_uniform." then a key could be "test" to make "test_uniform.test"
      */
-    mutable std::map<std::string, GLint> uniform_locations;
+    mutable std::map<std::string, T> uniforms;
 
-    /* get_uniform_location
+    /* __get
      *
-     * get the location of a uniform
-     * 
-     * _name: the name of the uniform
-     * 
-     * return: location of the uniform
+     * add a uniform to the map if not already present, then return a reference
+     *
+     * postfix: the postfix for the member uniform
      */
-    GLint get_uniform_location ( const std::string& _name ) const;
+    T& __get ( const std::string& postfix ) const;
 
 };
 
 
 
-/* IS_UNIFORM DEFINITION */
+/* PURE_UNIFORM DEFINITION */
 
-/* struct is_uniform
+/* class pure_uniform : uniform
  *
- * is_uniform::value is true if the type is a uniform
+ * derivation of uniform class for normal uniforms in shaders
  */
-template<class T> struct glh::meta::is_uniform
-{
-    static const bool value = false;
-    operator bool () { return value; }
-};
-template<> struct glh::meta::is_uniform<glh::core::uniform>
-{
-    static const bool value = true;
-    operator bool () { return value; }
-};
-template<> struct glh::meta::is_uniform<glh::core::struct_uniform>
-{
-    static const bool value = true;
-    operator bool () { return value; }
-};
-template<> template<class _T> struct glh::meta::is_uniform<glh::core::array_uniform<_T>>
-{
-    static const bool value = is_uniform<_T>::value;
-    operator bool () { return value; }
-};
-
-
-/* UNIFORM DEFINITION */
-
-/* class uniform
- *
- * a reference to a uniform in a program
- * can set the uniform without querying its name
- */
-class glh::core::uniform
+class glh::core::pure_uniform : public uniform
 {
 public:
 
@@ -543,25 +480,23 @@ public:
      *
      * construct from location and containing program
      *
+     * _name: the name of the uniform
      * _location: the location of the uniform
      * _prog: the program associated with the uniform
      */
-    uniform ( const GLint _location, program& _prog )
-        : location { _location }
-        , prog { _prog }
-    {}
+    pure_uniform ( const std::string& _name, program& _prog );
 
     /* deleted zero-parameter constructor */
-    uniform () = delete;
+    pure_uniform () = delete;
 
     /* default copy constructor */
-    uniform ( const uniform& other ) = default;
+    pure_uniform ( const pure_uniform& other ) = default;
 
     /* deleted copy assignment operator */
-    uniform& operator= ( const uniform& other ) = delete;
+    pure_uniform& operator= ( const pure_uniform& other ) = delete;
 
     /* default destructor */
-    ~uniform () = default;
+    ~pure_uniform () = default;
 
 
 
@@ -651,13 +586,37 @@ public:
      *
      * use the associated program
      */
-    void use_program () const { prog.use (); }
+    void use_program () const;
 
     /* is_program_in_use
      *
      * return a boolean for if the associated program is in use
      */
-    bool is_program_in_use () const { return prog.is_in_use (); } 
+    bool is_program_in_use () const;
+
+    /* assert_is_program_in_use
+     *
+     * will throw if the associated program is not in use
+     */
+    void assert_is_program_in_use () const;
+
+    
+
+    /* is_set_valid
+     *
+     * returns true if it is safe to set values
+     */
+    bool is_set_valid () const { return true; }
+
+    /* assert_is_set_valid
+     *
+     * throws if the uniform is not set valid
+     * 
+     * operation: description of the operation
+     */
+    void assert_is_set_valid ( const std::string& operation ) const {}
+
+
 
     /* get_location
      * 
@@ -676,38 +635,33 @@ public:
 
 private:
 
+    /* prog
+     *
+     * the program the uniform is associated with
+     */
+    program& prog;
+
     /* location
      *
      * the location of the uniform
      */
-    const GLint location;
-
-    /* prog
-     *
-     * the program the uniform is associated with
-     */
-    program& prog;
-
-    /* assert_is_program_in_use
-     *
-     * will throw if the associated program is not in use
-     */
-    void assert_is_program_in_use () const;
+    GLint location;
 
 };
 
-/* comparison operators */
-inline bool operator== ( const glh::core::uniform& lhs, const glh::core::uniform& rhs ) { return ( lhs.get_location () == rhs.get_location () && lhs.get_program () == rhs.get_program () ); }
-inline bool operator!= ( const glh::core::uniform& lhs, const glh::core::uniform& rhs ) { return ( lhs.get_location () != rhs.get_location () || lhs.get_program () != rhs.get_program () ); }
 
 
-
-/* class complex_uniform
+/* class pure_array_uniform : array_uniform
  *
- * a base class for a uniform which stores other uniforms
+ * derivation of array_uniform class for normal array uniforms in shaders
  */
-class glh::core::complex_uniform
+template<class T> class glh::core::pure_array_uniform
+    : public array_uniform<typename meta::aquire_uniform_base<T>::type>
 {
+
+    /* static assert that T is a pure uniform */
+    static_assert ( meta::is_uniform_pure<T>::value, "class pure_array_uniform must have a template paramater of a pure uniform type" );
+
 public:
 
     /* constructor
@@ -717,210 +671,254 @@ public:
      * _name: the name of the uniform
      * _prog: the program associated with the uniform
      */
-    complex_uniform ( const std::string& _name, program& _prog )
-        : name { _name }
+    pure_array_uniform ( const std::string& _name, program& _prog )
+        : array_uniform<typename meta::aquire_uniform_base<T>::type> { _name }
         , prog { _prog }
+        , uniforms { _name, _prog }
     {}
 
     /* deleted zero-parameter constructor */
-    complex_uniform () = default;
+    pure_array_uniform () = delete;
 
     /* default copy constructor */
-    complex_uniform ( const complex_uniform& other ) = default;
+    pure_array_uniform ( const pure_array_uniform& other ) = default;
 
     /* deleted copy assignment operator */
-    complex_uniform& operator= ( const complex_uniform& other ) = delete;
-
-    /* default pure virtual destructor */
-    virtual ~complex_uniform () = 0;
-
-
-
-    /* use_program
-     *
-     * use the associated program
-     */
-    void use_program () const { prog.use (); }
-
-    /* is_program_in_use
-     *
-     * return a boolean for if the associated program is in use
-     */
-    bool is_program_in_use () const { return prog.is_in_use (); }
-
-    /* get_name
-     *
-     * get the name of the uniform
-     */
-    const std::string& get_name () const { return name; }
-
-    /* get_program
-     *
-     * get the program associated with the uniform
-     */
-    program& get_program () { return prog; }
-    const program& get_program () const { return prog; }
-
-
-
-protected:
-
-    /* name
-     *
-     * the name of the structure uniform
-     */
-    const std::string name;
-
-    /* prog
-     *
-     * the program the uniform is associated with
-     */
-    program& prog;
-
-};
-
-/* make destructor default */
-inline glh::core::complex_uniform::~complex_uniform () = default;
-
-/* comparison operators */
-inline bool operator== ( const glh::core::complex_uniform& lhs, const glh::core::complex_uniform& rhs ) { return ( lhs.get_name () == rhs.get_name () && lhs.get_program () == rhs.get_program () ); }
-inline bool operator!= ( const glh::core::complex_uniform& lhs, const glh::core::complex_uniform& rhs ) { return ( lhs.get_name () != rhs.get_name () || lhs.get_program () != rhs.get_program () ); }
-
-
-
-/* class struct_uniform : complex_uniform
- *
- * a reference to a structure uniform in a program
- */
-class glh::core::struct_uniform : public complex_uniform
-{
-public:
-
-    /* constructor
-     *
-     * construct from a name and containing program
-     *
-     * _name: the name of the uniform
-     * _prog: the program associated with the uniform
-     */
-    struct_uniform ( const std::string& _name, program& _prog )
-        : complex_uniform { _name, _prog }
-    {}
-
-    /* deleted zero-parameter constructor */
-    struct_uniform () = delete;
-
-    /* default copy constructor */
-    struct_uniform ( const struct_uniform& other ) = default;
-
-    /* deleted copy assignment operator */
-    struct_uniform& operator= ( const struct_uniform& other ) = delete;
+    pure_array_uniform& operator= ( const pure_array_uniform& other ) = delete;
 
     /* default destructor */
-    ~struct_uniform () = default;
+    ~pure_array_uniform () = default;
+
+
+
+    /* typedef of T */
+    typedef T type;
+
+
+
+    /* at/operator[]
+     *
+     * return the uniform at an index
+     */
+    typename meta::aquire_uniform_base<T>::type& at ( const unsigned i ) { return uniforms.get ( "[" + std::to_string ( i ) + "]" ); }
+    const typename meta::aquire_uniform_base<T>::type& at ( const unsigned i ) const { return uniforms.get ( "[" + std::to_string ( i ) + "]" ); }
+
+
+
+private:
+
+    /* the program the uniform is associated with */
+    program& prog;
+
+    /* storage of uniforms in the array */
+    pure_uniform_storage<T> uniforms;
+
+};
+
+
+
+/* class pure_struct_uniform : struct_uniform
+ *
+ * derivation of struct_uniform class for normal struct uniforms in shaders
+ */
+class glh::core::pure_struct_uniform : public struct_uniform
+{
+public:
+
+    /* constructor
+     *
+     * construct from a name and containing program
+     *
+     * _name: the name of the uniform
+     * _prog: the program associated with the uniform
+     */
+    pure_struct_uniform ( const std::string& _name, program& _prog )
+        : struct_uniform { _name }
+        , prog { _prog }
+        , uniforms { _name + ".", _prog }, struct_uniforms { _name + ".", _prog }
+        , uniform_array_uniforms { _name + ".", _prog }, struct_array_uniforms { _name + ".", _prog }
+        , uniform_2d_array_uniforms { _name + ".", _prog }, struct_2d_array_uniforms { _name + ".", _prog }
+    {}
+
+    /* deleted zero-parameter constructor */
+    pure_struct_uniform () = delete;
+
+    /* default copy constructor */
+    pure_struct_uniform ( const pure_struct_uniform& other ) = default;
+
+    /* deleted copy assignment operator */
+    pure_struct_uniform& operator= ( const pure_struct_uniform& other ) = delete;
+
+    /* default destructor */
+    ~pure_struct_uniform () = default;
+
+
+    /* get_(struct_)uniform
+     *
+     * get a normal/struct member of the struct uniform
+     */
+    uniform& get_uniform ( const std::string& name ) { return uniforms.get ( name ); }
+    const uniform& get_uniform ( const std::string& name ) const { return uniforms.get ( name ); }
+    struct_uniform& get_struct_uniform ( const std::string& name ) { return struct_uniforms.get ( name ); }
+    const struct_uniform& get_struct_uniform ( const std::string& name ) const { return struct_uniforms.get ( name ); }
+    
+    
+    /* get_..._array_uniform
+     *
+     * get an array member of the struct uniform
+     */
+    uniform_array_uniform& get_uniform_array_uniform ( const std::string& name ) { return uniform_array_uniforms.get ( name ); }
+    const uniform_array_uniform& get_uniform_array_uniform ( const std::string& name ) const { return uniform_array_uniforms.get ( name ); }
+    struct_array_uniform& get_struct_array_uniform ( const std::string& name ) { return struct_array_uniforms.get ( name ); }
+    const struct_array_uniform& get_struct_array_uniform ( const std::string& name ) const { return struct_array_uniforms.get ( name ); }
+    uniform_2d_array_uniform& get_uniform_2d_array_uniform ( const std::string& name ) { return uniform_2d_array_uniforms.get ( name ); }
+    const uniform_2d_array_uniform& get_uniform_2d_array_uniform ( const std::string& name ) const { return uniform_2d_array_uniforms.get ( name ); }
+    struct_2d_array_uniform& get_struct_2d_array_uniform ( const std::string& name ) { return struct_2d_array_uniforms.get ( name ); }
+    const struct_2d_array_uniform& get_struct_2d_array_uniform ( const std::string& name ) const { return struct_2d_array_uniforms.get ( name ); }
+
+
+
+private:
+
+    /* the program the uniform is associated with */
+    program& prog;
+
+    /* (..._)uniforms
+     *
+     * storage of uniforms in the program
+     */
+    pure_uniform_storage<pure_uniform> uniforms;
+    pure_uniform_storage<pure_struct_uniform> struct_uniforms;
+    pure_uniform_storage<pure_uniform_array_uniform> uniform_array_uniforms;
+    pure_uniform_storage<pure_struct_array_uniform> struct_array_uniforms;
+    pure_uniform_storage<pure_uniform_2d_array_uniform> uniform_2d_array_uniforms;
+    pure_uniform_storage<pure_struct_2d_array_uniform> struct_2d_array_uniforms;
+
+};
+
+
+
+/* PROGRAM DEFINITION */
+
+/* class program : object
+ *
+ * shader program
+ */
+class glh::core::program : public object
+{
+public:
+
+    /* three-shader constructor
+     *
+     * link all three shaders into a program
+     * NOTE: the shader program remains valid even when linked shaders are destroyed
+     */
+    program ( const vshader& vs, const gshader& gs, const fshader& fs );
+
+    /* two-shader constructor
+     *
+     * link vertex and fragment shaders into a program
+     * uses the default geometry shader
+     * NOTE: the shader program remains valid even when linked shaders are destroyed
+     */
+    program ( const vshader& vs, const fshader& fs );
+
+    /* deleted zero-parameter constructor */
+    program () = delete;
+
+    /* deleted copy constructor */
+    program ( const program& other ) = delete;
+
+    /* default move constructor */
+    program ( program&& other ) = default;
+
+    /* deleted copy assignment operator */
+    program& operator= ( const program& other ) = delete;
+
+    /* destructor */
+    ~program () { destroy (); }
 
 
 
     /* get_(struct_/array_)uniform
      *
-     * get a member of the struct
+     * return a uniform object based on a name
+     * 
+     * name: the name of the uniform
+     * 
+     * return: unfirom object
      */
-    uniform get_uniform ( const std::string& member ) const;
-    struct_uniform get_struct_uniform ( const std::string& member ) const;
-    template<class T> array_uniform<T> get_array_uniform ( const std::string& member ) const;
+    uniform& get_uniform ( const std::string& name ) { return uniforms.get ( name ); }
+    const uniform& get_uniform ( const std::string& name ) const { return uniforms.get ( name ); }
+    struct_uniform& get_struct_uniform ( const std::string& name ) { return struct_uniforms.get ( name ); }
+    const struct_uniform& get_struct_uniform ( const std::string& name ) const { return struct_uniforms.get ( name ); }
+    
     
     /* get_..._array_uniform
      *
      * simplified versions of get_array_uniform
      */
-    uniform_array_uniform get_uniform_array_uniform ( const std::string& member ) const;
-    struct_array_uniform get_struct_array_uniform ( const std::string& member ) const;
-    uniform_2d_array_uniform get_uniform_2d_array_uniform ( const std::string& member ) const;
-    struct_2d_array_uniform get_struct_2d_array_uniform ( const std::string& member ) const;
+    uniform_array_uniform& get_uniform_array_uniform ( const std::string& name ) { return uniform_array_uniforms.get ( name ); }
+    const uniform_array_uniform& get_uniform_array_uniform ( const std::string& name ) const { return uniform_array_uniforms.get ( name ); }
+    struct_array_uniform& get_struct_array_uniform ( const std::string& name ) { return struct_array_uniforms.get ( name ); }
+    const struct_array_uniform& get_struct_array_uniform ( const std::string& name ) const { return struct_array_uniforms.get ( name ); }
+    uniform_2d_array_uniform& get_uniform_2d_array_uniform ( const std::string& name ) { return uniform_2d_array_uniforms.get ( name ); }
+    const uniform_2d_array_uniform& get_uniform_2d_array_uniform ( const std::string& name ) const { return uniform_2d_array_uniforms.get ( name ); }
+    struct_2d_array_uniform& get_struct_2d_array_uniform ( const std::string& name ) { return struct_2d_array_uniforms.get ( name ); }
+    const struct_2d_array_uniform& get_struct_2d_array_uniform ( const std::string& name ) const { return struct_2d_array_uniforms.get ( name ); }
 
-};
-
-
-
-/* class array_uniform : complex_uniform
- *
- * a reference to an array uniform in a program
- */
-template<class T = glh::core::uniform> class glh::core::array_uniform : public complex_uniform
-{
-    /* static assert that T is a uniform */
-    static_assert ( meta::is_uniform<T>::value, "cannot create array_uniform object containing non-uniform type" );
-
-public:
-
-    /* constructor
+    /* get_uniform_location
      *
-     * construct from a name and containing program
-     *
-     * _name: the name of the uniform
-     * _prog: the program associated with the uniform
+     * get the location of a uniform
+     * 
+     * name: the name of the uniform
+     * 
+     * return: location of the uniform
      */
-    array_uniform ( const std::string& _name, program& _prog )
-        : complex_uniform { _name, _prog }
-    {}
-
-    /* deleted zero-parameter constructor */
-    array_uniform () = delete;
-
-    /* default copy constructor */
-    array_uniform ( const array_uniform& other ) = default;
-
-    /* deleted copy assignment operator */
-    array_uniform& operator= ( const array_uniform& other ) = delete;
-
-    /* default destructor */
-    ~array_uniform () = default;
+    GLint get_uniform_location ( const std::string& name ) const;
 
 
 
-    /* at/operator[]
+    /* destroy
      *
-     * return the uniform at an index
+     * destroys the shader program, setting id to 0
      */
-    T at ( const unsigned i ) const;
-    T operator[] ( const unsigned i ) const { return at ( i ); }
+    void destroy () { object_manager::destroy_program ( id ); id = 0; }
 
-};
-template<> class glh::core::array_uniform<glh::core::uniform> : public complex_uniform
-{
-public:
-
-    /* constructor
+    /* use
      *
-     * construct from a name and containing program
-     *
-     * _name: the name of the uniform
-     * _prog: the program associated with the uniform
+     * use the shader program for the following OpenGL function calls
+     * will not call glUseProgram if already in use
      */
-    array_uniform ( const std::string& _name, program& _prog )
-        : complex_uniform { _name, _prog }
-    {}
+    void use () const { object_manager::use_program ( id ); }
 
-    /* deleted zero-parameter constructor */
-    array_uniform () = delete;
-
-    /* default copy constructor */
-    array_uniform ( const array_uniform& other ) = default;
-
-    /* deleted copy assignment operator */
-    array_uniform& operator= ( const array_uniform& other ) = delete;
-
-    /* default destructor */
-    ~array_uniform () = default;
-
-
-
-    /* at/operator[]
+    /* is_in_use
      *
-     * return the uniform at an index
+     * return: boolean for if the program is in use
      */
-    uniform at ( const unsigned i ) const;
-    uniform operator[] ( const unsigned i ) const { return at ( i ); }
+    bool is_in_use () const { return object_manager::is_program_in_use ( id ); }
+
+
+
+private:
+
+    /* uniform_locations
+     *
+     * a map to the location of uniforms based on their full names
+     * saves some time on searching for uniforms every time they are changed
+     */
+    mutable std::map<std::string, GLint> uniform_locations;
+
+    /* (..._)uniforms
+     *
+     * storage of uniforms in the program
+     */
+    pure_uniform_storage<pure_uniform> uniforms;
+    pure_uniform_storage<pure_struct_uniform> struct_uniforms;
+    pure_uniform_storage<pure_uniform_array_uniform> uniform_array_uniforms;
+    pure_uniform_storage<pure_struct_array_uniform> struct_array_uniforms;
+    pure_uniform_storage<pure_uniform_2d_array_uniform> uniform_2d_array_uniforms;
+    pure_uniform_storage<pure_struct_2d_array_uniform> struct_2d_array_uniforms;
 
 };
 
@@ -956,60 +954,27 @@ public:
 
 
 
-/* UNIFORM_EXCEPTION DEFINITION */
+/* PURE_UNIFORM_STORAGE IMPLEMENTATION */
 
-/* class uniform_exception : exception
+/* __get
  *
- * for exceptions related to uniforms
+ * add a uniform to the map if not already present, then return a reference
+ *
+ * postfix: the postfix for the member uniform
  */
-class glh::exception::uniform_exception : public exception
+template<class T> T& glh::core::pure_uniform_storage<T>::__get ( const std::string& postfix ) const
 {
-public:
-
-    /* full constructor
-     *
-     * __what: description of the exception
-     */
-    explicit uniform_exception ( const std::string& __what )
-        : exception { __what }
-    {}
-
-    /* default zero-parameter constructor
-     *
-     * construct uniform_exception with no descrption
-     */
-    uniform_exception () = default;
-
-    /* default everything else and inherits what () function */
-
-};
-
-
-
-/* STRUCT_UNIFORM TEMPLATE METHOD IMPLEMENTATIONS */
-
-/* get_array_uniform
- *
- * get a member of the struct
- */
-template<class T> inline glh::core::array_uniform<T> glh::core::struct_uniform::get_array_uniform ( const std::string& member ) const 
-{
-    /* return array_uniform object */ 
-    return array_uniform<T> { name + "." + member, prog }; 
-}
-
-
-
-/* ARRAY_UNIFORM IMPLEMENTATION */
-
-/* at/operator[]
- *
- * return the uniform at an index
- */
-template<class T> inline T glh::core::array_uniform<T>::at ( const unsigned i ) const 
-{ 
-    /* return an object of type T */
-    return T { name + "[" + std::to_string ( i ) + "]", prog }; 
+    /* try to get the uniform from the map */
+    try
+    {
+        return uniforms.at ( postfix );
+    }
+    /* catch out of range error and add uniform to map */
+    catch ( const std::out_of_range& ex )
+    {
+        uniforms.insert ( { postfix, T { this->prefix + postfix, prog } } );
+        return uniforms.at ( postfix );
+    }
 }
 
 

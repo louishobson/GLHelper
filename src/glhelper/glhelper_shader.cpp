@@ -62,6 +62,53 @@ glh::core::shader::shader ( const GLenum _target, const std::string& _path )
 
 
 
+/* PURE_UNIFORM IMPLEMENTATION */
+
+/* constructor
+ *
+ * construct from location and containing program
+ *
+ * _name: the name of the uniform
+ * _location: the location of the uniform
+ * _prog: the program associated with the uniform
+ */
+glh::core::pure_uniform::pure_uniform ( const std::string& _name, program& _prog )
+    : uniform { _name }
+    , prog { _prog }
+    , location { prog.get_uniform_location ( name ) }
+{}
+
+/* use_program
+ *
+ * use the associated program
+ */
+void glh::core::pure_uniform::use_program () const
+{
+    /* use program */
+    prog.use ();
+}
+
+/* is_program_in_use
+ *
+ * return a boolean for if the associated program is in use
+ */
+bool glh::core::pure_uniform::is_program_in_use () const
+{
+    return prog.is_in_use ();
+}
+
+/* assert_is_program_in_use
+ *
+ * will throw if the associated program is not in use
+ */
+void glh::core::pure_uniform::assert_is_program_in_use () const
+{
+    /* if program is not in use, throw */
+    if ( !is_program_in_use () ) throw exception::uniform_exception { "attempted to perform pure uniform setting operation without program being in use" };
+}
+
+
+
 /* PROGRAM IMPLEMENTATION */
 
 /* three-shader constructor
@@ -71,6 +118,9 @@ glh::core::shader::shader ( const GLenum _target, const std::string& _path )
  */
 glh::core::program::program ( const vshader& vs, const gshader& gs, const fshader& fs )
     : object { object_manager::generate_program () }
+    , uniforms { "", * this }, struct_uniforms { "", * this }
+    , uniform_array_uniforms { "", * this }, struct_array_uniforms { "", * this }
+    , uniform_2d_array_uniforms { "", * this }, struct_2d_array_uniforms { "", * this }
 {
     /* check shaders are valid */
     if ( !vs.is_object_valid () || gs.is_object_valid () || !fs.is_object_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
@@ -106,6 +156,10 @@ glh::core::program::program ( const vshader& vs, const gshader& gs, const fshade
  * NOTE: the shader program remains valid even when linked shaders are destroyed
  */
 glh::core::program::program ( const vshader& vs, const fshader& fs )
+    : object { object_manager::generate_program () }
+    , uniforms { "", * this }, struct_uniforms { "", * this }
+    , uniform_array_uniforms { "", * this }, struct_array_uniforms { "", * this }
+    , uniform_2d_array_uniforms { "", * this }, struct_2d_array_uniforms { "", * this }
 {
     /* check shaders are valid */
     if ( !vs.is_object_valid () || !fs.is_object_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
@@ -136,53 +190,11 @@ glh::core::program::program ( const vshader& vs, const fshader& fs )
     }
 }
 
-/* get_(struct_/array_)uniform
- *
- * return a uniform object based on a name
- * 
- * name: the name of the uniform
- * 
- * return: unfirom object
- */
-glh::core::uniform glh::core::program::get_uniform ( const std::string& name )
-{
-    /* return the uniform */
-    return uniform { get_uniform_location ( name ), * this };
-}
-glh::core::struct_uniform glh::core::program::get_struct_uniform ( const std::string& name )
-{
-    /* return the struct uniform */
-    return struct_uniform { name, * this };
-}
-
-/* get_..._array_uniform
- *
- * simplified versions of get_array_uniform
- */
-glh::core::uniform_array_uniform glh::core::program::get_uniform_array_uniform ( const std::string& name )
-{
-    /* return the array uniform */
-    return uniform_array_uniform { name, * this };
-}
-glh::core::struct_array_uniform glh::core::program::get_struct_array_uniform ( const std::string& name )
-{
-    /* return the array uniform */
-    return struct_array_uniform { name, * this };
-}
-glh::core::uniform_2d_array_uniform glh::core::program::get_uniform_2d_array_uniform ( const std::string& name )
-{
-    /* return the array uniform */
-    return uniform_2d_array_uniform { name, * this };
-}
-glh::core::struct_2d_array_uniform glh::core::program::get_struct_2d_array_uniform ( const std::string& name )
-{
-    /* return the array uniform */
-    return struct_2d_array_uniform { name, * this };
-}
-
 /* get_uniform_location
  *
  * get the location of a uniform
+ * 
+ * name: the name of the uniform
  * 
  * return: location of the uniform
  */
@@ -205,76 +217,4 @@ GLint glh::core::program::get_uniform_location ( const std::string& name ) const
         /* return the location */
         return location;
     }   
-}
-
-
-
-/* UNIFORM IMPLEMENTATION */
-
-/* assert_is_program_in_use
- *
- * will throw if the associated program is not in use
- */
-void glh::core::uniform::assert_is_program_in_use () const 
-{
-    /* if not in use, throw */ 
-    if ( !prog.is_in_use () ) throw exception::uniform_exception { "associated program of uniform is not in use" };
-}
-
-
-
-/* STRUCT_UNIFORM IMPLEMENTATION */
-
-/* get_(struct_/array_)uniform
- *
- * get a member of the struct
- */
-glh::core::uniform glh::core::struct_uniform::get_uniform ( const std::string& member ) const
-{
-    /* return uniform */
-    return prog.get_uniform ( name + "." + member );
-}
-glh::core::struct_uniform glh::core::struct_uniform::get_struct_uniform ( const std::string& member ) const
-{
-    /* return uniform */
-    return prog.get_struct_uniform ( name + "." + member );
-}
-
-/* get_..._array_uniform
- *
- * simplified versions of get_array_uniform
- */
-glh::core::uniform_array_uniform glh::core::struct_uniform::get_uniform_array_uniform ( const std::string& member ) const
-{
-    /* return the array uniform */
-    return uniform_array_uniform { name + "." + member, prog };
-}
-glh::core::struct_array_uniform glh::core::struct_uniform::get_struct_array_uniform ( const std::string& member ) const
-{
-    /* return the array uniform */
-    return struct_array_uniform { name + "." + member, prog };
-}
-glh::core::uniform_2d_array_uniform glh::core::struct_uniform::get_uniform_2d_array_uniform ( const std::string& member ) const
-{
-    /* return the array uniform */
-    return uniform_2d_array_uniform { name + "." + member, prog };
-}
-glh::core::struct_2d_array_uniform glh::core::struct_uniform::get_struct_2d_array_uniform ( const std::string& member ) const
-{
-    /* return the array uniform */
-    return struct_2d_array_uniform { name + "." + member, prog };
-}
-
-
-
-/* ARRAY_UNIFORM SPECIALISATION IMPLEMENTATION */
-
-/* at/operator[]
- *
- * return the uniform at an index
- */
-glh::core::uniform glh::core::array_uniform<glh::core::uniform>::at ( const unsigned i ) const 
-{ 
-    /* get the uniform from the program and return it */
-    return prog.get_uniform ( name + "[" + std::to_string ( i ) + "]" ); 
 }
