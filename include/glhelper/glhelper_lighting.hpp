@@ -142,8 +142,8 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
-/* include glhelper_uniform.hpp */
-#include <glhelper/glhelper_uniform.hpp>
+/* include glhelper_shader.hpp */
+#include <glhelper/glhelper_shader.hpp>
 
 /* include glhelper_math.hpp */
 #include <glhelper/glhelper_math.hpp>
