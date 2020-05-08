@@ -147,8 +147,8 @@
 /* include glhelper_texture.hpp */
 #include <glhelper/glhelper_texture.hpp>
 
-/* include glhelper_uniform.hpp */
-#include <glhelper/glhelper_uniform.hpp>
+/* include glhelper_shader.hpp */
+#include <glhelper/glhelper_shader.hpp>
 
 /* include glhelper_render.hpp */
 #include <glhelper/glhelper_render.hpp>
