@@ -55,6 +55,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <type_traits>
 
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
@@ -132,6 +133,15 @@ namespace glh
 
     }
 
+    namespace meta
+    {
+        /* struct is_vector
+         *
+         * is_vector::value is true if the type supplied is a vector
+         */
+        template<class T> struct is_vector;
+    }
+
     namespace exception
     {
         /* class vector_exception : exception
@@ -141,6 +151,17 @@ namespace glh
         class vector_exception;
     }
 }
+
+
+
+/* IS_VECTOR DEFINITION */
+
+/* struct is_vector
+ *
+ * is_vector::value is true if the type supplied is a vector
+ */
+template<class T> struct glh::meta::is_vector : std::false_type {};
+template<> template<unsigned M> struct glh::meta::is_vector<glh::math::vector<M>> : std::true_type {};
 
 
 
@@ -188,6 +209,14 @@ public:
 
     /* default destructor */
     ~vector () = default;
+
+
+
+    /* size
+     *
+     * the size of the vector
+     */
+    static const unsigned size = M;
 
 
 
