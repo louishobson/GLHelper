@@ -183,9 +183,12 @@ int main ()
     glh::core::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
 
+    window.get_timeinfo ();
+    window.get_dimensions ();
+    window.get_mouseinfo ();
 
     double total_time = 0.0;
-    double frames = 0.0;
+    double frames = -1.0;
 
     while ( !window.should_close () ) 
     {
