@@ -46,7 +46,6 @@ int main ()
     const auto& mirror_trans_uni = mirror_program.get_struct_uniform ( "trans" );
     const auto& cubemap_trans_uni = cubemap_program.get_struct_uniform ( "trans" );
     const auto& model_transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
-    const auto& test_uni = model_program.get_struct_2d_array_uniform ( "test" );
     
     glh::camera::camera camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 1000.0 };
     camera.cache_uniforms ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
@@ -171,6 +170,11 @@ int main ()
         glh::math::identity<4> (),
         0.1
     );
+
+
+
+    //glh::core::ubo test_block_ubo { 10000 };
+    //test_block_ubo.bind_index ( model_program.get_uniform_block_index ( "test_block" ) );
 
 
 
