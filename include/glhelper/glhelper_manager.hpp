@@ -36,8 +36,8 @@
 /* INCLUDES */
 
 /* include core headers */
-#include <array>
 #include <iostream>
+#include <vector>
 
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
@@ -47,16 +47,6 @@
 
 /* include glhelper_glad.hpp */
 #include <glhelper/glhelper_glad.hpp>
-
-
-
-/* MACROS */
-
-/* GLH_MAX_TEXTURE_UNITS
- *
- * defined the maximum number of texture units that should be tracked
- */
-#define GLH_MAX_TEXTURE_UNITS 32
 
 
 
@@ -137,11 +127,18 @@ public:
      */
     static void unbind_vbo ( const GLuint id );
 
+    /* get_bound_vbo
+     *
+     * return the id of the bound vbo
+     * returns 0 if no vbo is bound
+     */
+    static GLuint get_bound_vbo () { return bound_vbo; }
+
     /* is_vbo_bound
      *
      * returns true if the vbo is bound
      */
-    static bool is_vbo_bound ( const GLuint id ) { return ( id == bound_vbo ); }
+    static bool is_vbo_bound ( const GLuint id ) { return ( id != 0 && id == bound_vbo ); }
 
     /* bind_ebo
      *
@@ -155,11 +152,18 @@ public:
      */
     static void unbind_ebo ( const GLuint id );
 
+    /* get_bound_ebo
+     *
+     * return the id of the bound ebo
+     * returns 0 if no ebo is bound
+     */
+    static GLuint get_bound_ebo () { return bound_ebo; }
+
     /* is_ebo_bound
      *
      * returns true if the ebo is bound
      */
-    static bool is_ebo_bound ( const GLuint id ) { return ( id == bound_ebo ); }
+    static bool is_ebo_bound ( const GLuint id ) { return ( id != 0 && id == bound_ebo ); }
 
     /* bind_ubo
      *
@@ -173,11 +177,49 @@ public:
      */
     static void unbind_ubo ( const GLuint id );
 
+    /* get_bound_ubo
+     *
+     * return the id of the bound ubo
+     * returns 0 if no ubo is bound
+     */
+    static GLuint get_bound_ubo () { return bound_ubo; }
+
     /* is_ubo_bound
      *
      * returns true if the ubo is bound
      */
-    static bool is_ubo_bound ( const GLuint id ) { return ( id == bound_ubo ); }
+    static bool is_ubo_bound ( const GLuint id ) { return ( id != 0 && id == bound_ubo ); }
+
+    /* bind_ubo_index
+     *
+     * bind a ubo to an index
+     * does NOT bind to the default ubo target
+     *
+     * index: the index to bind the ubo to
+     */
+    static void bind_ubo_index ( const GLuint id, const unsigned index );
+
+    /* unbind_ubo_index
+     *
+     * unbind a ubo from an index
+     * does NOT unbind from the default ubo target
+     *
+     * index: the index to unbind the ubo from
+     */
+    static void unbind_ubo_index ( const GLuint id, const unsigned index );
+
+    /* get_bound_ubo_index
+     *
+     * get the ubo bound to an index
+     * returns 0 if no ubo is bound to the index
+     */
+    static GLuint get_bound_ubo_index ( const unsigned index );
+
+    /* is_ubo_index_bound
+     *
+     * returns true if the ubo is bound to an index
+     */
+    static bool is_ubo_bound_index ( const GLuint id, const unsigned index );
 
     /* bind_copy_read_buffer
      *
@@ -191,11 +233,18 @@ public:
      */
     static void unbind_copy_read_buffer ( const GLuint id );
 
+    /* get_bound_copy_read_buffer
+     *
+     * return the id of the bound copy read buffer
+     * returns 0 if no copy read buffer is bound
+     */
+    static GLuint get_bound_copy_read_buffer () { return bound_copy_read_buffer; }
+
     /* is_copy_read_buffer_bound
      *
      * returns true if the buffer is bound to GL_COPY_READ_BUFFER
      */
-    static bool is_copy_read_buffer_bound ( const GLuint id ) { return ( id == bound_copy_read_buffer ); }
+    static bool is_copy_read_buffer_bound ( const GLuint id ) { return ( id != 0 && id == bound_copy_read_buffer ); }
 
     /* bind_copy_write_buffer
      *
@@ -209,11 +258,18 @@ public:
      */
     static void unbind_copy_write_buffer ( const GLuint id );
 
+    /* get_bound_copy_write_buffer
+     *
+     * return the id of the bound copy write buffer
+     * returns 0 if no copy write buffer is bound
+     */
+    static GLuint get_bound_copy_write_buffer () { return bound_copy_write_buffer; }
+
     /* is_copy_write_buffer_bound
      *
      * returns true if the buffer is bound to GL_COPY_WRITE_BUFFER
      */
-    static bool is_copy_write_buffer_bound ( const GLuint id ) { return ( id == bound_copy_write_buffer ); }
+    static bool is_copy_write_buffer_bound ( const GLuint id ) { return ( id != 0 && id == bound_copy_write_buffer ); }
 
 
 
@@ -243,11 +299,18 @@ public:
      */
     static void unbind_vao ( const GLuint id );
 
+    /* get_bound_vao
+     *
+     * return the id of the bound vao
+     * returns 0 if no vao is bound
+     */
+    static GLuint get_bound_vao () { return bound_vao; }
+
     /* is_vao_bound
      *
      * returns true if the vao is bound
      */
-    static bool is_vao_bound ( const GLuint id ) { return ( id == bound_vao ); }
+    static bool is_vao_bound ( const GLuint id ) { return ( id != 0 && id == bound_vao ); }
 
 
 
@@ -291,11 +354,18 @@ public:
      */
     static void unuse_program ( const GLuint id );
 
+    /* get_in_use_program
+     *
+     * returns the id of the program currently in use
+     * returns 0 if no program is in use
+     */
+    static GLuint get_in_use_program () { return in_use_program; }
+
     /* is_program_in_use
      *
      * returns true if the program is in use
      */
-    static bool is_program_in_use ( const GLuint id ) { return ( id == in_use_program ); }
+    static bool is_program_in_use ( const GLuint id ) { return ( id != 0 && id == in_use_program ); }
 
 
 
@@ -329,13 +399,22 @@ public:
      */
     static void unbind_texture2d ( const GLuint id, const unsigned unit );
 
+    /* get_bound_texture2d
+     *
+     * return the id of the texture currently bound to the texture unit supplied
+     * returns 0 if no texture is bound
+     * 
+     * unit: the texture unit to test
+     */
+    static GLuint get_bound_texture2d ( const unsigned unit );
+
     /* is_texture2d_bound
      *
      * returns true if a texture2d is bound to the provided texture unit
      *
      * unit: the texture unit to check
      */
-    static bool is_texture2d_bound ( const GLuint id, const unsigned unit ) { return ( id == bound_texture2ds.at ( unit ) ); }
+    static bool is_texture2d_bound ( const GLuint id, const unsigned unit );
 
     /* bind_cubemap
      *
@@ -353,13 +432,22 @@ public:
      */
     static void unbind_cubemap ( const GLuint id, const unsigned unit );
 
+    /* get_bound_cubemap
+     *
+     * return the id of the cubemap currently bound to the texture unit supplied
+     * returns 0 if no cubemap is bound
+     * 
+     * unit: the texture unit to test
+     */
+    static GLuint get_bound_cubemap ( const unsigned unit );
+
     /* is_cubemap_bound
      *
      * returns true if a cubemap is bound to GL_TEXTURE_CUBE_MAP under the provided texture unit
      *
      * unit: the texture unit to check
      */
-    static bool is_cubemap_bound ( const GLuint id, const unsigned unit ) { return ( id == bound_cubemaps.at ( unit ) ); }
+    static bool is_cubemap_bound ( const GLuint id, const unsigned unit );
 
 
 
@@ -389,11 +477,18 @@ public:
      */
     static void unbind_rbo ( const GLuint id );
 
+    /* get_bound_rbo
+     *
+     * return the id of the bound rbo
+     * returns 0 if no rbo is bound
+     */
+    static GLuint get_bound_rbo () { return bound_rbo; }
+
     /* is_rbo_bound
      *
      * return true if the rbo is bound
      */
-    static bool is_rbo_bound ( const GLuint id ) { return ( id == bound_rbo ); }
+    static bool is_rbo_bound ( const GLuint id ) { return ( id != 0 && id == bound_rbo ); }
 
 
 
@@ -430,22 +525,29 @@ public:
      */
     static void bind_default_fbo ();
 
+    /* get_bound_fbo
+     *
+     * return the id of the bound fbo
+     * returns 0 if no fbo is bound
+     */
+    static GLuint get_bound_fbo () { return bound_fbo; }
+
     /* is_fbo_bound
      *
      * return true if the framebuffer is bound
      */
-    static bool is_fbo_bound ( const GLuint id ) { return ( id == bound_fbo ); }
+    static bool is_fbo_bound ( const GLuint id ) { return ( id != 0 && id == bound_fbo ); }
 
 
 
-    /* assert_object_is_valid
+    /* assert_is_object_valid
      *
      * throws if an object has an id of 0
      *
      * id: the id of the object to test
      * operation: a description of the operation
      */
-    static void assert_object_is_valid ( const GLuint id, const std::string& operation = "" );
+    static void assert_is_object_valid ( const GLuint id, const std::string& operation = "" );
 
 
 
@@ -460,6 +562,9 @@ private:
     /* currently bound ubo */
     static GLuint bound_ubo;
 
+    /* currently bound ubo indices */
+    static std::vector<GLuint> bound_ubo_indices;
+
     /* currently bound read copy buffer */
     static GLuint bound_copy_read_buffer;
 
@@ -473,10 +578,10 @@ private:
     static GLuint in_use_program;
 
     /* array of texture units and their respectively bound textures */
-    static std::array<GLuint, GLH_MAX_TEXTURE_UNITS> bound_texture2ds;
+    static std::vector<GLuint> bound_texture2ds;
 
     /* array of texture units and their respectively bound cubemaps */
-    static std::array<GLuint, GLH_MAX_TEXTURE_UNITS> bound_cubemaps;
+    static std::vector<GLuint> bound_cubemaps;
 
     /* currently bound renderbuffer */
     static GLuint bound_rbo;
