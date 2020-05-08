@@ -184,11 +184,21 @@ int main ()
 
 
 
+    double total_time = 0.0;
+    double frames = 0.0;
+
     while ( !window.should_close () ) 
     {
         auto timeinfo = window.get_timeinfo ();
         auto dimensions = window.get_dimensions ();
         auto mouseinfo = window.get_mouseinfo ();
+
+        frames += 1.0;
+        total_time += timeinfo.delta;
+
+        //std::cout << "\rdelta time: " << timeinfo.delta << std::flush;
+        //std::cout << "\raverage fps: " << frames / total_time << std::flush;
+        std::cout << "\rfps: " << 1.0 / timeinfo.delta << std::flush;
 
         if ( dimensions.deltawidth != 0.0 || dimensions.deltaheight != 0.0 ) 
         {
