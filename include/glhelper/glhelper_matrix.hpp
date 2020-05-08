@@ -138,6 +138,15 @@ namespace glh
         template<> matrix<1> inverse<1> ( const matrix<1>& _matrix );
     }
 
+    namespace meta
+    {
+        /* struct is_matrix
+         *
+         * is_matrix::value is true if the type supplied is a matrix
+         */
+        template<class T> struct is_matrix;
+    }
+
     namespace exception
     {
         /* class matrix_exception : exception
@@ -147,6 +156,17 @@ namespace glh
         class matrix_exception;
     }
 }
+
+
+
+/* IS_MATRIX DEFINITION */
+
+/* struct is_matrix
+ *
+ * is_matrix::value is true if the type supplied is a matrix
+ */
+template<class T> struct glh::meta::is_matrix : std::false_type {};
+template<> template<unsigned M, unsigned N> struct glh::meta::is_matrix<glh::math::matrix<M, N>> : std::true_type {};
 
 
 
@@ -193,6 +213,15 @@ public:
 
     /* default destructor */
     ~matrix () = default;
+
+
+
+    /* width/height
+     *
+     * width and height of the matrix
+     */
+    static const unsigned height = M;
+    static const unsigned width = N;
 
 
 
