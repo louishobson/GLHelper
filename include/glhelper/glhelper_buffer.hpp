@@ -610,6 +610,21 @@ public:
     /* default destructor */
     ~ubo () = default;
 
+
+
+    /* (un)bind_index
+     *
+     * special indexed bindings for ubos
+     */
+    void bind_index ( const unsigned index ) { object_manager::bind_ubo_index ( id, index ); }
+    void unbind_index ( const unsigned index ) { object_manager::unbind_ubo_index ( id, index ); }
+
+    /* is_bound_index
+     *
+     * returns true if is bound to the ubo index supplied
+     */
+    bool is_bound_index ( const unsigned index ) { return object_manager::is_ubo_bound_index ( id, index ); }
+
 };
 
 
