@@ -179,8 +179,8 @@ protected:
  * 
  * return: boolean representing equality
  */
-bool inline operator== ( const glh::core::object& lhs, const glh::core::object& rhs ) { return ( lhs.internal_id () == rhs.internal_id () ); }
-bool inline operator!= ( const glh::core::object& lhs, const glh::core::object& rhs ) { return ( lhs.internal_id () != rhs.internal_id () ); }
+inline bool operator== ( const glh::core::object& lhs, const glh::core::object& rhs ) { return ( lhs.internal_id () == rhs.internal_id () ); }
+inline bool operator!= ( const glh::core::object& lhs, const glh::core::object& rhs ) { return ( lhs.internal_id () != rhs.internal_id () ); }
 
 
 
@@ -223,7 +223,7 @@ public:
  * 
  * operation: description of the operation
  */
-void inline glh::core::object::assert_is_object_valid ( const std::string& operation ) const
+inline void glh::core::object::assert_is_object_valid ( const std::string& operation ) const
 { 
     /* throw if invalid */
     if ( !is_object_valid () ) 
