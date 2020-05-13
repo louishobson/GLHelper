@@ -38,9 +38,6 @@
 #include <iostream>
 #include <string>
 
-/* include glhelper_core.hpp */
-#include <glhelper/glhelper_core.hpp>
-
 /* include glhelper_glfw.hpp */
 #include <glhelper/glhelper_glfw.hpp>
 
