@@ -11,6 +11,15 @@
  * 
  * 
  * 
+ * SCOPED ENUM GLH::CORE::MINOR_OBJECT_TYPE
+ * SCOPED ENUM GLH::CORE::MAJOR_OBJECT_TYPE
+ * SCOPED ENUM GLH::CORE::OBJECT_BIND_TARGET
+ * 
+ * these enums allow for the representation of different types of object and bind points, used by the object manager class
+ * the object manager class knows nothing about the actual derived class of an object, hence these enum values are used to identify objects
+ * 
+ * 
+ * 
  * CLASS GLH::CORE::OBJECT_MANAGER
  * 
  * a class with static methods to create, destroy and bind many types of OpenGL objects
@@ -36,6 +45,7 @@
 /* INCLUDES */
 
 /* include core headers */
+#include <array>
 #include <iostream>
 #include <vector>
 
@@ -56,12 +66,35 @@ namespace glh
 {
     namespace core
     {
+        /* enum major_object_type
+         *
+         * enum for general types of object (e.g. GLH_BUFFER_TYPE rather than GLH_VBO_TYPE)
+         */
+        enum struct major_object_type : unsigned;
+
+        /* enum minor_object_type
+         *
+         * enum for more specific types of object (e.g. GLH_VBO_TYPE rather than GLH_BUFFER_TYPE)
+         */
+        enum struct minor_object_type : unsigned;
+
+        /* enum object_bind_target
+         *
+         * enum for bind targets of objects
+         */
+        enum struct object_bind_target : unsigned;
+
+
+
         /* class object_manager
          *
          * responsible for generating and destroying OpenGL objects
          * also tracks bindings and avoids rebinds
          */
         class object_manager;
+
+        /* using expression for object_manager class */
+        using om = object_manager;
     }
 
     namespace exception
@@ -73,6 +106,100 @@ namespace glh
         class object_management_exception;
     }
 }
+
+/* operators+- for bind target enum
+ *
+ * allows one to step through indexed bind points
+ */
+glh::core::object_bind_target operator+ ( const glh::core::object_bind_target target, const int scalar );
+glh::core::object_bind_target operator- ( const glh::core::object_bind_target target, const int scalar );
+int operator- ( const glh::core::object_bind_target target0, const glh::core::object_bind_target target1 );
+
+
+
+/* ENUM DEFINITIONS DEFINITION */
+
+/* enum major_object_type
+ *
+ * enum for general types of object (e.g. GLH_BUFFER_TYPE rather than GLH_VBO_TYPE)
+ */
+enum struct glh::core::major_object_type : unsigned
+{
+    GLH_BUFFER_TYPE,
+    GLH_VAO_TYPE,
+    
+    GLH_RBO_TYPE,
+    GLH_FBO_TYPE,
+
+    GLH_SHADER_TYPE,
+    GLH_PROGRAM_TYPE,
+
+    GLH_TEXTURE_TYPE,
+
+    __COUNT__
+};
+
+/* enum minor_object_type
+ *
+ * enum for more specific types of object (e.g. GLH_VBO_TYPE rather than GLH_BUFFER_TYPE)
+ */
+enum struct glh::core::minor_object_type : unsigned
+{
+    GLH_VBO_TYPE,
+    GLH_EBO_TYPE,
+    GLH_UBO_TYPE,
+    GLH_VAO_TYPE,
+    
+    GLH_RBO_TYPE,
+    GLH_FBO_TYPE,
+
+    GLH_VSHADER_TYPE,
+    GLH_GSHADER_TYPE,
+    GLH_FSHADER_TYPE,
+    GLH_PROGRAM_TYPE,
+
+    GLH_TEXTURE2D_TYPE,
+    GLH_CUBEMAP_TYPE,
+
+    __COUNT__
+};
+
+/* enum object_bind_target
+ *
+ * enum for bind targets of objects
+ */
+enum struct glh::core::object_bind_target : unsigned
+{
+    GLH_VBO_TARGET,
+    GLH_EBO_TARGET,
+    GLH_UBO_TARGET,
+    GLH_COPY_READ_BUFFER_TARGET,
+    GLH_COPY_WRITE_BUFFER_TARGET,
+    GLH_VAO_TARGET,
+    
+    GLH_RBO_TARGET,
+    GLH_FBO_TARGET,
+
+    GLH_PROGRAM_TARGET,
+
+    __TEXTURE2D_START__,
+    GLH_TEXTURE2D_0_TARGET,  GLH_TEXTURE2D_1_TARGET,  GLH_TEXTURE2D_2_TARGET,  GLH_TEXTURE2D_3_TARGET,  GLH_TEXTURE2D_4_TARGET,  GLH_TEXTURE2D_5_TARGET,  GLH_TEXTURE2D_6_TARGET,  GLH_TEXTURE2D_7_TARGET, 
+    GLH_TEXTURE2D_8_TARGET,  GLH_TEXTURE2D_9_TARGET,  GLH_TEXTURE2D_10_TARGET, GLH_TEXTURE2D_11_TARGET, GLH_TEXTURE2D_12_TARGET, GLH_TEXTURE2D_13_TARGET, GLH_TEXTURE2D_14_TARGET, GLH_TEXTURE2D_15_TARGET, 
+    GLH_TEXTURE2D_16_TARGET, GLH_TEXTURE2D_17_TARGET, GLH_TEXTURE2D_18_TARGET, GLH_TEXTURE2D_19_TARGET, GLH_TEXTURE2D_20_TARGET, GLH_TEXTURE2D_21_TARGET, GLH_TEXTURE2D_22_TARGET, GLH_TEXTURE2D_23_TARGET, 
+    GLH_TEXTURE2D_24_TARGET, GLH_TEXTURE2D_25_TARGET, GLH_TEXTURE2D_26_TARGET, GLH_TEXTURE2D_27_TARGET, GLH_TEXTURE2D_28_TARGET, GLH_TEXTURE2D_29_TARGET, GLH_TEXTURE2D_30_TARGET, GLH_TEXTURE2D_31_TARGET, 
+    __TEXTURE2D_END__,
+
+    __CUBEMAP_START__,
+    GLH_CUBEMAP_0_TARGET,  GLH_CUBEMAP_1_TARGET,  GLH_CUBEMAP_2_TARGET,  GLH_CUBEMAP_3_TARGET,  GLH_CUBEMAP_4_TARGET,  GLH_CUBEMAP_5_TARGET,  GLH_CUBEMAP_6_TARGET,  GLH_CUBEMAP_7_TARGET, 
+    GLH_CUBEMAP_8_TARGET,  GLH_CUBEMAP_9_TARGET,  GLH_CUBEMAP_10_TARGET, GLH_CUBEMAP_11_TARGET, GLH_CUBEMAP_12_TARGET, GLH_CUBEMAP_13_TARGET, GLH_CUBEMAP_14_TARGET, GLH_CUBEMAP_15_TARGET, 
+    GLH_CUBEMAP_16_TARGET, GLH_CUBEMAP_17_TARGET, GLH_CUBEMAP_18_TARGET, GLH_CUBEMAP_19_TARGET, GLH_CUBEMAP_20_TARGET, GLH_CUBEMAP_21_TARGET, GLH_CUBEMAP_22_TARGET, GLH_CUBEMAP_23_TARGET, 
+    GLH_CUBEMAP_24_TARGET, GLH_CUBEMAP_25_TARGET, GLH_CUBEMAP_26_TARGET, GLH_CUBEMAP_27_TARGET, GLH_CUBEMAP_28_TARGET, GLH_CUBEMAP_29_TARGET, GLH_CUBEMAP_30_TARGET, GLH_CUBEMAP_31_TARGET,
+    __CUBEMAP_END__,
+
+    GLH_NO_TARGET,
+
+    __COUNT__
+};
 
 
 
@@ -87,456 +214,109 @@ class glh::core::object_manager
 {
 public:
 
-    /* default constructor */
-    object_manager () = default;
+    /* deleted constructor */
+    object_manager () = delete;
 
-    /* default copy constructor */
-    object_manager ( const object_manager& other ) = default;
+    /* deleted copy constructor */
+    object_manager ( const object_manager& other ) = delete;
 
-    /* default copy assignment operator */
-    object_manager& operator= ( const object_manager& other ) = default;
+    /* deleted copy assignment operator */
+    object_manager& operator= ( const object_manager& other ) = delete;
 
-    /* default destructor */
-    ~object_manager () = default;
+    /* deleted destructor */
+    ~object_manager () = delete;
 
 
 
-    /* BUFFER OBJECTS */
-
-    /* generate_buffer
+    /* generate_object
      *
-     * generate a buffer object
-     */
-    static GLuint generate_buffer ();
-
-    /* destroy_buffer
-     *
-     * destroy a buffer object, unbinding it from any bindings
-     */
-    static void destroy_buffer ( const GLuint id );
-
-    /* bind_vbo
-     *
-     * bind a buffer object as a vbo
-     */
-    static void bind_vbo ( const GLuint id );
-
-    /* unbind_vbo
-     *
-     * unbind the vbo, only if it is already bound
-     */
-    static void unbind_vbo ( const GLuint id );
-
-    /* get_bound_vbo
-     *
-     * return the id of the bound vbo
-     * returns 0 if no vbo is bound
-     */
-    static GLuint get_bound_vbo () { return bound_vbo; }
-
-    /* is_vbo_bound
-     *
-     * returns true if the vbo is bound
-     */
-    static bool is_vbo_bound ( const GLuint id ) { return ( id != 0 && id == bound_vbo ); }
-
-    /* bind_ebo
-     *
-     * bind a buffer object as an ebo
-     */
-    static void bind_ebo ( const GLuint id );
-
-    /* unbind_ebo
-     *
-     * unbind the ebo, only if it is already bound
-     */
-    static void unbind_ebo ( const GLuint id );
-
-    /* get_bound_ebo
-     *
-     * return the id of the bound ebo
-     * returns 0 if no ebo is bound
-     */
-    static GLuint get_bound_ebo () { return bound_ebo; }
-
-    /* is_ebo_bound
-     *
-     * returns true if the ebo is bound
-     */
-    static bool is_ebo_bound ( const GLuint id ) { return ( id != 0 && id == bound_ebo ); }
-
-    /* bind_ubo
-     *
-     * bind a buffer object as a ubo
-     */
-    static void bind_ubo ( const GLuint id );
-
-    /* unbind_ubo
-     *
-     * unbind the ubo, only if it is already bound
-     */
-    static void unbind_ubo ( const GLuint id );
-
-    /* get_bound_ubo
-     *
-     * return the id of the bound ubo
-     * returns 0 if no ubo is bound
-     */
-    static GLuint get_bound_ubo () { return bound_ubo; }
-
-    /* is_ubo_bound
-     *
-     * returns true if the ubo is bound
-     */
-    static bool is_ubo_bound ( const GLuint id ) { return ( id != 0 && id == bound_ubo ); }
-
-    /* bind_ubo_index
-     *
-     * bind a ubo to an index
-     * does NOT bind to the default ubo target
-     *
-     * index: the index to bind the ubo to
-     */
-    static void bind_ubo_index ( const GLuint id, const unsigned index );
-
-    /* unbind_ubo_index
-     *
-     * unbind a ubo from an index
-     * does NOT unbind from the default ubo target
-     *
-     * index: the index to unbind the ubo from
-     */
-    static void unbind_ubo_index ( const GLuint id, const unsigned index );
-
-    /* get_bound_ubo_index
-     *
-     * get the ubo bound to an index
-     * returns 0 if no ubo is bound to the index
-     */
-    static GLuint get_bound_ubo_index ( const unsigned index );
-
-    /* is_ubo_index_bound
-     *
-     * returns true if the ubo is bound to an index
-     */
-    static bool is_ubo_bound_index ( const GLuint id, const unsigned index );
-
-    /* bind_copy_read_buffer
-     *
-     * bind a buffer object to GL_COPY_READ_BUFFER
-     */
-    static void bind_copy_read_buffer ( const GLuint id );
-    
-    /* unbind_copy_read_buffer
-     *
-     * unbind a buffer object from GL_COPY_READ_BUFFER
-     */
-    static void unbind_copy_read_buffer ( const GLuint id );
-
-    /* get_bound_copy_read_buffer
-     *
-     * return the id of the bound copy read buffer
-     * returns 0 if no copy read buffer is bound
-     */
-    static GLuint get_bound_copy_read_buffer () { return bound_copy_read_buffer; }
-
-    /* is_copy_read_buffer_bound
-     *
-     * returns true if the buffer is bound to GL_COPY_READ_BUFFER
-     */
-    static bool is_copy_read_buffer_bound ( const GLuint id ) { return ( id != 0 && id == bound_copy_read_buffer ); }
-
-    /* bind_copy_write_buffer
-     *
-     * bind a buffer object to GL_COPY_WRITE_BUFFER
-     */
-    static void bind_copy_write_buffer ( const GLuint id );
-
-    /* unbind_copy_write_buffer
-     *
-     * unbind a buffer object to GL_COPY_WRITE_BUFFER
-     */
-    static void unbind_copy_write_buffer ( const GLuint id );
-
-    /* get_bound_copy_write_buffer
-     *
-     * return the id of the bound copy write buffer
-     * returns 0 if no copy write buffer is bound
-     */
-    static GLuint get_bound_copy_write_buffer () { return bound_copy_write_buffer; }
-
-    /* is_copy_write_buffer_bound
-     *
-     * returns true if the buffer is bound to GL_COPY_WRITE_BUFFER
-     */
-    static bool is_copy_write_buffer_bound ( const GLuint id ) { return ( id != 0 && id == bound_copy_write_buffer ); }
-
-
-
-    /* VERTEX ARRAY OBJECTS */
-
-    /* generate_vao
-     *
-     * generate a vertex array object
-     */
-    static GLuint generate_vao ();
-
-    /* destroy_vao
-     *
-     * destroy a vao, unbinding it if is bound
-     */
-    static void destroy_vao ( const GLuint id );
-
-    /* bind_vao
-     *
-     * bind a vao
-     */
-    static void bind_vao ( const GLuint id );
-
-    /* unbind_vao
-     *
-     * unbind the vao, only if it is already bound
-     */
-    static void unbind_vao ( const GLuint id );
-
-    /* get_bound_vao
-     *
-     * return the id of the bound vao
-     * returns 0 if no vao is bound
-     */
-    static GLuint get_bound_vao () { return bound_vao; }
-
-    /* is_vao_bound
-     *
-     * returns true if the vao is bound
-     */
-    static bool is_vao_bound ( const GLuint id ) { return ( id != 0 && id == bound_vao ); }
-
-
-
-    /* SHADER/PROGRAM OBJECTS */
-
-    /* generate_shader
-     *
-     * generate a shader object
+     * generate an object of a given type
      * 
-     * type: the type of the shader
-     */
-    static GLuint generate_shader ( const GLenum type );
-
-    /* destroy_shader
-     *
-     * destroy a shader object
-     */
-    static void destroy_shader ( const GLuint id );
-
-    /* generate_program
-     *
-     * generate a program object
-     */
-    static GLuint generate_program ();
-
-    /* destroy_program
+     * type: the type of the object (minor type)
      * 
-     * destroy a program object, making it not in use in the progrss
+     * return: the id of the new object
      */
-    static void destroy_program ( const GLuint id );
+    static GLuint generate_object ( const minor_object_type type );
 
-    /* use_program
+    /* destroy_object
      *
-     * make a program currently in use
-     */
-    static void use_program ( const GLuint id );
-
-    /* unuse_program
-     *
-     * unuse the program, only if it is already in use
-     */
-    static void unuse_program ( const GLuint id );
-
-    /* get_in_use_program
-     *
-     * returns the id of the program currently in use
-     * returns 0 if no program is in use
-     */
-    static GLuint get_in_use_program () { return in_use_program; }
-
-    /* is_program_in_use
-     *
-     * returns true if the program is in use
-     */
-    static bool is_program_in_use ( const GLuint id ) { return ( id != 0 && id == in_use_program ); }
-
-
-
-    /* TEXTURE OBJECTS */
-
-    /* generate_texture
+     * destroy an object of a given type
      * 
-     * generate a texture object
+     * id: the id of the object to destroy
+     * type: the type of the object (minor type)
      */
-    static GLuint generate_texture ();
+    static void destroy_object ( const GLuint id, const minor_object_type type );
 
-    /* destroy_texture
+    /* unbind_object_all
      *
-     * destroy a texture object, unbinding it from any texture units
-     */
-    static void destroy_texture ( const GLuint id );
-
-    /* bind_texture2d
-     *
-     * bind a texture2d to a texture unit
+     * unbinds an object from all possible bind points
+     * includes all indexed bindings, where applicable
      * 
-     * unit: the texture unit to bind it to
+     * id: the id of the object to unbind
+     * type: the type of the object (minor type)
      */
-    static void bind_texture2d ( const GLuint id, const unsigned unit );
+    static void unbind_object_all ( const GLuint id, const minor_object_type type );
 
-    /* unbind_texture2d
+    /* bind_object
      *
-     * unbind a texture2d from a unit, if it is already bound
+     * bind an object to a target
+     * if already bound, it will not be bound twice
      * 
-     * unit: the texture unit to unbind it from
+     * id: the id of the object
+     * type: the bind target of the object (bind target)
      */
-    static void unbind_texture2d ( const GLuint id, const unsigned unit );
+    static void bind_object ( const GLuint id, object_bind_target target );
 
-    /* get_bound_texture2d
+    /* unbind_object
      *
-     * return the id of the texture currently bound to the texture unit supplied
-     * returns 0 if no texture is bound
+     * unbind an object from a target
+     * if not bound, the function returns having done nothing
      * 
-     * unit: the texture unit to test
+     * id: the id of the object
+     * target: the bind target of the object (bind target)
      */
-    static GLuint get_bound_texture2d ( const unsigned unit );
+    static void unbind_object ( const GLuint id, const object_bind_target target );
 
-    /* is_texture2d_bound
+    /* get_bound_object
      *
-     * returns true if a texture2d is bound to the provided texture unit
+     * get the object thats bound to a target
      *
-     * unit: the texture unit to check
+     * target: the bind target of the object (bind target)
+     *
+     * return: the id of the bound object
      */
-    static bool is_texture2d_bound ( const GLuint id, const unsigned unit );
+    static GLuint get_bound_object ( const object_bind_target target );
 
-    /* bind_cubemap
+    /* is_object_bound
      *
-     * bind a cubemap texture to GL_TEXTURE_CUBE_MAP, if not already bounc
+     * return true if an object is bound to its target
      * 
-     * unit: the texture unit to bind it to
+     * id: the id of the object to check
+     * target: the bind target of the object (bind target)
+     *
+     * return: true if bound, false if not
      */
-    static void bind_cubemap ( const GLuint id, const unsigned unit );
+    static bool is_object_bound ( const GLuint id, const object_bind_target target );
 
-    /* unbind_cubemap
+
+
+    /* to_major_object_type
+     * to_object_bind_target
+     * to_opengl_bind_target
+     *
+     * convert between enum types
+     */
+    static major_object_type to_major_object_type ( const minor_object_type type );
+    static object_bind_target to_object_bind_target ( const minor_object_type type );
+    static GLenum to_opengl_bind_target ( const object_bind_target target );
+
+    /* is_texture2d_object_bind_target
+     * is_cubemap_object_bind_target
      * 
-     * unbind a cubemap texture from GL_TEXTURE_CUBE_MAP, if already bound
-     * 
-     * unit: the texture unit to unbind it from
+     * returns true if the target supplied is a texture/cubemap bind target
      */
-    static void unbind_cubemap ( const GLuint id, const unsigned unit );
-
-    /* get_bound_cubemap
-     *
-     * return the id of the cubemap currently bound to the texture unit supplied
-     * returns 0 if no cubemap is bound
-     * 
-     * unit: the texture unit to test
-     */
-    static GLuint get_bound_cubemap ( const unsigned unit );
-
-    /* is_cubemap_bound
-     *
-     * returns true if a cubemap is bound to GL_TEXTURE_CUBE_MAP under the provided texture unit
-     *
-     * unit: the texture unit to check
-     */
-    static bool is_cubemap_bound ( const GLuint id, const unsigned unit );
-
-
-
-    /* RENDERBUFFER OBJECTS */
-
-    /* generate_rbo
-     *
-     * generate a renderbuffer object
-     */
-    static GLuint generate_rbo ();
-
-    /* destroy_rbo
-     *
-     * destroy a renderbuffer object, unbindint it if bound
-     */
-    static void destroy_rbo ( const GLuint id );
-
-    /* bind_rbo
-     *
-     * bind a renderbuffer object
-     */
-    static void bind_rbo ( const GLuint id );
-
-    /* unbind_rbo
-     *
-     * unbind an renderbuffer object, if already bound
-     */
-    static void unbind_rbo ( const GLuint id );
-
-    /* get_bound_rbo
-     *
-     * return the id of the bound rbo
-     * returns 0 if no rbo is bound
-     */
-    static GLuint get_bound_rbo () { return bound_rbo; }
-
-    /* is_rbo_bound
-     *
-     * return true if the rbo is bound
-     */
-    static bool is_rbo_bound ( const GLuint id ) { return ( id != 0 && id == bound_rbo ); }
-
-
-
-    /* FRAMEBUFFER OBJECTS */
-
-    /* generate_fbo
-     *
-     * generate a framebuffer object
-     */
-    static GLuint generate_fbo ();
-
-    /* destroy_fbo
-     *
-     * destroy a framebuffer object, unbinding it if bound
-     */
-    static void destroy_fbo ( const GLuint id );
-
-    /* bind_fbo
-     *
-     * bind a framebuffer object
-     */
-    static void bind_fbo ( const GLuint id );
-
-    /* unbind_fbo
-     *
-     * if the fbo is bound, bind the default fbo instead
-     */
-    static void unbind_fbo ( const GLuint id );
-
-    /* bind_default_fbo
-     *
-     * bind the default framebuffer
-     * this replaces the unbind_framebuffer method, as framebuffer id=0 is the default framebuffer
-     */
-    static void bind_default_fbo ();
-
-    /* get_bound_fbo
-     *
-     * return the id of the bound fbo
-     * returns 0 if no fbo is bound
-     */
-    static GLuint get_bound_fbo () { return bound_fbo; }
-
-    /* is_fbo_bound
-     *
-     * return true if the framebuffer is bound
-     */
-    static bool is_fbo_bound ( const GLuint id ) { return ( id != 0 && id == bound_fbo ); }
+    static bool is_texture2d_object_bind_target ( const object_bind_target target );
+    static bool is_cubemap_object_bind_target ( const object_bind_target target );
 
 
 
@@ -553,41 +333,8 @@ public:
 
 private:
 
-    /* currently bound vbo */
-    static GLuint bound_vbo;
-
-    /* currently bound ebo */
-    static GLuint bound_ebo;
-
-    /* currently bound ubo */
-    static GLuint bound_ubo;
-
-    /* currently bound ubo indices */
-    static std::vector<GLuint> bound_ubo_indices;
-
-    /* currently bound read copy buffer */
-    static GLuint bound_copy_read_buffer;
-
-    /* currently bound copy write buffer */
-    static GLuint bound_copy_write_buffer;
-
-    /* currently bound vao */
-    static GLuint bound_vao;
-
-    /* currently in-use program */
-    static GLuint in_use_program;
-
-    /* array of texture units and their respectively bound textures */
-    static std::vector<GLuint> bound_texture2ds;
-
-    /* array of texture units and their respectively bound cubemaps */
-    static std::vector<GLuint> bound_cubemaps;
-
-    /* currently bound renderbuffer */
-    static GLuint bound_rbo;
-
-    /* currently bound framebuffer */
-    static GLuint bound_fbo;
+    /* object bindings */
+    static std::array<GLuint, static_cast<unsigned> ( object_bind_target::__COUNT__ )> object_bindings;
 
 };
 

@@ -19,770 +19,372 @@
 
 
 
+/* NON-MEMBER FUNCTIONS IMPLEMENTATIONS */
+
+/* operators+- for bind target enum
+ *
+ * allows one to step through indexed bind points
+ */
+glh::core::object_bind_target operator+ ( const glh::core::object_bind_target target, const int scalar )
+{
+    /* using namespace glh::core to save some effort of namespace management */
+    using namespace glh::core;
+
+    /* get new target after adding scalar */
+    const int new_target = static_cast<int> ( target ) + scalar;
+    
+    /* if target is a texture2d indices */
+    if ( om::is_texture2d_object_bind_target ( target ) )
+    {
+        /* if is still a texture2d target, return the new target, otherwise throw */
+        if ( new_target > static_cast<int> ( object_bind_target::__TEXTURE2D_START__ ) && new_target < static_cast<int> ( object_bind_target::__TEXTURE2D_END__ ) )
+            return static_cast<object_bind_target> ( new_target );
+        else throw glh::exception::object_management_exception { "scalar addition to object_bind_target cannot cause the target to no longer refer to a texture2d target" };
+    } else
+
+    /* if target is a cubemap indices */
+    if ( om::is_cubemap_object_bind_target ( target ) )
+    {
+        /* if is still a cubemap target, return the new target, otherwise throw */
+        if ( new_target > static_cast<int> ( object_bind_target::__CUBEMAP_START__ ) && new_target < static_cast<int> ( object_bind_target::__CUBEMAP_END__ ) )
+            return static_cast<object_bind_target> ( new_target );
+        else throw glh::exception::object_management_exception { "scalar addition to object_bind_target cannot cause the target to no longer refer to a cubemap target" };
+    } else
+    
+    /* otherwise throw, as cannot add to target */
+    throw glh::exception::object_management_exception { "scalar addition to object_bind_target is only valid for indexed targets" };
+}
+glh::core::object_bind_target operator- ( const glh::core::object_bind_target target, const int scalar ) { return ( target + -scalar ); }
+int operator- ( const glh::core::object_bind_target target0, const glh::core::object_bind_target target1 )
+{
+    /* using namespace glh::core to save some effort of namespace management */
+    using namespace glh::core;
+
+    /* get difference */
+    const int difference = static_cast<int> ( target0 ) - static_cast<int> ( target1 );
+
+    /* if targets are both texture2d or cubemap indices, return difference, otherwise throw */
+    if ( ( om::is_texture2d_object_bind_target ( target0 ) && om::is_texture2d_object_bind_target ( target1 ) ) || ( om::is_cubemap_object_bind_target ( target0 ) && om::is_cubemap_object_bind_target ( target1 ) ) ) 
+        return difference;
+    else throw glh::exception::object_management_exception { "subtraction between object_bind_target types is only valid if both targets are the same indexed bind target" };
+}
+
+
+
 /* OBJECT_MANAGER IMPLEMENTATION */
 
-/* BUFFER OBJECTS */
-
-/* generate_buffer
+/* generate_object
  *
- * generate a buffer object
+ * generate an object of a given type
+ * 
+ * type: the type of the object (minor type)
+ * 
+ * return: the id of the new object
  */
-GLuint glh::core::object_manager::generate_buffer ()
+GLuint glh::core::object_manager::generate_object ( const minor_object_type type )
 {
-    /* assertions */
-    glh::core::glad_loader::assert_is_loaded ();
+    /* variable to store the id */
+    GLuint id = 0;
 
-    /* generate and return object */
-    GLuint id;
-    glGenBuffers ( 1, &id );
+    /* switch on type to generate object and store in id */
+    switch ( type )
+    {
+    case minor_object_type::GLH_VBO_TYPE: glGenBuffers ( 1, &id ); break;
+    case minor_object_type::GLH_EBO_TYPE: glGenBuffers ( 1, &id ); break;
+    case minor_object_type::GLH_UBO_TYPE: glGenBuffers ( 1, &id ); break;
+    case minor_object_type::GLH_VAO_TYPE: glGenVertexArrays ( 1, &id ); break;
+
+    case minor_object_type::GLH_RBO_TYPE: glGenRenderbuffers ( 1, &id ); break;
+    case minor_object_type::GLH_FBO_TYPE: glGenFramebuffers ( 1, &id ); break;
+
+    case minor_object_type::GLH_VSHADER_TYPE: id = glCreateShader ( GL_VERTEX_SHADER ); break;
+    case minor_object_type::GLH_GSHADER_TYPE: id = glCreateShader ( GL_GEOMETRY_SHADER ); break;
+    case minor_object_type::GLH_FSHADER_TYPE: id = glCreateShader ( GL_FRAGMENT_SHADER ); break;
+    case minor_object_type::GLH_PROGRAM_TYPE: id = glCreateProgram (); break;
+
+    case minor_object_type::GLH_TEXTURE2D_TYPE: glGenTextures ( 1, &id ); break;
+    case minor_object_type::GLH_CUBEMAP_TYPE: glGenTextures ( 1, &id ); break;
+
+    default: throw exception::object_management_exception { "attempted to perform generation operation on unknown object type" };
+    }
+
+    /* return id */
     return id;
 }
 
-/* destroy_buffer
+/* destroy_object
  *
- * destroy a buffer object, unbinding it from any bindings
- */
-void glh::core::object_manager::destroy_buffer ( const GLuint id )
-{
-    /* if not zero, remove bind entry if bound and then destroy */
-    if ( id != 0 )
-    {
-        if ( id == bound_vbo ) bound_vbo = 0;
-        if ( id == bound_vbo ) bound_ebo = 0;
-        if ( id == bound_ubo ) bound_ubo = 0;
-        for ( unsigned i = 0; i < bound_ubo_indices.size (); ++i ) if ( id == bound_ubo_indices.at ( i ) ) bound_ubo_indices.at ( i ) = 0;
-        glDeleteBuffers ( 1, &id );
-    }
-}
-
-
-
-/* bind_vbo
- *
- * bind a buffer object as a vbo
- */
-void glh::core::object_manager::bind_vbo ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "bind vbo" );
-
-    /* if not already bound, bind and record */
-    if ( id != bound_vbo )
-    {
-        glBindBuffer ( GL_ARRAY_BUFFER, id );
-        bound_vbo = id;
-    }
-}
-
-/* unbind_vbo
- *
- * unbind the vbo, only if it is already bound
- */
-void glh::core::object_manager::unbind_vbo ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "unbind vbo" );
-
-    /* if bound, unbind and record */
-    if ( id == bound_vbo )
-    {
-        glBindBuffer ( GL_ARRAY_BUFFER, 0 );
-        bound_vbo = 0;
-    }
-}
-
-/* bind_ebo
- *
- * bind a buffer object as an ebo
- */
-void glh::core::object_manager::bind_ebo ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "bind ebo" );
-
-    /* if not already bound, bind and record */
-    if ( id != bound_ebo )
-    {
-        glBindBuffer ( GL_ELEMENT_ARRAY_BUFFER, id );
-        bound_ebo = id;
-    }
-}
-
-/* unbind_ebo
- *
- * unbind the ebo, only if it is alreay bound
- */
-void glh::core::object_manager::unbind_ebo ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "unbind ebo" );
-
-    /* if bound, unbind and record */
-    if ( id == bound_ebo )
-    {
-        glBindBuffer ( GL_ELEMENT_ARRAY_BUFFER, 0 );
-        bound_ebo = 0;
-    }
-}
-
-/* bind_ubo
- *
- * bind a buffer object as a ubo
- */
-void glh::core::object_manager::bind_ubo ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "bind ubo" );
-
-    /* if not already bound, bind and record */
-    if ( id != bound_ubo )
-    {
-        glBindBuffer ( GL_UNIFORM_BUFFER, id );
-        bound_ubo = id;
-    }
-}
-
-/* unbind_ubo
- *
- * unbind the ubo, only if it is already bound
- */
-void glh::core::object_manager::unbind_ubo ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "unbind ubo" );
-
-    /* if bound, unbind and record */
-    if ( id == bound_ubo )
-    {
-        glBindBuffer ( GL_UNIFORM_BUFFER, 0 );
-        bound_ubo = 0;
-    }
-}
-
-/* bind_ubo_index
- *
- * bind a ubo to an index
- * does NOT bind to the default ubo target
- *
- * index: the index to bind the ubo to
- */
-void glh::core::object_manager::bind_ubo_index ( const GLuint id, const unsigned index )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "bind ubo index" );
-
-    /* resize if necessary */
-    if ( bound_ubo_indices.size () <= index ) bound_ubo_indices.resize ( index + 1, 0 ); 
-
-    /* if not already bound, bind to index, and restore previous default ubo target binding */
-    if ( id != bound_ubo_indices.at ( index ) )
-    {
-        glBindBufferBase ( GL_UNIFORM_BUFFER, index, id );
-        glBindBuffer ( GL_UNIFORM_BUFFER, bound_ubo );
-        bound_ubo_indices.at ( index ) = id;
-    }
-}
-
-/* unbind_ubo_index
- *
- * unbind a ubo from an index
- * does NOT unbind from the default ubo target
- *
- * index: the index to unbind the ubo from
- */
-void glh::core::object_manager::unbind_ubo_index ( const GLuint id, const unsigned index )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "unbind ubo index" );
-
-    /* resize if necessary */
-    if ( bound_ubo_indices.size () <= index ) bound_ubo_indices.resize ( index + 1, 0 ); 
-
-    /* if bound, unbind from index, and restore previous default ubo target binding */
-    if ( id == bound_ubo_indices.at ( index ) )
-    {
-        glBindBufferBase ( GL_UNIFORM_BUFFER, index, 0 );
-        glBindBuffer ( GL_UNIFORM_BUFFER, bound_ubo );
-        bound_ubo_indices.at ( index ) = 0;
-    }
-}
-
-/* get_bound_ubo_index
-*
-* get the ubo bound to an index
-* returns 0 if no ubo is bound to the index
-*/
-GLuint glh::core::object_manager::get_bound_ubo_index ( const unsigned index ) 
-{ 
-    /* resize if necessary, then return */
-    if ( bound_ubo_indices.size () <= index ) bound_ubo_indices.resize ( index + 1, 0 ); 
-    return bound_ubo_indices.at ( index );
-}
-
-/* is_ubo_index_bound
-*
-* returns true if the ubo is bound to an index
-*/
-bool glh::core::object_manager::is_ubo_bound_index ( const GLuint id, const unsigned index ) 
-{ 
-    /* resize if necessary, then return */
-    if ( bound_ubo_indices.size () <= index ) bound_ubo_indices.resize ( index + 1, 0 ); 
-    return ( id != 0 && id == bound_ubo_indices.at ( index ) ); 
-}
-
-/* bind_copy_read_buffer
- *
- * bind a buffer object to GL_COPY_READ_BUFFER
- */
-void glh::core::object_manager::bind_copy_read_buffer ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "bind copy read buffer" );
-
-    /* if not already bound, bind and record */
-    if ( id != bound_copy_read_buffer )
-    {
-        glBindBuffer ( GL_COPY_READ_BUFFER, id );
-        bound_copy_read_buffer = id;
-    }
-}
-
-/* unbind_copy_read_buffer
- *
- * unbind a buffer object from GL_COPY_READ_BUFFER
- */
-void glh::core::object_manager::unbind_copy_read_buffer ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "unbind copy read buffer" );
-
-    /* if bound, unbind and record */
-    if ( id == bound_copy_read_buffer )
-    {
-        glBindBuffer ( GL_COPY_READ_BUFFER, 0 );
-        bound_copy_read_buffer = 0;
-    }
-}
-
-/* bind_copy_write_buffer
- *
- * bind a buffer object to GL_COPY_WRITE_BUFFER
- */
-void glh::core::object_manager::bind_copy_write_buffer ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "bind copy write buffer" );
-
-    /* if not already bound, bind and record */
-    if ( id != bound_copy_write_buffer )
-    {
-        glBindBuffer ( GL_COPY_WRITE_BUFFER, id );
-        bound_copy_write_buffer = id;;
-    }
-}
-
-/* unbind_copy_write_buffer
- *
- * unbind a buffer object to GL_COPY_WRITE_BUFFER
- */
-void glh::core::object_manager::unbind_copy_write_buffer ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "unbind copy write buffer" );
-
-    /* if bound, unbind and record */
-    if ( id == bound_copy_write_buffer )
-    {
-        glBindBuffer ( GL_COPY_WRITE_BUFFER, 0 );
-        bound_copy_write_buffer = 0;
-    }
-}
-
-
-
-/* VERTEX ARRAY OBJECTS */
-
-/* generate_vao
- *
- * generate a vertex array object
- */
-GLuint glh::core::object_manager::generate_vao ()
-{
-    /* assertions */
-    glh::core::glad_loader::assert_is_loaded ();
-
-    /* generate and return object */
-    GLuint id;
-    glGenVertexArrays ( 1, &id );
-    return id;
-}
-
-/* destroy_vao
- *
- * destroy a vao, unbinding it if is bound
- */
-void glh::core::object_manager::destroy_vao ( const GLuint id )
-{
-    /* if not zero, remove bind entry if bound and then destroy */
-    if ( id != 0 )
-    {
-        if ( id == bound_vao ) bound_vao = 0;
-        glDeleteVertexArrays ( 1, &id );
-    }
-}
-
-/* bind_vao
- *
- * bind a vao
- */
-void glh::core::object_manager::bind_vao ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "bind vbo" );
-
-    /* if not already bound, bind and record */
-    if ( id != bound_vao )
-    {
-        glBindVertexArray ( id );
-        bound_vao = id;;
-    }
-}
-
-/* unbind_vao
- *
- * unbind the vao, only if it is already bound
- */
-void glh::core::object_manager::unbind_vao ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "unbind vbo" );
-
-    /* if bound, unbind and record */
-    if ( id == bound_vao )
-    {
-        glBindVertexArray ( 0 );
-        bound_vao = 0;
-    }
-}
-
-
-
-/* SHADER/PROGRAM OBJECTS */
-
-/* generate_shader
- *
- * generate a shader object
+ * destroy an object of a given type
  * 
- * type: the type of the shader
+ * id: the id of the object to destroy
+ * type: the type of the object (major type)
  */
-GLuint glh::core::object_manager::generate_shader ( const GLenum type )
+void glh::core::object_manager::destroy_object ( const GLuint id, const minor_object_type type )
 {
-    /* assertions */
-    glh::core::glad_loader::assert_is_loaded ();
+    /* unbind from all bind points */
+    unbind_object_all ( id, type );
 
-    /* generate and return object */
-    return glCreateShader ( type );
+    /* switch on type to destroy object */
+    switch ( type )
+    {
+    case minor_object_type::GLH_VBO_TYPE: glDeleteBuffers ( 1, &id ); break;
+    case minor_object_type::GLH_EBO_TYPE: glDeleteBuffers ( 1, &id ); break;
+    case minor_object_type::GLH_UBO_TYPE: glDeleteBuffers ( 1, &id ); break;
+    case minor_object_type::GLH_VAO_TYPE: glDeleteVertexArrays ( 1, &id ); break;
+
+    case minor_object_type::GLH_RBO_TYPE: glDeleteRenderbuffers ( 1, &id ); break;
+    case minor_object_type::GLH_FBO_TYPE: glDeleteFramebuffers ( 1, &id ); break;
+
+    case minor_object_type::GLH_VSHADER_TYPE: glDeleteShader ( id ); break;
+    case minor_object_type::GLH_GSHADER_TYPE: glDeleteShader ( id ); break;
+    case minor_object_type::GLH_FSHADER_TYPE: glDeleteShader ( id ); break;
+    case minor_object_type::GLH_PROGRAM_TYPE: glDeleteProgram ( id ); break;
+
+    case minor_object_type::GLH_TEXTURE2D_TYPE: glDeleteTextures ( 1, &id ); break;
+    case minor_object_type::GLH_CUBEMAP_TYPE: glDeleteTextures ( 1, &id ); break;
+
+    default: throw exception::object_management_exception { "attempted to perform destroy operation on unknown object type" };
+    }
 }
 
-/* destroy_shader
+/* unbind_object_all
  *
- * destroy a shader object
- */
-void glh::core::object_manager::destroy_shader ( const GLuint id )
-{
-    /* if not zero destroy object */
-    if ( id != 0 ) glDeleteShader ( id );
-}
-
-/* generate_program
- *
- * generate a program object
- */
-GLuint glh::core::object_manager::generate_program ()
-{
-    /* assertions */
-    glh::core::glad_loader::assert_is_loaded ();
-
-    /* generate and return object */
-    return glCreateProgram ();
-}
-
-/* destroy_program
+ * unbinds an object from all possible bind points
+ * includes all indexed bindings, where applicable
  * 
- * destroy a program object, making it not in use in the progrss
+ * id: the id of the object to unbind
+ * type: the type of the object (minor type)
  */
-void glh::core::object_manager::destroy_program ( const GLuint id )
+void glh::core::object_manager::unbind_object_all ( const GLuint id, const minor_object_type type )
 {
-    /* if not zero, remove in use entry and then destroy */
-    if ( id != 0 )
+    /* get the bind target */
+    const object_bind_target target = to_object_bind_target ( type );
+
+    /* if target is a texture bind point, ensure is unbound from all units, otherwise just unbind */
+    if ( target == object_bind_target::GLH_TEXTURE2D_0_TARGET || target == object_bind_target::GLH_CUBEMAP_0_TARGET )
     {
-        if ( id == in_use_program ) in_use_program = 0;
-        glDeleteProgram ( id );
-    }
+        for ( unsigned i = 0; i < 32; ++i ) unbind_object ( id, target + i );
+    } else unbind_object ( id, target );
 }
 
-/* use_program
+/* bind_object
  *
- * make a program currently in use
- */
-void glh::core::object_manager::use_program ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "use program" );
-
-    /* if not alreay in use, use and record */
-    if ( id != in_use_program )
-    {
-        glUseProgram ( id );
-        in_use_program = id;;
-    }
-}
-
-/* unuse_program
- *
- * unuse the program, only if it is already in use
- */
-void glh::core::object_manager::unuse_program ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "unuse program" );
-
-    /* if in use, unuse and record */
-    if ( id == in_use_program )
-    {
-        glUseProgram ( 0 );
-        in_use_program = 0;
-    }
-}
-
-
-
-/* TEXTURE OBJECTS */
-
-/* generate_texture
+ * bind an object to a target
+ * if already bound, it will not be bound twice
  * 
- * generate a texture object
+ * id: the id of the object
+ * type: the bind target of the object (bind target)
  */
-GLuint glh::core::object_manager::generate_texture ()
-{
-    /* assertions */
-    glh::core::glad_loader::assert_is_loaded ();
+void glh::core::object_manager::bind_object ( const GLuint id, const object_bind_target target )
+{   
+    /* if already bound, return */
+    if ( object_bindings.at ( static_cast<unsigned> ( target ) ) == id ) return;
 
-    /* generate texture and return */
-    GLuint id;
-    glGenTextures ( 1, &id );
-    return id;
+    /* otherwise record the binding */
+    object_bindings.at ( static_cast<unsigned> ( target ) ) = id;
+
+    /* switch on target and bind to default bind point */
+    switch ( target )
+    {
+    case object_bind_target::GLH_VBO_TARGET: glBindBuffer ( GL_ARRAY_BUFFER, id ); break;
+    case object_bind_target::GLH_EBO_TARGET: glBindBuffer ( GL_ELEMENT_ARRAY_BUFFER, id ); break;
+    case object_bind_target::GLH_UBO_TARGET: glBindBuffer ( GL_UNIFORM_BUFFER, id ); break;
+    case object_bind_target::GLH_COPY_READ_BUFFER_TARGET: glBindBuffer ( GL_COPY_READ_BUFFER, id ); break;
+    case object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET: glBindBuffer ( GL_COPY_WRITE_BUFFER, id ); break;
+    case object_bind_target::GLH_VAO_TARGET: glBindVertexArray ( id ); break;
+
+    case object_bind_target::GLH_RBO_TARGET: glBindRenderbuffer ( GL_RENDERBUFFER, id ); break;
+    case object_bind_target::GLH_FBO_TARGET: glBindFramebuffer ( GL_FRAMEBUFFER, id ); break;
+
+    case object_bind_target::GLH_PROGRAM_TARGET: glUseProgram ( id ); break;
+
+    case object_bind_target::GLH_NO_TARGET: break;
+
+    default:
+        if ( is_texture2d_object_bind_target ( target ) )
+        {
+            glActiveTexture ( GL_TEXTURE0 + ( target - object_bind_target::GLH_TEXTURE2D_0_TARGET ) );
+            glBindTexture ( GL_TEXTURE_2D, id );
+        } else
+        if ( is_cubemap_object_bind_target ( target ) )
+        {
+            glActiveTexture ( GL_TEXTURE0 + ( target - object_bind_target::GLH_CUBEMAP_0_TARGET ) );
+            glBindTexture ( GL_TEXTURE_CUBE_MAP, id );
+        } else
+        throw exception::object_management_exception { "attempted to perform bind operation to unknown target" };
+    }
 }
 
-/* destroy_texture
+/* unbind_object
  *
- * destroy a texture object, unbinding it from any texture units
- */
-void glh::core::object_manager::destroy_texture ( const GLuint id )
-{
-    /* unbind the texture from any texture units and return */
-    for ( unsigned i = 0; i < bound_texture2ds.size (); ++i ) if ( id == bound_texture2ds.at ( i ) ) bound_texture2ds.at ( i ) = 0;
-    for ( unsigned i = 0; i < bound_cubemaps.size (); ++i ) if ( id == bound_cubemaps.at ( i ) ) bound_cubemaps.at ( i ) = 0;
-    glDeleteTextures ( 1, &id );
-}
-
-/* bind_texture2d
- *
- * bind a texture2d to a texture unit
+ * unbind an object from a target
+ * if not bound, the function returns having done nothing
  * 
- * unit: the texture unit to bind it to
+ * id: the id of the object
+ * target: the bind target of the object (bind target)
  */
-void glh::core::object_manager::bind_texture2d ( const GLuint id, const unsigned unit )
+void glh::core::object_manager::unbind_object ( const GLuint id, const object_bind_target target )
 {
-    /* assertions */
-    assert_is_object_valid ( id, "bind testure2d" );   
+    /* if not bound, return */
+    if ( object_bindings.at ( static_cast<unsigned> ( target ) ) != id ) return;
 
-    /* resize if necessary */
-    if ( bound_texture2ds.size () <= unit ) bound_texture2ds.resize ( unit + 1, 0 ); 
+    /* otherwise record the unbinding */
+    object_bindings.at ( static_cast<unsigned> ( target ) ) = 0;
 
-    /* if not already bound, bind and record */
-    if ( id != bound_texture2ds.at ( unit ) )
+    /* switch on target and bind to default bind point */
+    switch ( target )
     {
-        glActiveTexture ( GL_TEXTURE0 + unit );
-        glBindTexture ( GL_TEXTURE_2D, id );
-        bound_texture2ds.at ( unit ) = id;
+    case object_bind_target::GLH_VBO_TARGET: glBindBuffer ( GL_ARRAY_BUFFER, 0 ); break;
+    case object_bind_target::GLH_EBO_TARGET: glBindBuffer ( GL_ELEMENT_ARRAY_BUFFER, 0 ); break;
+    case object_bind_target::GLH_UBO_TARGET: glBindBuffer ( GL_UNIFORM_BUFFER, 0 ); break;
+    case object_bind_target::GLH_COPY_READ_BUFFER_TARGET: glBindBuffer ( GL_COPY_READ_BUFFER, 0 ); break;
+    case object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET: glBindBuffer ( GL_COPY_WRITE_BUFFER, 0 ); break;
+    case object_bind_target::GLH_VAO_TARGET: glBindVertexArray ( 0 ); break;
+
+    case object_bind_target::GLH_RBO_TARGET: glBindRenderbuffer ( GL_RENDERBUFFER, 0 ); break;
+    case object_bind_target::GLH_FBO_TARGET: glBindFramebuffer ( GL_FRAMEBUFFER, 0 ); break;
+
+    case object_bind_target::GLH_PROGRAM_TARGET: glUseProgram ( 0 ); break;
+
+    case object_bind_target::GLH_NO_TARGET: break;
+
+    default:
+        if ( is_texture2d_object_bind_target ( target ) )
+        {
+            glActiveTexture ( GL_TEXTURE0 + ( target - object_bind_target::GLH_TEXTURE2D_0_TARGET ) );
+            glBindTexture ( GL_TEXTURE_2D, 0 );
+        } else
+        if ( is_cubemap_object_bind_target ( target ) )
+        {
+            glActiveTexture ( GL_TEXTURE0 + ( target - object_bind_target::GLH_CUBEMAP_0_TARGET ) );
+            glBindTexture ( GL_TEXTURE_CUBE_MAP, 0 );
+        } else
+        throw exception::object_management_exception { "attempted to perform unbind operation to unknown target" };
     }
 }
 
-
-/* unbind_texture2d
+/* get_bound_object
  *
- * unbind a texture2d from a unit, if it is already bound
+ * get the object thats bound to a target
+ *
+ * target: the bind target of the object (bind target)
+ *
+ * return: the id of the bound object
+ */
+GLuint glh::core::object_manager::get_bound_object ( const object_bind_target target )
+{   
+    /* return object from bind point */
+    return object_bindings.at ( static_cast<unsigned> ( target ) );
+}
+
+/* is_object_bound
+ *
+ * return true if an object is bound to its target
  * 
- * unit: the texture unit to unbind it from
+ * id: the id of the object to check
+ * target: the bind target of the object (bind target)
+ *
+ * return: true if bound, false if not
  */
-void glh::core::object_manager::unbind_texture2d ( const GLuint id, const unsigned unit )
+bool glh::core::object_manager::is_object_bound ( const GLuint id, const object_bind_target target )
 {
-    /* assertions */
-    assert_is_object_valid ( id, "unbind texture2d" );
-        
-    /* resize if necessary */
-    if ( bound_texture2ds.size () <= unit ) bound_texture2ds.resize ( unit + 1, 0 ); 
+    /* return comparison between supplied id and bound id */
+    return ( object_bindings.at ( static_cast<unsigned> ( target ) ) == id );
+}
 
-    /* if already bound, unbind and record */
-    if ( id == bound_texture2ds.at ( unit ) )
+/* to_major/gen/object_bind_target
+ *
+ * take a minor object type and convert it to its major, gen or bind object type
+ */
+glh::core::major_object_type glh::core::object_manager::to_major_object_type ( const minor_object_type type )
+{
+    /* switch for different object types */
+    switch ( type )
     {
-        glActiveTexture ( GL_TEXTURE0 + unit );
-        glBindTexture ( GL_TEXTURE_2D, 0 );
-        bound_texture2ds.at ( unit ) = 0;
+    case minor_object_type::GLH_VBO_TYPE: return major_object_type::GLH_BUFFER_TYPE;
+    case minor_object_type::GLH_EBO_TYPE: return major_object_type::GLH_BUFFER_TYPE;
+    case minor_object_type::GLH_UBO_TYPE: return major_object_type::GLH_BUFFER_TYPE;
+    case minor_object_type::GLH_VAO_TYPE: return major_object_type::GLH_VAO_TYPE;
+    
+    case minor_object_type::GLH_RBO_TYPE: return major_object_type::GLH_RBO_TYPE;
+    case minor_object_type::GLH_FBO_TYPE: return major_object_type::GLH_FBO_TYPE;
+
+    case minor_object_type::GLH_VSHADER_TYPE: return major_object_type::GLH_SHADER_TYPE;
+    case minor_object_type::GLH_GSHADER_TYPE: return major_object_type::GLH_SHADER_TYPE;
+    case minor_object_type::GLH_FSHADER_TYPE: return major_object_type::GLH_SHADER_TYPE;
+    case minor_object_type::GLH_PROGRAM_TYPE: return major_object_type::GLH_PROGRAM_TYPE;
+
+    case minor_object_type::GLH_TEXTURE2D_TYPE: return major_object_type::GLH_TEXTURE_TYPE;
+    case minor_object_type::GLH_CUBEMAP_TYPE: return major_object_type::GLH_TEXTURE_TYPE;
+    
+    default: throw exception::object_management_exception { "attempted to perform minor to major type conversion on unknown object type" };
+    }
+}
+glh::core::object_bind_target glh::core::object_manager::to_object_bind_target ( const minor_object_type type )
+{
+    /* switch for different object types */
+    switch ( type )
+    {
+    case minor_object_type::GLH_VBO_TYPE: return object_bind_target::GLH_VBO_TARGET;
+    case minor_object_type::GLH_EBO_TYPE: return object_bind_target::GLH_EBO_TARGET;
+    case minor_object_type::GLH_UBO_TYPE: return object_bind_target::GLH_UBO_TARGET;
+    case minor_object_type::GLH_VAO_TYPE: return object_bind_target::GLH_VAO_TARGET;
+    
+    case minor_object_type::GLH_RBO_TYPE: return object_bind_target::GLH_RBO_TARGET;
+    case minor_object_type::GLH_FBO_TYPE: return object_bind_target::GLH_FBO_TARGET;
+
+    case minor_object_type::GLH_VSHADER_TYPE: return object_bind_target::GLH_NO_TARGET;
+    case minor_object_type::GLH_GSHADER_TYPE: return object_bind_target::GLH_NO_TARGET;
+    case minor_object_type::GLH_FSHADER_TYPE: return object_bind_target::GLH_NO_TARGET;
+    case minor_object_type::GLH_PROGRAM_TYPE: return object_bind_target::GLH_PROGRAM_TARGET;
+
+    case minor_object_type::GLH_TEXTURE2D_TYPE: return object_bind_target::GLH_TEXTURE2D_0_TARGET;
+    case minor_object_type::GLH_CUBEMAP_TYPE: return object_bind_target::GLH_CUBEMAP_0_TARGET;
+    
+    default: throw exception::object_management_exception { "attempted to perform minor to bind target conversion on unknown object type" };
+    }
+}
+GLenum glh::core::object_manager::to_opengl_bind_target ( const object_bind_target target )
+{
+    /* switch on target and bind to default bind point */
+    switch ( target )
+    {
+    case object_bind_target::GLH_VBO_TARGET: return GL_ARRAY_BUFFER;
+    case object_bind_target::GLH_EBO_TARGET: return GL_ELEMENT_ARRAY_BUFFER;
+    case object_bind_target::GLH_UBO_TARGET: return GL_UNIFORM_BUFFER;
+    case object_bind_target::GLH_COPY_READ_BUFFER_TARGET: return GL_COPY_READ_BUFFER;
+    case object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET: return GL_COPY_WRITE_BUFFER;
+    case object_bind_target::GLH_VAO_TARGET: return GL_NONE;
+
+    case object_bind_target::GLH_RBO_TARGET: return GL_RENDERBUFFER;
+    case object_bind_target::GLH_FBO_TARGET: return GL_FRAMEBUFFER;
+
+    case object_bind_target::GLH_PROGRAM_TARGET: return GL_NONE;
+
+    case object_bind_target::GLH_NO_TARGET: return GL_NONE;
+
+    default:
+        if ( is_texture2d_object_bind_target ( target ) ) return GL_TEXTURE_2D; else
+        if ( is_cubemap_object_bind_target ( target ) ) return GL_TEXTURE_CUBE_MAP; else
+        throw exception::object_management_exception { "attempted to perform glh to opengl bind target conversion on unknown target" };
     }
 }
 
-/* get_bound_texture2d
- *
- * return the id of the texture currently bound to the texture unit supplied
- * returns 0 if no texture is bound
+/* is_texture2d_object_bind_target
+ * is_cubemap_object_bind_target
  * 
- * unit: the texture unit to test
+ * returns true if the target supplied is a texture/cubemap bind target
  */
-GLuint glh::core::object_manager::get_bound_texture2d ( const unsigned unit ) 
-{ 
-    /* resize if necessary then return */
-    if ( bound_texture2ds.size () <= unit ) bound_texture2ds.resize ( unit + 1, 0 ); 
-    return bound_texture2ds.at ( unit );
-}
-
-/* is_texture2d_bound
- *
- * returns true if a texture2d is bound to the provided texture unit
- *
- * unit: the texture unit to check
- */
-bool glh::core::object_manager::is_texture2d_bound ( const GLuint id, const unsigned unit )
-{ 
-    /* resize if necessary then return */
-    if ( bound_texture2ds.size () <= unit ) bound_texture2ds.resize ( unit + 1, 0 ); 
-    return ( id != 0 && id == bound_texture2ds.at ( unit ) );
-}
-
-
-/* bind_cubemap
- *
- * bind a cubemap texture to GL_TEXTURE_CUBE_MAP, if not already bounc
- * 
- * unit: the texture unit to bind it to
- */
-void glh::core::object_manager::bind_cubemap ( const GLuint id, const unsigned unit )
+bool glh::core::object_manager::is_texture2d_object_bind_target ( const object_bind_target target )
 {
-    /* assertions */
-    assert_is_object_valid ( id, "bind cubemap" );  
-
-    /* resize if necessary */
-    if ( bound_cubemaps.size () <= unit ) bound_cubemaps.resize ( unit + 1, 0 ); 
-
-    /* if not already bound, bind and record */
-    if ( id != bound_cubemaps.at ( unit ) )
-    {
-        glActiveTexture ( GL_TEXTURE0 + unit );
-        glBindTexture ( GL_TEXTURE_CUBE_MAP, id );
-        bound_cubemaps.at ( unit ) = id;;
-    }
+    /* if the target is between __TEXTURE2D_START__ and __TEXTURE2D_END__ return true, else false */
+    return ( target > object_bind_target::__TEXTURE2D_START__ && target < object_bind_target::__TEXTURE2D_END__ );
 }
-
-/* unbind_cubemap
- * 
- * unbind a cubemap texture from GL_TEXTURE_CUBE_MAP, if already bound
- * 
- * unit: the texture unit to unbind it from
- */
-void glh::core::object_manager::unbind_cubemap ( const GLuint id, const unsigned unit )
+bool glh::core::object_manager::is_cubemap_object_bind_target ( const object_bind_target target )
 {
-    /* assertions */
-    assert_is_object_valid ( id, "unbind cubemap" );  
-        
-    /* resize if necessary */
-    if ( bound_cubemaps.size () <= unit ) bound_cubemaps.resize ( unit + 1, 0 ); 
-
-    /* if already bound, unbind and record */
-    if ( id == bound_cubemaps.at ( unit ) )
-    {
-        glActiveTexture ( GL_TEXTURE0 + unit );
-        glBindTexture ( GL_TEXTURE_CUBE_MAP, id );
-        bound_cubemaps.at ( unit ) = 0;
-    }
+    /* if the target is between __CUBEMAP_START__ and __CUBEMAP_END__ return true, else false */
+    return ( target >= object_bind_target::__CUBEMAP_START__ && target <= object_bind_target::__CUBEMAP_END__ );
 }
-
-/* get_bound_cubemap
- *
- * return the id of the cubemap currently bound to the texture unit supplied
- * returns 0 if no cubemap is bound
- * 
- * unit: the texture unit to test
- */
-GLuint glh::core::object_manager::get_bound_cubemap ( const unsigned unit ) 
-{ 
-    /* resize if necessary then return */
-    if ( bound_cubemaps.size () <= unit ) bound_cubemaps.resize ( unit + 1, 0 );
-    return bound_cubemaps.at ( unit );
-}
-
-/* is_cubemap_bound
-*
-* returns true if a cubemap is bound to GL_TEXTURE_CUBE_MAP under the provided texture unit
-*
-* unit: the texture unit to check
-*/
-bool glh::core::object_manager::is_cubemap_bound ( const GLuint id, const unsigned unit )
-{ 
-    /* resize if necessary then return */
-    if ( bound_cubemaps.size () <= unit ) bound_cubemaps.resize ( unit + 1, 0 ); 
-    return ( id != 0 && id == bound_cubemaps.at ( unit ) );
-}
-
-
-
-/* RENDERBUFFER OBJECTS */
-
-/* generate_rbo
- *
- * generate a renderbuffer object
- */
-GLuint glh::core::object_manager::generate_rbo ()
-{
-    /* assertions */
-    glh::core::glad_loader::assert_is_loaded ();
-
-    /* generate rbo and return */
-    GLuint id;
-    glGenRenderbuffers ( 1, &id );
-    return id;
-}
-
-/* destroy_rbo
- *
- * destroy a renderbuffer object, unbindint it if bound
- */
-void glh::core::object_manager::destroy_rbo ( const GLuint id )
-{
-    /* if not zero, remove bind entry if bound and then destroy */
-    if ( id != 0 )
-    {
-        if ( id == bound_rbo ) bound_rbo = 0;
-        glDeleteRenderbuffers ( 1, &id );
-    }
-}
-
-/* bind_rbo
- *
- * bind a renderbuffer object
- */
-void glh::core::object_manager::bind_rbo ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "bind rbo" );  
-
-    /* if not already bound, bind and record */
-    if ( id != bound_rbo )
-    {
-        glBindRenderbuffer ( GL_RENDERBUFFER, id );
-        bound_rbo = id;;
-    }
-}
-
-/* unbind_rbo
- *
- * unbind an renderbuffer object, if already bound
- */
-void glh::core::object_manager::unbind_rbo ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "unbind rbo" );
-
-    /* if already bound, unbind and record */
-    if ( id == bound_rbo )
-    {
-        glBindRenderbuffer ( GL_RENDERBUFFER, 0 );
-        bound_rbo = 0;
-    } 
-}
-
-
-
-/* FRAMEBUFFER OBJECTS */
-
-/* generate_fbo
- *
- * generate a framebuffer object
- */
-GLuint glh::core::object_manager::generate_fbo ()
-{
-    /* assertions */
-    glh::core::glad_loader::assert_is_loaded ();
-
-    /* generate and return framebuffer */
-    GLuint id;
-    glGenFramebuffers ( 1, &id );
-    return id;
-}
-
-/* destroy_fbo
- *
- * destroy a framebuffer object, unbinding it if bound
- */
-void glh::core::object_manager::destroy_fbo ( const GLuint id )
-{
-    /* if not zero, remove bind entry if bound and then destroy */
-    if ( id != 0 )
-    {
-        if ( id == bound_fbo ) bound_fbo = 0;
-        glDeleteFramebuffers ( 1, &id );
-    }
-}
-
-/* bind_fbo
- *
- * bind a framebuffer object
- */
-void glh::core::object_manager::bind_fbo ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "bind fbo" );    
-
-    /* if not already bound, bind and record */
-    if ( id != bound_fbo )
-    {
-        glBindFramebuffer ( GL_FRAMEBUFFER, id );
-        bound_fbo = id;;
-    }
-}
-
-/* unbind_fbo
- *
- * if the fbo is bound, bind the default fbo instead
- */
-void glh::core::object_manager::unbind_fbo ( const GLuint id )
-{
-    /* assertions */
-    assert_is_object_valid ( id, "unbind fbo" );    
-
-    /* if already bound, unbind and record */
-    if ( id == bound_fbo )
-    {
-        glBindFramebuffer ( GL_FRAMEBUFFER, 0 );
-        bound_fbo = 0;
-    } 
-}
-
-/* bind_default_framebuffer
- *
- * bind the default framebuffer
- */
-void glh::core::object_manager::bind_default_fbo ()
-{
-    /* if not already default, set to default */
-    if ( 0 != bound_fbo )
-    {
-        glBindFramebuffer ( GL_FRAMEBUFFER, 0 );
-        bound_fbo = 0;
-    }
-}
-
-
 
 /* assert_is_object_valid
  *
@@ -805,38 +407,17 @@ void glh::core::object_manager::assert_is_object_valid ( const GLuint id, const 
 
 /* STATIC MEMBERS DEFINITIONS */
 
-/* currently bound vbo */
-GLuint glh::core::object_manager::bound_vbo { 0 };
-
-/* currently bound ebo */
-GLuint glh::core::object_manager::bound_ebo { 0 };
-
-/* currently bound ubo */
-GLuint glh::core::object_manager::bound_ubo { 0 };
-
-/* currently bound ubo indices */
-std::vector<GLuint> glh::core::object_manager::bound_ubo_indices {};
-
-/* currently bound read copy buffer */
-GLuint glh::core::object_manager::bound_copy_read_buffer { 0 };
-
-/* currently bound copy write buffer */
-GLuint glh::core::object_manager::bound_copy_write_buffer { 0 };
-
-/* currently bound vao */
-GLuint glh::core::object_manager::bound_vao { 0 };
-
-/* currently in-use program */
-GLuint glh::core::object_manager::in_use_program { 0 };
-
-/* array of texture units and their respectively bound textures */
-std::vector<GLuint> glh::core::object_manager::bound_texture2ds {};
-
-/* array of texture units and their respectively bound cubemaps */
-std::vector<GLuint> glh::core::object_manager::bound_cubemaps {};
-
-/* currently bound renderbuffer */
-GLuint glh::core::object_manager::bound_rbo { 0 };
-
-/* currently bound framebuffer */
-GLuint glh::core::object_manager::bound_fbo { 0 };
+/* object bindings */
+std::array<GLuint, static_cast<unsigned> ( glh::core::object_bind_target::__COUNT__ )> glh::core::object_manager::object_bindings
+{
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0
+};
