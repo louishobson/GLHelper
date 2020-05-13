@@ -38,7 +38,7 @@ void glh::core::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data
     assert_is_not_mapped ( "buffer data" );
 
     /* buffer data and change capacity */
-    glBufferData ( target, size, data, usage );
+    glBufferData ( gl_target, size, data, usage );
     capacity = size;
 
     /* unbind the buffer */
@@ -64,7 +64,7 @@ void glh::core::buffer::buffer_sub_data ( const GLintptr offset, const GLsizeipt
     throw exception::buffer_exception { "attempted to perform buffer sub data operation with incompatible paramaters for buffer capacities" };
 
     /* buffer data */
-    glBufferSubData ( target, offset, size, data );
+    glBufferSubData ( gl_target, offset, size, data );
 
     /* unbind the buffer */
     unbind ();
@@ -114,7 +114,7 @@ void glh::core::buffer::clear_data ()
     assert_is_not_mapped ( "clear data" );
 
     /* empty buffer data */
-    glBufferData ( target, 0, NULL, GL_STATIC_DRAW );
+    glBufferData ( gl_target, 0, NULL, GL_STATIC_DRAW );
 
     /* unbind the buffer */
     unbind ();
@@ -137,56 +137,8 @@ void glh::core::buffer::unmap ()
         
         /* unmap the buffer, throwing if fails */
         bind ();
-        if ( glUnmapBuffer ( target ) != GL_TRUE ) throw exception::buffer_exception { "failed to unmap buffer" };
+        if ( glUnmapBuffer ( gl_target ) != GL_TRUE ) throw exception::buffer_exception { "failed to unmap buffer" };
         unbind ();
-    }
-}
-
-/* bind
- *
- * bind the buffer
- */
-void glh::core::buffer::bind () const
-{
-    /* switch for different targets */
-    switch ( target )
-    {
-        case GL_ARRAY_BUFFER: object_manager::bind_vbo ( id ); break;
-        case GL_ELEMENT_ARRAY_BUFFER: object_manager::bind_ebo ( id ); break;
-        case GL_UNIFORM_BUFFER: object_manager::bind_ubo ( id ); break;
-        default: exception::object_management_exception { "attempted to perform bind operation on unknown buffer object" };
-    }
-}
-
-/* unbind
- *
- * unbind the buffer's target
- */
-void glh::core::buffer::unbind () const
-{
-    /* switch for different targets */
-    switch ( target )
-    {
-        case GL_ARRAY_BUFFER: object_manager::unbind_vbo ( id ); break;
-        case GL_ELEMENT_ARRAY_BUFFER: object_manager::unbind_ebo ( id ); break;
-        case GL_UNIFORM_BUFFER: object_manager::unbind_ubo ( id ); break;
-        default: throw exception::object_management_exception { "attempted to perform bind operation on unknown buffer object" };
-    }
-}
-
-/* is_bound
- *
- * checks if the buffer is bound
- */
-bool glh::core::buffer::is_bound () const
-{
-    /* switch for different targets */
-    switch ( target )
-    {
-        case GL_ARRAY_BUFFER: return object_manager::is_vbo_bound ( id );
-        case GL_ELEMENT_ARRAY_BUFFER: return object_manager::is_ebo_bound ( id );
-        case GL_UNIFORM_BUFFER: return object_manager::is_ubo_bound ( id );
-        default: throw exception::object_management_exception { "attempted to perform bind check operation on unknown buffer object" };
     }
 }
 
@@ -203,7 +155,7 @@ GLvoid * glh::core::buffer::generate_map ()
 
     /* else generate the map */
     bind ();
-    map_ptr = glMapBuffer ( target, GL_READ_WRITE );
+    map_ptr = glMapBuffer ( gl_target, GL_READ_WRITE );
     unbind ();
 
     /* return the map */

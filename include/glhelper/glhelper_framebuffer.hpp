@@ -107,34 +107,9 @@ public:
     /* deleted copy assignment operator */
     rbo& operator= ( const rbo& other ) = delete;
 
-    /* destructor */
-    ~rbo () { destroy (); }
+    /* default estructor */
+    ~rbo () = default;
 
-
-
-    /* destroy 
-     *
-     * destroy the renderbuffer
-     */
-    void destroy () { object_manager::destroy_rbo ( id ); id = 0; }
-
-    /* bind
-     *
-     * bind the renderbuffer
-     */
-    void bind () const { object_manager::bind_rbo ( id ); }
-
-    /* unbind
-     *
-     * unbind the renderbuffer, if already bound
-     */
-    void unbind () const { object_manager::unbind_rbo ( id ); }
-
-    /* is_bound
-     *
-     * return true if the renderbuffer is bound
-     */
-    bool is_bound () const { return object_manager::is_rbo_bound ( id ); }
 };
 
 
@@ -154,7 +129,7 @@ public:
      * construct empty framebuffer
      */
     fbo ()
-        : object { object_manager::generate_fbo () }
+        : object { minor_object_type::GLH_FBO_TYPE }
     {}
 
     /* deleted copy constructor */
@@ -166,8 +141,8 @@ public:
     /* deleted copy assignment operator */
     fbo& operator= ( const fbo& other ) = delete;
 
-    /* destructor */
-    ~fbo () { destroy (); }
+    /* default destructor */
+    ~fbo () = default;
 
 
 
@@ -197,32 +172,6 @@ public:
      * return true if the framebuffer is complete
      */
     bool is_complete () const;
-
-
-
-    /* destroy
-     *
-     * destroys the object, setting its id to 0
-     */
-    void destroy () { object_manager::destroy_fbo ( id ); id = 0; }
-
-    /* bind
-     *
-     * bind the fbo
-     */
-    void bind () const { object_manager::bind_fbo ( id ); }
-
-    /* unbind
-     *
-     * unbind the fbo, if bound
-     */
-    void unbind () const { object_manager::unbind_fbo ( id ); }
-
-    /* is_bound
-     *
-     * return true if the fbo is bound
-     */
-    bool is_bound () const { return object_manager::is_fbo_bound ( id ); }
 
 };
 

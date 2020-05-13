@@ -29,7 +29,7 @@
  * format: the storage format of the renderbuffer
  */
 glh::core::rbo::rbo ( const unsigned width, const unsigned height, const GLenum format )
-    : object { object_manager::generate_rbo () }
+    : object { minor_object_type::GLH_RBO_TYPE }
 {
     /* bind, set the storage, unbind */
     bind ();

@@ -138,11 +138,10 @@ public:
      *
      * generates a buffer
      * 
-     * _target: the target for the buffer
+     * _minor_type: the minor type of the buffer
      */
-    buffer ( const GLenum _target )
-        : object { object_manager::generate_buffer () }
-        , target { _target }
+    buffer ( const minor_object_type _minor_type )
+        : object { _minor_type }
         , capacity { 0 }
         , map_ptr { NULL }
         , map_id { 0 }
@@ -152,14 +151,13 @@ public:
      *
      * generates a buffer and immediately buffers data
      * 
-     * _target: the target for the buffer (e.g. GL_ARRAY_BUFFER)
+     * _minor_type: the minor type of the buffer
      * size: size of data in bytes
      * data: pointer to data
      * usage: the storage method for the data
      */
-    buffer ( const GLenum _target, const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
-        : object { object_manager::generate_buffer () }
-        , target { _target }
+    buffer ( const minor_object_type _minor_type, const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
+        : object { _minor_type }
         , capacity { 0 }
         , map_ptr { NULL }
         , map_id { 0 }
@@ -250,58 +248,28 @@ public:
 
 
 
-    /* destroy
-     *
-     * destroys the object, setting id to 0
-     */
-    void destroy () { object_manager::destroy_buffer ( id ); id = 0; }
-
-    /* bind
-     *
-     * bind the buffer
-     */
-    void bind () const;
-
     /* bind_copy_read/write
      *
      * bind the buffer to the copy read/write targets
      */
-    void bind_copy_read () const { object_manager::bind_copy_read_buffer ( id ); }
-    void bind_copy_write () const { object_manager::bind_copy_write_buffer ( id ); }
+    void bind_copy_read () const { om::bind_object ( id, object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
+    void bind_copy_write () const { om::bind_object ( id, object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET ); }
 
     /* unbind_copy_read/write
      *
      * unbind the buffer to the copy read/write targets
      */
-    void unbind_copy_read () const { object_manager::unbind_copy_read_buffer ( id ); }
-    void unbind_copy_write () const { object_manager::unbind_copy_write_buffer ( id ); }
+    void unbind_copy_read () const { om::unbind_object ( id, object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
+    void unbind_copy_write () const { om::unbind_object ( id, object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET ); }
 
     /* is_copy_read/write_bound
      *
      * check if the buffer is bound to the copy read/write targets
      */
-    bool is_copy_read_bound () const { return object_manager::is_copy_read_buffer_bound ( id ); }
-    bool is_copy_write_bound () const { return object_manager::is_copy_write_buffer_bound ( id ); }
-
-    /* unbind
-     *
-     * unbind the buffer's target
-     */
-    void unbind () const;
-
-    /* is_bound
-     *
-     * checks if the buffer is bound
-     */
-    bool is_bound () const;
+    bool is_copy_read_bound () const { return om::is_object_bound ( id, object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
+    bool is_copy_write_bound () const { return om::is_object_bound ( id, object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET ); }
 
 
-
-    /* get_target
-     *
-     * get the target in which the buffer is bound
-     */
-    const GLenum& get_target () const { return target; }
 
     /* get_capacity
      *
@@ -312,12 +280,6 @@ public:
 
 
 private:
-
-    /* GLenum target
-     *
-     * the target to bind the buffer to
-     */
-    const GLenum target;
 
     /* GLsizeiptr capacity
      *
@@ -491,7 +453,7 @@ public:
      * generates the buffer
      */
     vbo ()
-        : buffer { GL_ARRAY_BUFFER }
+        : buffer { minor_object_type::GLH_VBO_TYPE }
     {}
 
     /* construct and immediately buffer data
@@ -503,7 +465,7 @@ public:
      * usage: the storage method for the data
      */
     vbo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
-        : buffer { GL_ARRAY_BUFFER, size, data, usage }
+        : buffer { minor_object_type::GLH_VBO_TYPE, size, data, usage }
     {}
 
     /* deleted copy constructor */
@@ -537,7 +499,7 @@ public:
      * generates the buffer
      */
     ebo ()
-        : buffer { GL_ELEMENT_ARRAY_BUFFER }
+        : buffer { minor_object_type::GLH_EBO_TYPE }
     {}
 
     /* construct and immediately buffer data
@@ -549,7 +511,7 @@ public:
      * usage: the storage method for the data
      */
     ebo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
-        : buffer { GL_ELEMENT_ARRAY_BUFFER, size, data, usage }
+        : buffer { minor_object_type::GLH_EBO_TYPE, size, data, usage }
     {}
 
     /* deleted copy constructor */
@@ -583,7 +545,7 @@ public:
      * generates the buffer
      */
     ubo ()
-        : buffer { GL_UNIFORM_BUFFER }
+        : buffer { minor_object_type::GLH_UBO_TYPE }
     {}
 
     /* construct and immediately buffer data
@@ -595,7 +557,7 @@ public:
      * usage: the storage method for the data
      */
     ubo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
-        : buffer { GL_UNIFORM_BUFFER, size, data, usage }
+        : buffer { minor_object_type::GLH_UBO_TYPE, size, data, usage }
     {}
 
     /* deleted copy constructor */
@@ -616,14 +578,14 @@ public:
      *
      * special indexed bindings for ubos
      */
-    void bind_index ( const unsigned index ) { object_manager::bind_ubo_index ( id, index ); }
-    void unbind_index ( const unsigned index ) { object_manager::unbind_ubo_index ( id, index ); }
+    //void bind_index ( const unsigned index ) { om::bind_ubo_index ( id, index ); }
+    //void unbind_index ( const unsigned index ) { om::unbind_ubo_index ( id, index ); }
 
     /* is_bound_index
      *
      * returns true if is bound to the ubo index supplied
      */
-    bool is_bound_index ( const unsigned index ) { return object_manager::is_ubo_bound_index ( id, index ); }
+    //bool is_bound_index ( const unsigned index ) { return om::is_ubo_bound_index ( id, index ); }
 
 };
 
@@ -644,7 +606,7 @@ public:
      * creates a vertex array object without any vbo or ebo bound
      */
     vao ()
-        : object { object_manager::generate_vao () }
+        : object { minor_object_type::GLH_VAO_TYPE }
         , vertex_attribs { 8, { 0, GL_NONE, GL_NONE, 0, 0, NULL, false } }
         , bound_ebo { NULL }
     {}
@@ -733,32 +695,6 @@ public:
      * operation: description of the operation
      */
     void assert_is_draw_elements_valid ( const std::string& operation = "" ) const;
-
-
-
-    /* destroy
-     *
-     * destroys the object, setting id to 0
-     */
-    void destroy () { object_manager::destroy_vao ( id ); id = 0; }
-
-    /* bind
-     *
-     * bind the vertex array object
-     */
-    void bind () const { object_manager::bind_vao ( id ); }
-
-    /* unbind
-     *
-     * unbind the vertex array object
-     */
-    void unbind () const { object_manager::unbind_vao ( id ); }
-
-    /* is_bound
-     *
-     * checks if the vao is bound
-     */
-    bool is_bound () const { return object_manager::is_vao_bound ( id ); }
 
 
 

@@ -122,14 +122,13 @@ public:
      *
      * only supply the texture target
      * 
-     * _target: the target for the texture (e.g. GL_TEXTURE_2D)
+     * _minor_type: the minor type of the texture
      * _internal_format: the internal format of the data (e.g. specific bit arrangements)
      * _format: the format of the data (e.g. what the data will be used for)
      * _width/height: width/height of the texture (defaults to 0)
      */
-    texture_base ( const GLenum _target, const GLenum _internal_format, const GLenum _format, const int _width = 0, const int _height = 0 )
-        : object { object_manager::generate_texture () }
-        , target { _target }
+    texture_base ( const minor_object_type _minor_type, const GLenum _internal_format, const GLenum _format, const int _width = 0, const int _height = 0 )
+        : object { _minor_type }
         , internal_format ( _internal_format )
         , format ( _format )
         , width { _width }
@@ -174,19 +173,15 @@ public:
 
 
 
-    /* destroy
-     *
-     * destroys the texture, setting its id to 0
-     */
-    void destroy () { object_manager::destroy_texture ( id ); id = 0; }
-
     /* bind
      *
      * bind the texture to a texture unit
      * 
      * texture_unit: the texture unit to bind to, defaulting to 0
      */
-    void bind ( const unsigned texture_unit = 0 ) const;
+    using object::bind;
+    void bind ( const unsigned texture_unit ) const
+    { om::bind_object ( id, bind_target + texture_unit ); }
 
     /* unbind
      *
@@ -194,7 +189,9 @@ public:
      * 
      * texture_unit: the texture unit to unbind from, defaulting to 0
      */
-    void unbind ( const unsigned texture_unit = 0 ) const;
+    using object::unbind;
+    void unbind ( const unsigned texture_unit ) const
+    { om::unbind_object ( id, bind_target + texture_unit ); }
 
     /* is_bound
      *
@@ -202,22 +199,13 @@ public:
      * 
      * return: boolean for if the texture is bound
      */
-    bool is_bound ( const unsigned texture_unit = 0 ) const;
-
-
-
-    /* get_target
-     *
-     * get the target in which the texture is bound
-     */
-    const GLenum& get_target () const { return target; }
+    using object::is_bound;
+    bool is_bound ( const unsigned texture_unit ) const
+    { return om::is_object_bound ( id, bind_target + texture_unit ); }
 
 
 
 protected:
-
-    /* target of the texture */
-    const GLenum target;
 
     /* (internal_)format
      *
