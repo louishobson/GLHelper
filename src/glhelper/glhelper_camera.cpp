@@ -63,12 +63,15 @@ void glh::camera::camera_base::apply () const
  */
 void glh::camera::camera_base::cache_uniforms ( const core::uniform& view_uni, const core::uniform& proj_uni )
 {
-    /* cache uniforms */
-    cached_uniforms.reset ( new cached_uniforms_struct
+    /* if uniforms are not already cached, cache the new ones */
+    if ( !cached_uniforms || cached_uniforms->view_uni != view_uni || cached_uniforms->proj_uni != proj_uni )
     {
-        view_uni,
-        proj_uni
-    } );
+        cached_uniforms.reset ( new cached_uniforms_struct
+        {
+            view_uni,
+            proj_uni
+        } );
+    }
 }
 
 /* get_view

@@ -810,13 +810,17 @@ inline void glh::lighting::light_collection<T>::apply () const
 template<class T>
 inline void glh::lighting::light_collection<T>::cache_uniforms ( const core::struct_uniform& light_collection_uni )
 {
-    /* cache uniforms */
-    cached_uniforms.reset ( new cached_uniforms_struct
+    /* if uniforms are not already cached, cache the new ones */
+    if ( !cached_uniforms || cached_uniforms->light_collection_uni != light_collection_uni )
     {
-        light_collection_uni,
-        light_collection_uni.get_uniform ( "size" ),
-        light_collection_uni.get_struct_array_uniform ( "lights" )
-    } );
+        cached_uniforms.reset ( new cached_uniforms_struct
+        {
+            light_collection_uni,
+            light_collection_uni.get_uniform ( "size" ),
+            light_collection_uni.get_struct_array_uniform ( "lights" )
+        } );
+    }
+
     /* cache each light's uniforms */
     for ( unsigned i = 0; i < lights.size (); ++i ) lights.at ( i ).cache_uniforms ( cached_uniforms->lights_uni.at ( i ) );
 

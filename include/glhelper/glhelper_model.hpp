@@ -458,7 +458,7 @@ public:
      */
     model ( const std::string& _directory, const std::string& _entry, const unsigned _pps = 
     aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenUVCoords | aiProcess_TransformUVCoords | aiProcess_GenNormals | 
-    aiProcess_JoinIdenticalVertices | aiProcess_RemoveRedundantMaterials | aiProcess_OptimizeMeshes | aiProcess_Debone );
+    aiProcess_JoinIdenticalVertices | aiProcess_RemoveRedundantMaterials | aiProcess_OptimizeMeshes | aiProcess_Debone | aiProcess_OptimizeGraph );
 
     /* deleted zero parameter constructor */
     model () = delete;
