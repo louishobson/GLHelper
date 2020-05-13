@@ -4,11 +4,11 @@
 
 # gcc setup
 CC=g++
-CFLAGS=-std=c++17 -Iinclude -fpic -g
+CFLAGS=-std=c++17 -Iinclude -fpic -g -Og
 
 # g++ setup
 CPP=g++
-CPPFLAGS=-std=c++17 -Iinclude -fpic -g
+CPPFLAGS=-std=c++17 -Iinclude -fpic -g -Og
 
 # ar setup
 AR=ar
@@ -45,9 +45,9 @@ glad: src/glad/glad.o
 #
 # compile glhelper to a library
 glhelper: src/glhelper/libglhelper.a src/glhelper/libglhelper.so
-src/glhelper/libglhelper.a: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o src/glhelper/glhelper_buffer.o src/glhelper/glhelper_shader.o src/glhelper/glhelper_texture.o src/glhelper/glhelper_camera.o src/glhelper/glhelper_model.o src/glhelper/glhelper_lighting.o src/glhelper/glhelper_render.o src/glhelper/glhelper_manager.o src/glhelper/glhelper_framebuffer.o src/glhelper/glhelper_vertices.o
+src/glhelper/libglhelper.a: src/glhelper/glhelper_core.o src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o src/glhelper/glhelper_buffer.o src/glhelper/glhelper_shader.o src/glhelper/glhelper_texture.o src/glhelper/glhelper_camera.o src/glhelper/glhelper_model.o src/glhelper/glhelper_lighting.o src/glhelper/glhelper_render.o src/glhelper/glhelper_manager.o src/glhelper/glhelper_framebuffer.o src/glhelper/glhelper_vertices.o
 	$(AR) $(ARFLAGS) $@ $^
-src/glhelper/libglhelper.so: src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o src/glhelper/glhelper_buffer.o src/glhelper/glhelper_shader.o src/glhelper/glhelper_texture.o src/glhelper/glhelper_camera.o src/glhelper/glhelper_model.o src/glhelper/glhelper_lighting.o src/glhelper/glhelper_render.o src/glhelper/glhelper_manager.o src/glhelper/glhelper_framebuffer.o src/glhelper/glhelper_vertices.o
+src/glhelper/libglhelper.so: src/glhelper/glhelper_core.o src/glhelper/glhelper_glad.o src/glhelper/glhelper_glfw.o src/glhelper/glhelper_buffer.o src/glhelper/glhelper_shader.o src/glhelper/glhelper_texture.o src/glhelper/glhelper_camera.o src/glhelper/glhelper_model.o src/glhelper/glhelper_lighting.o src/glhelper/glhelper_render.o src/glhelper/glhelper_manager.o src/glhelper/glhelper_framebuffer.o src/glhelper/glhelper_vertices.o
 	$(CPP) -shared -o $@ $^
 
 
