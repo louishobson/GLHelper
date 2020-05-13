@@ -19,12 +19,37 @@
 
 
 
+/* UNIFORM COMPARISION OPERATORS IMPLEMENTATION */
+
+/* comparison operators for uniform types
+ * array uniform comparison operator implementations can be found in header
+ *
+ * returns true if the objects refer to the same uniform
+ */
+bool operator== ( const glh::core::uniform& lhs, const glh::core::uniform& rhs )
+{
+    return ( lhs.get_program () == rhs.get_program () && lhs.get_name () == rhs.get_name () );
+}
+bool operator!= ( const glh::core::uniform& lhs, const glh::core::uniform& rhs )
+{
+    return !( lhs == rhs );
+}
+bool operator== ( const glh::core::struct_uniform& lhs, const glh::core::struct_uniform& rhs )
+{
+    return ( lhs.get_program () == rhs.get_program () && lhs.get_name () == rhs.get_name () );
+}
+bool operator!= ( const glh::core::struct_uniform& lhs, const glh::core::struct_uniform& rhs )
+{
+    return !( lhs == rhs );
+}
+
+
+
 /* SHADER IMPLEMENTATION */
 
 /* constructor */
-glh::core::shader::shader ( const GLenum _target, const std::string& _path )
-    : object { object_manager::generate_shader ( _target ) }
-    , target { _target }
+glh::core::shader::shader ( const minor_object_type _type, const std::string& _path )
+    : object { _type }
     , path { _path }
 {
     /* try to open the shader */
@@ -430,7 +455,7 @@ void glh::core::uniform::assert_is_program_in_use ( const std::string& operation
  * NOTE: the shader program remains valid even when linked shaders are destroyed
  */
 glh::core::program::program ( const vshader& vs, const gshader& gs, const fshader& fs )
-    : object { object_manager::generate_program () }
+    : object { minor_object_type::GLH_PROGRAM_TYPE }
     , uniforms { "", * this }, struct_uniforms { "", * this }
     , uniform_array_uniforms { "", * this }, struct_array_uniforms { "", * this }
     , uniform_2d_array_uniforms { "", * this }, struct_2d_array_uniforms { "", * this }
@@ -469,7 +494,7 @@ glh::core::program::program ( const vshader& vs, const gshader& gs, const fshade
  * NOTE: the shader program remains valid even when linked shaders are destroyed
  */
 glh::core::program::program ( const vshader& vs, const fshader& fs )
-    : object { object_manager::generate_program () }
+    : object { minor_object_type::GLH_PROGRAM_TYPE }
     , uniforms { "", * this }, struct_uniforms { "", * this }
     , uniform_array_uniforms { "", * this }, struct_array_uniforms { "", * this }
     , uniform_2d_array_uniforms { "", * this }, struct_2d_array_uniforms { "", * this }
@@ -611,4 +636,24 @@ GLint glh::core::program::get_active_uniform_iv ( const std::string& name, const
 {
     /* get index and call overload */
     return get_active_uniform_iv ( get_uniform_index ( name ), target );
+}
+
+/* get_active_uniform_block_iv
+ *
+ * get integer information about a uniform block
+ * 
+ * index/name: the index/name of the uniform block
+ * target: the target piece of information
+ */
+GLint glh::core::program::get_active_uniform_block_iv ( const GLuint index, const GLenum target ) const
+{
+    /* get information and return */
+    GLint param = 0;
+    glGetActiveUniformBlockiv ( id, index, target, &param );
+    return param;
+}
+GLint glh::core::program::get_active_uniform_block_iv ( const std::string& name, const GLenum target ) const
+{
+    /* get index and call overload */
+    return get_active_uniform_block_iv ( get_uniform_block_index ( name ), target );
 }

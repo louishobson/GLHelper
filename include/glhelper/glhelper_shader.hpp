@@ -29,72 +29,26 @@
  * 
  * CLASS GLH::CORE::UNIFORM
  * 
- * base class for an endpoint uniform
+ * class for an endpoint uniform
  * a value is given to the uniform via the set_... methods
- * these methods are virtual, and the specifics modification is specified by derived classes
+ * if the uniform is in the default block, glUniform... functions will be used to set the value(s)
+ * if the unfirom is not in the default block, the ubo responsible for its data storage is located, and modified accordingly
  * 
  * 
  * 
  * CLASS GLH::CORE::STRUCT_UNIFORM
  * 
- * base class for structure uniforms
+ * class for structure uniforms
  * further members the struct extracted via the get_..._uniform methods
- * these methods are virtual, and the specifics of gettibg a member is specified by derived classes
  * 
  * 
  * 
  * CLASS GLH::CORE::ARRAY_UNIFORM
  * 
- * a template base class to represent an array of uniforms
- * the template parameter must be a derivation of the uniform, struct_uniform or array_uniform classes
+ * a template class to represent an array of uniforms
+ * the template parameter must be one of the uniform, struct_uniform or array_uniform classes
  * this will be the type of uniform the array contains
  * the at method will then extract one of these uniforms at a specific index
- * this method is virtual, and the specifics of getting an element is specified by derived classes
- * 
- * 
- * 
- * CLASS GLH::CORE::PURE_UNIFORM
- * 
- * derivation of uniform class to represent a normal uniform in a shader
- * this uniform directly references a variable in the shader which can be written to using the set_... methods
- * NOTE: the parent program must be in use to set the uniform
- * 
- * 
- * 
- * CLASS GLH::CORE::PURE_ARRAY_UNIFORM
- * 
- * derivation of array_uniform to represent a normal array uniform in a shader
- * the at method allows for elements of the array to be accessed
- * the type of uniform returned is based on the template parameter of the pure_array_uniform class
- * 
- * 
- * 
- * CLASS GLH::CORE::PURE_STRUCT_UNIFORM
- * 
- * derivation of struct_uniform to represent a normal struct uniform in a shader
- * members can be accessed using the get_..._uniform methods, with a member name
- * 
- * 
- * 
- * CLASS GLH::CORE::BLOCK_UNIFORM
- * 
- * derivation of uniform class to represent a uniform in a uniform block of a shader
- * modifying this uniform modifies the UBO currently associated with that uniform block
- * 
- * 
- * 
- * CLASS GLH::CORE::BLOCK_ARRAY_UNIFORM
- * 
- * derivation of array_uniform to represent an array uniform in a uniform block of a shader
- * the at method allows for elements of the array to be accessed
- * the type of uniform returned is based on the template parameter of the block_array_uniform class
- * 
- * 
- * 
- * CLASS GLH::CORE::BLOCK_STRUCT_UNIFORM
- * 
- * derivation of struct_uniform to represent a struct uniform in a uniform block of a shader
- * members can be accessed using the get_..._uniform methods, with a member name
  * 
  * 
  * 
@@ -271,6 +225,17 @@ namespace glh
     }    
 }
 
+/* comparison operators for uniform types
+ *
+ * returns true if the objects refer to the same uniform
+ */
+bool operator== ( const glh::core::uniform& lhs, const glh::core::uniform& rhs );
+bool operator!= ( const glh::core::uniform& lhs, const glh::core::uniform& rhs );
+bool operator== ( const glh::core::struct_uniform& lhs, const glh::core::struct_uniform& rhs );
+bool operator!= ( const glh::core::struct_uniform& lhs, const glh::core::struct_uniform& rhs );
+template<class T> bool operator== ( const glh::core::array_uniform<T>& lhs, const glh::core::array_uniform<T>& rhs );
+template<class T> bool operator!= ( const glh::core::array_uniform<T>& lhs, const glh::core::array_uniform<T>& rhs );
+
 
 
 /* SHADER DEFINITION */
@@ -284,7 +249,7 @@ class glh::core::shader : public object
 public:
 
     /* constructor */
-    shader ( const GLenum _target, const std::string& _path );
+    shader ( const minor_object_type _type, const std::string& _path );
 
     /* deleted zero-parameter constructor */
     shader () = delete;
@@ -303,21 +268,6 @@ public:
 
 
 
-    /* destroy
-     *
-     * destroys the shader, setting its id to 0
-     * any program using this shader will still function
-     */
-    void destroy () { object_manager::destroy_shader ( id ); id; }
-
-
-
-    /* get_target
-     *
-     * get the target of the shader
-     */
-    const GLenum& get_target () const { return target; }
-
     /* get_path
      *
      * get the path of the shader
@@ -333,9 +283,6 @@ public:
 
 
 private:
-
-    /* shader target */
-    const GLenum target;
 
     /* path to the shader */
     const std::string path;
@@ -359,7 +306,7 @@ public:
 
     /* constructor */
     explicit vshader ( const std::string& _path )
-        : shader { GL_VERTEX_SHADER, _path }
+        : shader { minor_object_type::GLH_VSHADER_TYPE, _path }
     {}
 
     /* deleted zero-parameter constructor */
@@ -393,7 +340,7 @@ public:
 
     /* constructor */
     explicit gshader ( const std::string& _path )
-        : shader { GL_GEOMETRY_SHADER, _path }
+        : shader { minor_object_type::GLH_GSHADER_TYPE, _path }
     {}
 
     /* deleted zero-parameter constructor */
@@ -427,7 +374,7 @@ public:
 
     /* constructor */
     explicit fshader ( const std::string& _path )
-        : shader { GL_FRAGMENT_SHADER, _path }
+        : shader { minor_object_type::GLH_FSHADER_TYPE, _path }
     {}
 
     /* deleted zero-parameter constructor */
@@ -1049,26 +996,33 @@ public:
     GLint get_active_uniform_iv ( const GLuint index, const GLenum target ) const;
     GLint get_active_uniform_iv ( const std::string& name, const GLenum target ) const;
 
-
-
-    /* destroy
+    /* get_active_uniform_block_iv
      *
-     * destroys the shader program, setting id to 0
+     * get integer information about a uniform block
+     * 
+     * index/name: the index/name of the uniform block
+     * target: the target piece of information
      */
-    void destroy () { object_manager::destroy_program ( id ); id; }
+    GLint get_active_uniform_block_iv ( const GLuint index, const GLenum target ) const;
+    GLint get_active_uniform_block_iv ( const std::string& name, const GLenum target ) const;
+
+
 
     /* use
      *
      * use the shader program for the following OpenGL function calls
      * will not call glUseProgram if already in use
+     * same as bind method
      */
-    void use () const { object_manager::use_program ( id ); }
+    void use () const { bind (); }
 
     /* is_in_use
      *
+     * same as is_bound method
+     * 
      * return: boolean for if the program is in use
      */
-    bool is_in_use () const { return object_manager::is_program_in_use ( id ); }
+    bool is_in_use () const { return is_bound (); }
 
 
 
@@ -1156,6 +1110,23 @@ public:
     /* default everything else and inherits what () function */
 
 };
+
+
+
+/* ARRAY UNIFORM COMPARISON OPERATORS IMPLEMENTATION */
+
+/* comparison operators for array uniform types
+ *
+ * returns true if the objects refer to the same uniform
+ */
+template<class T> inline bool operator== ( const glh::core::array_uniform<T>& lhs, const glh::core::array_uniform<T>& rhs )
+{
+    return ( lhs.get_program () == rhs.get_program () && lhs.get_name () == rhs.get_name () );
+}
+template<class T> inline bool operator!= ( const glh::core::array_uniform<T>& lhs, const glh::core::array_uniform<T>& rhs )
+{
+    return !( lhs == rhs );
+}
 
 
 
