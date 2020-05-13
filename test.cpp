@@ -188,7 +188,7 @@ int main ()
     window.get_mouseinfo ();
 
     double total_time = 0.0;
-    double frames = -1.0;
+    int frames = -1;
 
     while ( !window.should_close () ) 
     {
@@ -196,14 +196,12 @@ int main ()
         auto dimensions = window.get_dimensions ();
         auto mouseinfo = window.get_mouseinfo ();
 
-        frames += 1.0;
+        frames += 1;
         total_time += timeinfo.delta;
 
-        //std::cout << "\rdelta time: " << timeinfo.delta << std::flush;
-        //std::cout << "\raverage fps: " << frames / total_time << std::flush;
         std::cout << "\rfps: " << 1.0 / timeinfo.delta << std::flush;
 
-        if ( dimensions.deltawidth != 0.0 || dimensions.deltaheight != 0.0 ) 
+        if ( dimensions.deltawidth != 0.0 || dimensions.deltaheight != 0.0 || frames % 60 == 0 ) 
         {
             camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
         }
@@ -267,9 +265,10 @@ int main ()
         //chappie.render ( chappie_matrix, true );
         xeno.render ( xeno_matrix, true );
 
-        
+
         */
-        
+
+
 
         model_program.use ();
         light_system.apply ();
@@ -335,14 +334,13 @@ int main ()
         mirror_tex.bind ( 0 );
         glh::core::renderer::draw_elements ( mirror_vao, GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 
-        
-
-
 
         window.swap_buffers ();
         window.poll_events ();
 
     }
+
+    std::cout << std::endl << "average fps: " << frames / total_time << std::endl;
 
     return 0;
 }
