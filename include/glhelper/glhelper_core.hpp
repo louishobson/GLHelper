@@ -41,6 +41,9 @@
 /* include glhelper_exception.hpp */
 #include <glhelper/glhelper_exception.hpp>
 
+/* include glhelper_manager.hpp */
+#include <glhelper/glhelper_manager.hpp>
+
 
 
 /* NAMESPACE FORWARD DECLARATIONS */
@@ -49,6 +52,35 @@ namespace glh
 {
     namespace core
     {
+        /* FORWARD DECLARATIONS FROM OBJECT MANAGER HEADER */
+
+        /* enum major_object_type
+         *
+         * enum for general types of object (e.g. GLH_BUFFER_TYPE rather than GLH_VBO_TYPE)
+         */
+        enum struct major_object_type : unsigned;
+
+        /* enum minor_object_type
+         *
+         * enum for more specific types of object (e.g. GLH_VBO_TYPE rather than GLH_BUFFER_TYPE)
+         */
+        enum struct minor_object_type : unsigned;
+
+        /* enum object_bind_target
+         *
+         * enum for bind targets of objects
+         */
+        enum struct object_bind_target : unsigned;
+
+
+
+        /* class object_manager
+         *
+         * responsible for generating and destroying OpenGL objects
+         * also tracks bindings and avoids rebinds
+         */
+        class object_manager;
+
         /* class object
          *
          * abstract base class to represent any OpenGL object
@@ -66,6 +98,15 @@ namespace glh
     }
 }
 
+/* comparison operators for objects
+ *
+ * determines if two objects are equal by comparing ids
+ * 
+ * return: boolean representing equality
+ */
+bool operator== ( const glh::core::object& lhs, const glh::core::object& rhs );
+bool operator!= ( const glh::core::object& lhs, const glh::core::object& rhs );
+
 
 
 /* OBJECT DEFINITION */
@@ -82,17 +123,10 @@ public:
      *
      * _id: the id of the object
      */
-    explicit object ( const GLuint _id )
-        : id { _id }
-    {}
+    explicit object ( const minor_object_type _minor_type );
 
-    /* zero-parameter constructor
-     *
-     * in this case, id is initialised to 0
-     */
-    object ()
-        : id { 0 }
-    {}
+    /* deleted zero-parameter constructor */
+    object () = delete;
 
     /* deleted copy constructor
      *
@@ -104,6 +138,10 @@ public:
     /* default move constructor */
     object ( object&& other )
         : id { other.id }
+        , minor_type { other.minor_type }
+        , major_type { other.major_type }
+        , bind_target { other.bind_target }
+        , gl_target { other.gl_target }
     { other.id = 0; }
 
     /* deleted copy assignment operator
@@ -118,15 +156,32 @@ public:
      *
      * virtual in preparation for polymorphism
      */
-    virtual ~object () { id = 0; }
+    virtual ~object () { destroy (); }
 
 
 
-    /* internal_id
+    /* bind/unbind
      *
-     * returns the internal id of the object
+     * bind/unbind the object
      */
-    const GLuint& internal_id () const { return id; }
+    virtual void bind () const;
+    virtual void unbind () const;
+
+    /* is_bound
+     *
+     * returns true if the object is bound
+     */
+    virtual bool is_bound () const;
+
+
+
+    /* destroy
+     *
+     * destroys the object, setting its id to 0
+     */
+    void destroy ();
+
+
 
     /* virtual is_object_valid
      *
@@ -145,21 +200,35 @@ public:
      */
     virtual void assert_is_object_valid ( const std::string& operation = "" ) const;
 
-    /* virtual not operator
+
+
+    /* not operator
      *
      * determines if the object is invalid
      * synonymous to !object.is_object_valid ()
      * 
      * return: boolean representing invalidity
      */
-    virtual bool operator! () const { return !is_object_valid (); }
+    bool operator! () const { return !is_object_valid (); }
 
-    /* pure virtual destroy
+
+
+    /* internal_id
      *
-     * destroys the object, at least setting id to 0
-     * although multiple calls to this function are valid, only the first should have effect
+     * returns the internal id of the object
      */
-    virtual void destroy () = 0;
+    const GLuint& internal_id () const { return id; }
+
+    /* get_minor/major_object_type
+     * get_object_bind_target
+     * get_gl_target
+     *
+     * get the different types/targets associated with the object
+     */
+    const minor_object_type& get_minor_object_type () const { return minor_type; }
+    const major_object_type& get_major_object_type () const { return major_type; }
+    const object_bind_target& get_object_bind_target () const { return bind_target; }
+    const GLenum& get_gl_target () const { return gl_target; }
 
 
 
@@ -171,16 +240,21 @@ protected:
      */
     GLuint id;
 
+    /* minor_type, major_type, bind_target
+     *
+     * the minor and major object types, as well as the object bind target
+     */
+    const minor_object_type minor_type;
+    const major_object_type major_type;
+    const object_bind_target bind_target;
+
+    /* gl_target
+     *
+     * the opengl enum used for binding
+     */
+    const GLenum gl_target;
 };
 
-/* comparison operators
- *
- * determines if two objects are equal by comparing ids
- * 
- * return: boolean representing equality
- */
-inline bool operator== ( const glh::core::object& lhs, const glh::core::object& rhs ) { return ( lhs.internal_id () == rhs.internal_id () ); }
-inline bool operator!= ( const glh::core::object& lhs, const glh::core::object& rhs ) { return ( lhs.internal_id () != rhs.internal_id () ); }
 
 
 
