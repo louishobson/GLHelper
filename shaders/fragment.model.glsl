@@ -345,7 +345,9 @@ void main ()
 
     //ambient = vec4 ( 0.5, 0.5, 0.5, 1.0 ); diffuse = vec4 ( 0.5, 0.5, 0.5, 1.0 );
 
-    //ambient = vec4 ( ( abs ( fragpos ) / 100 ), 1.0 ); diffuse = vec4 ( ( abs ( fragpos ) / 100 ), 1.0 );
+    //ambient = vec4 ( abs ( fragpos ) / 200, 1.0 ); diffuse = vec4 ( abs ( fragpos ) / 200, 1.0 );
+
+    //ambient = vec4 ( abs ( normal ), 1.0 ); diffuse = vec4 ( abs ( fragpos ) / 200, 1.0 );
 
     /* if there were no textures for any stack, multiply by the vertex color */
     if ( material.ambient_stack.stack_size == 0 ) ambient *= vcolor;
@@ -374,6 +376,4 @@ void main ()
     else fragcolor = vec4 ( ambient.rgb + diffuse.rgb + specular.rgb, 1.0 );
 
     //fragcolor = texture ( skybox, S );
-
-    //fragcolor = vec4 ( ( abs ( fragpos ) / 100 ), 1.0 );
 }
