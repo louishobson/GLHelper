@@ -85,21 +85,21 @@ int main ()
             glh::math::enlarge3d 
             ( 
                 glh::math::identity<4> (),
-                10.0
+                30.0
             ), 
-            glh::math::rad ( 45 ), 
+            glh::math::rad ( 0.0 ), 
             glh::math::vec3 { 1.0, 0.0, 0.0 }
         ), 
-        glh::math::vec3 { 0.0, 50.0, -50.0 }
+        glh::math::vec3 { 0.0, 50.0, -75.0 }
     );
 
     glh::camera::mirror_camera mirror_camera 
     { 
         camera, 
-        glh::math::vec3 { 0.0, 50.0, -50.0 }, 
-        glh::math::normalise ( glh::math::vec3 { 0.0, -1.0, 1.0 } ), 
-        glh::math::normalise ( glh::math::vec3 { 0.0, 1.0, 1.0 } ),
-        10.0, 10.0 
+        glh::math::vec3 { 0.0, 50.0, -75.0 }, 
+        glh::math::normalise ( glh::math::vec3 { 0.0, 0.0, 1.0 } ), 
+        glh::math::normalise ( glh::math::vec3 { 0.0, 1.0, 0.0 } ),
+        30.0, 30.0 
     };
 
 
@@ -152,7 +152,7 @@ int main ()
             glh::math::enlarge3d 
             ( 
                 glh::math::identity<4> (),
-                0.01
+                0.005
             ), 
             glh::math::rad ( 180.0 ), 
             glh::math::vec3 { 0.0, 1.0, 0.0 } 
@@ -219,6 +219,15 @@ int main ()
 
         camera.pitch ( mouseinfo.deltayfrac * glh::math::rad ( -80 ) );
         camera.yaw ( mouseinfo.deltaxfrac * glh::math::rad ( -80 ) );
+
+
+
+        double mirror_angle = glh::math::rad ( 10 ) * timeinfo.delta;
+        mirror_camera.set_normal ( glh::math::rotate3d ( mirror_camera.get_normal (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
+        mirror_camera.set_position ( glh::math::rotate3d ( mirror_camera.get_position (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) ); 
+        mirror_camera.set_ytan ( glh::math::rotate3d ( mirror_camera.get_ytan (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
+        mirror_matrix = glh::math::rotate3d ( mirror_matrix, mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } );
+
 
 
 
@@ -333,6 +342,7 @@ int main ()
         mirror_fbo.unbind ();
         mirror_tex.bind ( 0 );
         glh::core::renderer::draw_elements ( mirror_vao, GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
+        
 
 
         window.swap_buffers ();
