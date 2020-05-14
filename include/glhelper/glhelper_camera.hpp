@@ -459,6 +459,13 @@ public:
     const math::vec3& get_normal () const { return normal; }
     void set_normal ( const math::vec3& _normal ) { normal = math::normalise ( _normal ); }
 
+    /* get/set_ytan
+     *
+     * get/set the y tangent of the mirror
+     */
+    const math::vec3& get_ytan () const { return ytan; }
+    void set_ytan ( const math::vec3& _ytan ) { ytan = math::normalise ( _ytan ); }
+
     /* get/set_width/height
      *
      * get/set the width/height of the mirror
