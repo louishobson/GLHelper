@@ -35,7 +35,7 @@
 
 
 
-/* NAMESPACE FORWARD DECLARATIONS */
+/* NAMESPACE DECLARATIONS */
 
 namespace glh
 {

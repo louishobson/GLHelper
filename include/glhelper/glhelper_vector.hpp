@@ -60,12 +60,9 @@
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
-/* include glhelper_exception.hpp */
-#include <glhelper/glhelper_exception.hpp>
 
 
-
-/* NAMESPACE FORWARD DECLARATIONS */
+/* NAMESPACE DECLARATIONS */
 
 namespace glh
 {

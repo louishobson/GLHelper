@@ -147,25 +147,7 @@ void glh::core::object_manager::destroy_object ( const GLuint id, const minor_ob
     }
 }
 
-/* unbind_object_all
- *
- * unbinds an object from all possible bind points
- * includes all indexed bindings, where applicable
- * 
- * id: the id of the object to unbind
- * type: the type of the object (minor type)
- */
-void glh::core::object_manager::unbind_object_all ( const GLuint id, const minor_object_type type )
-{
-    /* get the bind target */
-    const object_bind_target target = to_object_bind_target ( type );
 
-    /* if target is a texture bind point, ensure is unbound from all units, otherwise just unbind */
-    if ( target == object_bind_target::GLH_TEXTURE2D_0_TARGET || target == object_bind_target::GLH_CUBEMAP_0_TARGET )
-    {
-        for ( unsigned i = 0; i < 32; ++i ) unbind_object ( id, target + i );
-    } else unbind_object ( id, target );
-}
 
 /* bind_object
  *
@@ -228,10 +210,43 @@ void glh::core::object_manager::unbind_object ( const GLuint id, const object_bi
     /* if not bound, return */
     if ( object_bindings.at ( static_cast<unsigned> ( target ) ) != id ) return;
 
-    /* otherwise record the unbinding */
+    /* otherwise unbind that target */
+    unbind_target ( target );
+}
+
+/* unbind_object_all
+ *
+ * unbinds an object from all possible bind points
+ * includes all indexed bindings, where applicable
+ * 
+ * id: the id of the object to unbind
+ * type: the type of the object (minor type)
+ */
+void glh::core::object_manager::unbind_object_all ( const GLuint id, const minor_object_type type )
+{
+    /* get the bind target */
+    const object_bind_target target = to_object_bind_target ( type );
+
+    /* if target is a texture bind point, ensure is unbound from all units, otherwise just unbind */
+    if ( target == object_bind_target::GLH_TEXTURE2D_0_TARGET || target == object_bind_target::GLH_CUBEMAP_0_TARGET )
+    {
+        for ( unsigned i = 0; i < 32; ++i ) unbind_object ( id, target + i );
+    } else unbind_object ( id, target );
+}
+
+/* unbind_target
+ *
+ * unbind a the object currently bound to the target from the target
+ * if no object is bound, this method does nothing
+ *
+ * target: the target to unbind
+ */
+void glh::core::object_manager::unbind_target ( const object_bind_target target )
+{
+    /* record the unbinding */
     object_bindings.at ( static_cast<unsigned> ( target ) ) = 0;
 
-    /* switch on target and bind to default bind point */
+    /* switch on target and unbind any bound object */
     switch ( target )
     {
     case object_bind_target::GLH_VBO_TARGET: glBindBuffer ( GL_ARRAY_BUFFER, 0 ); break;
@@ -370,6 +385,8 @@ GLenum glh::core::object_manager::to_opengl_bind_target ( const object_bind_targ
     }
 }
 
+
+
 /* is_texture2d_object_bind_target
  * is_cubemap_object_bind_target
  * 
@@ -385,6 +402,8 @@ bool glh::core::object_manager::is_cubemap_object_bind_target ( const object_bin
     /* if the target is between __CUBEMAP_START__ and __CUBEMAP_END__ return true, else false */
     return ( target >= object_bind_target::__CUBEMAP_START__ && target <= object_bind_target::__CUBEMAP_END__ );
 }
+
+
 
 /* assert_is_object_valid
  *
@@ -405,19 +424,22 @@ void glh::core::object_manager::assert_is_object_valid ( const GLuint id, const 
 
 
 
+/* create_object_array
+ *
+ * method to return an array of size M filled with zero values
+ */
+template<unsigned M> std::array<GLuint, M> glh::core::object_manager::create_object_array ()
+{
+    /* create array, fill, return */
+    std::array<GLuint, M> objects;
+    objects.fill ( 0 );
+    return objects;
+}
+
+
+
 /* STATIC MEMBERS DEFINITIONS */
 
 /* object bindings */
-std::array<GLuint, static_cast<unsigned> ( glh::core::object_bind_target::__COUNT__ )> glh::core::object_manager::object_bindings
-{
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0
-};
+std::array<GLuint, static_cast<unsigned> ( glh::core::object_bind_target::__COUNT__ )> glh::core::object_manager::object_bindings 
+{ glh::core::object_manager::create_object_array<static_cast<unsigned> ( glh::core::object_bind_target::__COUNT__ )> () };

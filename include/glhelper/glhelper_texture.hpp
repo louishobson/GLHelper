@@ -59,18 +59,12 @@
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
-/* include glhelper_exception.hpp */
-#include <glhelper/glhelper_exception.hpp>
-
-/* include glhelper_manager.hpp */
-#include <glhelper/glhelper_manager.hpp>
-
 /* indlude stb_image.h without implementation */
 #include <stb/stb_image.h>
 
 
 
-/* NAMESPACE FORWARD DECLARATIONS */
+/* NAMESPACE DECLARATIONS */
 
 namespace glh
 {

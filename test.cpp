@@ -333,8 +333,6 @@ int main ()
         camera.apply ( mirror_trans_uni.get_uniform ( "view" ), mirror_trans_uni.get_uniform ( "proj" ) );
         mirror_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
 
-        
-
         glh::core::renderer::disable_face_culling ();
         glh::core::renderer::set_depth_mask ( GL_TRUE );
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
@@ -342,7 +340,7 @@ int main ()
         mirror_fbo.unbind ();
         mirror_tex.bind ( 0 );
         glh::core::renderer::draw_elements ( mirror_vao, GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
-        
+
 
 
         window.swap_buffers ();

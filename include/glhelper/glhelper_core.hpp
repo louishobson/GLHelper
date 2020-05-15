@@ -46,13 +46,13 @@
 
 
 
-/* NAMESPACE FORWARD DECLARATIONS */
+/* NAMESPACE DECLARATIONS */
 
 namespace glh
 {
     namespace core
     {
-        /* FORWARD DECLARATIONS FROM OBJECT MANAGER HEADER */
+        /* FORWARD DECLARATIONS FROM GLHELPER_MANAGER.HPP HEADER */
 
         /* enum major_object_type
          *
@@ -72,14 +72,16 @@ namespace glh
          */
         enum struct object_bind_target : unsigned;
 
-
-
         /* class object_manager
          *
          * responsible for generating and destroying OpenGL objects
          * also tracks bindings and avoids rebinds
          */
         class object_manager;
+
+
+
+        /* DECLARATIONS FOR THIS HEADER */
 
         /* class object
          *

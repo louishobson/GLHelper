@@ -60,12 +60,21 @@
 
 
 
-/* NAMESPACE FORWARD DECLARATIONS */
+/* NAMESPACE DECLARATIONS */
 
 namespace glh
 {
     namespace core
     {
+        /* FORWARD DECLARATIONS FROM GLHELPER_CORE.HPP HEADER */
+
+        /* class object forward declaration */
+        class object;
+
+
+
+        /* DECLARATIONS FOR THIS HEADER */
+
         /* enum major_object_type
          *
          * enum for general types of object (e.g. GLH_BUFFER_TYPE rather than GLH_VBO_TYPE)
@@ -247,16 +256,6 @@ public:
      */
     static void destroy_object ( const GLuint id, const minor_object_type type );
 
-    /* unbind_object_all
-     *
-     * unbinds an object from all possible bind points
-     * includes all indexed bindings, where applicable
-     * 
-     * id: the id of the object to unbind
-     * type: the type of the object (minor type)
-     */
-    static void unbind_object_all ( const GLuint id, const minor_object_type type );
-
     /* bind_object
      *
      * bind an object to a target
@@ -276,6 +275,25 @@ public:
      * target: the bind target of the object (bind target)
      */
     static void unbind_object ( const GLuint id, const object_bind_target target );
+
+    /* unbind_object_all
+     *
+     * unbinds an object from all possible bind points
+     * includes all indexed bindings, where applicable
+     * 
+     * id: the id of the object to unbind
+     * type: the type of the object (minor type)
+     */
+    static void unbind_object_all ( const GLuint id, const minor_object_type type );
+
+    /* unbind_target
+     *
+     * unbind a the object currently bound to the target from the target
+     * if no object is bound, this method does nothing
+     *
+     * target: the target to unbind
+     */
+    static void unbind_target ( const object_bind_target target );
 
     /* get_bound_object
      *
@@ -298,6 +316,39 @@ public:
      */
     static bool is_object_bound ( const GLuint id, const object_bind_target target );
 
+
+
+    /* associate_id_with_object
+     *
+     * associate an object id with a GLHelper object
+     * overrides any previous association for the id and type
+     * 
+     * id: the id to associate with an object
+     * type: the type of the object (major type)
+     * obj: the obejct to associate with the id
+     */
+    static void associate_id_with_object ( const GLuint id, const major_object_type type, object& obj );
+
+    /* dissociate_id_from_object
+     *
+     * dissociate an object id from a GLHelper object
+     * the id is only dissociated if it matehced the object and its type
+     * 
+     * id: the id to dissociate from an object
+     * type: the type of the object (major type)
+     * obj: the object to dissociate
+     */
+    static void dissociate_id_from_object ( const GLuint id, const major_object_type type, object& obj );
+
+    /* dissociate_id
+     *
+     * dissociate id from any object currently associated
+     * 
+     * id: the id to dissociate from any associated object
+     * type: the type of the object to dissociate
+     */
+    static void dissociate_id ( const GLuint id, const major_object_type type );
+    
 
 
     /* to_major_object_type
@@ -335,6 +386,14 @@ private:
 
     /* object bindings */
     static std::array<GLuint, static_cast<unsigned> ( object_bind_target::__COUNT__ )> object_bindings;
+
+
+
+    /* create_object_array
+     *
+     * method to return an array of size M filled with zero values
+     */
+    template<unsigned M> static std::array<GLuint, M> create_object_array ();
 
 };
 
