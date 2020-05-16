@@ -26,6 +26,9 @@
 
 int main ()
 {
+
+    {
+        
     glh::glfw::window window;
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
 
@@ -46,6 +49,10 @@ int main ()
     const auto& mirror_trans_uni = mirror_program.get_struct_uniform ( "trans" );
     const auto& cubemap_trans_uni = cubemap_program.get_struct_uniform ( "trans" );
     const auto& model_transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
+
+    model_program.set_uniform_block_binding ( "LIGHT_SYSTEM_BLOCK", 0 );
+    glh::core::ubo light_system_ubo { model_program.get_active_uniform_block_iv ( "LIGHT_SYSTEM_BLOCK", GL_UNIFORM_BLOCK_DATA_SIZE ) };
+    light_system_ubo.bind_buffer_base ( 0 );
     
     glh::camera::camera camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 1000.0 };
     camera.cache_uniforms ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
@@ -182,6 +189,7 @@ int main ()
     glh::core::renderer::enable_depth_test ();
     glh::core::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
+    light_system.apply ();
 
     window.get_timeinfo ();
     window.get_dimensions ();
@@ -251,7 +259,6 @@ int main ()
 
 
         model_program.use ();
-        light_system.apply ();
         model_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
         camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         model_transparent_mode_uni.set_int ( 0 );
@@ -280,7 +287,6 @@ int main ()
 
 
         model_program.use ();
-        light_system.apply ();
         model_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
         model_transparent_mode_uni.set_int ( 0 );
 
@@ -349,6 +355,8 @@ int main ()
     }
 
     std::cout << std::endl << "average fps: " << frames / total_time << std::endl;
+
+    }  
 
     return 0;
 }
