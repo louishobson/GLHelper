@@ -104,14 +104,6 @@ namespace glh
 bool operator== ( const glh::core::object& lhs, const glh::core::object& rhs );
 bool operator!= ( const glh::core::object& lhs, const glh::core::object& rhs );
 
-/* operators+- for bind targets
- *
- * allows one to step through unit-based bind points
- */
-glh::core::object_bind_target operator+ ( const glh::core::object_bind_target target, const int scalar );
-glh::core::object_bind_target operator- ( const glh::core::object_bind_target target, const int scalar );
-int operator- ( const glh::core::object_bind_target target0, const glh::core::object_bind_target target1 );
-
 
 
 /* ENUM DEFINITIONS */
@@ -132,6 +124,8 @@ enum struct glh::core::major_object_type : unsigned
     GLH_PROGRAM_TYPE,
 
     GLH_TEXTURE_TYPE,
+
+    GLH_UNKNOWN_TYPE,
 
     __COUNT__
 };
@@ -157,6 +151,8 @@ enum struct glh::core::minor_object_type : unsigned
 
     GLH_TEXTURE2D_TYPE,
     GLH_CUBEMAP_TYPE,
+
+    GLH_UNKNOWN_TYPE,
 
     __COUNT__
 };
@@ -193,7 +189,7 @@ enum struct glh::core::object_bind_target : unsigned
     GLH_CUBEMAP_24_TARGET, GLH_CUBEMAP_25_TARGET, GLH_CUBEMAP_26_TARGET, GLH_CUBEMAP_27_TARGET, GLH_CUBEMAP_28_TARGET, GLH_CUBEMAP_29_TARGET, GLH_CUBEMAP_30_TARGET, GLH_CUBEMAP_31_TARGET,
     __CUBEMAP_END__,
 
-    GLH_NO_TARGET,
+    GLH_UNKNOWN_TARGET,
 
     __COUNT__
 };
@@ -218,35 +214,14 @@ public:
      */
     explicit object ( const minor_object_type type );
 
-    /* existing object constructor
-     *
-     * construct an object from an existing object id and type
-     * will throw if an object of the same id does not already exist
-     * 
-     * type: the type of the object (minor type)
-     * _id: an existing id of an object of this type
-     */
-    object ( const minor_object_type type, const GLuint _id );
-
-    /* bound object constructor
-     *
-     * construct an object via the object currently bound to a target
-     * if no object is bound to the target, the object constructed has an id of 0
-     * the type not matching with the target will cause undefined behavior
-     * 
-     * type: the type of the object to create (minor type)
-     * target: the target to get the bound object from
-     */
-    object ( const minor_object_type type, const object_bind_target target );
-
     /* deleted zero-parameter constructor */
     object () = delete;
 
-    /* copy constructor
-     *
-     * creates an object referring to the same OpenGL object
-     */
-    object ( const object& other );
+    /* deleted copy constructor */
+    object ( const object& other ) = delete;
+
+    /* move constructor */
+    object ( object&& other );
 
     /* deleted copy assignment operator
      *
@@ -261,6 +236,15 @@ public:
      * virtual in preparation for polymorphism
      */
     virtual ~object ();
+
+
+
+    /* get_bound_object_pointer
+     *
+     * produce a pointer to the object bound to a given bind point
+     * NULL is returned if no object is bound to the bind point
+     */
+    static object * get_bound_object_pointer ( const object_bind_target target );
 
 
 
@@ -311,6 +295,15 @@ public:
      */
     virtual bool is_object_valid () const { return ( id > 0 ); }
 
+    /* not operator
+     *
+     * determines if the object is invalid
+     * synonymous to !object.is_object_valid ()
+     * 
+     * return: boolean representing invalidity
+     */
+    bool operator! () const { return !is_object_valid (); }
+
     /* assert_is_object_valid
      *
      * throws if the object is not valid
@@ -321,24 +314,11 @@ public:
 
 
 
-    /* not operator
-     *
-     * determines if the object is invalid
-     * synonymous to !object.is_object_valid ()
-     * 
-     * return: boolean representing invalidity
-     */
-    bool operator! () const { return !is_object_valid (); }
-
-
-
     /* internal_id
      *
      * returns the internal id of the object
      */
     const GLuint& internal_id () const { return id; }
-
-
 
     /* get_minor/major_object_type
      * get_object_bind_target
@@ -389,8 +369,8 @@ protected:
 
     /* STATIC MEMBERS */
 
-    /* number of existing object ids per major type */
-    static std::array<std::vector<unsigned>, static_cast<unsigned> ( major_object_type::__COUNT__ )> existing_objects;
+    /* pointers to the object of each type and id */
+    static std::array<std::vector<object *>, static_cast<unsigned> ( major_object_type::__COUNT__ )> object_pointers;
 
     /* object bindings per bind target */
     static std::array<GLuint, static_cast<unsigned> ( object_bind_target::__COUNT__ )> object_bindings;
@@ -399,11 +379,11 @@ protected:
 
     /* STATIC METHODS */
 
-    /* create existing_objects
+    /* create_object_pointers
      *
-     * create existing objects array 
+     * create object pointers array
      */
-    static std::array<std::vector<unsigned>, static_cast<unsigned> ( major_object_type::__COUNT__ )> create_existing_objects ();
+    static std::array<std::vector<object *>, static_cast<unsigned> ( major_object_type::__COUNT__ )> create_object_pointers ();
 
     /* create_object_bindings
      *
@@ -422,6 +402,7 @@ protected:
     static major_object_type to_major_object_type ( const minor_object_type type );
     static object_bind_target to_object_bind_target ( const minor_object_type type );
     static GLenum to_opengl_bind_target ( const object_bind_target target );
+    static major_object_type to_major_object_type ( const object_bind_target target );
 
     /* is_texture2d_bind_target
      * is_cubemap_bind_target

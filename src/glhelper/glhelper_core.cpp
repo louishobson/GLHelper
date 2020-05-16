@@ -59,74 +59,17 @@ glh::core::object::object ( const minor_object_type type )
     default: throw exception::object_exception { "attempted to perform generation operation on unknown object type" };
     }
 
-    /* successfully generated object, so add to existing_objects */
+    /* successfully generated object, so add to object_pointers */
 
     /* resize the vector for object ids for this type if necessary */
-    if ( existing_objects.at ( major_type_index ).size () <= id ) existing_objects.at ( major_type_index ).resize ( id + 1 );
+    if ( object_pointers.at ( major_type_index ).size () <= id ) object_pointers.at ( major_type_index ).resize ( id + 1, NULL );
 
-    /* increment the number of existing objects for this id */
-    ++existing_objects.at ( major_type_index ).at ( id );
+    /* set the pointer to object_pointers */
+    object_pointers.at ( major_type_index ).at ( id ) = this;
 }
 
-/* existing object constructor
- *
- * construct an object from an existing object id and type
- * will throw if an object of the same id does not already exist
- * 
- * type: the type of the object (minor type)
- * _id: an existing id of an object of this type
- */
-glh::core::object::object ( const minor_object_type type, const GLuint _id )
-    : id { 0 }
-    , minor_type { type }
-    , major_type { to_major_object_type ( type ) }
-    , bind_target { to_object_bind_target ( type ) }
-    , minor_type_index { static_cast<unsigned> ( minor_type ) }
-    , major_type_index { static_cast<unsigned> ( major_type ) }
-    , bind_target_index { static_cast <unsigned> ( bind_target ) }
-    , gl_target { to_opengl_bind_target ( bind_target ) }
-{
-    /* if object exists, increament the number of existing objects and set id */
-    if ( existing_objects.at ( major_type_index ).size () > _id && existing_objects.at ( major_type_index ).at ( _id ) > 0 )
-    {
-        ++existing_objects.at ( major_type_index ).at ( _id );
-        id = _id;
-        return;
-    } else
-    
-    /* otherwise throw exception */
-    throw exception::object_exception { "attempted to construct object from an id that does not yet refer to an existing object" };
-}
-
-/* bound object constructor
- *
- * construct an object via the object currently bound to a target
- * if no object is bound to the target, the object constructed has an id of 0
- * 
- * target: the target to get the bound object from
- */
-glh::core::object::object ( const minor_object_type type, const object_bind_target target )
-    : id { 0 }
-    , minor_type { type }
-    , major_type { to_major_object_type ( type ) }
-    , bind_target { to_object_bind_target ( type ) }
-    , minor_type_index { static_cast<unsigned> ( minor_type ) }
-    , major_type_index { static_cast<unsigned> ( major_type ) }
-    , bind_target_index { static_cast <unsigned> ( bind_target ) }
-    , gl_target { to_opengl_bind_target ( bind_target ) }
-{
-    /* set id to be equal to object bound top target */
-    id = object_bindings.at ( static_cast<unsigned> ( target ) );
-
-    /* if object is now valid, add one to existing objects */
-    if ( is_object_valid () ) ++existing_objects.at ( major_type_index ).at ( id );
-}
-
-/* copy constructor
- *
- * creates an object referring to the same OpenGL object
- */
-glh::core::object::object ( const object& other )
+/* move constructor */
+glh::core::object::object ( object&& other )
     : id { other.id }
     , minor_type { other.minor_type }
     , major_type { other.major_type }
@@ -136,8 +79,11 @@ glh::core::object::object ( const object& other )
     , bind_target_index { other.bind_target_index }
     , gl_target { other.gl_target }
 {
-    /* if object is valid, add one to existing objects */
-    if ( is_object_valid () ) ++existing_objects.at ( major_type_index ).at ( id );
+    /* set new pointer to object_pointers */
+    if ( is_object_valid () ) object_pointers.at ( major_type_index ).at ( id ) = this;
+
+    /* set id of other object to 0 */
+    other.id = 0;
 }
 
 
@@ -149,44 +95,59 @@ glh::core::object::~object ()
 {
     /* if not valid, return */
     if ( !is_object_valid () ) return;
-
-    /* decrement the number of existing objects for this is and type
-     * if this now equals 0, also destroy the OpenGL object */
-    if ( --existing_objects.at ( major_type_index ).at ( id ) == 0 )
-    {
+    
         /* unbind from all bind points */
         unbind_all ();
 
-        /* switch on type to destroy object */
-        switch ( minor_type )
-        {
-        case minor_object_type::GLH_VBO_TYPE: glDeleteBuffers ( 1, &id ); break;
-        case minor_object_type::GLH_EBO_TYPE: glDeleteBuffers ( 1, &id ); break;
-        case minor_object_type::GLH_UBO_TYPE: glDeleteBuffers ( 1, &id ); break;
-        case minor_object_type::GLH_VAO_TYPE: glDeleteVertexArrays ( 1, &id ); break;
+    /* switch on type to destroy object */
+    switch ( minor_type )
+    {
+    case minor_object_type::GLH_VBO_TYPE: glDeleteBuffers ( 1, &id ); break;
+    case minor_object_type::GLH_EBO_TYPE: glDeleteBuffers ( 1, &id ); break;
+    case minor_object_type::GLH_UBO_TYPE: glDeleteBuffers ( 1, &id ); break;
+    case minor_object_type::GLH_VAO_TYPE: glDeleteVertexArrays ( 1, &id ); break;
 
-        case minor_object_type::GLH_RBO_TYPE: glDeleteRenderbuffers ( 1, &id ); break;
-        case minor_object_type::GLH_FBO_TYPE: glDeleteFramebuffers ( 1, &id ); break;
+    case minor_object_type::GLH_RBO_TYPE: glDeleteRenderbuffers ( 1, &id ); break;
+    case minor_object_type::GLH_FBO_TYPE: glDeleteFramebuffers ( 1, &id ); break;
 
-        case minor_object_type::GLH_VSHADER_TYPE: glDeleteShader ( id ); break;
-        case minor_object_type::GLH_GSHADER_TYPE: glDeleteShader ( id ); break;
-        case minor_object_type::GLH_FSHADER_TYPE: glDeleteShader ( id ); break;
-        case minor_object_type::GLH_PROGRAM_TYPE: glDeleteProgram ( id ); break;
+    case minor_object_type::GLH_VSHADER_TYPE: glDeleteShader ( id ); break;
+    case minor_object_type::GLH_GSHADER_TYPE: glDeleteShader ( id ); break;
+    case minor_object_type::GLH_FSHADER_TYPE: glDeleteShader ( id ); break;
+    case minor_object_type::GLH_PROGRAM_TYPE: glDeleteProgram ( id ); break;
 
-        case minor_object_type::GLH_TEXTURE2D_TYPE: glDeleteTextures ( 1, &id ); break;
-        case minor_object_type::GLH_CUBEMAP_TYPE: glDeleteTextures ( 1, &id ); break;
+    case minor_object_type::GLH_TEXTURE2D_TYPE: glDeleteTextures ( 1, &id ); break;
+    case minor_object_type::GLH_CUBEMAP_TYPE: glDeleteTextures ( 1, &id ); break;
 
-        default: break;
+    default: break;
         /* throw exception::object_exception { "attempted to perform destroy operation on unknown object type" };
          *
          * it would be nice to throw, but t'is a destructor
          */
-        }
     }
+
+    /* set pointer to NULL */
+    object_pointers.at ( major_type_index ).at ( id ) = NULL;
 
     /* set id to 0 */
     id = 0;
 }
+
+
+
+/* get_bound_object_pointer
+ *
+ * produce a pointer to the object bound to a given bind point
+ * NULL is returned if no object is bound to the bind point
+ *
+ * target: the bind target to get the object from
+ */
+glh::core::object * glh::core::object::get_bound_object_pointer ( const object_bind_target target )
+{
+    /* cast target to unsigned and return the object bound to that bind point */
+    return object_pointers.at ( static_cast<unsigned> ( to_major_object_type ( target ) ) ).at ( object_bindings.at ( static_cast<unsigned> ( target ) ) );
+}
+
+
 
 /* bind/unbind
  * 
@@ -216,7 +177,7 @@ void glh::core::object::bind () const
 
     case object_bind_target::GLH_PROGRAM_TARGET: glUseProgram ( id ); break;
 
-    case object_bind_target::GLH_NO_TARGET: break;
+    case object_bind_target::GLH_UNKNOWN_TARGET: break;
 
     case object_bind_target::GLH_TEXTURE2D_0_TARGET: glActiveTexture ( GL_TEXTURE0 ); glBindTexture ( GL_TEXTURE_2D, id ); break;
     case object_bind_target::GLH_CUBEMAP_0_TARGET: glActiveTexture ( GL_TEXTURE0 ); glBindTexture ( GL_TEXTURE_CUBE_MAP, id ); break;
@@ -277,7 +238,7 @@ void glh::core::object::force_unbind () const
 
     case object_bind_target::GLH_PROGRAM_TARGET: glUseProgram ( 0 ); break;
 
-    case object_bind_target::GLH_NO_TARGET: break;
+    case object_bind_target::GLH_UNKNOWN_TARGET: break;
 
     case object_bind_target::GLH_TEXTURE2D_0_TARGET: glActiveTexture ( GL_TEXTURE0 ); glBindTexture ( GL_TEXTURE_2D, 0 ); break;
     case object_bind_target::GLH_CUBEMAP_0_TARGET: glActiveTexture ( GL_TEXTURE0 ); glBindTexture ( GL_TEXTURE_CUBE_MAP, 0 ); break;
@@ -319,16 +280,16 @@ void glh::core::object::assert_is_object_valid ( const std::string& operation ) 
 
 
 
-/* create existing_objects
+/* create_object_pointers
  *
- * create existing objects array 
+ * create object pointers array 
  */
-std::array<std::vector<unsigned>, static_cast<unsigned> ( glh::core::major_object_type::__COUNT__ )> glh::core::object::create_existing_objects ()
+std::array<std::vector<glh::core::object *>, static_cast<unsigned> ( glh::core::major_object_type::__COUNT__ )> glh::core::object::create_object_pointers ()
 {
     /* initialise to empty vectors */
-    std::array<std::vector<unsigned>, static_cast<unsigned> ( glh::core::major_object_type::__COUNT__ )> _existing_objects;
-    _existing_objects.fill ( {} );
-    return _existing_objects;
+    std::array<std::vector<object *>, static_cast<unsigned> ( glh::core::major_object_type::__COUNT__ )> _object_pointers;
+    _object_pointers.fill ( {} );
+    return _object_pointers;
 }
 
 /* create_object_bindings
@@ -345,7 +306,9 @@ std::array<GLuint, static_cast<unsigned> ( glh::core::object_bind_target::__COUN
 
 
 
-/* to_major/gen/object_bind_target
+/* to_major_object_type
+ * to_object_bind_target
+ * to_opengl_bind_target
  *
  * take a minor object type and convert it to its major, gen or bind object type
  */
@@ -369,6 +332,8 @@ glh::core::major_object_type glh::core::object::to_major_object_type ( const min
 
     case minor_object_type::GLH_TEXTURE2D_TYPE: return major_object_type::GLH_TEXTURE_TYPE;
     case minor_object_type::GLH_CUBEMAP_TYPE: return major_object_type::GLH_TEXTURE_TYPE;
+
+    case minor_object_type::GLH_UNKNOWN_TYPE: return major_object_type::GLH_UNKNOWN_TYPE;
     
     default: throw exception::object_exception { "attempted to perform minor to major type conversion on unknown object type" };
     }
@@ -386,13 +351,15 @@ glh::core::object_bind_target glh::core::object::to_object_bind_target ( const m
     case minor_object_type::GLH_RBO_TYPE: return object_bind_target::GLH_RBO_TARGET;
     case minor_object_type::GLH_FBO_TYPE: return object_bind_target::GLH_FBO_TARGET;
 
-    case minor_object_type::GLH_VSHADER_TYPE: return object_bind_target::GLH_NO_TARGET;
-    case minor_object_type::GLH_GSHADER_TYPE: return object_bind_target::GLH_NO_TARGET;
-    case minor_object_type::GLH_FSHADER_TYPE: return object_bind_target::GLH_NO_TARGET;
+    case minor_object_type::GLH_VSHADER_TYPE: return object_bind_target::GLH_UNKNOWN_TARGET;
+    case minor_object_type::GLH_GSHADER_TYPE: return object_bind_target::GLH_UNKNOWN_TARGET;
+    case minor_object_type::GLH_FSHADER_TYPE: return object_bind_target::GLH_UNKNOWN_TARGET;
     case minor_object_type::GLH_PROGRAM_TYPE: return object_bind_target::GLH_PROGRAM_TARGET;
 
     case minor_object_type::GLH_TEXTURE2D_TYPE: return object_bind_target::GLH_TEXTURE2D_0_TARGET;
     case minor_object_type::GLH_CUBEMAP_TYPE: return object_bind_target::GLH_CUBEMAP_0_TARGET;
+
+    case minor_object_type::GLH_UNKNOWN_TYPE: return object_bind_target::GLH_UNKNOWN_TARGET;
     
     default: throw exception::object_exception { "attempted to perform minor to bind target conversion on unknown object type" };
     }
@@ -414,11 +381,36 @@ GLenum glh::core::object::to_opengl_bind_target ( const object_bind_target targe
 
     case object_bind_target::GLH_PROGRAM_TARGET: return GL_NONE;
 
-    case object_bind_target::GLH_NO_TARGET: return GL_NONE;
+    case object_bind_target::GLH_UNKNOWN_TARGET: return GL_NONE;
 
     default:
         if ( is_texture2d_bind_target ( target ) ) return GL_TEXTURE_2D; else
         if ( is_cubemap_bind_target ( target ) ) return GL_TEXTURE_CUBE_MAP; else
+        throw exception::object_exception { "attempted to perform glh to opengl bind target conversion on unknown target" };
+    }
+}
+glh::core::major_object_type glh::core::object::to_major_object_type ( const object_bind_target target )
+{
+    /* switch on target and bind to default bind point */
+    switch ( target )
+    {
+    case object_bind_target::GLH_VBO_TARGET: return major_object_type::GLH_BUFFER_TYPE;
+    case object_bind_target::GLH_EBO_TARGET: return major_object_type::GLH_BUFFER_TYPE;
+    case object_bind_target::GLH_UBO_TARGET: return major_object_type::GLH_BUFFER_TYPE;
+    case object_bind_target::GLH_COPY_READ_BUFFER_TARGET: return major_object_type::GLH_BUFFER_TYPE;
+    case object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET: return major_object_type::GLH_BUFFER_TYPE;
+    case object_bind_target::GLH_VAO_TARGET: return major_object_type::GLH_VAO_TYPE;
+
+    case object_bind_target::GLH_RBO_TARGET: return major_object_type::GLH_RBO_TYPE;
+    case object_bind_target::GLH_FBO_TARGET: return major_object_type::GLH_FBO_TYPE;
+
+    case object_bind_target::GLH_PROGRAM_TARGET: return major_object_type::GLH_PROGRAM_TYPE;
+
+    case object_bind_target::GLH_UNKNOWN_TARGET: return major_object_type::GLH_UNKNOWN_TYPE;
+
+    default:
+        if ( is_texture2d_bind_target ( target ) ) return major_object_type::GLH_TEXTURE_TYPE; else
+        if ( is_cubemap_bind_target ( target ) ) return major_object_type::GLH_TEXTURE_TYPE; else
         throw exception::object_exception { "attempted to perform glh to opengl bind target conversion on unknown target" };
     }
 }
@@ -446,8 +438,8 @@ bool glh::core::object::is_cubemap_bind_target ( const object_bind_target target
 /* STATIC MEMBERS OF OBJECT DEFINITIONS */
 
 /* number of existing object ids per major type */
-std::array<std::vector<unsigned>, static_cast<unsigned> ( glh::core::major_object_type::__COUNT__ )> glh::core::object::existing_objects
-{ create_existing_objects () };
+std::array<std::vector<glh::core::object *>, static_cast<unsigned> ( glh::core::major_object_type::__COUNT__ )> glh::core::object::object_pointers
+{ create_object_pointers () };
 
 /* object bindings per bind target */
 std::array<GLuint, static_cast<unsigned> ( glh::core::object_bind_target::__COUNT__ )> glh::core::object::object_bindings
