@@ -134,12 +134,7 @@ public:
      * 
      * _minor_type: the minor type of the buffer
      */
-    buffer ( const minor_object_type _minor_type )
-        : object { _minor_type }
-        , capacity { 0 }
-        , map_ptr { NULL }
-        , map_id { 0 }
-    {}
+    buffer ( const minor_object_type _minor_type );
 
     /* construct and immediately buffer data
      *
@@ -150,12 +145,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    buffer ( const minor_object_type _minor_type, const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
-        : object { _minor_type }
-        , capacity { 0 }
-        , map_ptr { NULL }
-        , map_id { 0 }
-    { buffer_data ( size, data, usage ); }
+    buffer ( const minor_object_type _minor_type, const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW );
 
     /* deleted zero-parameter constructor */
     buffer () = delete;
@@ -169,8 +159,8 @@ public:
     /* deleted copy assignment operator */
     buffer& operator= ( const buffer& other ) = delete;
 
-    /* virtual destructor */
-    virtual ~buffer () { destroy (); }
+    /* default virtual destructor */
+    virtual ~buffer () = default;
 
 
 
@@ -246,22 +236,22 @@ public:
      *
      * bind the buffer to the copy read/write targets
      */
-    void bind_copy_read () const { om::bind_object ( id, object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
-    void bind_copy_write () const { om::bind_object ( id, object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET ); }
+    void bind_copy_read () const;
+    void bind_copy_write () const;
 
     /* unbind_copy_read/write
      *
      * unbind the buffer to the copy read/write targets
      */
-    void unbind_copy_read () const { om::unbind_object ( id, object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
-    void unbind_copy_write () const { om::unbind_object ( id, object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET ); }
+    void unbind_copy_read () const;
+    void unbind_copy_write () const;
 
     /* is_copy_read/write_bound
      *
      * check if the buffer is bound to the copy read/write targets
      */
-    bool is_copy_read_bound () const { return om::is_object_bound ( id, object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
-    bool is_copy_write_bound () const { return om::is_object_bound ( id, object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET ); }
+    bool is_copy_read_bound () const;
+    bool is_copy_write_bound () const;
 
 
 
@@ -614,8 +604,8 @@ public:
     /* deleted copy assignment operator */
     vao& operator= ( const vao& other ) = delete;
 
-    /* destructor */
-    ~vao () { destroy (); }
+    /* default destructor */
+    ~vao () = default;
 
 
 

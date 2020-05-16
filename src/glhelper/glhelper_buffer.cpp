@@ -21,6 +21,44 @@
 
 /* buffer IMPLEMENTATION */
 
+/* constructor
+ *
+ * generates a buffer
+ * 
+ * _minor_type: the minor type of the buffer
+ */
+glh::core::buffer::buffer ( const minor_object_type _minor_type )
+    : object { _minor_type }
+    , capacity { 0 }
+    , map_ptr { NULL }
+    , map_id { 0 }
+{ 
+    /* assert major type is a buffer */ 
+    if ( major_type != major_object_type::GLH_BUFFER_TYPE ) throw exception::buffer_exception { "attempted to construct buffer with non-buffer type" }; 
+}
+
+/* construct and immediately buffer data
+ *
+ * generates a buffer and immediately buffers data
+ * 
+ * _minor_type: the minor type of the buffer
+ * size: size of data in bytes
+ * data: pointer to data
+ * usage: the storage method for the data
+ */
+glh::core::buffer::buffer ( const minor_object_type _minor_type, const GLsizeiptr size, const GLvoid * data, const GLenum usage )
+    : object { _minor_type }
+    , capacity { 0 }
+    , map_ptr { NULL }
+    , map_id { 0 }
+{ 
+    /* assert major type is a buffer */ 
+    if ( major_type != major_object_type::GLH_BUFFER_TYPE ) throw exception::buffer_exception { "attempted to construct buffer with non-buffer type" }; 
+    
+    /* now biffer data */
+    buffer_data ( size, data, usage );
+}
+
 /* buffer_data
  *
  * buffer data into the buffer
@@ -140,6 +178,99 @@ void glh::core::buffer::unmap ()
         if ( glUnmapBuffer ( gl_target ) != GL_TRUE ) throw exception::buffer_exception { "failed to unmap buffer" };
         unbind ();
     }
+}
+
+/* bind_copy_read/write
+ *
+ * bind the buffer to the copy read/write targets
+ */
+void glh::core::buffer::bind_copy_read () const
+{
+    /* throw if not valid */
+    assert_is_object_valid ( "bind" );
+
+    /* get the index of the copy read target */
+    const unsigned copy_read_target_index = static_cast<unsigned> ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET );
+
+    /* if already bound, return */
+    if ( object_bindings.at ( copy_read_target_index ) == id ) return;
+
+    /* bind object */
+    glBindBuffer ( GL_COPY_READ_BUFFER, id );
+
+    /* record the binding */
+    object_bindings.at ( copy_read_target_index ) = id;
+}
+void glh::core::buffer::bind_copy_write () const
+{
+    /* throw if not valid */
+    assert_is_object_valid ( "bind" );
+
+    /* get the index of the copy write target */
+    const unsigned copy_write_target_index = static_cast<unsigned> ( object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET );
+
+    /* if already bound, return */
+    if ( object_bindings.at ( copy_write_target_index ) == id ) return;
+
+    /* bind object */
+    glBindBuffer ( GL_COPY_WRITE_BUFFER, id );
+
+    /* record the binding */
+    object_bindings.at ( copy_write_target_index ) = id;
+}
+
+/* unbind_copy_read/write
+ *
+ * unbind the buffer to the copy read/write targets
+ */
+void glh::core::buffer::unbind_copy_read () const
+{
+    /* throw if not valid */
+    assert_is_object_valid ( "unbind" );
+
+    /* get the index of the copy read target */
+    const unsigned copy_read_target_index = static_cast<unsigned> ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET );
+
+    /* if not bound, return */
+    if ( object_bindings.at ( copy_read_target_index ) != id ) return;
+
+    /* un bind object */
+    glBindBuffer ( GL_COPY_READ_BUFFER, 0 );
+
+    /* record the unbinding */
+    object_bindings.at ( copy_read_target_index ) = 0;
+}
+void glh::core::buffer::unbind_copy_write () const
+{
+    /* throw if not valid */
+    assert_is_object_valid ( "unbind" );
+
+    /* get the index of the copy write target */
+    const unsigned copy_write_target_index = static_cast<unsigned> ( object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET );
+
+    /* if not bound, return */
+    if ( object_bindings.at ( copy_write_target_index ) != id ) return;
+
+    /* unbind object */
+    glBindBuffer ( GL_COPY_WRITE_BUFFER, 0 );
+
+    /* record the unbinding */
+    object_bindings.at ( copy_write_target_index ) = 0;
+}
+
+/* is_copy_read/write_bound
+ *
+ * check if the buffer is bound to the copy read/write targets
+ */
+bool glh::core::buffer::is_copy_read_bound () const
+{
+    /* return true if is valid and is bound */
+    return ( is_object_valid () && object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET ) ) == id );
+}
+bool glh::core::buffer::is_copy_write_bound () const
+{
+    /* return true if is valid and is bound */
+    return ( is_object_valid () && object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET ) ) == id );
 }
 
 /* generate_map

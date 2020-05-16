@@ -25,6 +25,111 @@
 
 /* TEXTURE_BASE IMPLEMENTATION */
 
+/* full constructor
+ *
+ * only supply the texture target
+ * 
+ * _minor_type: the minor type of the texture
+ * _internal_format: the internal format of the data (e.g. specific bit arrangements)
+ * _format: the format of the data (e.g. what the data will be used for)
+ * _width/height: width/height of the texture (defaults to 0)
+ */
+glh::core::texture_base::texture_base ( const minor_object_type _minor_type, const GLenum _internal_format, const GLenum _format, const int _width, const int _height )
+    : object { _minor_type }
+    , internal_format ( _internal_format )
+    , format ( _format )
+    , width { _width }
+    , height { _height }
+{
+    /* assert major type is a texture */ 
+    if ( major_type != major_object_type::GLH_TEXTURE_TYPE ) throw exception::texture_exception { "attempted to construct texture_base with non-texture type" }; 
+}
+
+
+/* bind/unbind
+ *
+ * bind the texture to a texture unit
+ * 
+ * unit: the texture unit to bind to/unbind from
+ */
+void glh::core::texture_base::bind ( const unsigned unit ) const
+{
+    /* throw if not valid */
+    assert_is_object_valid ( "bind" );
+
+    /* if already bound, return */
+    if ( object_bindings.at ( bind_target_index + unit ) == id ) return;
+
+    /* switch for bind target */
+    switch ( bind_target )
+    {
+    case object_bind_target::GLH_TEXTURE2D_0_TARGET: 
+        glActiveTexture ( GL_TEXTURE0 + unit );
+        glBindTexture ( GL_TEXTURE_2D, id );
+        break;
+
+    case object_bind_target::GLH_CUBEMAP_0_TARGET: 
+        glActiveTexture ( GL_TEXTURE0 + unit );
+        glBindTexture ( GL_TEXTURE_CUBE_MAP, id );
+        break;
+
+    default: throw exception::object_exception { "attempted to perform unbind operation to unknown target" };
+    }
+
+    /* set binding */
+    object_bindings.at ( bind_target_index + unit ) = id;
+}
+
+/* unbind
+ *
+ * unbind the texture from a texture unit
+ * 
+ * uniy: the texture unit to unbind from
+ */
+void glh::core::texture_base::unbind ( const unsigned unit ) const
+{
+    /* throw if not valid */
+    assert_is_object_valid ( "unbind" );
+
+    /* if not bound, return */
+    if ( object_bindings.at ( bind_target_index + unit ) != id ) return;
+
+    /* switch for bind target */
+    switch ( bind_target )
+    {
+    case object_bind_target::GLH_TEXTURE2D_0_TARGET: 
+        glActiveTexture ( GL_TEXTURE0 + unit );
+        glBindTexture ( GL_TEXTURE_2D, 0 );
+        break;
+
+    case object_bind_target::GLH_CUBEMAP_0_TARGET: 
+        glActiveTexture ( GL_TEXTURE0 + unit );
+        glBindTexture ( GL_TEXTURE_CUBE_MAP, 0 );
+        break;
+
+    default: throw exception::object_exception { "attempted to perform unbind operation to unknown target" };
+    }
+
+    /* set binding */
+    object_bindings.at ( bind_target_index + unit ) = 0;
+}
+
+/* is_bound 
+ *
+ * check if is bound to a texture unit
+ * 
+ * unit: the texture unit to check if it is bound to
+ * 
+ * return: boolean for if the texture is bound to the unit supplied
+ */
+bool glh::core::texture_base::is_bound ( const unsigned unit ) const
+{
+    /* return true if is valid and is bount to texture unit */
+    return ( is_object_valid () && object_bindings.at ( bind_target_index + unit ) == id );
+}
+
+
+
 /* set_mag/min_filter
  *
  * set the texture filtering parameters of magnified/minified texture

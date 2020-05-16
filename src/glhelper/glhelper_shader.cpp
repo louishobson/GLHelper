@@ -79,8 +79,7 @@ glh::core::shader::shader ( const minor_object_type _type, const std::string& _p
         glGetShaderInfoLog ( id, GLH_SHADER_LOG_SIZE, NULL, comp_log );
         /* print log info to stderr */
         std::cerr << comp_log;
-        /* destroy the shader and throw */
-        destroy ();
+        /* throw */
         throw exception::shader_exception { "shader compilation failed for shader at path " + path };
     }
 }
@@ -501,9 +500,6 @@ glh::core::program::program ( const vshader& vs, const fshader& fs )
 {
     /* check shaders are valid */
     if ( !vs.is_object_valid () || !fs.is_object_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
-
-    /* generate program */
-    id = glCreateProgram ();
 
     /* attach shaders */
     glAttachShader ( id, vs.internal_id () );

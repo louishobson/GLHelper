@@ -121,14 +121,8 @@ public:
      * _format: the format of the data (e.g. what the data will be used for)
      * _width/height: width/height of the texture (defaults to 0)
      */
-    texture_base ( const minor_object_type _minor_type, const GLenum _internal_format, const GLenum _format, const int _width = 0, const int _height = 0 )
-        : object { _minor_type }
-        , internal_format ( _internal_format )
-        , format ( _format )
-        , width { _width }
-        , height { _height }
-    {}
-
+    texture_base ( const minor_object_type _minor_type, const GLenum _internal_format, const GLenum _format, const int _width = 0, const int _height = 0 );
+    
     /* deleted copy constructor */
     texture_base ( const texture_base& other ) = delete;
 
@@ -138,8 +132,8 @@ public:
     /* deleted copy constructor */
     texture_base& operator= ( const texture_base& other ) = delete;
 
-    /* virtual destructor */
-    virtual ~texture_base () { destroy (); }
+    /* default virtual destructor */
+    virtual ~texture_base () = default;
 
 
 
@@ -167,35 +161,34 @@ public:
 
 
 
-    /* bind
+    /* bind/unbind
      *
      * bind the texture to a texture unit
      * 
-     * texture_unit: the texture unit to bind to, defaulting to 0
+     * unit: the texture unit to bind to/unbind from
      */
     using object::bind;
-    void bind ( const unsigned texture_unit ) const
-    { om::bind_object ( id, bind_target + texture_unit ); }
+    void bind ( const unsigned texture_unit ) const;
 
     /* unbind
      *
      * unbind the texture from a texture unit
      * 
-     * texture_unit: the texture unit to unbind from, defaulting to 0
+     * uniy: the texture unit to unbind from
      */
     using object::unbind;
-    void unbind ( const unsigned texture_unit ) const
-    { om::unbind_object ( id, bind_target + texture_unit ); }
+    void unbind ( const unsigned texture_unit ) const;
 
     /* is_bound
      *
-     * texture_unit: the texture unit to check if it is bound to, defaulting to 0
+     * check if is bound to a texture unit
      * 
-     * return: boolean for if the texture is bound
+     * unit: the texture unit to check if it is bound to
+     * 
+     * return: boolean for if the texture is bound to the unit supplied
      */
     using object::is_bound;
-    bool is_bound ( const unsigned texture_unit ) const
-    { return om::is_object_bound ( id, bind_target + texture_unit ); }
+    bool is_bound ( const unsigned texture_unit ) const;
 
 
 

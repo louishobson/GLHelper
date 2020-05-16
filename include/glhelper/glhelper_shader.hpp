@@ -257,8 +257,8 @@ public:
     /* deleted copy asignment operator */
     shader& operator= ( const shader& other ) = delete;
 
-    /* destructor */
-    virtual ~shader () { destroy (); }
+    /* default virtual destructor */
+    virtual ~shader () = default;
 
 
 
@@ -920,8 +920,8 @@ public:
     /* deleted copy assignment operator */
     program& operator= ( const program& other ) = delete;
 
-    /* destructor */
-    ~program () { destroy (); }
+    /* default destructor */
+    ~program () = default;
 
 
 
