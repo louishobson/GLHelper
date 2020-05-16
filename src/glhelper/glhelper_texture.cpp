@@ -46,6 +46,7 @@ glh::core::texture_base::texture_base ( const minor_object_type _minor_type, con
 }
 
 
+
 /* bind/unbind
  *
  * bind the texture to a texture unit
@@ -112,6 +113,34 @@ void glh::core::texture_base::unbind ( const unsigned unit ) const
 
     /* set binding */
     object_bindings.at ( bind_target_index + unit ) = 0;
+}
+
+/* unbind_all
+ *
+ * unbind from all targets
+ * this includes all texture units
+ */
+void glh::core::texture_base::unbind_all () const
+{
+    /* switch for bind target */
+    switch ( bind_target )
+    {
+    case object_bind_target::GLH_TEXTURE2D_0_TARGET:
+        {
+            const unsigned num_texture2d_units = static_cast<unsigned> ( object_bind_target::__TEXTURE2D_END__ ) - static_cast<unsigned> ( object_bind_target::__TEXTURE2D_START__ ) - 1;
+            for ( unsigned i = 0; i < num_texture2d_units; ++i ) unbind ( i );
+        }
+        break;
+
+    case object_bind_target::GLH_CUBEMAP_0_TARGET:
+        { 
+            const unsigned num_cubemap_units = static_cast<unsigned> ( object_bind_target::__CUBEMAP_END__ ) - static_cast<unsigned> ( object_bind_target::__CUBEMAP_START__ ) - 1;
+            for ( unsigned i = 0; i < num_cubemap_units; ++i ) unbind ( i );
+        }
+        break;
+
+    default: throw exception::object_exception { "attempted to perform unbind all operation to unknown target" };
+    }
 }
 
 /* is_bound 
@@ -261,6 +290,22 @@ glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height,
 
 
 
+/* get_bound_object_pointer
+ *
+ * produce a pointer to the texture2d currently bound
+ * NULL is returned if no object is bound to the bind point
+ *
+ * target: the bind target to get the object from
+ * unit: the texture unit to get the object bound to
+ */
+glh::core::texture2d * glh::core::texture2d::get_bound_object_pointer ( const unsigned unit )
+{
+    /* return the casted object */
+    return dynamic_cast<texture2d *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_TEXTURE_TYPE ) ).at ( object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_0_TARGET ) + unit ) ) );    
+}
+
+
+
 /* CUBEMAP IMPLEMENTATION */
 
 /* image constructor
@@ -369,4 +414,20 @@ glh::core::cubemap::cubemap ( const std::string& path )
     /* set mag/min options */
     set_mag_filter ( GL_LINEAR );
     set_min_filter ( GL_LINEAR_MIPMAP_LINEAR );
+}
+
+
+
+/* get_bound_object_pointer
+ *
+ * produce a pointer to the cubemap currently bound
+ * NULL is returned if no object is bound to the bind point
+ *
+ * target: the bind target to get the object from
+ * unit: the texture unit to get the object bound to
+ */
+glh::core::cubemap * glh::core::cubemap::get_bound_object_pointer ( const unsigned unit )
+{
+    /* return the casted object */
+    return dynamic_cast<cubemap *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_TEXTURE_TYPE ) ).at ( object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET ) + unit ) ) );    
 }

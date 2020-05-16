@@ -179,6 +179,13 @@ public:
     using object::unbind;
     void unbind ( const unsigned texture_unit ) const;
 
+    /* unbind_all
+     *
+     * unbind from all targets
+     * this includes all texture units
+     */
+    void unbind_all () const;
+
     /* is_bound
      *
      * check if is bound to a texture unit
@@ -261,6 +268,17 @@ public:
 
 
 
+    /* get_bound_object_pointer
+     *
+     * produce a pointer to the texture2d currently bound
+     * NULL is returned if no object is bound to the bind point
+     * unit: the texture unit to get the object bound to
+     */
+    using object::get_bound_object_pointer;
+    static texture2d * get_bound_object_pointer ( const unsigned unit = 0 );
+
+
+
     /* get_path
      *
      * get the path the texture was originally imported from
@@ -338,6 +356,17 @@ public:
 
     /* deleted copy assignment operator */
     cubemap& operator= ( const cubemap& other ) = delete;
+
+
+
+    /* get_bound_object_pointer
+     *
+     * produce a pointer to the cubemap currently bound
+     * NULL is returned if no object is bound to the bind point
+     * unit: the texture unit to get the object bound to
+     */
+    using object::get_bound_object_pointer;
+    static cubemap * get_bound_object_pointer ( const unsigned unit = 0 );
 
 
 
