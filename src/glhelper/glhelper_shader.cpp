@@ -328,7 +328,7 @@ void glh::core::uniform::set_matrix ( const math::matrix<2, 2>& v0 ) const
 
     /* apply the uniform */
     if ( block_index == -1 ) default_set ( glUniformMatrix2fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_array ( v0.export_data ().data (), 4 );
+    else ubo_set_matrix ( v0 );
 }
 void glh::core::uniform::set_matrix ( const math::matrix<2, 3>& v0 ) const
 {
@@ -338,7 +338,7 @@ void glh::core::uniform::set_matrix ( const math::matrix<2, 3>& v0 ) const
 
     /* apply the uniform */
     if ( block_index == -1 ) default_set ( glUniformMatrix2x3fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_array ( v0.export_data ().data (), 6 );
+    else ubo_set_matrix ( v0 );
 }
 void glh::core::uniform::set_matrix ( const math::matrix<2, 4>& v0 ) const
 {
@@ -348,7 +348,7 @@ void glh::core::uniform::set_matrix ( const math::matrix<2, 4>& v0 ) const
 
     /* apply the uniform */
     if ( block_index == -1 ) default_set ( glUniformMatrix2x4fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_array ( v0.export_data ().data (), 8 );
+    else ubo_set_matrix ( v0 );
 }
 void glh::core::uniform::set_matrix ( const math::matrix<3, 2>& v0 ) const
 {
@@ -358,7 +358,7 @@ void glh::core::uniform::set_matrix ( const math::matrix<3, 2>& v0 ) const
 
     /* apply the uniform */
     if ( block_index == -1 ) default_set ( glUniformMatrix3x2fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_array ( v0.export_data ().data (), 6 );
+    else ubo_set_matrix ( v0 );
 }
 void glh::core::uniform::set_matrix ( const math::matrix<3, 3>& v0 ) const
 {
@@ -368,7 +368,7 @@ void glh::core::uniform::set_matrix ( const math::matrix<3, 3>& v0 ) const
 
     /* apply the uniform */
     if ( block_index == -1 ) default_set ( glUniformMatrix3fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_array ( v0.export_data ().data (), 9 );
+    else ubo_set_matrix ( v0 );
 }
 void glh::core::uniform::set_matrix ( const math::matrix<3, 4>& v0 ) const
 {
@@ -378,7 +378,7 @@ void glh::core::uniform::set_matrix ( const math::matrix<3, 4>& v0 ) const
 
     /* apply the uniform */
     if ( block_index == -1 ) default_set ( glUniformMatrix3x4fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_array ( v0.export_data ().data (), 12 );
+    else ubo_set_matrix ( v0 );
 }
 void glh::core::uniform::set_matrix ( const math::matrix<4, 2>& v0 ) const
 {
@@ -388,7 +388,7 @@ void glh::core::uniform::set_matrix ( const math::matrix<4, 2>& v0 ) const
     
     /* apply the uniform */
     if ( block_index == -1 ) default_set ( glUniformMatrix4x2fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_array ( v0.export_data ().data (), 8 );
+    else ubo_set_matrix ( v0 );
 }
 void glh::core::uniform::set_matrix ( const math::matrix<4, 3>& v0 ) const
 {
@@ -398,7 +398,7 @@ void glh::core::uniform::set_matrix ( const math::matrix<4, 3>& v0 ) const
 
     /* apply the uniform */
     if ( block_index == -1 ) default_set ( glUniformMatrix4x3fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_array ( v0.export_data ().data (), 12 );
+    else ubo_set_matrix ( v0 );
 }
 void glh::core::uniform::set_matrix ( const math::matrix<4, 4>& v0 ) const
 {
@@ -408,7 +408,7 @@ void glh::core::uniform::set_matrix ( const math::matrix<4, 4>& v0 ) const
 
     /* apply the uniform */
     if ( block_index == -1 ) default_set ( glUniformMatrix4fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_array ( v0.export_data ().data (), 16 );
+    else ubo_set_matrix ( v0 );
 }
 
 /* use_program
@@ -652,4 +652,52 @@ GLint glh::core::program::get_active_uniform_block_iv ( const std::string& name,
 {
     /* get index and call overload */
     return get_active_uniform_block_iv ( get_uniform_block_index ( name ), target );
+}
+
+
+
+/* set_uniform_block_binding
+ *
+ * bind/unbind a uniform block from an index
+ *
+ * block_index/name: the index/name of the uniform block
+ * bp_index: the index of the bind point
+ */
+void glh::core::program::set_uniform_block_binding ( const GLuint block_index, const GLuint bp_index ) const
+{
+    /* resize vector if necessary */
+    if ( uniform_block_bindings.size () <= block_index ) uniform_block_bindings.resize ( block_index + 1, -1 );
+
+    /* if already bound to index, return */
+    if ( uniform_block_bindings.at ( block_index ) == bp_index ) return;
+
+    /* otherwise bind block to index */
+    glUniformBlockBinding ( id, block_index, bp_index );
+
+    /* record binding */
+    uniform_block_bindings.at ( block_index ) = bp_index;
+}
+void glh::core::program::set_uniform_block_binding ( const std::string& block_name, const GLuint bp_index ) const
+{
+    /* get index and call overload */
+    set_uniform_block_binding ( get_uniform_block_index ( block_name ), bp_index );
+}
+
+/* get_uniform_block_binding
+ *
+ * returns the index of the bind point a uniform block is bound to
+ * -1 if not bound
+ * 
+ * block_index/name: the index/name of the block to get the bind point of
+ */
+GLint glh::core::program::get_uniform_block_binding ( const GLuint block_index ) const
+{
+    /* simply return the value in uniform_block_bindings */
+    if ( uniform_block_bindings.size () > block_index ) return uniform_block_bindings.at ( block_index );
+    else return -1;
+}
+GLint glh::core::program::get_uniform_block_binding ( const std::string& block_name ) const
+{
+    /* get index and call overload */
+    return get_uniform_block_binding ( get_uniform_block_index ( block_name ) );
 }

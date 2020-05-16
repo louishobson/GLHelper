@@ -91,6 +91,7 @@
 #include <map>
 #include <string>
 #include <type_traits>
+#include <vector>
 
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
@@ -677,18 +678,21 @@ protected:
      */
     template<class T, class ...Ts> void ubo_set ( const Ts&... vs ) const;
 
-    /* ubo_set_array
+    /* ubo_set_matrix
      *
      * set a uniform to the ubo bound to its block index
-     * takes a pointer to data rather than individual values
+     * takes a matrix rather than general values
      */
-    template<class T> void ubo_set_array ( const T * vs, const unsigned size ) const;
+    template<unsigned M> void ubo_set_matrix ( const math::matrix<M, 2>& matrix ) const;
+    template<unsigned M> void ubo_set_matrix ( const math::matrix<M, 3>& matrix ) const;
+    template<unsigned M> void ubo_set_matrix ( const math::matrix<M, 4>& matrix ) const;
 
     /* __ubo_set
      *
      * for internal use by ubo_set
      */
     template<class T,  class ...Ts> void __ubo_set ( buffer_map<T>& map, const unsigned index, const T& v0, const Ts&... vs ) const;
+    template<class T> void __ubo_set ( buffer_map<T>& map, const unsigned index ) const {}
 
 };
 
@@ -925,6 +929,16 @@ public:
 
 
 
+    /* get_bound_object_pointer
+     *
+     * produce a pointer to the program currently bound
+     * NULL is returned if no object is bound to the bind point
+     */
+    using object::get_bound_object_pointer;
+    static program * get_bound_object_pointer () { return dynamic_cast<program *> ( get_bound_object_pointer ( object_bind_target::GLH_PROGRAM_TARGET ) ); }
+
+
+
     /* get_(struct_)uniform
      *
      * return a uniform object based on a name
@@ -1000,6 +1014,26 @@ public:
     GLint get_active_uniform_block_iv ( const GLuint index, const GLenum target ) const;
     GLint get_active_uniform_block_iv ( const std::string& name, const GLenum target ) const;
 
+    /* set_uniform_block_binding
+     *
+     * bind a uniform block to an index
+     *
+     * block_index/name: the index/name of the uniform block
+     * bp_index: the index of the bind point
+     */
+    void set_uniform_block_binding ( const GLuint block_index, const GLuint bp_index ) const;
+    void set_uniform_block_binding ( const std::string& block_name, const GLuint bp_index ) const;
+
+    /* get_uniform_block_binding
+     *
+     * returns the index of the bind point a uniform block is bound to
+     * -1 if not bound
+     * 
+     * block_index/name: the index/name of the block to get the bind point of
+     */
+    GLint get_uniform_block_binding ( const GLuint block_index ) const;
+    GLint get_uniform_block_binding ( const std::string& block_name ) const;
+
 
 
     /* use
@@ -1022,7 +1056,8 @@ public:
 
 private:
 
-    /* uniform_locations/indices
+    /* uniform_locations
+     * uniform_indices
      * uniform_block_indices
      *
      * maps to the locations/indices of uniforms and uniform blocks based on their full names
@@ -1031,6 +1066,13 @@ private:
     mutable std::map<std::string, GLint> uniform_locations;
     mutable std::map<std::string, GLuint> uniform_indices;
     mutable std::map<std::string, GLuint> uniform_block_indices;
+
+    /* uniform_block_bindings
+     *
+     * vector mapping uniform block indices to their current bind boints
+     * -1 if not mapped
+     */
+    mutable std::vector<GLint> uniform_block_bindings;
 
     /* pure_(..._)uniforms
      *
@@ -1163,6 +1205,102 @@ template<class F, class ...Ts> inline void glh::core::uniform::default_set ( con
     func ( location, params... );
 }
 
+/* ubo_set_matrix
+ *
+ * set a uniform to the ubo bound to its block index
+ * takes a matrix rather than general values
+ */
+template<unsigned M> inline void glh::core::uniform::ubo_set_matrix ( const math::matrix<M, 2>& matrix ) const
+{
+    /* if in the default block, throw */
+    if ( block_index < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " in the default block" };
+
+    /* get the index the block is bound to */
+    const GLint block_binding = prog.get_uniform_block_binding ( block_index );
+
+    /* if is < 0, throw */
+    if ( block_binding < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which has not been set a binding" };
+
+    /* attempt to get pointer to associated ubo */
+    ubo * block_ubo = ubo::get_index_bound_ubo_pointer ( block_binding );
+
+    /* if is NULL, throw */
+    if ( !block_ubo ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which, although is bound, has not got a ubo associated with its binding" };
+
+    /* map ubo */
+    auto block_ubo_map = block_ubo->map<float> ();
+
+    /* loop through M of matrix */
+    for ( unsigned i = 0; i < M; ++i )
+    {
+        /* set values using __ubo_set */
+        __ubo_set<float> ( block_ubo_map, ( offset / sizeof ( float ) ) + ( i * 4 * sizeof ( float ) ), matrix.at ( i, 0 ), matrix.at ( i, 1 ) );
+    }
+
+    /* unmap ubo */
+    block_ubo->unmap ();
+}
+template<unsigned M> inline void glh::core::uniform::ubo_set_matrix ( const math::matrix<M, 3>& matrix ) const
+{
+    /* if in the default block, throw */
+    if ( block_index < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " in the default block" };
+
+    /* get the index the block is bound to */
+    const GLint block_binding = prog.get_uniform_block_binding ( block_index );
+
+    /* if is < 0, throw */
+    if ( block_binding < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which has not been set a binding" };
+
+    /* attempt to get pointer to associated ubo */
+    ubo * block_ubo = ubo::get_index_bound_ubo_pointer ( block_binding );
+
+    /* if is NULL, throw */
+    if ( !block_ubo ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which, although is bound, has not got a ubo associated with its binding" };
+
+    /* map ubo */
+    auto block_ubo_map = block_ubo->map<float> ();
+
+    /* loop through M of matrix */
+    for ( unsigned i = 0; i < M; ++i )
+    {
+        /* set values using __ubo_set */
+        __ubo_set<float> ( block_ubo_map, ( offset / sizeof ( float ) ) + ( i * 4 * sizeof ( float ) ), matrix.at ( i, 0 ), matrix.at ( i, 1 ), matrix.at ( i, 2 ) );
+    }
+
+    /* unmap ubo */
+    block_ubo->unmap ();
+}
+template<unsigned M> inline void glh::core::uniform::ubo_set_matrix ( const math::matrix<M, 4>& matrix ) const
+{
+    /* if in the default block, throw */
+    if ( block_index < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " in the default block" };
+
+    /* get the index the block is bound to */
+    const GLint block_binding = prog.get_uniform_block_binding ( block_index );
+
+    /* if is < 0, throw */
+    if ( block_binding < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which has not been set a binding" };
+
+    /* attempt to get pointer to associated ubo */
+    ubo * block_ubo = ubo::get_index_bound_ubo_pointer ( block_binding );
+
+    /* if is NULL, throw */
+    if ( !block_ubo ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which, although is bound, has not got a ubo associated with its binding" };
+
+    /* map ubo */
+    auto block_ubo_map = block_ubo->map<float> ();
+
+    /* loop through M of matrix */
+    for ( unsigned i = 0; i < M; ++i )
+    {
+        /* set values using __ubo_set */
+        __ubo_set<float> ( block_ubo_map, ( offset / sizeof ( float ) ) + ( i * 4 * sizeof ( float ) ), matrix.at ( i, 0 ), matrix.at ( i, 1 ), matrix.at ( i, 2 ), matrix.at ( i, 3 ) );
+    }
+
+    /* unmap ubo */
+    block_ubo->unmap ();
+}
+
 /* ubo_set
  *
  * set a uniform to the ubo bound to its block index
@@ -1173,18 +1311,28 @@ template<class T, class ...Ts> inline void glh::core::uniform::ubo_set ( const T
 {
 
     /* if in the default block, throw */
-    if ( block_index < 0 ) throw exception::uniform_exception { "attempted to perform block set uniform operation on a uniform named " + name + " in the default block" };
-}
+    if ( block_index < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " in the default block" };
 
-/* ubo_set_array
- *
- * set a uniform to the ubo bound to its block index
- * takes a pointer to data rather than individual values
- */
-template<class T> inline void glh::core::uniform::ubo_set_array ( const T * vs, const unsigned size ) const
-{
-    /* if in the default block, throw */
-    if ( block_index < 0 ) throw exception::uniform_exception { "attempted to perform block set uniform operation on a uniform named " + name + " in the default block" };
+    /* get the index the block is bound to */
+    const GLint block_binding = prog.get_uniform_block_binding ( block_index );
+
+    /* if is < 0, throw */
+    if ( block_binding < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which has not been set a binding" };
+
+    /* attempt to get pointer to associated ubo */
+    ubo * block_ubo = ubo::get_index_bound_ubo_pointer ( block_binding );
+
+    /* if is NULL, throw */
+    if ( !block_ubo ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which, although is bound, has not got a ubo associated with its binding" };
+
+    /* map ubo */
+    auto block_ubo_map = block_ubo->map<T> ();
+
+    /* use __ubo_set to set values */
+    __ubo_set<T> ( block_ubo_map, offset / sizeof ( T ), vs... );
+
+    /* unmap ubo */
+    block_ubo->unmap ();
 }
 
 /* __ubo_set
@@ -1193,7 +1341,9 @@ template<class T> inline void glh::core::uniform::ubo_set_array ( const T * vs, 
  */
 template<class T,  class ...Ts> inline void glh::core::uniform::__ubo_set ( buffer_map<T>& map, const unsigned index, const T& v0, const Ts&... vs ) const
 {
-
+    /* set value and recursively call */
+    map.at ( index ) = v0;
+    __ubo_set<T> ( map, index + 1, vs... );
 }
 
 
