@@ -246,6 +246,13 @@ public:
     void unbind_copy_read () const;
     void unbind_copy_write () const;
 
+    /* unbind_all
+     *
+     * unbind from all targets
+     * this includes copy read/write targets
+     */
+    void unbind_all () const;
+
     /* is_copy_read/write_bound
      *
      * check if the buffer is bound to the copy read/write targets
@@ -464,6 +471,16 @@ public:
     /* default destructor */
     ~vbo () = default;
 
+
+
+    /* get_bound_object_pointer
+     *
+     * produce a pointer to the vbo currently bound
+     * NULL is returned if no object is bound to the bind point
+     */
+    using object::get_bound_object_pointer;
+    static vbo * get_bound_object_pointer () { return dynamic_cast<vbo *> ( get_bound_object_pointer ( object_bind_target::GLH_VBO_TARGET ) ); }
+
 };
 
 
@@ -509,6 +526,16 @@ public:
 
     /* default destructor */
     ~ebo () = default;
+
+
+
+    /* get_bound_object_pointer
+     *
+     * produce a pointer to the ebo currently bound
+     * NULL is returned if no object is bound to the bind point
+     */
+    using object::get_bound_object_pointer;
+    static ebo * get_bound_object_pointer () { return dynamic_cast<ebo *> ( get_bound_object_pointer ( object_bind_target::GLH_EBO_TARGET ) ); }
 
 };
 
@@ -558,18 +585,44 @@ public:
 
 
 
-    /* (un)bind_index
+    /* get_bound_object_pointer
+     *
+     * produce a pointer to the ubo currently bound
+     * NULL is returned if no object is bound to the bind point
+     */
+    using object::get_bound_object_pointer;
+    static ubo * get_bound_object_pointer () { return dynamic_cast<ubo *> ( get_bound_object_pointer ( object_bind_target::GLH_UBO_TARGET ) ); }
+
+    /* get_index_bound_ubo_pointer
+     *
+     * produce a pointer to the ubo currently bound to an index bind point
+     * NULL is returned if no UBO is bound to that index
+     * 
+     * index: the index to produce the pointer from
+     */
+    static ubo * get_index_bound_ubo_pointer ( const unsigned index );
+
+
+
+    /* bind/unbuffer_base
      *
      * special indexed bindings for ubos
      */
-    //void bind_index ( const unsigned index ) { om::bind_ubo_index ( id, index ); }
-    //void unbind_index ( const unsigned index ) { om::unbind_ubo_index ( id, index ); }
+    void bind_buffer_base ( const unsigned index );
+    void unbind_buffer_base ( const unsigned index );
 
-    /* is_bound_index
+    /* is_bound_buffer_base
      *
      * returns true if is bound to the ubo index supplied
      */
-    //bool is_bound_index ( const unsigned index ) { return om::is_ubo_bound_index ( id, index ); }
+    bool is_bound_buffer_base ( const unsigned index );
+
+
+
+private:
+
+    /* records of ubo indexed bindings */
+    static std::vector<GLuint> ubo_indexed_bindings;
 
 };
 
@@ -606,6 +659,16 @@ public:
 
     /* default destructor */
     ~vao () = default;
+
+
+
+    /* get_bound_object_pointer
+     *
+     * produce a pointer to the vao currently bound
+     * NULL is returned if no object is bound to the bind point
+     */
+    using object::get_bound_object_pointer;
+    static vao * get_bound_object_pointer () { return dynamic_cast<vao *> ( get_bound_object_pointer ( object_bind_target::GLH_VAO_TARGET ) ); }
 
 
 

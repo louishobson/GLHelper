@@ -59,6 +59,8 @@ glh::core::buffer::buffer ( const minor_object_type _minor_type, const GLsizeipt
     buffer_data ( size, data, usage );
 }
 
+
+
 /* buffer_data
  *
  * buffer data into the buffer
@@ -158,6 +160,8 @@ void glh::core::buffer::clear_data ()
     unbind ();
 }
 
+
+
 /* unmap
  *
  * unmaps the buffer, making all existing maps invalid
@@ -179,6 +183,8 @@ void glh::core::buffer::unmap ()
         unbind ();
     }
 }
+
+
 
 /* bind_copy_read/write
  *
@@ -258,6 +264,19 @@ void glh::core::buffer::unbind_copy_write () const
     object_bindings.at ( copy_write_target_index ) = 0;
 }
 
+/* unbind_all
+ *
+ * unbind from all targets
+ * this includes copy read/write targets
+ */
+void glh::core::buffer::unbind_all () const
+{
+    /* unbind normally, as well as unbinding from any copy read/write targets */
+    unbind ();
+    unbind_copy_read ();
+    unbind_copy_write ();    
+}
+
 /* is_copy_read/write_bound
  *
  * check if the buffer is bound to the copy read/write targets
@@ -308,6 +327,76 @@ void glh::core::buffer::assert_is_not_mapped ( const std::string& operation ) co
         else throw exception::buffer_exception { "attempted to perform operation while buffer is mapped" };
     }
 }
+
+
+
+/* UBO IMPLEMENTATION */
+
+/* get_index_bound_ubo_pointer
+ *
+ * produce a pointer to the ubo currently bound to an index bind point
+ * NULL is returned if no UBO is bound to that index
+ * 
+ * index: the index to produce the pointer from
+ */
+glh::core::ubo * glh::core::ubo::get_index_bound_ubo_pointer ( const unsigned index )
+{
+    /* if object is bound, return pointer to it */
+    if ( ubo_indexed_bindings.size () > index && ubo_indexed_bindings.at ( index ) > 0 )
+    {
+        return dynamic_cast<ubo *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_BUFFER_TYPE ) ).at ( ubo_indexed_bindings.at ( index ) ) );
+    }
+
+    /* else return NULL */
+    else return NULL;
+}
+
+/* bind/unbind_buffer_base
+ *
+ * special indexed bindings for ubos
+ */
+void glh::core::ubo::bind_buffer_base ( const unsigned index )
+{
+    /* resize vector if necessary */
+    if ( ubo_indexed_bindings.size () <= index ) ubo_indexed_bindings.resize ( index + 1, 0 );
+
+    /* if already bound to index, return */
+    if ( ubo_indexed_bindings.at ( index ) == id ) return;
+
+    /* otherwise bind ubo to index */
+    glBindBufferBase ( GL_UNIFORM_BUFFER, index, id );
+
+    /* record binding */
+    ubo_indexed_bindings.at ( index ) = id;
+}
+void glh::core::ubo::unbind_buffer_base ( const unsigned index )
+{
+    /* if not bound to index, return */
+    if ( ubo_indexed_bindings.size () <= index || ubo_indexed_bindings.at ( index ) != id ) return;
+
+    /* otherwise unbind ubo from index */
+    glBindBufferBase ( GL_UNIFORM_BUFFER, index, 0 );
+
+    /* record binding */
+    ubo_indexed_bindings.at ( index ) = 0;
+}
+
+/* is_bound_buffer_base
+ *
+ * returns true if is bound to the ubo index supplied
+ */
+bool glh::core::ubo::is_bound_buffer_base ( const unsigned index )
+{
+    /* return true if is valid and is bound to index */
+    return ( is_object_valid () && ubo_indexed_bindings.size () > index && ubo_indexed_bindings.at ( index ) == id );
+}
+
+
+
+/* UBO STATIC MEMBERS DEFINITIONS */
+
+/* records of ubo indexed bindings */
+std::vector<GLuint> glh::core::ubo::ubo_indexed_bindings {};
 
 
 
