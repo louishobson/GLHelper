@@ -101,7 +101,10 @@ out vec4 fragcolor;
 
 /* material and lighting uniforms */
 uniform material_struct material;
-uniform light_system_struct light_system;
+uniform LIGHT_SYSTEM_BLOCK
+{
+    light_system_struct light_system;
+};
 
 /* transformation matrices */
 uniform trans_struct trans;
