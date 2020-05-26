@@ -200,7 +200,7 @@ int main ()
         frames += 1;
         total_time += timeinfo.delta;
 
-        std::cout << "\rfps: " << 1.0 / timeinfo.delta << std::flush;
+        if ( frames % 5 == 0 ) std::cout << "\rfps: " << 1.0 / timeinfo.delta << std::flush;
 
         if ( dimensions.deltawidth != 0.0 || dimensions.deltaheight != 0.0 || frames % 60 == 0 ) 
         {
