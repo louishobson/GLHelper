@@ -153,14 +153,16 @@ glh::core::object * glh::core::object::get_bound_object_pointer ( const object_b
  * 
  * bind/unbind the object
  * unbinding is silently ignored if object is not already bound
+ * 
+ * returns true if a change in binding occured
  */
-void glh::core::object::bind () const
+bool glh::core::object::bind () const
 {
     /* if invalid, throw */
     assert_is_object_valid ( "bind" );
 
-    /* if already bound, return */
-    if ( object_bindings.at ( bind_target_index ) == id ) return;
+    /* if already bound, return false */
+    if ( object_bindings.at ( bind_target_index ) == id ) return false;
 
     /* switch on target and bind to bind point */
     switch ( bind_target )
@@ -187,17 +189,20 @@ void glh::core::object::bind () const
 
     /* record the binding */
     object_bindings.at ( bind_target_index ) = id;
+
+    /* return true */
+    return true;
 }
-void glh::core::object::unbind () const
+bool glh::core::object::unbind () const
 {
     /* if invalid, throw */
     assert_is_object_valid ( "unbind" );
 
-    /* if not bound, return */
-    if ( object_bindings.at ( bind_target_index ) != id ) return;
+    /* if not bound, return false */
+    if ( object_bindings.at ( bind_target_index ) != id ) return false;
 
     /* now force unbind */
-    force_unbind ();
+    return force_unbind ();
 }
 
 /* bind/unbind unit version
@@ -206,12 +211,12 @@ void glh::core::object::unbind () const
  * the base class method will always throw
  * a derived class may wish to override this method, such that unit bindings become possible
  */
-void glh::core::object::bind ( const unsigned unit ) const
+bool glh::core::object::bind ( const unsigned unit ) const
 {
     /* throw */
     throw exception::object_exception { "attempted to bind object to a unit, without unit-binding capabilities being defined" };
 }
-void glh::core::object::unbind ( const unsigned unit ) const
+bool glh::core::object::unbind ( const unsigned unit ) const
 {
     /* throw */
     throw exception::object_exception { "attempted to unbind object from a unit, without unit-binding capabilities being defined" };
@@ -221,8 +226,11 @@ void glh::core::object::unbind ( const unsigned unit ) const
  * 
  * force the unbinding of the target of this object
  */
-void glh::core::object::force_unbind () const
+bool glh::core::object::force_unbind () const
 {
+    /* if nothing bound, return false */
+    if ( object_bindings.at ( bind_target_index ) == 0 ) return false;
+    
     /* switch on target and unbind from bind point */
     switch ( bind_target )
     {
@@ -248,6 +256,9 @@ void glh::core::object::force_unbind () const
 
     /* record the unbinding */
     object_bindings.at ( bind_target_index ) = 0;
+
+    /* return true */
+    return true;
 }
 
 /* is_bound

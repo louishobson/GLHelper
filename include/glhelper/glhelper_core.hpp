@@ -45,6 +45,20 @@
 
 
 
+/* MACROS */
+
+/* glh_if_constexpr
+ *
+ * either "if" or "if constexpr" depending on availibility
+ */
+#ifdef __cpp_if_constexpr
+    #define glh_if_constexpr if constexpr
+#else
+    #define glh_if_constexpr if
+#endif
+
+
+
 /* NAMESPACE DECLARATIONS */
 
 namespace glh
@@ -252,31 +266,39 @@ public:
      *
      * bind/unbind the object
      * unbinding is silently ignored if object is not already bound
+     * 
+     * returns true if a change in binding occured
      */
-    void bind () const;
-    void unbind () const;
+    bool bind () const;
+    bool unbind () const;
 
     /* bind/unbind unit version
      *
      * bind/unbind the object using a unit integer
      * the base class method will always throw
      * a derived class may wish to override this method, such that unit bindings become possible
+     * 
+     * returns true if a change in binding occured
      */
-    virtual void bind ( const unsigned unit ) const;
-    virtual void unbind ( const unsigned unit ) const;
+    virtual bool bind ( const unsigned unit ) const;
+    virtual bool unbind ( const unsigned unit ) const;
 
     /* force_unbind
      *
      * force the unbinding of the target of this object
+     * 
+     * returns true if a change in binding occured
      */
-    void force_unbind () const;
+    bool force_unbind () const;
 
     /* unbind_all
      *
      * the base class definition purely calls unbind
      * however, derived classes may wish to override this method, such that all units are unbound
+     * 
+     * returns true if a change in binding occured
      */
-    void virtual unbind_all () const { unbind (); }
+    bool virtual unbind_all () const { return unbind (); }
 
     /* is_bound
      *
