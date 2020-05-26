@@ -217,7 +217,7 @@ namespace glh
  * is_light::value is true if the type is a light
  */
 template<class T, class> struct glh::meta::is_light : std::false_type {};
-template<class T> struct glh::meta::is_light<T, typename std::enable_if<std::is_base_of<glh::lighting::light, T>::value>::type> : std::true_type {};
+template<class T> struct glh::meta::is_light<T, std::enable_if_t<std::is_base_of<glh::lighting::light, T>::value>> : std::true_type {};
 
 
 
@@ -290,7 +290,7 @@ public:
      * 
      * light_uni: the uniform to apply the light to (which will be cached)
      */
-    void apply ( const core::struct_uniform& light_uni );
+    void apply ( core::struct_uniform& light_uni );
     void apply () const;
 
     /* cache_uniforms
@@ -299,7 +299,7 @@ public:
      * 
      * light_uni: the uniform to cache
      */
-    void cache_uniforms ( const core::struct_uniform& light_uni );
+    void cache_uniforms ( core::struct_uniform& light_uni );
 
 
 
@@ -321,31 +321,31 @@ public:
      *
      * get/set the different cone angles
      */
-    const double& get_inner_cone () const { return inner_cone; }
+    double get_inner_cone () const { return inner_cone; }
     void set_inner_cone ( const double _inner_cone ) { inner_cone = _inner_cone; }
-    const double& get_outer_cone () const { return outer_cone; }
+    double get_outer_cone () const { return outer_cone; }
     void set_outer_cone ( const double _outer_cone ) { inner_cone = _outer_cone; }
 
     /* get/set_att_...
      *
      * get/set attenuation constants
      */
-    const double& get_att_const () const { return att_const; }
+    double get_att_const () const { return att_const; }
     void set_att_const ( const double _att_const ) { att_const = _att_const; }
-    const double& get_att_linear () const { return att_linear; }
+    double get_att_linear () const { return att_linear; }
     void set_att_linear ( const double _att_linear ) { att_linear = _att_linear; }
-    const double& get_att_quad () const { return att_quad; }
+    double get_att_quad () const { return att_quad; }
     void set_att_quad ( const double _att_quad ) { att_quad = _att_quad; }
 
     /* get/set_ambient/diffuse/specular_color
      *
      * get/set color components
      */
-    const math::vec3& get_ambient_color () const { return ambient_color; }
+    math::vec3 get_ambient_color () const { return ambient_color; }
     const void set_ambient_color ( const glh::math::vec3& _ambient_color ) { ambient_color = _ambient_color; }
-    const math::vec3& get_diffuse_color () const { return diffuse_color; }
+    math::vec3 get_diffuse_color () const { return diffuse_color; }
     const void set_diffuse_color ( const glh::math::vec3& _diffuse_color ) { diffuse_color = _diffuse_color; }
-    const math::vec3& get_specular_color () const { return specular_color; }
+    math::vec3 get_specular_color () const { return specular_color; }
     const void set_specular_color ( const glh::math::vec3& _specular_color ) { specular_color = _specular_color; }
 
     /* enable/disable
@@ -360,10 +360,10 @@ public:
 private:
 
     /* position of the light */
-    math::vec3 position;
+    math::fvec3 position;
 
     /* direction of the light */
-    math::vec3 direction;
+    math::fvec3 direction;
 
     /* inner cone and outer cone angles of spotlights */
     double inner_cone;
@@ -375,9 +375,9 @@ private:
     double att_quad;
 
     /* colors of light */
-    math::vec3 ambient_color;
-    math::vec3 diffuse_color;
-    math::vec3 specular_color;
+    math::fvec3 ambient_color;
+    math::fvec3 diffuse_color;
+    math::fvec3 specular_color;
 
     /* whether the light is enables */
     bool enabled;
@@ -385,18 +385,18 @@ private:
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
-        const core::struct_uniform& light_uni;
-        const core::uniform& position_uni;
-        const core::uniform& direction_uni;
-        const core::uniform& inner_cone_uni;
-        const core::uniform& outer_cone_uni;
-        const core::uniform& att_const_uni;
-        const core::uniform& att_linear_uni;
-        const core::uniform& att_quad_uni;
-        const core::uniform& ambient_color_uni;
-        const core::uniform& diffuse_color_uni;
-        const core::uniform& specular_color_uni;
-        const core::uniform& enabled_uni;
+        core::struct_uniform& light_uni;
+        core::uniform& position_uni;
+        core::uniform& direction_uni;
+        core::uniform& inner_cone_uni;
+        core::uniform& outer_cone_uni;
+        core::uniform& att_const_uni;
+        core::uniform& att_linear_uni;
+        core::uniform& att_quad_uni;
+        core::uniform& ambient_color_uni;
+        core::uniform& diffuse_color_uni;
+        core::uniform& specular_color_uni;
+        core::uniform& enabled_uni;
     };
 
     /* cached uniforms */
@@ -644,7 +644,7 @@ public:
      * 
      * light_collection_uni: the uniform to apply the lights to
      */
-    void apply ( const core::struct_uniform& light_collection_uni );
+    void apply ( core::struct_uniform& light_collection_uni );
     void apply () const;
 
     /* cache_uniforms
@@ -653,7 +653,7 @@ public:
      * 
      * light_collection_uni: the uniform to cache
      */
-    void cache_uniforms ( const core::struct_uniform& light_collection_uni );
+    void cache_uniforms ( core::struct_uniform& light_collection_uni );
 
     /* reload_uniforms
      *
@@ -668,9 +668,9 @@ private:
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
-        const core::struct_uniform& light_collection_uni;
-        const core::uniform& size_uni;
-        const core::struct_array_uniform& lights_uni;
+        core::struct_uniform& light_collection_uni;
+        core::uniform& size_uni;
+        core::struct_array_uniform& lights_uni;
     };
 
     /* cached uniforms */
@@ -733,7 +733,7 @@ public:
      * 
      * light_system_uni: the uniform to apply the lights to
      */
-    void apply ( const core::struct_uniform& light_system_uni );
+    void apply ( core::struct_uniform& light_system_uni );
     void apply () const;
 
     /* cache_uniforms
@@ -742,7 +742,7 @@ public:
      * 
      * light_system_uni: the uniform to cache
      */
-    void cache_uniforms ( const core::struct_uniform& light_system_uni );
+    void cache_uniforms ( core::struct_uniform& light_system_uni );
 
     /* reload_uniforms
      *
@@ -757,10 +757,10 @@ private:
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
-        const core::struct_uniform& light_system_uni;
-        const core::struct_uniform& dircoll_uni;
-        const core::struct_uniform& pointcoll_uni;
-        const core::struct_uniform& spotcoll_uni;
+        core::struct_uniform& light_system_uni;
+        core::struct_uniform& dircoll_uni;
+        core::struct_uniform& pointcoll_uni;
+        core::struct_uniform& spotcoll_uni;
     };
 
     /* cached uniforms */
@@ -779,7 +779,7 @@ private:
  * light_collection_uni: the uniform to apply the lights to
  */
 template<class T>
-inline void glh::lighting::light_collection<T>::apply ( const core::struct_uniform& light_collection_uni )
+inline void glh::lighting::light_collection<T>::apply ( core::struct_uniform& light_collection_uni )
 {
     /* cache uniform */
     cache_uniforms ( light_collection_uni );
@@ -805,7 +805,7 @@ inline void glh::lighting::light_collection<T>::apply () const
  * light_collection_uni: the uniform to cache
  */
 template<class T>
-inline void glh::lighting::light_collection<T>::cache_uniforms ( const core::struct_uniform& light_collection_uni )
+inline void glh::lighting::light_collection<T>::cache_uniforms ( core::struct_uniform& light_collection_uni )
 {
     /* if uniforms are not already cached, cache the new ones */
     if ( !cached_uniforms || cached_uniforms->light_collection_uni != light_collection_uni )
