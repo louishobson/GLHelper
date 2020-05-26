@@ -79,7 +79,7 @@ void glh::core::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data
     const bool binding_change = bind ();
 
     /* buffer data and change capacity */
-    glBufferData ( gl_target, size, data, usage );
+    glBufferData ( opengl_bind_target, size, data, usage );
     capacity = size;
 
     /* unbind the buffer */
@@ -107,7 +107,7 @@ void glh::core::buffer::buffer_sub_data ( const GLintptr offset, const GLsizeipt
     throw exception::buffer_exception { "attempted to perform buffer sub data operation with incompatible paramaters for buffer capacity" };
 
     /* buffer data */
-    glBufferSubData ( gl_target, offset, size, data );
+    glBufferSubData ( opengl_bind_target, offset, size, data );
 
     /* unbind the buffer */
     if ( binding_change ) unbind ();
@@ -157,7 +157,7 @@ void glh::core::buffer::clear_data ()
     const bool binding_change = bind ();
 
     /* empty buffer data */
-    glBufferData ( gl_target, 0, NULL, GL_STATIC_DRAW );
+    glBufferData ( opengl_bind_target, 0, NULL, GL_STATIC_DRAW );
 
     /* unbind the buffer */
     if ( binding_change ) unbind ();
@@ -310,7 +310,7 @@ GLvoid * glh::core::buffer::map_buffer () const
 
     /* else generate the map */
     const bool binding_change = bind ();
-    map_ptr = glMapBuffer ( gl_target, GL_READ_WRITE );
+    map_ptr = glMapBuffer ( opengl_bind_target, GL_READ_WRITE );
     if ( binding_change ) unbind ();
 
     /* return the map */
@@ -328,7 +328,7 @@ void glh::core::buffer::unmap_buffer () const
 
     /* otherwise destroy the map */
     const bool binding_change = bind ();
-    glUnmapBuffer ( gl_target );
+    glUnmapBuffer ( opengl_bind_target );
     if ( binding_change ) unbind ();
 
     /* set to NULL */

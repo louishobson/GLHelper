@@ -35,7 +35,7 @@ glh::core::object::object ( const minor_object_type type )
     , minor_type_index { static_cast<unsigned> ( minor_type ) }
     , major_type_index { static_cast<unsigned> ( major_type ) }
     , bind_target_index { static_cast <unsigned> ( bind_target ) }
-    , gl_target { to_opengl_bind_target ( bind_target ) }
+    , opengl_bind_target { to_opengl_bind_target ( bind_target ) }
 {
     /* switch on type to generate object and store in id */
     switch ( minor_type )
@@ -77,7 +77,7 @@ glh::core::object::object ( object&& other )
     , minor_type_index { other.minor_type_index }
     , major_type_index { other.major_type_index }
     , bind_target_index { other.bind_target_index }
-    , gl_target { other.gl_target }
+    , opengl_bind_target { other.opengl_bind_target }
 {
     /* set new pointer to object_pointers */
     if ( is_object_valid () ) object_pointers.at ( major_type_index ).at ( id ) = this;

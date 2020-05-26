@@ -61,21 +61,9 @@ bool glh::core::texture_base::bind ( const unsigned unit ) const
     /* if already bound, return false */
     if ( object_bindings.at ( bind_target_index + unit ) == id ) return false;
 
-    /* switch for bind target */
-    switch ( bind_target )
-    {
-    case object_bind_target::GLH_TEXTURE2D_0_TARGET: 
-        glActiveTexture ( GL_TEXTURE0 + unit );
-        glBindTexture ( GL_TEXTURE_2D, id );
-        break;
-
-    case object_bind_target::GLH_CUBEMAP_0_TARGET: 
-        glActiveTexture ( GL_TEXTURE0 + unit );
-        glBindTexture ( GL_TEXTURE_CUBE_MAP, id );
-        break;
-
-    default: throw exception::object_exception { "attempted to perform unbind operation to unknown target" };
-    }
+    /* bind texture */
+    glActiveTexture ( GL_TEXTURE0 + unit );
+    glBindTexture ( opengl_bind_target, id );
 
     /* set binding */
     object_bindings.at ( bind_target_index + unit ) = id;
@@ -98,21 +86,9 @@ bool glh::core::texture_base::unbind ( const unsigned unit ) const
     /* if not bound, return false */
     if ( object_bindings.at ( bind_target_index + unit ) != id ) return false;
 
-    /* switch for bind target */
-    switch ( bind_target )
-    {
-    case object_bind_target::GLH_TEXTURE2D_0_TARGET: 
-        glActiveTexture ( GL_TEXTURE0 + unit );
-        glBindTexture ( GL_TEXTURE_2D, 0 );
-        break;
-
-    case object_bind_target::GLH_CUBEMAP_0_TARGET: 
-        glActiveTexture ( GL_TEXTURE0 + unit );
-        glBindTexture ( GL_TEXTURE_CUBE_MAP, 0 );
-        break;
-
-    default: throw exception::object_exception { "attempted to perform unbind operation to unknown target" };
-    }
+    /* unbind */
+    glActiveTexture ( GL_TEXTURE0 + unit );
+    glBindTexture ( opengl_bind_target, 0 );
 
     /* set unbinding */
     object_bindings.at ( bind_target_index + unit ) = 0;
@@ -179,13 +155,13 @@ void glh::core::texture_base::set_mag_filter ( const GLenum opt )
 { 
     /* bind, set paramater, unbind */
     bind (); 
-    glTexParameteri ( gl_target, GL_TEXTURE_MAG_FILTER, opt ); 
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_MAG_FILTER, opt ); 
 }
 void glh::core::texture_base::set_min_filter ( const GLenum opt ) 
 { 
     /* bind, set paramater */
     bind (); 
-    glTexParameteri ( gl_target, GL_TEXTURE_MIN_FILTER, opt );
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_MIN_FILTER, opt );
 }
 
 /* set_(s/t/r)_wrap
@@ -196,27 +172,27 @@ void glh::core::texture_base::set_s_wrap ( const GLenum opt )
 { 
     /* bind, set paramater */
     bind (); 
-    glTexParameteri ( gl_target, GL_TEXTURE_WRAP_S, opt );
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_S, opt );
 }
 void glh::core::texture_base::set_t_wrap ( const GLenum opt ) 
 { 
     /* bind, set paramater */
     bind (); 
-    glTexParameteri ( gl_target, GL_TEXTURE_WRAP_T, opt );
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_T, opt );
 }
 void glh::core::texture_base::set_r_wrap ( const GLenum opt ) 
 { 
     /* bind, set paramater */
     bind (); 
-    glTexParameteri ( gl_target, GL_TEXTURE_WRAP_R, opt );
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_R, opt );
 }
 void glh::core::texture_base::set_wrap ( const GLenum opt ) 
 {
     /* bind, set paramaters */
     bind (); 
-    glTexParameteri ( gl_target, GL_TEXTURE_WRAP_S, opt ); 
-    glTexParameteri ( gl_target, GL_TEXTURE_WRAP_T, opt );
-    glTexParameteri ( gl_target, GL_TEXTURE_WRAP_R, opt );
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_S, opt ); 
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_T, opt );
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_R, opt );
 }
 
 /* generate_mipmap
@@ -227,7 +203,7 @@ void glh::core::texture_base::generate_mipmap ()
 {
     /* bind and generate mipmap */
     bind ();
-    glGenerateMipmap ( gl_target );
+    glGenerateMipmap ( opengl_bind_target );
 }
 
 
@@ -258,7 +234,7 @@ glh::core::texture2d::texture2d ( const std::string& _path )
      * although the original image may not have 4 channels, by putting the last parameter as 4 in stbi_load,
      * the image is forced to have 4 channels
      */
-    glTexImage2D ( gl_target, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
+    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
     
     /* generate mipmap */
     generate_mipmap ();
@@ -293,7 +269,7 @@ glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height,
     bind ();
 
     /* set texture data */
-    glTexImage2D ( gl_target, 0, internal_format, width, height, 0, format, _type, NULL );
+    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, _type, NULL );
 
     /* set mag/min options */
     set_mag_filter ( GL_LINEAR );

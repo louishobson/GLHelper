@@ -344,14 +344,14 @@ public:
 
     /* get_minor/major_object_type
      * get_object_bind_target
-     * get_gl_target
+     * get_opengl_bind_taregt
      *
      * get the different types/targets associated with the object
      */
     const minor_object_type& get_minor_object_type () const { return minor_type; }
     const major_object_type& get_major_object_type () const { return major_type; }
     const object_bind_target& get_object_bind_target () const { return bind_target; }
-    const GLenum& get_gl_target () const { return gl_target; }
+    const GLenum& get_opengl_bind_taregt () const { return opengl_bind_target; }
 
 
 
@@ -381,11 +381,11 @@ protected:
     const unsigned major_type_index;
     const unsigned bind_target_index;
 
-    /* gl_target
+    /* opengl_bind_target
      *
      * the opengl enum used for binding
      */
-    const GLenum gl_target;
+    const GLenum opengl_bind_target;
 
 
 
