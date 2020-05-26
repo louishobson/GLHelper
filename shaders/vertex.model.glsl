@@ -6,8 +6,11 @@
 
 #version 330 core
 
+/* maximum number of color sets */
+#define MAX_COLOR_SETS 1
+
 /* maximum number of UV channels */
-#define MAX_UV_CHANNELS 8
+#define MAX_UV_CHANNELS 2
 
 /* transformations structure */
 struct trans_struct
@@ -21,14 +24,14 @@ struct trans_struct
 /* vertices, texture coords and normal */
 layout ( location = 0 ) in vec3 pos;
 layout ( location = 1 ) in vec3 in_normal;
-layout ( location = 2 ) in vec4 in_vcolor;
-layout ( location = 3 ) in vec3 in_texcoords [ 8 ];
+layout ( location = 2 ) in vec4 in_vcolor [ MAX_COLOR_SETS ];
+layout ( location = 3 ) in vec3 in_texcoords [ MAX_UV_CHANNELS ];
 
 /* texture coords, normal, vcolor */
-out vec3 texcoords [ MAX_UV_CHANNELS ];
-out vec3 normal;
 out vec3 fragpos;
-out vec4 vcolor;
+out vec3 normal;
+out vec4 vcolor [ MAX_COLOR_SETS ];
+out vec3 texcoords [ MAX_UV_CHANNELS ];
 
 /* transformation matrices */
 uniform trans_struct trans;
