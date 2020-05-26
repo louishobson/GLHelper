@@ -620,6 +620,8 @@ GLint glh::core::program::get_uniform_location ( const std::string& name ) const
         /* try to get location */
         const GLint location = glGetUniformLocation ( id, name.c_str () );
         
+        if ( location < 0 ) throw exception::uniform_exception { "failed to get location of uniform with name " + name };
+
         /* add uniform location to map */
         uniform_locations.insert ( { name, location } );
         
