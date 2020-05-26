@@ -33,8 +33,8 @@
  */
 void glh::core::renderer::draw_arrays ( const vao& _vao, const GLenum mode, const GLint start_index, const GLsizei count )
 {
-    /* assert vao is draw arrays valid */
-    _vao.assert_is_draw_arrays_valid ( "draw arrays" );
+    /* prepare the vao */
+    _vao.prepare_arrays ();
 
     /* bind vao */
     _vao.bind ();
@@ -58,8 +58,8 @@ void glh::core::renderer::draw_arrays ( const vao& _vao, const GLenum mode, cons
  */
 void glh::core::renderer::draw_elements ( const vao& _vao, const GLenum mode, const GLint count, const GLenum type, const GLsizeiptr start_index )
 {
-    /* assert vao is draw elements valid */
-    _vao.assert_is_draw_elements_valid ( "draw elements" );
+    /* prepare the vao */
+    _vao.prepare_elements ();
 
     /* bind vao */
     _vao.bind ();
