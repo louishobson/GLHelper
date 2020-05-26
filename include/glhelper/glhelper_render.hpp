@@ -282,6 +282,19 @@ public:
     static void viewport ( GLint x, GLint y, GLsizei width, GLsizei height )
     { glViewport ( x, y, width, height ); }
 
+    /* enable/disable_multisample
+     *
+     * enable/disable MSAA
+     */
+    static void enable_multisample ();
+    static void disable_multisample ();
+
+    /* multisample_enabled
+     *
+     * return true if MSAA is enabled
+     */
+    static bool multisample_enabled () { return multisample_state; }
+
 
 
 private:
@@ -348,6 +361,13 @@ private:
      * defaults to GL_CCW
      */
     static GLenum front_face;
+
+    /* multisample_state
+     *
+     * whether multisampling is enabled
+     * defaults to false
+     */
+    static bool multisample_state;
 
 };
 
