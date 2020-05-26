@@ -134,7 +134,7 @@ public:
      * view_uni: 4x4 matrix uniform for the view matrix
      * proj_uni: 4x4 matrix uniform for the projection matrix
      */
-    void apply ( const core::uniform& view_uni, const core::uniform& proj_uni );
+    void apply ( core::uniform& view_uni, core::uniform& proj_uni );
     void apply () const;
 
     /* cache_uniforms
@@ -144,7 +144,7 @@ public:
      * view_uni: 4x4 matrix uniform for the view matrix
      * proj_uni: 4x4 matrix uniform for the projection matrix
      */
-    void cache_uniforms ( const core::uniform& view_uni, const core::uniform& proj_uni );
+    void cache_uniforms ( core::uniform& view_uni, core::uniform& proj_uni );
 
 
 
@@ -174,8 +174,8 @@ protected:
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
-        const core::uniform& view_uni;
-        const core::uniform& proj_uni;
+        core::uniform& view_uni;
+        core::uniform& proj_uni;
     };
 
     /* cached uniforms */

@@ -28,7 +28,7 @@
  * view_uni: 4x4 matrix uniform for the view matrix
  * proj_uni: 4x4 matrix uniform for the projection matrix
  */
-void glh::camera::camera_base::apply ( const core::uniform& view_uni, const core::uniform& proj_uni )
+void glh::camera::camera_base::apply ( core::uniform& view_uni, core::uniform& proj_uni )
 {
     /* cache the uniforms */
     cache_uniforms ( view_uni, proj_uni );
@@ -61,7 +61,7 @@ void glh::camera::camera_base::apply () const
  * view_uni: 4x4 matrix uniform for the view matrix
  * proj_uni: 4x4 matrix uniform for the projection matrix
  */
-void glh::camera::camera_base::cache_uniforms ( const core::uniform& view_uni, const core::uniform& proj_uni )
+void glh::camera::camera_base::cache_uniforms ( core::uniform& view_uni, core::uniform& proj_uni )
 {
     /* if uniforms are not already cached, cache the new ones */
     if ( !cached_uniforms || cached_uniforms->view_uni != view_uni || cached_uniforms->proj_uni != proj_uni )
@@ -327,7 +327,7 @@ bool glh::camera::camera::update_proj () const
     /* if proj has been changed, update */
     if ( proj_change )
     {
-        proj = math::perspective_fov ( fov, aspect, near, far );
+        proj = math::perspective_fov<double> ( fov, aspect, near, far );
         proj_change = false;
         return true;
     }
@@ -399,7 +399,7 @@ bool glh::camera::mirror_camera::update_proj () const
      * notice the sign of the half_widths vs the half_heights
      * we reflect the texture in the x-axis
      */
-    proj = math::perspective ( mirror_pos.at ( 0 ) + half_width, mirror_pos.at ( 0 ) - half_width, mirror_pos.at ( 1 ) - half_height, mirror_pos.at ( 1 ) + half_height, -mirror_pos.at ( 2 ), cam.get_far () );
+    proj = math::perspective<double> ( mirror_pos.at ( 0 ) + half_width, mirror_pos.at ( 0 ) - half_width, mirror_pos.at ( 1 ) - half_height, mirror_pos.at ( 1 ) + half_height, -mirror_pos.at ( 2 ), cam.get_far () );
     /* return true */
     return true;
 
