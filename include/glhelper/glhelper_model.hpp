@@ -98,14 +98,12 @@
  * 
  * VERTEX ATTTRIBUTES
  * 
- * 0: vec3  : vertices
- * 1: vec3  : normals
- * 2: vec4  : vertex colors
- * 2: vec3[]: UV channels of texture coordinates
+ * 0  : vec3    : vertices
+ * 1  : vec3    : normals
+ * 2  : vec4[x] : vertex colors
+ * 2+x: vec3[y] : UV channels of texture coordinates
  * 
- * even if there are multiple color sets, only the first set is sent to the vertex shader
- * how many UV channels you allow (size of the array at location 2) is up to the user
- * too many is not an issue, too few will be
+ * the number of vertex colors and UV channels is defined by GLH_MODEL_MAX_COLOR_SETS and GLH_MODEL_MAX_UV_CHANNELS respectively
  * 
  * 
  * 
@@ -123,9 +121,42 @@
 
 
 
+/* MACROS */
+
+/* GLH_MODEL_MAX_COLOR_SETS
+ *
+ * the maximum number of color sets a model can contain
+ * defaults to 1
+ */
+#ifndef GLH_MODEL_MAX_COLOR_SETS
+    #define GLH_MODEL_MAX_COLOR_SETS 1
+#endif
+
+/* GLH_MODEL_MAX_UV_CHANNELS
+ *
+ * the maximum number of uv channels a model can contain
+ * defaults to 2
+ */
+#ifndef GLH_MODEL_MAX_UV_CHANNELS
+    #define GLH_MODEL_MAX_UV_CHANNELS 2
+#endif
+
+/* GLH_MODEL_MAX_TEXTURE_STACK_SIZE
+ *
+ * the maximum levels to a texture stack of a matrial
+ * defaults to 2
+ */
+#ifndef GLH_MODEL_MAX_TEXTURE_STACK_SIZE
+    #define GLH_MODEL_MAX_TEXTURE_STACK_SIZE 2
+#endif
+
+
+
 /* INCLUDES */
 
 /* include core headers */
+#include <algorithm>
+#include <array>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -234,16 +265,16 @@ namespace glh
 struct glh::model::vertex
 {
     /* the vertex position */
-    math::vec3 position;
+    math::fvec3 position;
 
     /* normal vector */
-    math::vec3 normal;
-
-    /* multiple uv channels of texture coords */
-    std::vector<math::vec3> texcoords;
+    math::fvec3 normal;
 
     /* multiple color sets */
-    std::vector<math::vec4> colorsets;
+    std::array<math::fvec4, GLH_MODEL_MAX_COLOR_SETS> colorsets;
+
+    /* multiple uv channels of texture coords */
+    std::array<math::fvec3, GLH_MODEL_MAX_UV_CHANNELS> texcoords;
 };
 
 
@@ -287,10 +318,13 @@ struct glh::model::texture_stack_level
  struct glh::model::texture_stack
  {
     /* the base color */
-    math::vec3 base_color;
+    math::fvec3 base_color;
+
+    /* size of the stack */
+    unsigned stack_size;
 
     /* array of texture references */
-    std::vector<texture_stack_level> levels;
+    std::array<texture_stack_level, GLH_MODEL_MAX_TEXTURE_STACK_SIZE> levels;
  };
 
 
@@ -354,10 +388,7 @@ struct glh::model::material
 struct glh::model::face
 {
     /* the indices the face consists of */
-    std::vector<unsigned> indices;
-
-    /* pointers to vertices the face consists of */
-    std::vector<vertex *> vertices;
+    std::array<unsigned, 3> indices;
 };
 
 
@@ -370,6 +401,9 @@ struct glh::model::face
  */
 struct glh::model::mesh
 {
+    /* the number of color sets the mesh contains for each vertex */
+    unsigned num_color_sets;
+
     /* the number of uv channels the mesh consists of for each vertex */
     unsigned num_uv_channels;
 
@@ -430,7 +464,7 @@ struct glh::model::node
     std::vector<mesh *> meshes;
 
     /* transformation relative to parent's node */
-    math::mat4 transform;
+    math::fmat4 transform;
 };
 
 
@@ -483,7 +517,7 @@ public:
      * transform: the overall model transformation to apply (identity by default)
      * transparent_only: only render meshes with possible transparent elements (false by default)
      */
-    void render ( const core::struct_uniform& material_uni, const core::uniform& model_uni, const math::mat4& transform = math::identity<4> (), const bool transparent_only = false );
+    void render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform = math::identity<4> (), const bool transparent_only = false );
     void render ( const math::mat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
 
     /* cache_uniforms
@@ -493,7 +527,7 @@ public:
      * material_uni: the material uniform to cache
      * model_uni: model uniform to cache
      */
-    void cache_uniforms ( const core::struct_uniform& material_uni, const core::uniform& model_uni );
+    void cache_uniforms ( core::struct_uniform& material_uni, core::uniform& model_uni );
 
 
 
@@ -527,21 +561,21 @@ private:
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
-        const core::struct_uniform& material_uni;
-        const core::uniform& ambient_stack_size_uni;
-        const core::uniform& diffuse_stack_size_uni;
-        const core::uniform& specular_stack_size_uni;
-        const core::uniform& ambient_stack_base_color_uni;
-        const core::uniform& diffuse_stack_base_color_uni;
-        const core::uniform& specular_stack_base_color_uni;
-        const core::struct_array_uniform& ambient_stack_levels_uni; 
-        const core::struct_array_uniform& diffuse_stack_levels_uni; 
-        const core::struct_array_uniform& specular_stack_levels_uni;
-        const core::uniform& blending_mode_uni;
-        const core::uniform& shininess_uni;
-        const core::uniform& shininess_strength_uni;
-        const core::uniform& opacity_uni;
-        const core::uniform& model_uni;
+        core::struct_uniform& material_uni;
+        core::uniform& ambient_stack_size_uni;
+        core::uniform& diffuse_stack_size_uni;
+        core::uniform& specular_stack_size_uni;
+        core::uniform& ambient_stack_base_color_uni;
+        core::uniform& diffuse_stack_base_color_uni;
+        core::uniform& specular_stack_base_color_uni;
+        core::struct_array_uniform& ambient_stack_levels_uni; 
+        core::struct_array_uniform& diffuse_stack_levels_uni; 
+        core::struct_array_uniform& specular_stack_levels_uni;
+        core::uniform& blending_mode_uni;
+        core::uniform& shininess_uni;
+        core::uniform& shininess_strength_uni;
+        core::uniform& opacity_uni;
+        core::uniform& model_uni;
     };
 
     /* cached uniforms */
@@ -560,10 +594,10 @@ private:
      * 
      * return: a glh vector
      */
-    template<typename T> math::vec2 cast_vector ( const aiVector2t<T>& vec ) { return math::vec2 { vec.x, vec.y }; }
-    template<typename T> math::vec3 cast_vector ( const aiVector3t<T>& vec ) { return math::vec3 { vec.x, vec.y, vec.z }; }
-    math::vec3 cast_vector ( const aiColor3D& vec ) { return math::vec3 { vec.r, vec.g, vec.b }; }
-    template<typename T> math::vec4 cast_vector ( const aiColor4t<T>& vec ) { return math::vec4 { vec.r, vec.g, vec.b, vec.a }; }
+    template<typename T> math::vector<2, T> cast_vector ( const aiVector2t<T>& vec ) { return math::vector<2, T> { vec.x, vec.y }; }
+    template<typename T> math::vector<3, T> cast_vector ( const aiVector3t<T>& vec ) { return math::vector<3, T> { vec.x, vec.y, vec.z }; }
+    math::fvec3 cast_vector ( const aiColor3D& vec ) { return math::fvec3 { vec.r, vec.g, vec.b }; }
+    template<typename T> math::vector<4, T> cast_vector ( const aiColor4t<T>& vec ) { return math::vector<4, T> { vec.r, vec.g, vec.b, vec.a }; }
 
     /* cast_matrix
      *
@@ -686,7 +720,7 @@ private:
      * transform: the current model transformation from all the previous nodes
      * transparent_only: only render meshes with possible transparent elements (false by default)
      */
-    void render_node ( const node& _node, const math::mat4& transform ) const;
+    void render_node ( const node& _node, const math::fmat4& transform ) const;
 
     /* render_mesh
      *
