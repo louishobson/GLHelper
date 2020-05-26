@@ -19,10 +19,10 @@
  * 
  * 
  * 
- * CLASS GLH::CORE::BUFFER_MAP
+ * CLASS GLH::CORE::FORWARD/BACKWARD_BUFFER_ITERATOR
  * 
- * returned by map method of buffer class so that a buffer can be accessed like an array
- * after mapping, the buffer must be unmapped before any other modification or draw calls are made to it
+ * iterators to allow for access to a buffer C++ style
+ * the buffer is mapped and unmapped implicity and as required
  * 
  * 
  * 
