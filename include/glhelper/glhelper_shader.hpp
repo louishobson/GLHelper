@@ -27,6 +27,13 @@
  * 
  * 
  * 
+ * CLASS GLH::MATH::UNIFORM_ALIGNED_VECTOR/MATRIX
+ * 
+ * classes which can be implicity converted to and from normal vectors and matrices
+ * the storage of these special types is such that they are valid to be written into a ubo as is
+ * 
+ * 
+ * 
  * CLASS GLH::CORE::UNIFORM
  * 
  * class for an endpoint uniform
@@ -112,16 +119,6 @@
  */
 #define GLH_SHADER_LOG_SIZE 512
 
-/* glh_if_constexpr
- *
- * either "if" or "if constexpr" depending on availibility
- */
-#ifdef __cpp_if_constexpr
-    #define glh_if_constexpr if constexpr
-#else
-    #define glh_if_constexpr if
-#endif
-
 
 
 /* NAMESPACE DECLARATIONS */
@@ -186,6 +183,61 @@ namespace glh
          * shader program
          */
         class program;
+
+    }
+
+    namespace math
+    {
+        /* class uniform_aligned_vector
+         *
+         * a class to represent a vector with data aligned specifically for use with ubos
+         * will implicitly convert to and from a normal vector
+         */
+        template<unsigned M, class T> class uniform_aligned_vector;
+
+        /* class uniform_aligned_matrix
+         *
+         * a class to represent a matrix with data aligned specifically for use with ubos
+         * will implicitly convert to and from a normal matrix
+         */
+        template<unsigned M, unsigned N, class T> class uniform_aligned_matrix;
+
+        /* default uniform_aligned_vector types */
+        template<unsigned M, class T> using ua_vector = uniform_aligned_vector<M, T>;
+        template<unsigned M> using ua_fvector = ua_vector<M, GLfloat>;
+        template<unsigned M> using ua_dvector = ua_vector<M, GLdouble>;
+        template<unsigned M> using ua_ivector = ua_vector<M, GLint>;
+        using ua_fvec2 = ua_fvector<2>;
+        using ua_fvec3 = ua_fvector<3>;
+        using ua_fvec4 = ua_fvector<4>;
+        using ua_dvec2 = ua_dvector<2>;
+        using ua_dvec3 = ua_dvector<3>;
+        using ua_dvec4 = ua_dvector<4>;
+        using ua_ivec2 = ua_ivector<2>;
+        using ua_ivec3 = ua_ivector<3>;
+        using ua_ivec4 = ua_ivector<4>;
+        using ua_vec2 = ua_dvec2;
+        using ua_vec3 = ua_dvec3;
+        using ua_vec4 = ua_dvec4;
+
+
+        /* default uniform_aligned_matrix types */
+        template<unsigned M, unsigned N, class T> using ua_matrix = uniform_aligned_matrix<M, N, T>;
+        template<unsigned M, unsigned N> using ua_fmatrix = ua_matrix<M, N, GLfloat>;
+        template<unsigned M, unsigned N> using ua_dmatrix = ua_matrix<M, N, GLdouble>;
+        template<unsigned M, unsigned N> using ua_imatrix = ua_matrix<M, N, GLint>;
+        using ua_fmat2 = ua_fmatrix<2, 2>; using ua_fmat2x3 = ua_fmatrix<2, 3>; using ua_fmat2x4 = ua_fmatrix<2, 4>;
+        using ua_fmat3 = ua_fmatrix<3, 3>; using ua_fmat3x2 = ua_fmatrix<3, 2>; using ua_fmat3x4 = ua_fmatrix<3, 4>;
+        using ua_fmat4 = ua_fmatrix<4, 4>; using ua_fmat4x2 = ua_fmatrix<4, 2>; using ua_fmat4x3 = ua_fmatrix<4, 3>;
+        using ua_dmat2 = ua_dmatrix<2, 2>; using ua_dmat2x3 = ua_dmatrix<2, 3>; using ua_dmat2x4 = ua_dmatrix<2, 4>;
+        using ua_dmat3 = ua_dmatrix<3, 3>; using ua_dmat3x2 = ua_dmatrix<3, 2>; using ua_dmat3x4 = ua_dmatrix<3, 4>;
+        using ua_dmat4 = ua_dmatrix<4, 4>; using ua_dmat4x2 = ua_dmatrix<4, 2>; using ua_dmat4x3 = ua_dmatrix<4, 3>;
+        using ua_imat2 = ua_imatrix<2, 2>; using ua_imat2x3 = ua_imatrix<2, 3>; using ua_imat2x4 = ua_imatrix<2, 4>;
+        using ua_imat3 = ua_imatrix<3, 3>; using ua_imat3x2 = ua_imatrix<3, 2>; using ua_imat3x4 = ua_imatrix<3, 4>;
+        using ua_imat4 = ua_imatrix<4, 4>; using ua_imat4x2 = ua_imatrix<4, 2>; using ua_imat4x3 = ua_imatrix<4, 3>;
+        using ua_mat2 = ua_dmat2; using ua_mat2x3 = ua_dmat2x3; using ua_mat2x4 = ua_dmat2x4;
+        using ua_mat3 = ua_dmat3; using ua_mat3x2 = ua_dmat3x2; using ua_mat3x4 = ua_dmat3x4;
+        using ua_mat4 = ua_dmat4; using ua_mat4x2 = ua_dmat4x2; using ua_mat4x3 = ua_dmat4x3;
 
     }
 
@@ -391,6 +443,158 @@ public:
 
 
 
+/* UNIFORM_ALIGNED_VECTOR DEFINITION */
+
+/* class uniform_aligned_vector
+ *
+ * a class to represent a vector with data aligned specifically for use with ubos
+ * will implicitly convert to and from a normal vector
+ */
+template<unsigned M, class T> class glh::math::uniform_aligned_vector
+{
+
+    /* assert that M >= 2 && M <= 4 */
+    static_assert ( M >=2 && M <= 4, "a uniform aligned vector can not have a dimension outside of the range 2-4" );
+
+    /* static assert that T is arithmetic */
+    static_assert ( std::is_arithmetic<T>::value, "a uniform aligned vector cannot be instantiated from a non-arithmetic type" );
+
+    /* assert that T is 4 bytes */
+    static_assert ( sizeof ( T ) == 4, "a uniform aligned vector must have a value of T which is 4 bytes in size" );
+
+public:
+
+    /* deleted zero-parameter constructor
+     *
+     * can only be constructed from another vector
+     */
+    uniform_aligned_vector () = delete;
+
+    /* retype constructor
+     *
+     * construct from a (uniform aligned) vector of the same size but different type
+     */
+    template<class _T> uniform_aligned_vector ( const uniform_aligned_vector<M, _T>& other );
+    template<class _T> uniform_aligned_vector ( const vector<M, _T>& other );
+
+    /* implicitly casts to vector of the same type and size */
+    operator vector<M, T> () const;
+
+    /* deleted copy assignment operator */
+    uniform_aligned_vector& operator= ( const uniform_aligned_vector& other ) = delete;
+
+    /* default destructor */
+    ~uniform_aligned_vector () = default;
+
+
+
+    /* the size of the vector */
+    static const unsigned size = M;
+    
+    /* the type of the vector */
+    typedef T value_type;
+
+
+
+    /* internal_ptr
+     *
+     * return: pointer to the internal array of data
+     */
+    T * internal_ptr () { return data.data (); }
+    const T * internal_ptr () const { return data.data (); }
+
+
+
+private:
+
+    /* data
+     *
+     * either 2 or 4 T's
+     */
+    std::conditional_t<M <= 2, std::array<T, 2>, std::array<T, 4>> data;
+
+};
+
+
+
+/* UNIFORM_ALIGNED_MATRIX DEFINITION */
+
+/* class uniform_aligned_matrix
+ *
+ * a class to represent a matrix with data aligned specifically for use with ubos
+ * will implicitly convert to and from a normal matrix
+ */
+template<unsigned M, unsigned N, class T> class glh::math::uniform_aligned_matrix
+{
+
+    /* assert that M >= 2 && M <= 4 && N >= 2 && N <= 4 */
+    static_assert ( M >=2 && M <= 4 && N >=2 && N <= 4, "a uniform aligned matrix can not have dimensions outside of the range (2-4)x(2-4)" );
+
+    /* static assert that T is arithmetic */
+    static_assert ( std::is_arithmetic<T>::value, "a uniform aligned matrix cannot be instantiated from a non-arithmetic type" );
+
+    /* assert that T is 4 bytes */
+    static_assert ( sizeof ( T ) == 4, "a uniform aligned matrix must have a value of T which is 4 bytes in size" );
+
+public:
+
+    /* deleted zero-parameter constructor
+     *
+     * can only be constructed from another vector
+     */
+    uniform_aligned_matrix () = delete;
+
+    /* retype constructor
+     *
+     * construct from a (uniform aligned) vector of the same size but different type
+     */
+    template<class _T> uniform_aligned_matrix ( const uniform_aligned_matrix<M, N, _T>& other );
+    template<class _T> uniform_aligned_matrix ( const matrix<M, N, _T>& other );
+
+    /* implicitly casts to matrix of the same type and size */
+    operator matrix<M, N, T> () const;
+
+    /* deleted copy assignment operator */
+    uniform_aligned_matrix& operator= ( const uniform_aligned_matrix& other ) = delete;
+
+    /* default destructor */
+    ~uniform_aligned_matrix () = default;
+
+
+
+    /* width/height
+     *
+     * width and height of the matrix
+     */
+    static const unsigned height = M;
+    static const unsigned width = N;
+    
+    /* the type of the matrix */
+    typedef T value_type;
+
+
+
+    /* internal_ptr
+     *
+     * return: pointer to the internal array of data
+     */
+    T * internal_ptr () { return data.data (); }
+    const T * internal_ptr () const { return data.data (); }
+
+
+
+private:
+
+    /* data
+     *
+     * stored as an array of collumn vectors of dimension 4
+     */
+    std::array<T, N * 4> data;
+
+};
+
+
+
 /* IS_UNIFORM DEFINITION */
 
 /* struct is_uniform
@@ -543,30 +747,22 @@ public:
      *
      * set the uniform to varying values
      */
-    void set_int ( const GLint v0 ) const;
-    void set_int ( const GLint v0, const GLint v1 ) const;
-    void set_int ( const GLint v0, const GLint v1, const GLint v2 ) const;
-    void set_int ( const GLint v0, const GLint v1, const GLint v2, const GLint v3 ) const;
-    void set_uint ( const GLuint v0 ) const;
-    void set_uint ( const GLuint v0, const GLuint v1 ) const;
-    void set_uint ( const GLuint v0, const GLuint v1, const GLuint v2 ) const;
-    void set_uint ( const GLuint v0, const GLuint v1, const GLuint v2, const GLuint v3 ) const;
-    void set_float ( const GLfloat v0 ) const;
-    void set_float ( const GLfloat v0, const GLfloat v1 ) const;
-    void set_float ( const GLfloat v0, const GLfloat v1, const GLfloat v2 ) const;
-    void set_float ( const GLfloat v0, const GLfloat v1, const GLfloat v2, const GLfloat v3 ) const;
-    void set_vector ( const math::vec2& v0 ) const;
-    void set_vector ( const math::vec3& v0 ) const;
-    void set_vector ( const math::vec4& v0 ) const;
-    void set_matrix ( const math::matrix<2, 2>& v0 ) const;
-    void set_matrix ( const math::matrix<2, 3>& v0 ) const;
-    void set_matrix ( const math::matrix<2, 4>& v0 ) const;
-    void set_matrix ( const math::matrix<3, 2>& v0 ) const;
-    void set_matrix ( const math::matrix<3, 3>& v0 ) const;
-    void set_matrix ( const math::matrix<3, 4>& v0 ) const;
-    void set_matrix ( const math::matrix<4, 2>& v0 ) const;
-    void set_matrix ( const math::matrix<4, 3>& v0 ) const;
-    void set_matrix ( const math::matrix<4, 4>& v0 ) const;
+    void set_int ( const GLint v0 );
+    void set_uint ( const GLuint v0 );
+    void set_float ( const GLfloat v0 );
+    void set_vector ( const math::fvec2& v0 );
+    void set_vector ( const math::fvec3& v0 );
+    void set_vector ( const math::fvec4& v0 );
+    void set_matrix ( const math::fmat2& v0 );
+    void set_matrix ( const math::fmat2x3& v0 );
+    void set_matrix ( const math::fmat2x4& v0 );
+    void set_matrix ( const math::fmat3x2& v0 );
+    void set_matrix ( const math::fmat3& v0 );
+    void set_matrix ( const math::fmat3x4& v0 );
+    void set_matrix ( const math::fmat4x2& v0 );
+    void set_matrix ( const math::fmat4x3& v0 );
+    void set_matrix ( const math::fmat4& v0 );
+
 
 
     /* use_program
@@ -662,37 +858,6 @@ protected:
     /* the type of the uniform in the shader */
     const GLint uniform_type;
 
-
-
-    /* default_set
-     *
-     * set a uniform given a functor to a glUniform function and its parameters, excluding the location parameter
-     */
-    template<class F, class ...Ts> void default_set ( const F func, const Ts&... params ) const;
-
-    /* ubo_set
-     *
-     * set a uniform to the ubo bound to its block index
-     * the template parameter T is the type that will be written to the uniform
-     * all of Ts... must be convertible to type T
-     */
-    template<class T, class ...Ts> void ubo_set ( const Ts&... vs ) const;
-
-    /* ubo_set_matrix
-     *
-     * set a uniform to the ubo bound to its block index
-     * takes a matrix rather than general values
-     */
-    template<unsigned M> void ubo_set_matrix ( const math::matrix<M, 2>& matrix ) const;
-    template<unsigned M> void ubo_set_matrix ( const math::matrix<M, 3>& matrix ) const;
-    template<unsigned M> void ubo_set_matrix ( const math::matrix<M, 4>& matrix ) const;
-
-    /* __ubo_set
-     *
-     * for internal use by ubo_set
-     */
-    template<class T,  class ...Ts> void __ubo_set ( buffer_map<T>& map, const unsigned index, const T& v0, const Ts&... vs ) const;
-    template<class T> void __ubo_set ( buffer_map<T>& map, const unsigned index ) const {}
 
 };
 
@@ -1020,9 +1185,11 @@ public:
      *
      * block_index/name: the index/name of the uniform block
      * bp_index: the index of the bind point
+     * 
+     * returns true if a change to the binding occured
      */
-    void set_uniform_block_binding ( const GLuint block_index, const GLuint bp_index ) const;
-    void set_uniform_block_binding ( const std::string& block_name, const GLuint bp_index ) const;
+    bool set_uniform_block_binding ( const GLuint block_index, const GLuint bp_index ) const;
+    bool set_uniform_block_binding ( const std::string& block_name, const GLuint bp_index ) const;
 
     /* get_uniform_block_binding
      *
@@ -1042,7 +1209,7 @@ public:
      * will not call glUseProgram if already in use
      * same as bind method
      */
-    void use () const { bind (); }
+    bool use () const { return bind (); }
 
     /* is_in_use
      *
@@ -1166,6 +1333,66 @@ template<class T> inline bool operator!= ( const glh::core::array_uniform<T>& lh
 
 
 
+/* UNIFORM_ALIGNED_VECTOR IMPLEMENTATION */
+
+/* retype constructor
+ *
+ * construct from a (uniform aligned) vector of the same size but different type
+ */
+template<unsigned M, class T>
+template<class _T> glh::math::uniform_aligned_vector<M, T>::uniform_aligned_vector ( const uniform_aligned_vector<M, _T>& other )
+{
+    /* copy each value from other to this */
+    for ( unsigned i = 0; i < M; ++i ) data.at ( i ) = static_cast<T> ( other.data.at ( i ) );
+}
+template<unsigned M, class T>
+template<class _T> glh::math::uniform_aligned_vector<M, T>::uniform_aligned_vector ( const vector<M, _T>& other )
+{
+    /* copy each value from other to this */
+    for ( unsigned i = 0; i < M; ++i ) data.at ( i ) = static_cast<T> ( other.at ( i ) );
+}
+
+/* implicitly casts to vector of the same type and size */
+template<unsigned M, class T> glh::math::uniform_aligned_vector<M, T>::operator vector<M, T> () const
+{
+    /* copy values into vector and return it */
+    vector<M, T> other;
+    for ( unsigned i = 0; i < M; ++i ) other.at ( i ) = data.at ( i );
+    return other;
+}
+
+
+
+/* UNIFORM_ALIGNED_MATRIX IMPLEMENTATION */
+
+/* retype constructor
+ *
+ * construct from a (uniform aligned) vector of the same size but different type
+ */
+template<unsigned M, unsigned N, class T>
+template<class _T> glh::math::uniform_aligned_matrix<M, N, T>::uniform_aligned_matrix ( const uniform_aligned_matrix<M, N, _T>& other )
+{
+    /* iterate over collumns and set the values in them */
+    for ( unsigned i = 0; i < N; ++i ) for ( unsigned j = 0; j < M; ++j ) data.at ( ( i * 4 ) + j ) = static_cast<T> ( other.data.at ( ( i * 4 ) + j ) );
+}
+template<unsigned M, unsigned N, class T>
+template<class _T> glh::math::uniform_aligned_matrix<M, N, T>::uniform_aligned_matrix ( const matrix<M, N, _T>& other )
+{
+    /* iterate over collumns and set the values in them */
+    for ( unsigned i = 0; i < N; ++i ) for ( unsigned j = 0; j < M; ++j ) data.at ( ( i * 4 ) + j ) = static_cast<T> ( other.at ( j, i ) );
+}
+
+/* implicitly casts to matrix of the same type and size */
+template<unsigned M, unsigned N, class T> glh::math::uniform_aligned_matrix<M, N, T>::operator matrix<M, N, T> () const
+{
+    /* copy values into matrix and return it */
+    matrix<M, N, T> other;
+    for ( unsigned i = 0; i < N; ++i ) for ( unsigned j = 0; j < M; ++j ) other.at ( j, i ) = data.at ( ( i * 4 ) + j );
+    return other;
+}
+
+
+
 /* UNIFORM_STORAGE IMPLEMENTATION */
 
 /* __get
@@ -1186,164 +1413,6 @@ template<class T> inline T& glh::core::uniform_storage<T>::__get ( const std::st
         uniforms.insert ( { postfix, T { this->prefix + postfix, prog } } );
         return uniforms.at ( postfix );
     }
-}
-
-
-
-/* UNIFORM IMPLEMENTATION */
-
-/* default_set
- *
- * set a uniform given a functor to a glUniform function and its parameters, excluding the location parameter
- */
-template<class F, class ...Ts> inline void glh::core::uniform::default_set ( const F func, const Ts&... params ) const
-{
-    /* assert program is in use */
-    assert_is_program_in_use ( "default set uniform" );
-
-    /* invoke the setting function */
-    func ( location, params... );
-}
-
-/* ubo_set_matrix
- *
- * set a uniform to the ubo bound to its block index
- * takes a matrix rather than general values
- */
-template<unsigned M> inline void glh::core::uniform::ubo_set_matrix ( const math::matrix<M, 2>& matrix ) const
-{
-    /* if in the default block, throw */
-    if ( block_index < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " in the default block" };
-
-    /* get the index the block is bound to */
-    const GLint block_binding = prog.get_uniform_block_binding ( block_index );
-
-    /* if is < 0, throw */
-    if ( block_binding < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which has not been set a binding" };
-
-    /* attempt to get pointer to associated ubo */
-    ubo * block_ubo = ubo::get_index_bound_ubo_pointer ( block_binding );
-
-    /* if is NULL, throw */
-    if ( !block_ubo ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which, although is bound, has not got a ubo associated with its binding" };
-
-    /* map ubo */
-    auto block_ubo_map = block_ubo->map<float> ();
-
-    /* loop through M of matrix */
-    for ( unsigned i = 0; i < M; ++i )
-    {
-        /* set values using __ubo_set */
-        __ubo_set<float> ( block_ubo_map, ( offset / sizeof ( float ) ) + ( i * 4 * sizeof ( float ) ), matrix.at ( i, 0 ), matrix.at ( i, 1 ) );
-    }
-
-    /* unmap ubo */
-    block_ubo->unmap ();
-}
-template<unsigned M> inline void glh::core::uniform::ubo_set_matrix ( const math::matrix<M, 3>& matrix ) const
-{
-    /* if in the default block, throw */
-    if ( block_index < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " in the default block" };
-
-    /* get the index the block is bound to */
-    const GLint block_binding = prog.get_uniform_block_binding ( block_index );
-
-    /* if is < 0, throw */
-    if ( block_binding < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which has not been set a binding" };
-
-    /* attempt to get pointer to associated ubo */
-    ubo * block_ubo = ubo::get_index_bound_ubo_pointer ( block_binding );
-
-    /* if is NULL, throw */
-    if ( !block_ubo ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which, although is bound, has not got a ubo associated with its binding" };
-
-    /* map ubo */
-    auto block_ubo_map = block_ubo->map<float> ();
-
-    /* loop through M of matrix */
-    for ( unsigned i = 0; i < M; ++i )
-    {
-        /* set values using __ubo_set */
-        __ubo_set<float> ( block_ubo_map, ( offset / sizeof ( float ) ) + ( i * 4 * sizeof ( float ) ), matrix.at ( i, 0 ), matrix.at ( i, 1 ), matrix.at ( i, 2 ) );
-    }
-
-    /* unmap ubo */
-    block_ubo->unmap ();
-}
-template<unsigned M> inline void glh::core::uniform::ubo_set_matrix ( const math::matrix<M, 4>& matrix ) const
-{
-    /* if in the default block, throw */
-    if ( block_index < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " in the default block" };
-
-    /* get the index the block is bound to */
-    const GLint block_binding = prog.get_uniform_block_binding ( block_index );
-
-    /* if is < 0, throw */
-    if ( block_binding < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which has not been set a binding" };
-
-    /* attempt to get pointer to associated ubo */
-    ubo * block_ubo = ubo::get_index_bound_ubo_pointer ( block_binding );
-
-    /* if is NULL, throw */
-    if ( !block_ubo ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which, although is bound, has not got a ubo associated with its binding" };
-
-    /* map ubo */
-    auto block_ubo_map = block_ubo->map<float> ();
-
-    /* loop through M of matrix */
-    for ( unsigned i = 0; i < M; ++i )
-    {
-        /* set values using __ubo_set */
-        __ubo_set<float> ( block_ubo_map, ( offset / sizeof ( float ) ) + ( i * 4 * sizeof ( float ) ), matrix.at ( i, 0 ), matrix.at ( i, 1 ), matrix.at ( i, 2 ), matrix.at ( i, 3 ) );
-    }
-
-    /* unmap ubo */
-    block_ubo->unmap ();
-}
-
-/* ubo_set
- *
- * set a uniform to the ubo bound to its block index
- * the template parameter T is the type that will be written to the uniform
- * all of Ts... must be convertible to type T
- */
-template<class T, class ...Ts> inline void glh::core::uniform::ubo_set ( const Ts&... vs ) const
-{
-
-    /* if in the default block, throw */
-    if ( block_index < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " in the default block" };
-
-    /* get the index the block is bound to */
-    const GLint block_binding = prog.get_uniform_block_binding ( block_index );
-
-    /* if is < 0, throw */
-    if ( block_binding < 0 ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which has not been set a binding" };
-
-    /* attempt to get pointer to associated ubo */
-    ubo * block_ubo = ubo::get_index_bound_ubo_pointer ( block_binding );
-
-    /* if is NULL, throw */
-    if ( !block_ubo ) throw exception::uniform_exception { "attempted to set values to a ubo for a uniform named " + name + " which, although is bound, has not got a ubo associated with its binding" };
-
-    /* map ubo */
-    auto block_ubo_map = block_ubo->map<T> ();
-
-    /* use __ubo_set to set values */
-    __ubo_set<T> ( block_ubo_map, offset / sizeof ( T ), vs... );
-
-    /* unmap ubo */
-    block_ubo->unmap ();
-}
-
-/* __ubo_set
- *
- * for internal use by ubo_set
- */
-template<class T,  class ...Ts> inline void glh::core::uniform::__ubo_set ( buffer_map<T>& map, const unsigned index, const T& v0, const Ts&... vs ) const
-{
-    /* set value and recursively call */
-    map.at ( index ) = v0;
-    __ubo_set<T> ( map, index + 1, vs... );
 }
 
 

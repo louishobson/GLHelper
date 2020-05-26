@@ -110,7 +110,7 @@ glh::core::uniform::uniform ( const std::string& _name, program& _prog )
  *
  * set the uniform to varying values
  */
-void glh::core::uniform::set_int ( const GLint v0 ) const
+void glh::core::uniform::set_int ( const GLint v0 )
 {
     /* check that the type is correct */
     if 
@@ -135,52 +135,21 @@ void glh::core::uniform::set_int ( const GLint v0 ) const
     }
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform1i, v0 );
-    else ubo_set<GLint> ( v0 );
-}
-void glh::core::uniform::set_int ( const GLint v0, const GLint v1 ) const
-{
-    /* check that the type is correct */
-    if ( uniform_type != GL_INT_VEC2 && uniform_type != GL_BOOL_VEC2 )
+    if ( block_index == -1 ) 
     {
-        if ( uniform_type == GL_UNSIGNED_INT_VEC2 ) throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with two signed integer types on a uniform with name " + name + " (the uniform has type uint vec2)" };
-        if ( uniform_type == GL_FLOAT_VEC2 ) throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with two signed integer types on a uniform with name " + name + " (the uniform has type float vec2)" };
-        else throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with two signed integer types on a uniform with name " + name };
+        assert_is_program_in_use ( "default set uniform" );
+        glUniform1i ( location, v0 );
+    } else
+    {   
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( v0 ), &v0 );
     }
-
-    /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform2i, v0, v1 );
-    else ubo_set<GLint> ( v0, v1 );
 }
-void glh::core::uniform::set_int ( const GLint v0, const GLint v1, const GLint v2 ) const
-{
-    /* check that the type is correct */
-    if ( uniform_type != GL_INT_VEC3 && uniform_type != GL_BOOL_VEC3 )
-    {
-        if ( uniform_type == GL_UNSIGNED_INT_VEC3 ) throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with three signed integer types on a uniform ith name " + name + " (the uniform has type uint vec3)" };
-        else if ( uniform_type == GL_FLOAT_VEC3 ) throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with three signed integer types on a uniform with name " + name + " (the uniform has type float vec3)" };
-        else throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with three signed integer types on a uniform with name " + name };
-    }
-
-    /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform3i, v0, v1, v2 );
-    else ubo_set<GLint> ( v0, v1, v2 );
-}
-void glh::core::uniform::set_int ( const GLint v0, const GLint v1, const GLint v2, const GLint v3 ) const
-{
-    /* check that the type is correct */
-    if ( uniform_type != GL_INT_VEC4 && uniform_type != GL_BOOL_VEC4 )
-    {
-        if ( uniform_type == GL_UNSIGNED_INT_VEC4 ) throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with four signed integer types on a uniform ith name " + name + " (the uniform has type uint vec4)" };
-        else if ( uniform_type == GL_FLOAT_VEC4 ) throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with four signed integer types on a uniform with name " + name + " (the uniform has type float vec4)" };
-        else throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with three signed integer types on a uniform with name " + name };
-    }
-
-    /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform4i, v0, v1, v2, v3 );
-    else ubo_set<GLint> ( v0, v1, v2, v3 );
-}
-void glh::core::uniform::set_uint ( const GLuint v0 ) const
+void glh::core::uniform::set_uint ( const GLuint v0 )
 {
     /* check that the type is correct */
     if 
@@ -205,210 +174,317 @@ void glh::core::uniform::set_uint ( const GLuint v0 ) const
     } 
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform1ui, v0 );
-    else ubo_set<GLuint> ( v0 );
-}
-void glh::core::uniform::set_uint ( const GLuint v0, const GLuint v1 ) const
-{
-    /* check that the type is correct */
-    if ( uniform_type != GL_UNSIGNED_INT_VEC2 && uniform_type != GL_BOOL_VEC2 )
+    if ( block_index == -1 ) 
     {
-        if ( uniform_type == GL_INT_VEC2 ) throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with two unsigned integer types on a uniform with name " + name + " (the uniform has type int vec2)" };
-        if ( uniform_type == GL_FLOAT_VEC2 ) throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with two unsigned integer types on a uniform with name " + name + " (the uniform has type float vec2)" };
-        else throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with two unsigned integer types on a uniform with name " + name };
+        assert_is_program_in_use ( "default set uniform" );
+        glUniform1ui ( location, v0 );
+    } else
+    {   
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( v0 ), &v0 );
     }
-
-    /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform2ui, v0, v1 );
-    else ubo_set<GLuint> ( v0, v1 );
 }
-void glh::core::uniform::set_uint ( const GLuint v0, const GLuint v1, const GLuint v2 ) const
-{
-    /* check that the type is correct */
-    if ( uniform_type != GL_UNSIGNED_INT_VEC3 && uniform_type != GL_BOOL_VEC3 )
-    {
-        if ( uniform_type == GL_INT_VEC3 ) throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with three unsigned integer types on a uniform with name " + name + " (the uniform has type int vec3)" };
-        if ( uniform_type == GL_FLOAT_VEC3 ) throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with three unsigned integer types on a uniform with name " + name + " (the uniform has type float vec3)" };
-        else throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with three unsigned integer types on a uniform with name " + name };
-    }
-
-    /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform3ui, v0, v1, v2 );
-    else ubo_set<GLuint> ( v0, v1, v2 );
-}
-void glh::core::uniform::set_uint ( const GLuint v0, const GLuint v1, const GLuint v2, const GLuint v3 ) const
-{
-    /* check that the type is correct */
-    if ( uniform_type != GL_UNSIGNED_INT_VEC4 && uniform_type != GL_BOOL_VEC4 )
-    {
-        if ( uniform_type == GL_INT_VEC4 ) throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with four unsigned integer types on a uniform with name " + name + " (the uniform has type int vec4)" };
-        if ( uniform_type == GL_FLOAT_VEC4 ) throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with four unsigned integer types on a uniform with name " + name + " (the uniform has type float vec4)" };
-        else throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with four unsigned integer types on a uniform with name " + name };
-    }
-
-    /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform4ui, v0, v1, v2, v3 );
-    else ubo_set<GLuint> ( v0, v1, v2, v3 );
-}
-void glh::core::uniform::set_float ( const GLfloat v0 ) const
+void glh::core::uniform::set_float ( const GLfloat v0 )
 {
     /* check that the type is correct */
     if ( uniform_type != GL_FLOAT ) 
         throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with a single float type on a uniform with name " + name };   
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform1f, v0 );
-    else ubo_set<GLfloat> ( v0 );
+    if ( block_index == -1 ) 
+    {
+        assert_is_program_in_use ( "default set uniform" );
+        glUniform1f ( location, v0 );
+    } else
+    {   
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( v0 ), &v0 );
+    }
 }
-void glh::core::uniform::set_float ( const GLfloat v0, const GLfloat v1 ) const
-{
-    /* check that the type is correct */
-    if ( uniform_type != GL_FLOAT_VEC2 ) 
-        throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with two float types on a uniform with name " + name };
-
-    /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform2f, v0, v1 );
-    else ubo_set<GLfloat> ( v0, v1 );
-}
-void glh::core::uniform::set_float ( const GLfloat v0, const GLfloat v1, const GLfloat v2 ) const
-{
-    /* check that the type is correct */
-    if ( uniform_type != GL_FLOAT_VEC3 ) 
-        throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with three float types on a uniform with name " + name };    
-
-    /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform3f, v0, v1, v2 );
-    else ubo_set<GLfloat> ( v0, v1, v2 );        
-}
-void glh::core::uniform::set_float ( const GLfloat v0, const GLfloat v1, const GLfloat v2, const GLfloat v3 ) const
-{
-    /* check that the type is correct */
-    if ( uniform_type != GL_FLOAT_VEC4 ) 
-        throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with four float types on a uniform with name " + name };        
-
-    /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform4f, v0, v1, v2, v3 );
-    else ubo_set<GLfloat> ( v0, v1, v2, v3 );
-}
-void glh::core::uniform::set_vector ( const math::vec2& v0 ) const
+void glh::core::uniform::set_vector ( const math::fvec2& v0 )
 {
     /* check that the type is correct */
     if ( uniform_type != GL_FLOAT_VEC2 )
         throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with vec2 type on a uniform with name " + name };
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform2f, v0.at ( 0 ), v0.at ( 1 ) );
-    else ubo_set<GLfloat> ( v0.at ( 0 ), v0.at ( 1 ) );
+    if ( block_index == -1 ) 
+    {
+        assert_is_program_in_use ( "default set uniform" );
+        glUniform2f ( location, v0.at ( 0 ), v0.at ( 1 ) );
+    } else
+    {   
+        /* convert to uniform-aligned vector */
+        math::ua_fvec2 ua_v0 { v0 };
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+    }
+    
 }
-void glh::core::uniform::set_vector ( const math::vec3& v0 ) const
+void glh::core::uniform::set_vector ( const math::fvec3& v0 )
 {
     /* check that the type is correct */
     if ( uniform_type != GL_FLOAT_VEC3 )
         throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with vec3 type on a uniform with name " + name };
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform3f, v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ) );
-    else ubo_set<GLfloat> ( v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ) );
+    if ( block_index == -1 ) 
+    {
+        assert_is_program_in_use ( "default set uniform" );
+        glUniform3f ( location, v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ) );
+    } else
+    {   
+        /* convert to uniform-aligned vector */
+        math::ua_fvec3 ua_v0 { v0 };
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+    }
 }
-void glh::core::uniform::set_vector ( const math::vec4& v0 ) const
+void glh::core::uniform::set_vector ( const math::fvec4& v0 )
 {
     /* check that the type is correct */
     if ( uniform_type != GL_FLOAT_VEC4 )
         throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with vec4 type on a uniform with name " + name };
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniform4f, v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ), v0.at ( 3 ) );
-    else ubo_set<GLfloat> ( v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ), v0.at ( 3 ) );
+    if ( block_index == -1 ) 
+    {
+        assert_is_program_in_use ( "default set uniform" );
+        glUniform4f ( location, v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ), v0.at ( 3 ) );
+    } else
+    {   
+        /* convert to uniform-aligned vector */
+        math::ua_fvec4 ua_v0 { v0 };
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+    }
 }
-void glh::core::uniform::set_matrix ( const math::matrix<2, 2>& v0 ) const
+void glh::core::uniform::set_matrix ( const math::fmat2& v0 )
 {
     /* check that the type is correct */
     if ( uniform_type != GL_FLOAT_MAT2 ) 
         throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with mat2x2 type on a uniform with name " + name };
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniformMatrix2fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_matrix ( v0 );
+    if ( block_index == -1 ) 
+    {
+        assert_is_program_in_use ( "default set uniform" );
+        glUniformMatrix2fv ( location, 1, GL_FALSE, v0.internal_ptr () );
+    } else
+    {   
+        /* convert to uniform-aligned matrix */
+        math::ua_fmat2 ua_v0 { v0 };
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+    }
 }
-void glh::core::uniform::set_matrix ( const math::matrix<2, 3>& v0 ) const
+void glh::core::uniform::set_matrix ( const math::fmat2x3& v0 )
 {
     /* check that the type is correct */
     if ( uniform_type != GL_FLOAT_MAT2x3 ) 
         throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with mat2x3 type on a uniform with name " + name };
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniformMatrix2x3fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_matrix ( v0 );
+    if ( block_index == -1 ) 
+    {
+        assert_is_program_in_use ( "default set uniform" );
+        glUniformMatrix2x3fv ( location, 1, GL_FALSE, v0.internal_ptr () );
+    } else
+    {   
+        /* convert to uniform-aligned matrix */
+        math::ua_fmat2x3 ua_v0 { v0 };
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+    }
 }
-void glh::core::uniform::set_matrix ( const math::matrix<2, 4>& v0 ) const
+void glh::core::uniform::set_matrix ( const math::fmat2x4& v0 )
 {
     /* check that the type is correct */
     if ( uniform_type != GL_FLOAT_MAT2x4 ) 
         throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with mat2x4 type on a uniform with name " + name };
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniformMatrix2x4fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_matrix ( v0 );
+    if ( block_index == -1 ) 
+    {
+        assert_is_program_in_use ( "default set uniform" );
+        glUniformMatrix2x4fv ( location, 1, GL_FALSE, v0.internal_ptr () );
+    } else
+    {   
+        /* convert to uniform-aligned matrix */
+        math::ua_fmat2x4 ua_v0 { v0 };
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+    }
 }
-void glh::core::uniform::set_matrix ( const math::matrix<3, 2>& v0 ) const
+void glh::core::uniform::set_matrix ( const math::fmat3x2& v0 )
 {
     /* check that the type is correct */
     if ( uniform_type != GL_FLOAT_MAT3x2 ) 
         throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with mat3x2 type on a uniform with name " + name };
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniformMatrix3x2fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_matrix ( v0 );
+    if ( block_index == -1 ) 
+    {
+        assert_is_program_in_use ( "default set uniform" );
+        glUniformMatrix3x2fv ( location, 1, GL_FALSE, v0.internal_ptr () );
+    } else
+    {   
+        /* convert to uniform-aligned matrix */
+        math::ua_fmat3x2 ua_v0 { v0 };
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+    }
 }
-void glh::core::uniform::set_matrix ( const math::matrix<3, 3>& v0 ) const
+void glh::core::uniform::set_matrix ( const math::fmat3& v0 )
 {
     /* check that the type is correct */
     if ( uniform_type != GL_FLOAT_MAT3 ) 
         throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with mat3x3 type on a uniform with name " + name };
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniformMatrix3fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_matrix ( v0 );
+    if ( block_index == -1 ) 
+    {
+        assert_is_program_in_use ( "default set uniform" );
+        glUniformMatrix3fv ( location, 1, GL_FALSE, v0.internal_ptr () );
+    } else
+    {   
+        /* convert to uniform-aligned matrix */
+        math::ua_fmat3 ua_v0 { v0 };
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+    }
 }
-void glh::core::uniform::set_matrix ( const math::matrix<3, 4>& v0 ) const
+void glh::core::uniform::set_matrix ( const math::fmat3x4& v0 )
 {
     /* check that the type is correct */
     if ( uniform_type != GL_FLOAT_MAT3x4 ) 
         throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with mat4x4 type on a uniform with name " + name };
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniformMatrix3x4fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_matrix ( v0 );
+    if ( block_index == -1 ) 
+    {
+        assert_is_program_in_use ( "default set uniform" );
+        glUniformMatrix3x4fv ( location, 1, GL_FALSE, v0.internal_ptr () );
+    } else
+    {   
+        /* convert to uniform-aligned matrix */
+        math::ua_fmat3x4 ua_v0 { v0 };
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+    }
 }
-void glh::core::uniform::set_matrix ( const math::matrix<4, 2>& v0 ) const
+void glh::core::uniform::set_matrix ( const math::fmat4x2& v0 )
 {
     /* check that the type is correct */
     if ( uniform_type != GL_FLOAT_MAT4x2 ) 
         throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with mat4x2 type on a uniform with name " + name };
     
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniformMatrix4x2fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_matrix ( v0 );
+    if ( block_index == -1 ) 
+    {
+        assert_is_program_in_use ( "default set uniform" );
+        glUniformMatrix4x2fv ( location, 1, GL_FALSE, v0.internal_ptr () );
+    } else
+    {   
+        /* convert to uniform-aligned matrix */
+        math::ua_fmat4x2 ua_v0 { v0 };
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+    }
 }
-void glh::core::uniform::set_matrix ( const math::matrix<4, 3>& v0 ) const
+void glh::core::uniform::set_matrix ( const math::fmat4x3& v0 )
 {
     /* check that the type is correct */
     if ( uniform_type != GL_FLOAT_MAT4x3 ) 
         throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with mat4x3 type on a uniform with name " + name };
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniformMatrix4x3fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_matrix ( v0 );
+    if ( block_index == -1 ) 
+    {
+        assert_is_program_in_use ( "default set uniform" );
+        glUniformMatrix4x3fv ( location, 1, GL_FALSE, v0.internal_ptr () );
+    } else
+    {   
+        /* convert to uniform-aligned matrix */
+        math::ua_fmat4x3 ua_v0 { v0 };
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+    }
 }
-void glh::core::uniform::set_matrix ( const math::matrix<4, 4>& v0 ) const
+void glh::core::uniform::set_matrix ( const math::fmat4& v0 )
 {
     /* check that the type is correct */
     if ( uniform_type != GL_FLOAT_MAT4 ) 
         throw exception::uniform_exception { "attempted to perform invalid uniform setting operation with mat4x4 type on a uniform with name " + name };
 
     /* apply the uniform */
-    if ( block_index == -1 ) default_set ( glUniformMatrix4fv, 1, GL_FALSE, v0.export_data ().data () );
-    else ubo_set_matrix ( v0 );
+    if ( block_index == -1 ) 
+    {
+        assert_is_program_in_use ( "default set uniform" );
+        glUniformMatrix4fv ( location, 1, GL_FALSE, v0.internal_ptr () );
+    } else
+    {   
+        /* convert to uniform-aligned matrix */
+        math::ua_fmat4 ua_v0 { v0 };
+        /* get ubo for bind point and throw if anything goes wrong, then set the value */
+        const int bind_point = prog.get_uniform_block_binding ( block_index );
+        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        ubo * bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
+        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+    }
 }
 
 /* use_program
@@ -663,24 +739,27 @@ GLint glh::core::program::get_active_uniform_block_iv ( const std::string& name,
  * block_index/name: the index/name of the uniform block
  * bp_index: the index of the bind point
  */
-void glh::core::program::set_uniform_block_binding ( const GLuint block_index, const GLuint bp_index ) const
+bool glh::core::program::set_uniform_block_binding ( const GLuint block_index, const GLuint bp_index ) const
 {
     /* resize vector if necessary */
     if ( uniform_block_bindings.size () <= block_index ) uniform_block_bindings.resize ( block_index + 1, -1 );
 
-    /* if already bound to index, return */
-    if ( uniform_block_bindings.at ( block_index ) == bp_index ) return;
+    /* if already bound to index, return false */
+    if ( uniform_block_bindings.at ( block_index ) == bp_index ) return false;
 
     /* otherwise bind block to index */
     glUniformBlockBinding ( id, block_index, bp_index );
 
     /* record binding */
     uniform_block_bindings.at ( block_index ) = bp_index;
+
+    /* return true */
+    return true;
 }
-void glh::core::program::set_uniform_block_binding ( const std::string& block_name, const GLuint bp_index ) const
+bool glh::core::program::set_uniform_block_binding ( const std::string& block_name, const GLuint bp_index ) const
 {
     /* get index and call overload */
-    set_uniform_block_binding ( get_uniform_block_index ( block_name ), bp_index );
+    return set_uniform_block_binding ( get_uniform_block_index ( block_name ), bp_index );
 }
 
 /* get_uniform_block_binding
