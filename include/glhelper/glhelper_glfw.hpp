@@ -102,8 +102,9 @@ public:
      * 
      * title: the title of the window
      * width/height: the width and height of the window
+     * msaa_samples: the number of MSAA samples (defaults to 1)
      */
-    window ( const std::string& title, const int width, const int height );
+    window ( const std::string& title, const unsigned width, const unsigned height, const unsigned msaa_samples = 1 );
 
     /* zero-parameter constructor
      *
