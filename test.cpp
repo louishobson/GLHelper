@@ -19,6 +19,10 @@
 #include <chrono>
 #include <thread>
 
+#define GLH_MODEL_MAX_COLOR_SETS 1
+#define GLH_MODEL_MAX_UV_CHANNELS 2
+#define GLH_MODEL_MAX_TEXTURE_STACK_SIZE 2
+
 /* include glhelper.hpp */
 #include <glhelper/glhelper.hpp>
 
@@ -44,29 +48,25 @@ int main ()
     glh::core::program mirror_program { basic_vshader, mirror_fshader };
     glh::core::program cubemap_program { cubemap_vshader, cubemap_fshader };
 
-    const auto& basic_trans_uni = basic_program.get_struct_uniform ( "trans" );
-    const auto& model_trans_uni = model_program.get_struct_uniform ( "trans" );
-    const auto& mirror_trans_uni = mirror_program.get_struct_uniform ( "trans" );
-    const auto& cubemap_trans_uni = cubemap_program.get_struct_uniform ( "trans" );
-    const auto& model_transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
+    auto& basic_trans_uni = basic_program.get_struct_uniform ( "trans" );
+    auto& model_trans_uni = model_program.get_struct_uniform ( "trans" );
+    auto& mirror_trans_uni = mirror_program.get_struct_uniform ( "trans" );
+    auto& cubemap_trans_uni = cubemap_program.get_struct_uniform ( "trans" );
+    auto& model_transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
 
-    model_program.set_uniform_block_binding ( "LIGHT_SYSTEM_BLOCK", 0 );
-    glh::core::ubo light_system_ubo { model_program.get_active_uniform_block_iv ( "LIGHT_SYSTEM_BLOCK", GL_UNIFORM_BLOCK_DATA_SIZE ) };
-    light_system_ubo.bind_buffer_base ( 0 );
+
     
     glh::camera::camera camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 1000.0 };
     camera.cache_uniforms ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
     camera.enable_restrictive_mode ();
     camera.set_position ( glh::math::vec3 { -6.80822, 26.2452, -3.12343 } );
 
+
+
     glh::lighting::light_system light_system;
     light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
+    //light_system.pointcoll.lights.emplace_back ( glh::math::vec3 {}, 1.0, 0.045, 0.0075, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
     light_system.cache_uniforms ( model_program.get_struct_uniform ( "light_system" ) );
-
-    window.get_mouseinfo ();
-    auto dimensions = window.get_dimensions ();
-    camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
-    glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
 
 
 
@@ -180,16 +180,9 @@ int main ()
 
 
 
-    //glh::core::ubo test_block_ubo { 10000 };
-    //test_block_ubo.bind_index ( model_program.get_uniform_block_index ( "test_block" ) );
-
-
-
     glh::core::renderer::set_clear_color ( glh::math::vec4 { 0.5, 1.0, 1.0, 1.0 } );
     glh::core::renderer::enable_depth_test ();
     glh::core::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
-    light_system.apply ();
 
     window.get_timeinfo ();
     window.get_dimensions ();
@@ -235,6 +228,7 @@ int main ()
         mirror_camera.set_position ( glh::math::rotate3d ( mirror_camera.get_position (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) ); 
         mirror_camera.set_ytan ( glh::math::rotate3d ( mirror_camera.get_ytan (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
         mirror_matrix = glh::math::rotate3d ( mirror_matrix, mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } );
+        //light_system.pointcoll.lights.at ( 0 ).set_position ( camera.get_position () );
 
 
 
@@ -288,6 +282,7 @@ int main ()
 
         model_program.use ();
         model_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
+        light_system.apply ();
         model_transparent_mode_uni.set_int ( 0 );
 
         glh::core::renderer::enable_face_culling ();
