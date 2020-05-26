@@ -53,13 +53,13 @@ glh::core::texture_base::texture_base ( const minor_object_type _minor_type, con
  * 
  * unit: the texture unit to bind to/unbind from
  */
-void glh::core::texture_base::bind ( const unsigned unit ) const
+bool glh::core::texture_base::bind ( const unsigned unit ) const
 {
     /* throw if not valid */
     assert_is_object_valid ( "bind" );
 
-    /* if already bound, return */
-    if ( object_bindings.at ( bind_target_index + unit ) == id ) return;
+    /* if already bound, return false */
+    if ( object_bindings.at ( bind_target_index + unit ) == id ) return false;
 
     /* switch for bind target */
     switch ( bind_target )
@@ -79,6 +79,9 @@ void glh::core::texture_base::bind ( const unsigned unit ) const
 
     /* set binding */
     object_bindings.at ( bind_target_index + unit ) = id;
+
+    /* return true */
+    return true;
 }
 
 /* unbind
@@ -87,13 +90,13 @@ void glh::core::texture_base::bind ( const unsigned unit ) const
  * 
  * uniy: the texture unit to unbind from
  */
-void glh::core::texture_base::unbind ( const unsigned unit ) const
+bool glh::core::texture_base::unbind ( const unsigned unit ) const
 {
     /* throw if not valid */
     assert_is_object_valid ( "unbind" );
 
-    /* if not bound, return */
-    if ( object_bindings.at ( bind_target_index + unit ) != id ) return;
+    /* if not bound, return false */
+    if ( object_bindings.at ( bind_target_index + unit ) != id ) return false;
 
     /* switch for bind target */
     switch ( bind_target )
@@ -111,8 +114,11 @@ void glh::core::texture_base::unbind ( const unsigned unit ) const
     default: throw exception::object_exception { "attempted to perform unbind operation to unknown target" };
     }
 
-    /* set binding */
+    /* set unbinding */
     object_bindings.at ( bind_target_index + unit ) = 0;
+
+    /* return true */
+    return true;
 }
 
 /* unbind_all
@@ -120,27 +126,33 @@ void glh::core::texture_base::unbind ( const unsigned unit ) const
  * unbind from all targets
  * this includes all texture units
  */
-void glh::core::texture_base::unbind_all () const
+bool glh::core::texture_base::unbind_all () const
 {
+    /* track whether anything was unbound */
+    bool binding_change = false;
+
     /* switch for bind target */
     switch ( bind_target )
     {
     case object_bind_target::GLH_TEXTURE2D_0_TARGET:
         {
             const unsigned num_texture2d_units = static_cast<unsigned> ( object_bind_target::__TEXTURE2D_END__ ) - static_cast<unsigned> ( object_bind_target::__TEXTURE2D_START__ ) - 1;
-            for ( unsigned i = 0; i < num_texture2d_units; ++i ) unbind ( i );
+            for ( unsigned i = 0; i < num_texture2d_units; ++i ) binding_change &= unbind ( i );
         }
         break;
 
     case object_bind_target::GLH_CUBEMAP_0_TARGET:
         { 
             const unsigned num_cubemap_units = static_cast<unsigned> ( object_bind_target::__CUBEMAP_END__ ) - static_cast<unsigned> ( object_bind_target::__CUBEMAP_START__ ) - 1;
-            for ( unsigned i = 0; i < num_cubemap_units; ++i ) unbind ( i );
+            for ( unsigned i = 0; i < num_cubemap_units; ++i ) binding_change &= unbind ( i );
         }
         break;
 
     default: throw exception::object_exception { "attempted to perform unbind all operation to unknown target" };
     }
+
+    /* return binding change */
+    return binding_change;
 }
 
 /* is_bound 
@@ -171,7 +183,7 @@ void glh::core::texture_base::set_mag_filter ( const GLenum opt )
 }
 void glh::core::texture_base::set_min_filter ( const GLenum opt ) 
 { 
-    /* bind, set paramater, unbind */
+    /* bind, set paramater */
     bind (); 
     glTexParameteri ( gl_target, GL_TEXTURE_MIN_FILTER, opt );
 }
@@ -182,25 +194,25 @@ void glh::core::texture_base::set_min_filter ( const GLenum opt )
  */
 void glh::core::texture_base::set_s_wrap ( const GLenum opt ) 
 { 
-    /* bind, set paramater, unbind */
+    /* bind, set paramater */
     bind (); 
     glTexParameteri ( gl_target, GL_TEXTURE_WRAP_S, opt );
 }
 void glh::core::texture_base::set_t_wrap ( const GLenum opt ) 
 { 
-    /* bind, set paramater, unbind */
+    /* bind, set paramater */
     bind (); 
     glTexParameteri ( gl_target, GL_TEXTURE_WRAP_T, opt );
 }
 void glh::core::texture_base::set_r_wrap ( const GLenum opt ) 
 { 
-    /* bind, set paramater, unbind */
+    /* bind, set paramater */
     bind (); 
     glTexParameteri ( gl_target, GL_TEXTURE_WRAP_R, opt );
 }
 void glh::core::texture_base::set_wrap ( const GLenum opt ) 
 {
-    /* bind, set paramaters, unbind */
+    /* bind, set paramaters */
     bind (); 
     glTexParameteri ( gl_target, GL_TEXTURE_WRAP_S, opt ); 
     glTexParameteri ( gl_target, GL_TEXTURE_WRAP_T, opt );

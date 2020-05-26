@@ -168,7 +168,7 @@ public:
      * unit: the texture unit to bind to/unbind from
      */
     using object::bind;
-    void bind ( const unsigned texture_unit ) const;
+    bool bind ( const unsigned texture_unit ) const;
 
     /* unbind
      *
@@ -177,14 +177,14 @@ public:
      * uniy: the texture unit to unbind from
      */
     using object::unbind;
-    void unbind ( const unsigned texture_unit ) const;
+    bool unbind ( const unsigned texture_unit ) const;
 
     /* unbind_all
      *
      * unbind from all targets
      * this includes all texture units
      */
-    void unbind_all () const;
+    bool unbind_all () const;
 
     /* is_bound
      *
