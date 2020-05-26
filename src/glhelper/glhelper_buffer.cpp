@@ -55,7 +55,7 @@ glh::core::buffer::buffer ( const minor_object_type _minor_type, const GLsizeipt
     /* assert major type is a buffer */ 
     if ( major_type != major_object_type::GLH_BUFFER_TYPE ) throw exception::buffer_exception { "attempted to construct buffer with non-buffer type" }; 
     
-    /* now biffer data */
+    /* now buffer data */
     buffer_data ( size, data, usage );
 }
 
@@ -71,18 +71,19 @@ glh::core::buffer::buffer ( const minor_object_type _minor_type, const GLsizeipt
  */
 void glh::core::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage ) 
 {
-    /* bind the buffer */
-    bind ();
+    /* unmap */
+    unmap_buffer ();
+    ++map_id;
 
-    /* assert is not mapped */
-    assert_is_not_mapped ( "buffer data" );
+    /* bind the buffer */
+    const bool binding_change = bind ();
 
     /* buffer data and change capacity */
     glBufferData ( gl_target, size, data, usage );
     capacity = size;
 
     /* unbind the buffer */
-    unbind ();
+    if ( binding_change ) unbind ();
 }
 
 /* buffer_sub_data
@@ -93,21 +94,23 @@ void glh::core::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data
  */
 void glh::core::buffer::buffer_sub_data ( const GLintptr offset, const GLsizeiptr size, const GLvoid * data = NULL )
 {
-    /* bind the buffer */
-    bind ();
+    std::cout << "hi\n";
 
-    /* assert is not mapped */
-    assert_is_not_mapped ( "buffer sub data" );
+    /* unmap */
+    unmap_buffer ();
+
+    /* bind the buffer */
+    const bool binding_change = bind ();
 
     /* check offsets */
     if ( offset + size > capacity )
-    throw exception::buffer_exception { "attempted to perform buffer sub data operation with incompatible paramaters for buffer capacities" };
+    throw exception::buffer_exception { "attempted to perform buffer sub data operation with incompatible paramaters for buffer capacity" };
 
     /* buffer data */
     glBufferSubData ( gl_target, offset, size, data );
 
     /* unbind the buffer */
-    unbind ();
+    if ( binding_change ) unbind ();
 }
 
 /* copy_sub_data
@@ -121,13 +124,12 @@ void glh::core::buffer::buffer_sub_data ( const GLintptr offset, const GLsizeipt
  */
 void glh::core::buffer::copy_sub_data ( const buffer& read_buff, const GLintptr read_offset, const GLintptr write_offset, const GLsizeiptr size )
 {
-    /* bind buffers */
-    read_buff.bind_copy_read ();
-    bind_copy_write ();
+    /* unmap */
+    unmap_buffer ();
 
-    /* neither buffer is mapped */
-    read_buff.assert_is_not_mapped ( "copy buffer sub data" );
-    assert_is_not_mapped ( "copy buffer sub data" );
+    /* bind buffers */
+    const bool read_binding_change = read_buff.bind_copy_read ();
+    const bool write_binding_change = bind_copy_write ();
 
     /* check offsets */
     if ( read_offset + size > read_buff.get_capacity () || write_offset + size > capacity )
@@ -137,8 +139,8 @@ void glh::core::buffer::copy_sub_data ( const buffer& read_buff, const GLintptr 
     glCopyBufferSubData ( GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, read_offset, write_offset, size );
 
     /* unbind buffers */
-    unbind_copy_write ();
-    read_buff.unbind_copy_read ();
+    if ( write_binding_change ) unbind_copy_write ();
+    if ( read_binding_change ) read_buff.unbind_copy_read ();
 }
 
 /* clear_data
@@ -147,41 +149,18 @@ void glh::core::buffer::copy_sub_data ( const buffer& read_buff, const GLintptr 
  */
 void glh::core::buffer::clear_data ()
 {
-    /* bind the buffer */
-    bind ();
+    /* unmap */
+    unmap_buffer ();
+    ++map_id;
 
-    /* assert is not mapped */
-    assert_is_not_mapped ( "clear data" );
+    /* bind the buffer */
+    const bool binding_change = bind ();
 
     /* empty buffer data */
     glBufferData ( gl_target, 0, NULL, GL_STATIC_DRAW );
 
     /* unbind the buffer */
-    unbind ();
-}
-
-
-
-/* unmap
- *
- * unmaps the buffer, making all existing maps invalid
- */
-void glh::core::buffer::unmap ()
-{
-    /* unmap only if is already mapped
-     * it is not an error to call unmap multiple times
-     */
-    if ( is_mapped () )
-    {
-        /* set map_ptr to NULL and increment map_id */
-        map_ptr = NULL;
-        ++map_id;
-        
-        /* unmap the buffer, throwing if fails */
-        bind ();
-        if ( glUnmapBuffer ( gl_target ) != GL_TRUE ) throw exception::buffer_exception { "failed to unmap buffer" };
-        unbind ();
-    }
+    if ( binding_change ) unbind ();
 }
 
 
@@ -189,8 +168,10 @@ void glh::core::buffer::unmap ()
 /* bind_copy_read/write
  *
  * bind the buffer to the copy read/write targets
+ * 
+ * returns true if a change in binding occured
  */
-void glh::core::buffer::bind_copy_read () const
+bool glh::core::buffer::bind_copy_read () const
 {
     /* throw if not valid */
     assert_is_object_valid ( "bind" );
@@ -198,16 +179,19 @@ void glh::core::buffer::bind_copy_read () const
     /* get the index of the copy read target */
     const unsigned copy_read_target_index = static_cast<unsigned> ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET );
 
-    /* if already bound, return */
-    if ( object_bindings.at ( copy_read_target_index ) == id ) return;
+    /* if already bound, return false */
+    if ( object_bindings.at ( copy_read_target_index ) == id ) return false;
 
     /* bind object */
     glBindBuffer ( GL_COPY_READ_BUFFER, id );
 
     /* record the binding */
     object_bindings.at ( copy_read_target_index ) = id;
+
+    /* return true */
+    return true;
 }
-void glh::core::buffer::bind_copy_write () const
+bool glh::core::buffer::bind_copy_write () const
 {
     /* throw if not valid */
     assert_is_object_valid ( "bind" );
@@ -215,21 +199,28 @@ void glh::core::buffer::bind_copy_write () const
     /* get the index of the copy write target */
     const unsigned copy_write_target_index = static_cast<unsigned> ( object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET );
 
-    /* if already bound, return */
-    if ( object_bindings.at ( copy_write_target_index ) == id ) return;
+    /* if already bound, return false */
+    if ( object_bindings.at ( copy_write_target_index ) == id ) return false;
 
     /* bind object */
     glBindBuffer ( GL_COPY_WRITE_BUFFER, id );
 
     /* record the binding */
     object_bindings.at ( copy_write_target_index ) = id;
+
+    /* return true */
+    return true;
 }
+
+
 
 /* unbind_copy_read/write
  *
  * unbind the buffer to the copy read/write targets
+ * 
+ * returns true if a change in binding occured
  */
-void glh::core::buffer::unbind_copy_read () const
+bool glh::core::buffer::unbind_copy_read () const
 {
     /* throw if not valid */
     assert_is_object_valid ( "unbind" );
@@ -237,16 +228,19 @@ void glh::core::buffer::unbind_copy_read () const
     /* get the index of the copy read target */
     const unsigned copy_read_target_index = static_cast<unsigned> ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET );
 
-    /* if not bound, return */
-    if ( object_bindings.at ( copy_read_target_index ) != id ) return;
+    /* if not bound, return false */
+    if ( object_bindings.at ( copy_read_target_index ) != id ) return false;
 
     /* un bind object */
     glBindBuffer ( GL_COPY_READ_BUFFER, 0 );
 
     /* record the unbinding */
     object_bindings.at ( copy_read_target_index ) = 0;
+
+    /* return true */
+    return true;
 }
-void glh::core::buffer::unbind_copy_write () const
+bool glh::core::buffer::unbind_copy_write () const
 {
     /* throw if not valid */
     assert_is_object_valid ( "unbind" );
@@ -254,32 +248,41 @@ void glh::core::buffer::unbind_copy_write () const
     /* get the index of the copy write target */
     const unsigned copy_write_target_index = static_cast<unsigned> ( object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET );
 
-    /* if not bound, return */
-    if ( object_bindings.at ( copy_write_target_index ) != id ) return;
+    /* if not bound, return false */
+    if ( object_bindings.at ( copy_write_target_index ) != id ) false;
 
     /* unbind object */
     glBindBuffer ( GL_COPY_WRITE_BUFFER, 0 );
 
     /* record the unbinding */
     object_bindings.at ( copy_write_target_index ) = 0;
+
+    /* return true */
+    return true;
 }
+
+
 
 /* unbind_all
  *
  * unbind from all targets
  * this includes copy read/write targets
+ * 
+ * returns true if a change in binding occured
  */
-void glh::core::buffer::unbind_all () const
+bool glh::core::buffer::unbind_all () const
 {
     /* unbind normally, as well as unbinding from any copy read/write targets */
-    unbind ();
-    unbind_copy_read ();
-    unbind_copy_write ();    
+    return ( unbind () | unbind_copy_read () | unbind_copy_write () );
 }
+
+
 
 /* is_copy_read/write_bound
  *
  * check if the buffer is bound to the copy read/write targets
+ * 
+ * returns true if a change in binding occured
  */
 bool glh::core::buffer::is_copy_read_bound () const
 {
@@ -292,36 +295,58 @@ bool glh::core::buffer::is_copy_write_bound () const
     return ( is_object_valid () && object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET ) ) == id );
 }
 
-/* generate_map
+
+
+/* map_buffer
  *
  * generate a mapping, if not already mapped
  * 
  * return: the map to the buffer, or NULL on failure
  */
-GLvoid * glh::core::buffer::generate_map ()
+GLvoid * glh::core::buffer::map_buffer () const
 {
     /* if already mapped, return that */
     if ( map_ptr ) return map_ptr;
 
     /* else generate the map */
-    bind ();
+    const bool binding_change = bind ();
     map_ptr = glMapBuffer ( gl_target, GL_READ_WRITE );
-    unbind ();
+    if ( binding_change ) unbind ();
 
     /* return the map */
     return map_ptr;    
 }
 
-/* assert_is_not_mapped
+/* unmap_buffer
+ *
+ * unmaps the buffer, although the buffer will be remapped when an iterator is dereferenced
+ */
+void glh::core::buffer::unmap_buffer () const
+{
+    /* if not mapped, return */
+    if ( !map_ptr ) return;
+
+    /* otherwise destroy the map */
+    const bool binding_change = bind ();
+    glUnmapBuffer ( gl_target );
+    if ( binding_change ) unbind ();
+
+    /* set to NULL */
+    map_ptr = NULL;
+}
+
+
+
+/* assert_not_is_buffer_mapped
  *
  * throws if the buffer is mapped
  * 
- * operation: description of the operation
+ * operationL the operation being performed
  */
-void glh::core::buffer::assert_is_not_mapped ( const std::string& operation ) const
+void glh::core::buffer::assert_not_is_buffer_mapped ( const std::string& operation ) const
 {
-    /* if mapped, throw */
-    if ( is_mapped () ) 
+    /* throw if is mapped */
+    if ( is_buffer_mapped () )
     {
         if ( operation.size () > 0 ) throw exception::buffer_exception { "attempted to perform " + operation + " operation while buffer is mapped" };
         else throw exception::buffer_exception { "attempted to perform operation while buffer is mapped" };
@@ -354,31 +379,39 @@ glh::core::ubo * glh::core::ubo::get_index_bound_ubo_pointer ( const unsigned in
 /* bind/unbind_buffer_base
  *
  * special indexed bindings for ubos
+ * 
+ * returns true if a change in binding occured
  */
-void glh::core::ubo::bind_buffer_base ( const unsigned index )
+bool glh::core::ubo::bind_buffer_base ( const unsigned index )
 {
     /* resize vector if necessary */
     if ( ubo_indexed_bindings.size () <= index ) ubo_indexed_bindings.resize ( index + 1, 0 );
 
-    /* if already bound to index, return */
-    if ( ubo_indexed_bindings.at ( index ) == id ) return;
+    /* if already bound to index, return false */
+    if ( ubo_indexed_bindings.at ( index ) == id ) return false;
 
     /* otherwise bind ubo to index */
     glBindBufferBase ( GL_UNIFORM_BUFFER, index, id );
 
     /* record binding */
     ubo_indexed_bindings.at ( index ) = id;
+
+    /* return true */
+    return true;
 }
-void glh::core::ubo::unbind_buffer_base ( const unsigned index )
+bool glh::core::ubo::unbind_buffer_base ( const unsigned index )
 {
-    /* if not bound to index, return */
-    if ( ubo_indexed_bindings.size () <= index || ubo_indexed_bindings.at ( index ) != id ) return;
+    /* if not bound to index, return false */
+    if ( ubo_indexed_bindings.size () <= index || ubo_indexed_bindings.at ( index ) != id ) return false;
 
     /* otherwise unbind ubo from index */
     glBindBufferBase ( GL_UNIFORM_BUFFER, index, 0 );
 
     /* record binding */
     ubo_indexed_bindings.at ( index ) = 0;
+
+    /* return false */
+    return false;
 }
 
 /* is_bound_buffer_base
@@ -390,6 +423,7 @@ bool glh::core::ubo::is_bound_buffer_base ( const unsigned index )
     /* return true if is valid and is bound to index */
     return ( is_object_valid () && ubo_indexed_bindings.size () > index && ubo_indexed_bindings.at ( index ) == id );
 }
+
 
 
 
@@ -418,9 +452,9 @@ std::vector<GLuint> glh::core::ubo::ubo_indexed_bindings {};
 void glh::core::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, const GLint size, const GLenum type, const GLboolean norm, const GLsizei stride, const GLsizeiptr offset )
 {
     /* bind vao */
-    bind ();
+    const bool vao_binding_change = bind ();
     /* bind vbo */
-    buff.bind ();
+    const bool vbo_binding_change = buff.bind ();
 
     /* set attribute pointer */
     glVertexAttribPointer ( attrib, size, type, norm, stride, reinterpret_cast<GLvoid *> ( offset ) );
@@ -432,9 +466,9 @@ void glh::core::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, c
     vertex_attribs.at ( attrib ) = { size, type, norm, stride, offset, &buff, true };
 
     /* unbind vao */
-    unbind ();
+    if ( vao_binding_change ) unbind ();
     /* unbind vbo */
-    buff.unbind ();
+    if ( vbo_binding_change ) buff.unbind ();
 }
 
 /* enable_vertex_attrib
@@ -446,10 +480,10 @@ void glh::core::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, c
 void glh::core::vao::enable_vertex_attrib ( const GLuint attrib )
 {
     /* bind vao, enable, unbind */
-    bind ();
+    const bool binding_change = bind ();
     glEnableVertexAttribArray ( attrib );
     vertex_attribs.at ( attrib ).enabled = true;
-    unbind ();
+    if ( binding_change ) unbind ();
 }
 
 /* disable_vertex_attrib
@@ -461,10 +495,10 @@ void glh::core::vao::enable_vertex_attrib ( const GLuint attrib )
 void glh::core::vao::disable_vertex_attrib ( const GLuint attrib )
 {
     /* bind vao, disable, unbind */
-    bind ();
+    const bool binding_change = bind ();
     glDisableVertexAttribArray ( attrib );
     vertex_attribs.at ( attrib ).enabled = false;
-    unbind ();
+    if ( binding_change ) unbind ();
 }
 
 /* bind_ebo
@@ -476,91 +510,56 @@ void glh::core::vao::disable_vertex_attrib ( const GLuint attrib )
 void glh::core::vao::bind_ebo ( const ebo& buff )
 {
     /* bind vao, then ebo */
-    bind ();
-    buff.bind ();
+    const bool vao_binding_change = bind ();
+    const bool ebo_binding_change = buff.bind ();
 
     /* set the ebo */
     bound_ebo = &buff;
 
     /* unbind vao, then ebo */
-    unbind ();
-    buff.unbind ();
-}
-
-/* is_draw_arrays_valid
- *
- * returns true if it is safe to draw arrays from the vao
- * may be false if attributes are invalid, or a buffer is mapped
- */
-bool glh::core::vao::is_draw_arrays_valid () const
-{   
-    /* return false if invalid object */
-    if ( !is_object_valid () ) return false;
-
-    /* loop through enabled vertex attributes and check buffers are valid */
-    for ( const auto& att: vertex_attribs )
-    {
-        if ( att.enabled ) if ( !att.buff || !att.buff->is_object_valid () || att.buff->is_mapped () ) return false;
-    }
-
-    /* else return true */
-    return true;
-}
-
-/* is_draw_elements_valid
- *
- * returns true if it is safe to draw arrays from the vao
- * may be false if attributes are invalid, or a buffer is mapped
- */
-bool glh::core::vao::is_draw_elements_valid () const
-{
-    /* check is draw arrays valid and ebo is a valid object */
-    if ( !is_draw_arrays_valid () || !bound_ebo || !bound_ebo->is_object_valid () || bound_ebo->is_mapped () );
-
-    /* else return true */
-    return true;
+    if ( vao_binding_change ) unbind ();
+    if ( ebo_binding_change ) buff.unbind ();
 }
 
 
-/* assert_is_draw_arrays_valid
- *
- * throws if the vao is not draw arrays valid
+
+/* prepare_arrays
  * 
- * operation: description of the operation
+ * prepare for drawing from vertex arrays, not using an ebo
+ * will not bind the vao, however
+ * will throw if fails to prepare
  */
-void glh::core::vao::assert_is_draw_arrays_valid ( const std::string& operation ) const
+void glh::core::vao::prepare_arrays () const
 {
     /* throw if invalid object */
-    assert_is_object_valid ( operation );
+    assert_is_object_valid ( "prepare arrays" );
 
     /* loop through enabled vertex attributes and check buffers are valid */
     for ( const auto& att: vertex_attribs )
     {
         if ( att.enabled ) 
         {
-            att.buff->assert_is_object_valid ( operation ); 
-            att.buff->assert_is_not_mapped ();
+            /* assert is valid */
+            att.buff->assert_is_object_valid ( "prepare arrays" );
+            /* assure that buffer is not mapped */
+            att.buff->unmap_buffer ();
         }
     }
 }
 
-/* assert_is_draw_elements_valid
+/* prepare_elements
  *
- * throws if the vao is not draw elements valid
- * 
- * operation: description of the operation
+ * prepare for drawing using an ebo
+ * will not bind the vao, however
+ * will throw if fails to prepare
  */
-void glh::core::vao::assert_is_draw_elements_valid ( const std::string& operation ) const
+void glh::core::vao::prepare_elements () const
 {
-    /* throw if not draw arrays valid */
-    assert_is_draw_arrays_valid ( operation );
-    
-    /* throw if bound ebo is not valid */
-    if ( !bound_ebo )
-    {
-        if ( operation.size () > 0 ) throw exception::buffer_exception { "attempted to perform " + operation + " operation without an ebo being associated with a vao" };
-        else throw exception::buffer_exception { "attempted to perform operation without an ebo being associated with a vao" };
-    }
-    bound_ebo->assert_is_object_valid ( operation );
-    bound_ebo->assert_is_not_mapped ( operation );
+    /* prepare arrays */
+    prepare_arrays ();
+
+    /* assert that ebo is valid and that it is not mapped */
+    if ( !bound_ebo ) throw exception::buffer_exception { "attempted to perform draw elements operation, however no ebo has been bound to the vao" };
+    bound_ebo->assert_is_object_valid ( "draw elements" );
+    bound_ebo->unmap_buffer ();
 }
