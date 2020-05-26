@@ -19,6 +19,10 @@
 #include <chrono>
 #include <thread>
 
+#define GLH_MODEL_MAX_COLOR_SETS 1
+#define GLH_MODEL_MAX_UV_CHANNELS 2
+#define GLH_MODEL_MAX_TEXTURE_STACK_SIZE 2
+
 /* include glhelper.hpp */
 #include <glhelper/glhelper.hpp>
 
@@ -26,6 +30,9 @@
 
 int main ()
 {
+
+    {
+        
     glh::glfw::window window;
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
 
@@ -41,25 +48,25 @@ int main ()
     glh::core::program mirror_program { basic_vshader, mirror_fshader };
     glh::core::program cubemap_program { cubemap_vshader, cubemap_fshader };
 
-    auto basic_trans_uni = basic_program.get_struct_uniform ( "trans" );
-    auto model_trans_uni = model_program.get_struct_uniform ( "trans" );
-    auto mirror_trans_uni = mirror_program.get_struct_uniform ( "trans" );
-    auto cubemap_trans_uni = cubemap_program.get_struct_uniform ( "trans" );
-    auto model_transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
+    auto& basic_trans_uni = basic_program.get_struct_uniform ( "trans" );
+    auto& model_trans_uni = model_program.get_struct_uniform ( "trans" );
+    auto& mirror_trans_uni = mirror_program.get_struct_uniform ( "trans" );
+    auto& cubemap_trans_uni = cubemap_program.get_struct_uniform ( "trans" );
+    auto& model_transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
+
+
     
     glh::camera::camera camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 1000.0 };
     camera.cache_uniforms ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
     camera.enable_restrictive_mode ();
     camera.set_position ( glh::math::vec3 { -6.80822, 26.2452, -3.12343 } );
 
+
+
     glh::lighting::light_system light_system;
     light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
+    //light_system.pointcoll.lights.emplace_back ( glh::math::vec3 {}, 1.0, 0.045, 0.0075, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
     light_system.cache_uniforms ( model_program.get_struct_uniform ( "light_system" ) );
-
-    window.get_mouseinfo ();
-    auto dimensions = window.get_dimensions ();
-    camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
-    glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
 
 
 
@@ -85,21 +92,21 @@ int main ()
             glh::math::enlarge3d 
             ( 
                 glh::math::identity<4> (),
-                10.0
+                30.0
             ), 
-            glh::math::rad ( 45 ), 
+            glh::math::rad ( 0.0 ), 
             glh::math::vec3 { 1.0, 0.0, 0.0 }
         ), 
-        glh::math::vec3 { 0.0, 50.0, -50.0 }
+        glh::math::vec3 { 0.0, 50.0, -75.0 }
     );
 
     glh::camera::mirror_camera mirror_camera 
     { 
         camera, 
-        glh::math::vec3 { 0.0, 50.0, -50.0 }, 
-        glh::math::normalise ( glh::math::vec3 { 0.0, -1.0, 1.0 } ), 
-        glh::math::normalise ( glh::math::vec3 { 0.0, 1.0, 1.0 } ),
-        10.0, 10.0 
+        glh::math::vec3 { 0.0, 50.0, -75.0 }, 
+        glh::math::normalise ( glh::math::vec3 { 0.0, 0.0, 1.0 } ), 
+        glh::math::normalise ( glh::math::vec3 { 0.0, 1.0, 0.0 } ),
+        30.0, 30.0 
     };
 
 
@@ -152,7 +159,7 @@ int main ()
             glh::math::enlarge3d 
             ( 
                 glh::math::identity<4> (),
-                0.01
+                0.005
             ), 
             glh::math::rad ( 180.0 ), 
             glh::math::vec3 { 0.0, 1.0, 0.0 } 
@@ -177,7 +184,12 @@ int main ()
     glh::core::renderer::enable_depth_test ();
     glh::core::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
+    window.get_timeinfo ();
+    window.get_dimensions ();
+    window.get_mouseinfo ();
 
+    double total_time = 0.0;
+    int frames = -1;
 
     while ( !window.should_close () ) 
     {
@@ -185,7 +197,12 @@ int main ()
         auto dimensions = window.get_dimensions ();
         auto mouseinfo = window.get_mouseinfo ();
 
-        if ( dimensions.deltawidth != 0.0 || dimensions.deltaheight != 0.0 ) 
+        frames += 1;
+        total_time += timeinfo.delta;
+
+        std::cout << "\rfps: " << 1.0 / timeinfo.delta << std::flush;
+
+        if ( dimensions.deltawidth != 0.0 || dimensions.deltaheight != 0.0 || frames % 60 == 0 ) 
         {
             camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
         }
@@ -206,7 +223,17 @@ int main ()
 
 
 
-        
+        double mirror_angle = glh::math::rad ( 10 ) * timeinfo.delta;
+        mirror_camera.set_normal ( glh::math::rotate3d ( mirror_camera.get_normal (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
+        mirror_camera.set_position ( glh::math::rotate3d ( mirror_camera.get_position (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) ); 
+        mirror_camera.set_ytan ( glh::math::rotate3d ( mirror_camera.get_ytan (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
+        mirror_matrix = glh::math::rotate3d ( mirror_matrix, mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } );
+        //light_system.pointcoll.lights.at ( 0 ).set_position ( camera.get_position () );
+
+
+
+
+        /*
 
         cubemap_program.use ();
         cubemap_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
@@ -226,7 +253,6 @@ int main ()
 
 
         model_program.use ();
-        light_system.apply ();
         model_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
         camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         model_transparent_mode_uni.set_int ( 0 );
@@ -249,13 +275,14 @@ int main ()
         //chappie.render ( chappie_matrix, true );
         xeno.render ( xeno_matrix, true );
 
-        
 
-        /*
+        */
+
+
 
         model_program.use ();
-        light_system.apply ();
         model_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
+        light_system.apply ();
         model_transparent_mode_uni.set_int ( 0 );
 
         glh::core::renderer::enable_face_culling ();
@@ -307,8 +334,6 @@ int main ()
         camera.apply ( mirror_trans_uni.get_uniform ( "view" ), mirror_trans_uni.get_uniform ( "proj" ) );
         mirror_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
 
-        
-
         glh::core::renderer::disable_face_culling ();
         glh::core::renderer::set_depth_mask ( GL_TRUE );
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
@@ -317,14 +342,16 @@ int main ()
         mirror_tex.bind ( 0 );
         glh::core::renderer::draw_elements ( mirror_vao, GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 
-        */
-
 
 
         window.swap_buffers ();
         window.poll_events ();
 
     }
+
+    std::cout << std::endl << "average fps: " << frames / total_time << std::endl;
+
+    }  
 
     return 0;
 }

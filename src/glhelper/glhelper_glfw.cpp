@@ -245,7 +245,6 @@ glh::glfw::window::timeinfo_t glh::glfw::window::get_timeinfo () const
     timeinfo.last = prev_timeinfo.now;
     timeinfo.delta = timeinfo.now - timeinfo.last;
     
-    
     /* set prev_timeinfo */
     prev_timeinfo = timeinfo;
 

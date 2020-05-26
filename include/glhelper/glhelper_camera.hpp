@@ -53,9 +53,6 @@
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
-/* include glhelper_exception.hpp */
-#include <glhelper/glhelper_exception.hpp>
-
 /* include glhelper_math.hpp */
 #include <glhelper/glhelper_math.hpp>
 
@@ -64,7 +61,7 @@
 
 
 
-/* NAMESPACE FORWARD DECLARATIONS */
+/* NAMESPACE DECLARATIONS */
 
 namespace glh
 {
@@ -137,33 +134,17 @@ public:
      * view_uni: 4x4 matrix uniform for the view matrix
      * proj_uni: 4x4 matrix uniform for the projection matrix
      */
-    void apply ( const core::uniform& view_uni, const core::uniform& proj_uni );
+    void apply ( core::uniform& view_uni, core::uniform& proj_uni );
     void apply () const;
-
-    /* cache_view_uniform
-     *
-     * cache the view matrix uniform
-     * 
-     * view_uni: 4x4 matrix uniform for the view matrix
-     */
-    void cache_view_uniform ( const core::uniform& view_uni );
-
-    /* cache_proj_uniform
-     *
-     * cache the projection matrix uniform
-     * 
-     * proj_uni: 4x4 matrix uniform for the projection matrix
-     */
-    void cache_proj_uniform ( const core::uniform& proj_uni );
 
     /* cache_uniforms
      *
-     * cache all uniforms simultaneously
+     * cache all uniforms
      *
      * view_uni: 4x4 matrix uniform for the view matrix
      * proj_uni: 4x4 matrix uniform for the projection matrix
      */
-    void cache_uniforms ( const core::uniform& view_uni, const core::uniform& proj_uni );
+    void cache_uniforms ( core::uniform& view_uni, core::uniform& proj_uni );
 
 
 
@@ -190,9 +171,15 @@ public:
 
 protected:
 
+    /* struct for cached uniforms */
+    struct cached_uniforms_struct
+    {
+        core::uniform& view_uni;
+        core::uniform& proj_uni;
+    };
+
     /* cached uniforms */
-    std::unique_ptr<core::uniform> cached_view_uniform;
-    std::unique_ptr<core::uniform> cached_proj_uniform;
+    std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 
 
 
@@ -468,6 +455,13 @@ public:
      */
     const math::vec3& get_normal () const { return normal; }
     void set_normal ( const math::vec3& _normal ) { normal = math::normalise ( _normal ); }
+
+    /* get/set_ytan
+     *
+     * get/set the y tangent of the mirror
+     */
+    const math::vec3& get_ytan () const { return ytan; }
+    void set_ytan ( const math::vec3& _ytan ) { ytan = math::normalise ( _ytan ); }
 
     /* get/set_width/height
      *

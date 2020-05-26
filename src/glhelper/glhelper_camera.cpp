@@ -28,11 +28,10 @@
  * view_uni: 4x4 matrix uniform for the view matrix
  * proj_uni: 4x4 matrix uniform for the projection matrix
  */
-void glh::camera::camera_base::apply ( const core::uniform& view_uni, const core::uniform& proj_uni )
+void glh::camera::camera_base::apply ( core::uniform& view_uni, core::uniform& proj_uni )
 {
     /* cache the uniforms */
-    cache_view_uniform ( view_uni );
-    cache_proj_uniform ( proj_uni );
+    cache_uniforms ( view_uni, proj_uni );
 
     /* apply */
     apply ();
@@ -48,42 +47,13 @@ void glh::camera::camera_base::apply ( const core::uniform& view_uni, const core
 void glh::camera::camera_base::apply () const
 {
     /* throw if uniforms are not already cached */
-    if ( !cached_view_uniform || !cached_proj_uniform ) throw exception::uniform_exception { "attempted to apply camera without a complete uniform cache" };
+    if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to apply camera without a complete uniform cache" };
 
     /* set the matrices */
-    cached_view_uniform->set_matrix ( get_view () );
-    cached_proj_uniform->set_matrix ( get_proj () );
+    cached_uniforms->view_uni.set_matrix ( get_view () );
+    cached_uniforms->proj_uni.set_matrix ( get_proj () );
 }
 
-/* cache_view_uniform
- *
- * cache the view matrix uniform
- * 
- * view_uni: 4x4 matrix uniform for the view matrix
- */
-void glh::camera::camera_base::cache_view_uniform ( const core::uniform& view_uni )
-{
-    /* cache uniform if not already cached */
-    if ( !cached_view_uniform || * cached_view_uniform != view_uni )
-    {
-        cached_view_uniform.reset ( new core::uniform { view_uni } );
-    }
-}
-
-/* cache_proj_uniform
- *
- * cache the projection matrix uniform
- * 
- * proj_uni: 4x4 matrix uniform for the projection matrix
- */
-void glh::camera::camera_base::cache_proj_uniform ( const core::uniform& proj_uni )
-{
-    /* cache uniform if not already cached */
-    if ( !cached_proj_uniform || * cached_proj_uniform != proj_uni )
-    {
-        cached_proj_uniform.reset ( new core::uniform { proj_uni } );
-    }
-}
 /* cache_uniforms
  *
  * cache all uniforms simultaneously
@@ -91,11 +61,17 @@ void glh::camera::camera_base::cache_proj_uniform ( const core::uniform& proj_un
  * view_uni: 4x4 matrix uniform for the view matrix
  * proj_uni: 4x4 matrix uniform for the projection matrix
  */
-void glh::camera::camera_base::cache_uniforms ( const core::uniform& view_uni, const core::uniform& proj_uni )
+void glh::camera::camera_base::cache_uniforms ( core::uniform& view_uni, core::uniform& proj_uni )
 {
-    /* cache both uniforms */
-    cache_view_uniform ( view_uni );
-    cache_proj_uniform ( proj_uni );
+    /* if uniforms are not already cached, cache the new ones */
+    if ( !cached_uniforms || cached_uniforms->view_uni != view_uni || cached_uniforms->proj_uni != proj_uni )
+    {
+        cached_uniforms.reset ( new cached_uniforms_struct
+        {
+            view_uni,
+            proj_uni
+        } );
+    }
 }
 
 /* get_view
@@ -351,7 +327,7 @@ bool glh::camera::camera::update_proj () const
     /* if proj has been changed, update */
     if ( proj_change )
     {
-        proj = math::perspective_fov ( fov, aspect, near, far );
+        proj = math::perspective_fov<double> ( fov, aspect, near, far );
         proj_change = false;
         return true;
     }
@@ -423,7 +399,7 @@ bool glh::camera::mirror_camera::update_proj () const
      * notice the sign of the half_widths vs the half_heights
      * we reflect the texture in the x-axis
      */
-    proj = math::perspective ( mirror_pos.at ( 0 ) + half_width, mirror_pos.at ( 0 ) - half_width, mirror_pos.at ( 1 ) - half_height, mirror_pos.at ( 1 ) + half_height, -mirror_pos.at ( 2 ), cam.get_far () );
+    proj = math::perspective<double> ( mirror_pos.at ( 0 ) + half_width, mirror_pos.at ( 0 ) - half_width, mirror_pos.at ( 1 ) - half_height, mirror_pos.at ( 1 ) + half_height, -mirror_pos.at ( 2 ), cam.get_far () );
     /* return true */
     return true;
 

@@ -58,13 +58,10 @@ glh::model::model::model ( const std::string& _directory, const std::string& _en
  * transform: the overall model transformation to apply (identity by default)
  * transparent_only: only render meshes with possible transparent elements (false by default)
  */
-void glh::model::model::render ( const core::struct_uniform& material_uni, const core::uniform& model_uni, const math::mat4& transform, const bool transparent_only )
+void glh::model::model::render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform, const bool transparent_only )
 {
-    /* reload the cache of material uniforms  */
-    cache_material_uniforms ( material_uni );
-
-    /* reload the model uniform */
-    cache_model_uniform ( model_uni );
+    /* reload the cache of uniforms  */
+    cache_uniforms ( material_uni, model_uni );
 
     /* render */
     render ( transform, transparent_only );
@@ -72,7 +69,7 @@ void glh::model::model::render ( const core::struct_uniform& material_uni, const
 void glh::model::model::render ( const math::mat4& transform, const bool transparent_only ) const
 {
     /* throw if uniforms are not already cached */
-    if ( !cached_material_uniforms || !cached_model_uniform ) throw exception::uniform_exception { "attempted to render model without a complete uniform cache" };
+    if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to render model without a complete uniform cache" };
 
     /* set transparent_only flag */
     draw_transparent_only = transparent_only;
@@ -81,18 +78,19 @@ void glh::model::model::render ( const math::mat4& transform, const bool transpa
     render_node ( root_node, transform );
 }
 
-/* cache_material_uniforms
+/* cache_uniforms
  *
- * cache a material uniform for later use
- * 
- * material_uni: the uniform to cache
+ * cache all uniforms
+ *
+ * material_uni: the material uniform to cache
+ * model_uni: model uniform to cache
  */
-void glh::model::model::cache_material_uniforms ( const core::struct_uniform& material_uni )
+void glh::model::model::cache_uniforms ( core::struct_uniform& material_uni, core::uniform& model_uni )
 {
-    /* cache material uniform if not already cached */
-    if ( !cached_material_uniforms || cached_material_uniforms->material_uni != material_uni )
+    /* if uniforms are not already cached, cache the new ones */
+    if ( !cached_uniforms || cached_uniforms->material_uni != material_uni || cached_uniforms->model_uni != model_uni )
     {
-        cached_material_uniforms.reset ( new cached_material_uniforms_struct
+        cached_uniforms.reset ( new cached_uniforms_struct
         {
             material_uni,
             material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "stack_size" ),
@@ -107,38 +105,11 @@ void glh::model::model::cache_material_uniforms ( const core::struct_uniform& ma
             material_uni.get_uniform ( "blending_mode" ),
             material_uni.get_uniform ( "shininess" ),
             material_uni.get_uniform ( "shininess_strength" ),
-            material_uni.get_uniform ( "opacity" )
-         } );
+            material_uni.get_uniform ( "opacity" ),
+            model_uni,
+        } );
     }
 }
-
-/* cache_model_uniform
- *
- * cache a model uniform for later sue
- * 
- * model_uni: the uniform to cache
- */
-void glh::model::model::cache_model_uniform ( const core::uniform& model_uni )
-{
-    /* cache model uniform if not already cached */
-    if ( !cached_model_uniform || * cached_model_uniform != model_uni )
-    cached_model_uniform.reset ( new core::uniform { model_uni } );
-}
-
-/* cache_uniform
- *
- * cache all uniforms simultaneously
- *
- * material_uni: the material uniform to cache
- * model_uni: model uniform to cache
- */
-void glh::model::model::cache_uniforms ( const core::struct_uniform& material_uni, const core::uniform& model_uni )
-{
-    /* cache all uniforms */
-    cache_material_uniforms ( material_uni );
-    cache_model_uniform ( model_uni );
-}
-
 
 
 /* process_scene
@@ -157,11 +128,11 @@ void glh::model::model::process_scene ( const aiScene& aiscene )
     }
 
     /* add the texture pointers to the materials */
-    for ( material& m: materials )
+    for ( material& _material: materials )
     {
-        for ( texture_stack_level& tsl: m.ambient_stack.levels ) tsl.texture = &textures.at ( tsl.index );
-        for ( texture_stack_level& tsl: m.diffuse_stack.levels ) tsl.texture = &textures.at ( tsl.index );
-        for ( texture_stack_level& tsl: m.specular_stack.levels ) tsl.texture = &textures.at ( tsl.index );
+        for ( unsigned i = 0; i < _material.ambient_stack.stack_size; ++i ) _material.ambient_stack.levels.at ( i ).texture = &textures.at ( _material.ambient_stack.levels.at ( i ).index );
+        for ( unsigned i = 0; i < _material.diffuse_stack.stack_size; ++i ) _material.diffuse_stack.levels.at ( i ).texture = &textures.at ( _material.diffuse_stack.levels.at ( i ).index );
+        for ( unsigned i = 0; i < _material.specular_stack.stack_size; ++i ) _material.specular_stack.levels.at ( i ).texture = &textures.at ( _material.specular_stack.levels.at ( i ).index );
     }
 
     /* now add the meshes */
@@ -195,11 +166,11 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
 
     /* set the base colors of the stacks */
     if ( aimaterial.Get ( AI_MATKEY_COLOR_AMBIENT, temp_color ) == aiReturn_SUCCESS )
-    _material.ambient_stack.base_color = cast_vector ( temp_color ); else _material.ambient_stack.base_color = math::vec3 { 0.0 };
+    _material.ambient_stack.base_color = cast_vector ( temp_color ); else _material.ambient_stack.base_color = math::fvec3 { 0.0 };
     if ( aimaterial.Get ( AI_MATKEY_COLOR_DIFFUSE, temp_color ) == aiReturn_SUCCESS )
-    _material.diffuse_stack.base_color = cast_vector ( temp_color ); else _material.diffuse_stack.base_color = math::vec3 { 0.0 };
+    _material.diffuse_stack.base_color = cast_vector ( temp_color ); else _material.diffuse_stack.base_color = math::fvec3 { 0.0 };
     if ( aimaterial.Get ( AI_MATKEY_COLOR_SPECULAR, temp_color ) == aiReturn_SUCCESS )
-    _material.specular_stack.base_color = cast_vector ( temp_color ); else _material.specular_stack.base_color = math::vec3 { 0.0 };
+    _material.specular_stack.base_color = cast_vector ( temp_color ); else _material.specular_stack.base_color = math::fvec3 { 0.0 };
 
     /* set up the ambient texture stack textures
      * if ambient textures are present, use those
@@ -207,16 +178,16 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
      */
     if ( aimaterial.GetTextureCount ( aiTextureType_AMBIENT ) > 0 )
     {
-        _material.ambient_stack.levels.resize ( aimaterial.GetTextureCount ( aiTextureType_AMBIENT ) );
-        for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_AMBIENT ); ++i )
+        _material.ambient_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_AMBIENT ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
+        for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_AMBIENT ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
         {
             add_texture ( _material.ambient_stack.levels.at ( i ), aimaterial, i, aiTextureType_AMBIENT );  
         }
     } else
     {
+        _material.ambient_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
         _material.ambient_stack.base_color = _material.diffuse_stack.base_color;
-        _material.ambient_stack.levels.resize ( aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ) );
-        for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ); ++i )
+        for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
         {
             add_texture ( _material.ambient_stack.levels.at ( i ), aimaterial, i, aiTextureType_DIFFUSE );  
         }
@@ -224,16 +195,16 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
     
 
     /* set up the diffuse texture stack textures */
-    _material.diffuse_stack.levels.resize ( aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ) );
-    for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ); ++i )
+    for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
+        _material.diffuse_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
         add_texture ( _material.diffuse_stack.levels.at ( i ), aimaterial, i, aiTextureType_DIFFUSE );  
     }
 
     /* set up the specular texture stack textures */
-    _material.specular_stack.levels.resize ( aimaterial.GetTextureCount ( aiTextureType_SPECULAR ) );
-    for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_SPECULAR ); ++i )
+    for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_SPECULAR ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
+        _material.specular_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_SPECULAR ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
         add_texture ( _material.specular_stack.levels.at ( i ), aimaterial, i, aiTextureType_SPECULAR );  
     }
 
@@ -310,6 +281,9 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack_
     if ( aimaterial.Get ( AI_MATKEY_UVWSRC ( aitexturetype, index ), temp_int ) == aiReturn_SUCCESS )
     _texture_stack_level.uvwsrc = temp_int; else _texture_stack_level.uvwsrc = 0;
 
+    /* check that the uv channel is actually possible */
+    if ( _texture_stack_level.uvwsrc >= GLH_MODEL_MAX_UV_CHANNELS ) throw exception::model_exception { "level of texture stack requires UV channel greater than the maximum allowed channels" };
+
     /* check if already inported */
     for ( unsigned i = 0; i < textures.size (); ++i ) if ( textures.at ( i ).get_path () == texpath )
     {
@@ -344,9 +318,9 @@ bool glh::model::model::is_definitely_opaque ( const material& _material )
     /* loop through all textures and return false if any have 4 channels
      * use index rather than texture pointer in stack level as they have not yet been assigned
      */
-    for ( const texture_stack_level& tsl: _material.ambient_stack.levels ) if ( textures.at ( tsl.index ).get_channels () >= 4 ) return false;
-    for ( const texture_stack_level& tsl: _material.diffuse_stack.levels ) if ( textures.at ( tsl.index ).get_channels () >= 4 ) return false;
-    for ( const texture_stack_level& tsl: _material.specular_stack.levels ) if ( textures.at ( tsl.index ).get_channels () >= 4 ) return false;
+    for ( unsigned i = 0; i < _material.ambient_stack.stack_size; ++i ) if ( textures.at ( _material.ambient_stack.levels.at ( i ).index ).get_channels () >= 4 ) return false;
+    for ( unsigned i = 0; i < _material.diffuse_stack.stack_size; ++i ) if ( textures.at ( _material.diffuse_stack.levels.at ( i ).index ).get_channels () >= 4 ) return false;
+    for ( unsigned i = 0; i < _material.specular_stack.stack_size; ++i ) if ( textures.at ( _material.specular_stack.levels.at ( i ).index ).get_channels () >= 4 ) return false;
 
     /* otherwise the material is definitely opaque */
     return true;
@@ -375,6 +349,12 @@ bool glh::model::model::is_definitely_opaque ( const mesh& _mesh )
  */
 glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimesh )
 {
+    /* set the number of color sets */
+    _mesh.num_color_sets = std::min<unsigned> ( aimesh.GetNumColorChannels (), GLH_MODEL_MAX_COLOR_SETS );
+
+    /* set the number of uv channels */
+    _mesh.num_uv_channels = std::min<unsigned> ( aimesh.GetNumUVChannels (), GLH_MODEL_MAX_UV_CHANNELS );
+
     /* add vertices, normals and texcoords */
     _mesh.vertices.resize ( aimesh.mNumVertices );
     for ( unsigned i = 0; i < aimesh.mNumVertices; ++i )
@@ -383,28 +363,14 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
         _mesh.vertices.at ( i ).position = cast_vector ( aimesh.mVertices [ i ] );
         _mesh.vertices.at ( i ).normal = cast_vector ( aimesh.mNormals [ i ] );
 
-        /* resize texcoords to number of uv components and set them */
-        _mesh.vertices.at ( i ).texcoords.resize ( aimesh.GetNumUVChannels () );
-        for ( unsigned j = 0; j < aimesh.GetNumUVChannels (); ++j )
+        /* set color sets */
+        for ( unsigned j = 0; j < _mesh.num_color_sets; ++j )
+        _mesh.vertices.at ( i ).colorsets.at ( j ) = cast_vector ( aimesh.mColors [ j ][ i ] );
+
+        /* set uv channel coords */
+        for ( unsigned j = 0; j < _mesh.num_uv_channels; ++j )
         _mesh.vertices.at ( i ).texcoords.at ( j ) = cast_vector ( aimesh.mTextureCoords [ j ][ i ] );
-
-        /* if there are any, resize color_sets to the number of color sets and set them */
-        if ( aimesh.GetNumColorChannels () > 0 )
-        {
-            _mesh.vertices.at ( i ).colorsets.resize ( aimesh.GetNumColorChannels () );
-            for ( unsigned j = 0; j < aimesh.GetNumColorChannels (); ++j )
-            _mesh.vertices.at ( i ).colorsets.at ( j ) = cast_vector ( aimesh.mColors [ j ][ i ] );
-        } else
-        /* otherwise add one completely white set */
-        {
-            _mesh.vertices.at ( i ).colorsets.resize ( 1 );
-            for ( unsigned j = 0; j < aimesh.GetNumColorChannels (); ++j )
-            _mesh.vertices.at ( i ).colorsets.at ( j ) = math::vec4 { 1.0 };
-        }
     }
-
-    /* set the number of uv channels */
-    _mesh.num_uv_channels = aimesh.GetNumUVChannels ();
 
     /* add material reference */
     _mesh.properties_index = aimesh.mMaterialIndex;
@@ -433,14 +399,13 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
  */
 glh::model::face& glh::model::model::add_face ( face& _face, mesh& _mesh, const aiFace& aiface )
 {
+    /* assert that there are 3 indices */
+    if ( aiface.mNumIndices != 3 ) throw exception::model_exception { "face has not been triangulated" };
+
     /* set indices */
-    _face.indices.resize ( aiface.mNumIndices );
-    _face.vertices.resize ( aiface.mNumIndices );
-    for ( unsigned i = 0; i < aiface.mNumIndices; ++i )
-    {
-        _face.indices.at ( i ) = aiface.mIndices [ i ];
-        _face.vertices.at ( i ) = &_mesh.vertices.at ( _face.indices.at ( i ) );
-    }
+    _face.indices.at ( 0 ) = aiface.mIndices [ 0 ];
+    _face.indices.at ( 1 ) = aiface.mIndices [ 1 ];
+    _face.indices.at ( 2 ) = aiface.mIndices [ 2 ];
 
     /* return face */
     return _face;
@@ -454,59 +419,22 @@ glh::model::face& glh::model::model::add_face ( face& _face, mesh& _mesh, const 
  */
 void glh::model::model::configure_buffers ( mesh& _mesh )
 {
-    /* calculate the components per stride */
-    const unsigned component_stride = 10 + ( 3 * _mesh.num_uv_channels );
+    /* buffer vertex data */
+    _mesh.vertex_data.buffer_data ( _mesh.vertices.begin (), _mesh.vertices.end () );
 
-    /* resize the vertex buffer */
-    _mesh.vertex_data.buffer_data ( component_stride * _mesh.vertices.size () * sizeof ( GLfloat ) );
-    
-    /* map the vertex buffer and assign values */
-    auto vertex_map = _mesh.vertex_data.map<GLfloat> ();
-    for ( unsigned i = 0; i < _mesh.vertices.size (); ++i )
-    {
-        vertex_map.at ( ( i * component_stride ) + 0 ) = _mesh.vertices.at ( i ).position.at ( 0 );
-        vertex_map.at ( ( i * component_stride ) + 1 ) = _mesh.vertices.at ( i ).position.at ( 1 );
-        vertex_map.at ( ( i * component_stride ) + 2 ) = _mesh.vertices.at ( i ).position.at ( 2 );
-        vertex_map.at ( ( i * component_stride ) + 3 ) = _mesh.vertices.at ( i ).normal.at ( 0 );
-        vertex_map.at ( ( i * component_stride ) + 4 ) = _mesh.vertices.at ( i ).normal.at ( 1 );
-        vertex_map.at ( ( i * component_stride ) + 5 ) = _mesh.vertices.at ( i ).normal.at ( 2 );
-        vertex_map.at ( ( i * component_stride ) + 6 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 0 );
-        vertex_map.at ( ( i * component_stride ) + 7 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 1 );
-        vertex_map.at ( ( i * component_stride ) + 8 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 2 );
-        vertex_map.at ( ( i * component_stride ) + 9 ) = _mesh.vertices.at ( i ).colorsets.at ( 0 ).at ( 3 );
-        for ( unsigned j = 0; j < _mesh.num_uv_channels; ++j )
-        {
-            vertex_map.at ( ( i * component_stride ) + ( j * 3 ) + 10 ) = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 0 );
-            vertex_map.at ( ( i * component_stride ) + ( j * 3 ) + 11 ) = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 1 );
-            vertex_map.at ( ( i * component_stride ) + ( j * 3 ) + 12 ) = _mesh.vertices.at ( i ).texcoords.at ( j ).at ( 2 );
-        }        
-    }
-
-    /* unmap the vertex buffer */
-    _mesh.vertex_data.unmap ();
-
-    /* resize the index buffer */
-    _mesh.index_data.buffer_data ( 3 * _mesh.faces.size () * sizeof ( GLuint ) );
-
-    /* map the index buffer and assign values */
-    auto index_map = _mesh.index_data.map<GLuint> ();
-    for ( unsigned i = 0; i < _mesh.faces.size (); ++i )
-    {
-        index_map.at ( ( i * 3 ) + 0 ) = _mesh.faces.at ( i ).indices.at ( 0 );
-        index_map.at ( ( i * 3 ) + 1 ) = _mesh.faces.at ( i ).indices.at ( 1 );
-        index_map.at ( ( i * 3 ) + 2 ) = _mesh.faces.at ( i ).indices.at ( 2 );
-    }
-
-    /* unmap the index buffer */
-    _mesh.index_data.unmap ();
+    /* buffer index data */
+    _mesh.index_data.buffer_data ( _mesh.faces.begin (), _mesh.faces.end () );
 
     /* configure the vao */
-    _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), 0 );
-    _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), 3 * sizeof ( GLfloat ) );
-    _mesh.array_object.set_vertex_attrib ( 2, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), 6 * sizeof ( GLfloat ) );
+    _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 0 );
+    _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 3 * sizeof ( GLfloat ) );
+    for ( unsigned i = 0; i < _mesh.num_color_sets; ++i )
+    {
+        _mesh.array_object.set_vertex_attrib ( 2 + i, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 6 + ( i * 4 ) ) * sizeof ( GLfloat ) );
+    }
     for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
     {
-        _mesh.array_object.set_vertex_attrib ( 3 + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, component_stride * sizeof ( GLfloat ), ( ( i * 3 ) + 10 ) * sizeof ( GLfloat ) );
+        _mesh.array_object.set_vertex_attrib ( 2 + GLH_MODEL_MAX_COLOR_SETS + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 6 + ( GLH_MODEL_MAX_COLOR_SETS * 4 ) + ( i * 3 ) ) * sizeof ( GLfloat ) );
     }
     _mesh.array_object.bind_ebo ( _mesh.index_data );
 }
@@ -554,19 +482,19 @@ glh::model::node& glh::model::model::add_node ( node& _node, const aiNode& ainod
  * _node: the node to render
  * transform: the current model transformation from all the previous nodes
  */
-void glh::model::model::render_node ( const node& _node, const math::mat4& transform ) const
+void glh::model::model::render_node ( const node& _node, const math::fmat4& transform ) const
 {
     /* create transformation matrix */
-    math::mat4 trans = transform * _node.transform;
+    math::fmat4 trans = transform * _node.transform;
 
     /* first render the child nodes */
     for ( const node& child: _node.children ) render_node ( child, trans );
 
     /* set the model matrix */
-    cached_model_uniform->set_matrix ( trans );
+    cached_uniforms->model_uni.set_matrix ( trans );
 
     /* render all of the meshes */
-    for ( const mesh * m: _node.meshes ) render_mesh ( * m );
+    for ( const mesh * _mesh: _node.meshes ) render_mesh ( * _mesh );
 }
 
 /* render_mesh
@@ -585,57 +513,57 @@ void glh::model::model::render_mesh ( const mesh& _mesh ) const
     if ( culling_active && _mesh.properties->two_sided ) core::renderer::disable_face_culling ();
 
     /* set the stack sizes */
-    cached_material_uniforms->ambient_stack_size_uni.set_int ( _mesh.properties->ambient_stack.levels.size () );
-    cached_material_uniforms->diffuse_stack_size_uni.set_int ( _mesh.properties->diffuse_stack.levels.size () );
-    cached_material_uniforms->specular_stack_size_uni.set_int ( _mesh.properties->specular_stack.levels.size () );
+    cached_uniforms->ambient_stack_size_uni.set_int ( _mesh.properties->ambient_stack.stack_size );
+    cached_uniforms->diffuse_stack_size_uni.set_int ( _mesh.properties->diffuse_stack.stack_size );
+    cached_uniforms->specular_stack_size_uni.set_int ( _mesh.properties->specular_stack.stack_size );
 
     /* set the color values */
-    cached_material_uniforms->ambient_stack_base_color_uni.set_vector ( _mesh.properties->ambient_stack.base_color );
-    cached_material_uniforms->diffuse_stack_base_color_uni.set_vector ( _mesh.properties->diffuse_stack.base_color );
-    cached_material_uniforms->specular_stack_base_color_uni.set_vector ( _mesh.properties->specular_stack.base_color ); 
+    cached_uniforms->ambient_stack_base_color_uni.set_vector ( _mesh.properties->ambient_stack.base_color );
+    cached_uniforms->diffuse_stack_base_color_uni.set_vector ( _mesh.properties->diffuse_stack.base_color );
+    cached_uniforms->specular_stack_base_color_uni.set_vector ( _mesh.properties->specular_stack.base_color ); 
 
     /* bind the textures and set the sampler values */
-    unsigned i = 0, offset = 0;
-    for ( i = 0; i < _mesh.properties->ambient_stack.levels.size (); ++i, ++offset ) 
+    unsigned i = 0, tex_unit = 1;
+    for ( i = 0; i < _mesh.properties->ambient_stack.stack_size; ++i ) 
     {
-        _mesh.properties->ambient_stack.levels.at ( i ).texture->bind ( offset );
+        _mesh.properties->ambient_stack.levels.at ( i ).texture->bind ( tex_unit );
         _mesh.properties->ambient_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( _mesh.properties->ambient_stack.levels.at ( i ).wrapping_u ) );
         _mesh.properties->ambient_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( _mesh.properties->ambient_stack.levels.at ( i ).wrapping_v ) );
-        cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( offset++ );
-        cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "blend_operation" ).set_int ( _mesh.properties->ambient_stack.levels.at ( i ).blend_operation );
-        cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "blend_strength" ).set_float ( _mesh.properties->ambient_stack.levels.at ( i ).blend_strength );
-        cached_material_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "uvwsrc" ).set_int ( _mesh.properties->ambient_stack.levels.at ( i ).uvwsrc );
+        cached_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( tex_unit++ );
+        cached_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "blend_operation" ).set_int ( _mesh.properties->ambient_stack.levels.at ( i ).blend_operation );
+        cached_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "blend_strength" ).set_float ( _mesh.properties->ambient_stack.levels.at ( i ).blend_strength );
+        cached_uniforms->ambient_stack_levels_uni.at ( i ).get_uniform ( "uvwsrc" ).set_int ( _mesh.properties->ambient_stack.levels.at ( i ).uvwsrc );
     }
-    for ( i = 0; i < _mesh.properties->diffuse_stack.levels.size (); ++i, ++offset ) 
+    for ( i = 0; i < _mesh.properties->diffuse_stack.stack_size; ++i ) 
     {
-        _mesh.properties->diffuse_stack.levels.at ( i ).texture->bind ( offset );
+        _mesh.properties->diffuse_stack.levels.at ( i ).texture->bind ( tex_unit );
         _mesh.properties->diffuse_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( _mesh.properties->diffuse_stack.levels.at ( i ).wrapping_u ) );
         _mesh.properties->diffuse_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( _mesh.properties->diffuse_stack.levels.at ( i ).wrapping_v ) );
-        cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( offset++ );
-        cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "blend_operation" ).set_int ( _mesh.properties->diffuse_stack.levels.at ( i ).blend_operation );
-        cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "blend_strength" ).set_float ( _mesh.properties->diffuse_stack.levels.at ( i ).blend_strength );
-        cached_material_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "uvwsrc" ).set_int ( _mesh.properties->diffuse_stack.levels.at ( i ).uvwsrc );
+        cached_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( tex_unit++ );
+        cached_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "blend_operation" ).set_int ( _mesh.properties->diffuse_stack.levels.at ( i ).blend_operation );
+        cached_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "blend_strength" ).set_float ( _mesh.properties->diffuse_stack.levels.at ( i ).blend_strength );
+        cached_uniforms->diffuse_stack_levels_uni.at ( i ).get_uniform ( "uvwsrc" ).set_int ( _mesh.properties->diffuse_stack.levels.at ( i ).uvwsrc );
     }
-    for ( i = 0; i < _mesh.properties->specular_stack.levels.size (); ++i, ++offset ) 
+    for ( i = 0; i < _mesh.properties->specular_stack.stack_size; ++i, i ) 
     {
-        _mesh.properties->specular_stack.levels.at ( i ).texture->bind ( offset );
+        _mesh.properties->specular_stack.levels.at ( i ).texture->bind ( tex_unit );
         _mesh.properties->specular_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( _mesh.properties->specular_stack.levels.at ( i ).wrapping_u ) );
         _mesh.properties->specular_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( _mesh.properties->specular_stack.levels.at ( i ).wrapping_v ) );
-        cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( offset++ );
-        cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "blend_operation" ).set_int ( _mesh.properties->specular_stack.levels.at ( i ).blend_operation );
-        cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "blend_strength" ).set_float ( _mesh.properties->specular_stack.levels.at ( i ).blend_strength );
-        cached_material_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "uvwsrc" ).set_int ( _mesh.properties->specular_stack.levels.at ( i ).uvwsrc );
+        cached_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( tex_unit++ );
+        cached_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "blend_operation" ).set_int ( _mesh.properties->specular_stack.levels.at ( i ).blend_operation );
+        cached_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "blend_strength" ).set_float ( _mesh.properties->specular_stack.levels.at ( i ).blend_strength );
+        cached_uniforms->specular_stack_levels_uni.at ( i ).get_uniform ( "uvwsrc" ).set_int ( _mesh.properties->specular_stack.levels.at ( i ).uvwsrc );
     }
 
     /* set blending mode */
-    cached_material_uniforms->blending_mode_uni.set_int ( _mesh.properties->blending_mode );
+    cached_uniforms->blending_mode_uni.set_int ( _mesh.properties->blending_mode );
 
     /* set shininess values */
-    cached_material_uniforms->shininess_uni.set_float ( _mesh.properties->shininess );
-    cached_material_uniforms->shininess_strength_uni.set_float ( _mesh.properties->shininess_strength );
+    cached_uniforms->shininess_uni.set_float ( _mesh.properties->shininess );
+    cached_uniforms->shininess_strength_uni.set_float ( _mesh.properties->shininess_strength );
 
     /* set opacity */
-    cached_material_uniforms->opacity_uni.set_float ( _mesh.properties->opacity );
+    cached_uniforms->opacity_uni.set_float ( _mesh.properties->opacity );
 
     /* draw elements */
     core::renderer::draw_elements ( _mesh.array_object, GL_TRIANGLES, _mesh.faces.size () * 3, GL_UNSIGNED_INT, 0 );

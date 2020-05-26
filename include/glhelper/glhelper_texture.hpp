@@ -59,18 +59,12 @@
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
-/* include glhelper_exception.hpp */
-#include <glhelper/glhelper_exception.hpp>
-
-/* include glhelper_manager.hpp */
-#include <glhelper/glhelper_manager.hpp>
-
 /* indlude stb_image.h without implementation */
 #include <stb/stb_image.h>
 
 
 
-/* NAMESPACE FORWARD DECLARATIONS */
+/* NAMESPACE DECLARATIONS */
 
 namespace glh
 {
@@ -122,20 +116,13 @@ public:
      *
      * only supply the texture target
      * 
-     * _target: the target for the texture (e.g. GL_TEXTURE_2D)
+     * _minor_type: the minor type of the texture
      * _internal_format: the internal format of the data (e.g. specific bit arrangements)
      * _format: the format of the data (e.g. what the data will be used for)
      * _width/height: width/height of the texture (defaults to 0)
      */
-    texture_base ( const GLenum _target, const GLenum _internal_format, const GLenum _format, const int _width = 0, const int _height = 0 )
-        : object { object_manager::generate_texture () }
-        , target { _target }
-        , internal_format ( _internal_format )
-        , format ( _format )
-        , width { _width }
-        , height { _height }
-    {}
-
+    texture_base ( const minor_object_type _minor_type, const GLenum _internal_format, const GLenum _format, const int _width = 0, const int _height = 0 );
+    
     /* deleted copy constructor */
     texture_base ( const texture_base& other ) = delete;
 
@@ -145,8 +132,8 @@ public:
     /* deleted copy constructor */
     texture_base& operator= ( const texture_base& other ) = delete;
 
-    /* virtual destructor */
-    virtual ~texture_base () { destroy (); }
+    /* default virtual destructor */
+    virtual ~texture_base () = default;
 
 
 
@@ -174,50 +161,45 @@ public:
 
 
 
-    /* destroy
-     *
-     * destroys the texture, setting its id to 0
-     */
-    void destroy () { object_manager::destroy_texture ( id ); id = 0; }
-
-    /* bind
+    /* bind/unbind
      *
      * bind the texture to a texture unit
      * 
-     * texture_unit: the texture unit to bind to, defaulting to 0
+     * unit: the texture unit to bind to/unbind from
      */
-    void bind ( const unsigned texture_unit = 0 ) const;
+    using object::bind;
+    bool bind ( const unsigned texture_unit ) const;
 
     /* unbind
      *
      * unbind the texture from a texture unit
      * 
-     * texture_unit: the texture unit to unbind from, defaulting to 0
+     * uniy: the texture unit to unbind from
      */
-    void unbind ( const unsigned texture_unit = 0 ) const;
+    using object::unbind;
+    bool unbind ( const unsigned texture_unit ) const;
+
+    /* unbind_all
+     *
+     * unbind from all targets
+     * this includes all texture units
+     */
+    bool unbind_all () const;
 
     /* is_bound
      *
-     * texture_unit: the texture unit to check if it is bound to, defaulting to 0
+     * check if is bound to a texture unit
      * 
-     * return: boolean for if the texture is bound
+     * unit: the texture unit to check if it is bound to
+     * 
+     * return: boolean for if the texture is bound to the unit supplied
      */
-    bool is_bound ( const unsigned texture_unit = 0 ) const;
-
-
-
-    /* get_target
-     *
-     * get the target in which the texture is bound
-     */
-    const GLenum& get_target () const { return target; }
+    using object::is_bound;
+    bool is_bound ( const unsigned texture_unit ) const;
 
 
 
 protected:
-
-    /* target of the texture */
-    const GLenum target;
 
     /* (internal_)format
      *
@@ -283,6 +265,17 @@ public:
 
     /* default destructor */
     ~texture2d () = default;
+
+
+
+    /* get_bound_object_pointer
+     *
+     * produce a pointer to the texture2d currently bound
+     * NULL is returned if no object is bound to the bind point
+     * unit: the texture unit to get the object bound to
+     */
+    using object::get_bound_object_pointer;
+    static texture2d * get_bound_object_pointer ( const unsigned unit = 0 );
 
 
 
@@ -363,6 +356,17 @@ public:
 
     /* deleted copy assignment operator */
     cubemap& operator= ( const cubemap& other ) = delete;
+
+
+
+    /* get_bound_object_pointer
+     *
+     * produce a pointer to the cubemap currently bound
+     * NULL is returned if no object is bound to the bind point
+     * unit: the texture unit to get the object bound to
+     */
+    using object::get_bound_object_pointer;
+    static cubemap * get_bound_object_pointer ( const unsigned unit = 0 );
 
 
 

@@ -55,16 +55,14 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <type_traits>
 
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
-/* include glhelper_exception.hpp */
-#include <glhelper/glhelper_exception.hpp>
 
 
-
-/* NAMESPACE FORWARD DECLARATIONS */
+/* NAMESPACE DECLARATIONS */
 
 namespace glh
 {
@@ -76,60 +74,77 @@ namespace glh
          *
          * class to represent a vector of M size
          */
-        template<unsigned M> class vector;
+        template<unsigned M, class T> class vector;
 
-        /* typedef vector<M> vecM
-        *
-        * default vector sizes
-        */
-        typedef vector<1> vec1;
-        typedef vector<2> vec2;
-        typedef vector<3> vec3;
-        typedef vector<4> vec4;
+        /* default vector types */
+        template<unsigned M> using fvector = vector<M, GLfloat>;
+        template<unsigned M> using dvector = vector<M, GLdouble>;
+        template<unsigned M> using ivector = vector<M, GLint>;
+        using fvec2 = fvector<2>;
+        using fvec3 = fvector<3>;
+        using fvec4 = fvector<4>;
+        using dvec2 = dvector<2>;
+        using dvec3 = dvector<3>;
+        using dvec4 = dvector<4>;
+        using ivec2 = ivector<2>;
+        using ivec3 = ivector<3>;
+        using ivec4 = ivector<4>;
+        using vec2 = dvec2;
+        using vec3 = dvec3;
+        using vec4 = dvec4;
 
         
 
-        /* MATRIX MODIFIER FUNCTIONS DECLARATIONS */
+        /* VECTOR MODIFIER FUNCTIONS DECLARATIONS */
 
         /* concatenate
          *
-         * concatenate two vectors, two doubles or a combination into one vector
+         * concatenate two vectors, two Ts or a combination into one vector
          */
-        template<unsigned M0, unsigned M1> vector<M0 + M1> concatenate ( const vector<M0>& lhs, const vector<M1>& rhs );
-        template<unsigned M> vector<M + 1> concatenate ( const vector<M>& lhs, const double rhs );
-        template<unsigned M> vector<M + 1> concatenate ( const double lhs, const vector<M>& rhs );
-        vector<2> concatenate ( const double lhs, const double rhs );
+        template<unsigned M0, unsigned M1, class T> vector<M0 + M1, T> concatenate ( const vector<M0, T>& lhs, const vector<M1, T>& rhs );
+        template<unsigned M, class T> vector<M + 1, T> concatenate ( const vector<M, T>& lhs, const T& rhs );
+        template<unsigned M, class T> vector<M + 1, T> concatenate ( const T& lhs, const vector<M, T>& rhs );
+        template<class T> vector<2, T> concatenate ( const T& lhs, const T& rhs );
 
         /* dot
          *
          * find the dot product of two vectors
          */
-        template<unsigned M> double dot ( const vector<M>& lhs, const vector<M>& rhs );
+        template<unsigned M, class T> double dot ( const vector<M, T>& lhs, const vector<M, T>& rhs );
 
         /* cross
          *
          * find the cross product of a 3d vector
          */
-        vector<3> cross ( const vector<3>& lhs, const vector<3>& rhs );
+        template<class T> vector<3, T> cross ( const vector<3, T>& lhs, const vector<3, T>& rhs );
 
         /* modulus
          *
          * find the modulus of a vector
          */
-        template<unsigned M> double modulus ( const vector<M>& vec );
+        template<unsigned M, class T> double modulus ( const vector<M, T>& vec );
 
         /* normalise
          *
          * convert to a unit vector
          */
-        template<unsigned M> vector<M> normalise ( const vector<M>& vec );
+        template<unsigned M, class T> vector<M, T> normalise ( const vector<M, T>& vec );
 
         /* angle
          *
          * find the angle between two vectors
          */
-        template<unsigned M> double angle ( const vector<M>& lhs, const vector<M>& rhs );
+        template<unsigned M, class T> double angle ( const vector<M, T>& lhs, const vector<M, T>& rhs );
 
+    }
+
+    namespace meta
+    {
+        /* struct is_vector
+         *
+         * is_vector::value is true if the type supplied is a vector
+         */
+        template<class T> struct is_vector;
     }
 
     namespace exception
@@ -144,33 +159,53 @@ namespace glh
 
 
 
+/* IS_VECTOR DEFINITION */
+
+/* struct is_vector
+ *
+ * is_vector::value is true if the type supplied is a vector
+ */
+template<class T> struct glh::meta::is_vector : std::false_type {};
+template<> template<unsigned M, class _T> struct glh::meta::is_vector<glh::math::vector<M, _T>> : std::true_type {};
+
+
+
 /* VECTOR DEFINITION */
 
 /* class vector
  *
  * class to represent a vector of M size
  */
-template<unsigned M> class glh::math::vector
+template<unsigned M, class T> class glh::math::vector
 {
 
     /* assert that M > 0 */
     static_assert ( M > 0, "a vector can not have a dimension of 0" );
 
+    /* static assert that T is arithmetic */
+    static_assert ( std::is_arithmetic<T>::value, "a vector cannot be instantiated from a non-arithmetic type" );
+
 public:
 
-    /* double constructor
+    /* single value constructor
      *
-     * sets all values to the double provided, defaulting to 0.0
+     * sets all values to the value provided, defaulting to 0
      */
-    explicit vector ( const double val = 0.0 ) { data.fill ( val ); }
+    explicit vector ( const T& val = 0 ) { data.fill ( val ); }
 
-    /* vector constructor
+    /* resize constructor
      *
-     * construct from any other vector
+     * construct from any other vector size but same type
      * smaller vectors will be promoted, and the rest of this vector will be filled with 0s
      * larger vectors will be demoted, and their excessive elements will be ignored
      */
-    template<unsigned _M> explicit vector ( const vector<_M>& other );
+    template<unsigned _M> explicit vector ( const vector<_M, T>& other );
+
+    /* retype constructor
+     *
+     * construct from a vector of the same size but different type
+     */
+    template<class _T> vector ( const vector<M, _T>& other );
 
     /* compound constructor
      *
@@ -183,11 +218,19 @@ public:
         : vector { concatenate ( v0, v1 ), vs... }
     {}
 
-    /* default assignment operator */
-    vector<M>& operator= ( const vector<M>& other ) = default;
+    /* any type vector assignment operator */
+    template<class _T> vector& operator= ( const vector<M, _T>& other );
 
     /* default destructor */
     ~vector () = default;
+
+
+
+    /* the size of the vector */
+    static const unsigned size = M;
+    
+    /* the type of the vector */
+    typedef T value_type;
 
 
 
@@ -195,44 +238,33 @@ public:
      *
      * get values out of the vector
      */
-    double& at ( const unsigned i );
-    const double& at ( const unsigned i ) const;
+    T& at ( const unsigned i );
+    const T& at ( const unsigned i ) const;
 
     /* swizzle
      *
      * swizzle a vector
      * the variadic template parameters define the indices of the vector being swizzled
      */
-    template<unsigned T0, unsigned T1, unsigned... Ts> vector<2 + sizeof... ( Ts )> swizzle () const { return concatenate ( at ( T0 ), swizzle<T1, Ts...> () ); }
-    template<unsigned T> vector<1> swizzle () const { return vector<1> { at ( T ) }; }
+    template<unsigned V0, unsigned V1, unsigned... Vs> vector<2 + sizeof... ( Vs ), T> swizzle () const { return concatenate ( at ( V0 ), swizzle<V1, Vs...> () ); }
+    template<unsigned V0> vector<1, T> swizzle () const { return vector<1, T> { at ( V0 ) }; }
 
 
-
-    /* internal_data
-     *
-     * return: reference to data
-     */
-    std::array<double, M>& internal_data () { return data; }
-    const std::array<double, M>& internal_data () const { return data; }
 
     /* internal_ptr
      *
      * return: pointer to the internal array of data
      */
-    double * internal_ptr () { return data.data (); }
-    const double * internal_ptr () const { return data.data (); }
-
-    /* export_data
-     *
-     * return: an std::array which can be used with OpenGL
-     */
-    std::array<float, M> export_data () const;
+    T * internal_ptr () { return data.data (); }
+    const T * internal_ptr () const { return data.data (); }
 
     /* format_str
      *
-     * format the matrix to a string
+     * format the vector to a string
      */
     std::string format_str () const;
+
+
 
 private:
 
@@ -240,7 +272,7 @@ private:
      *
      * the actual data of the vector
      */
-    std::array<double, M> data;
+    std::array<T, M> data;
 
 };
 
@@ -252,8 +284,8 @@ private:
  *
  * compare the values of two vectors of the same size
  */
-template<unsigned M> bool operator== ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
-template<unsigned M> bool operator!= ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
+template<unsigned M, class T> bool operator== ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs );
+template<unsigned M, class T> bool operator!= ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs );
 
 /* operator+(=)
  *
@@ -262,8 +294,8 @@ template<unsigned M> bool operator!= ( const glh::math::vector<M>& lhs, const gl
  * vector + vector
  * vector += vector
  */
-template<unsigned M> glh::math::vector<M> operator+ ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
-template<unsigned M> glh::math::vector<M>& operator+= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
+template<unsigned M, class T> glh::math::vector<M, T> operator+ ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs );
+template<unsigned M, class T> glh::math::vector<M, T>& operator+= ( glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs );
 
 /* operator-(=)
  *
@@ -272,8 +304,8 @@ template<unsigned M> glh::math::vector<M>& operator+= ( glh::math::vector<M>& lh
  * vector - vector
  * vector -= vector
  */
-template<unsigned M> glh::math::vector<M> operator- ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
-template<unsigned M> glh::math::vector<M>& operator-= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
+template<unsigned M, class T> glh::math::vector<M, T> operator- ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs );
+template<unsigned M, class T> glh::math::vector<M, T>& operator-= ( glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs );
 
 /* operator*(=)
  *
@@ -287,11 +319,11 @@ template<unsigned M> glh::math::vector<M>& operator-= ( glh::math::vector<M>& lh
  * NOTE: vector multiplication finds the component wise product
  *       use the cross_product and dot_product functions for other multiplication types
  */
-template<unsigned M> glh::math::vector<M> operator* ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
-template<unsigned M> glh::math::vector<M> operator* ( const glh::math::vector<M>& lhs, const double rhs );
-template<unsigned M> glh::math::vector<M> operator* ( const double lhs, const glh::math::vector<M>& rhs );
-template<unsigned M> glh::math::vector<M>& operator*= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
-template<unsigned M> glh::math::vector<M>& operator*= ( glh::math::vector<M>& lhs, const double rhs );
+template<unsigned M, class T> glh::math::vector<M, T> operator* ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs );
+template<unsigned M, class T> glh::math::vector<M, T> operator* ( const glh::math::vector<M, T>& lhs, const double& rhs );
+template<unsigned M, class T> glh::math::vector<M, T> operator* ( const double& lhs, const glh::math::vector<M, T>& rhs );
+template<unsigned M, class T> glh::math::vector<M, T>& operator*= ( glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs );
+template<unsigned M, class T> glh::math::vector<M, T>& operator*= ( glh::math::vector<M, T>& lhs, const double& rhs );
 
 /* operator/(=)
  *
@@ -304,21 +336,21 @@ template<unsigned M> glh::math::vector<M>& operator*= ( glh::math::vector<M>& lh
  * 
  * NOTE: vector division finds the component wise dividend
  */
-template<unsigned M> glh::math::vector<M> operator/ ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
-template<unsigned M> glh::math::vector<M> operator/ ( const glh::math::vector<M>& lhs, const double rhs );
-template<unsigned M> glh::math::vector<M>& operator/= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs );
-template<unsigned M> glh::math::vector<M>& operator/= ( glh::math::vector<M>& lhs, const double rhs );
+template<unsigned M, class T> glh::math::vector<M, T> operator/ ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs );
+template<unsigned M, class T> glh::math::vector<M, T> operator/ ( const glh::math::vector<M, T>& lhs, const double& rhs );
+template<unsigned M, class T> glh::math::vector<M, T>& operator/= ( glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs );
+template<unsigned M, class T> glh::math::vector<M, T>& operator/= ( glh::math::vector<M, T>& lhs, const double& rhs );
 
 /* unary plus operator */
-template<unsigned M> glh::math::vector<M> operator+ ( const glh::math::vector<M>& lhs );
+template<unsigned M, class T> glh::math::vector<M, T> operator+ ( const glh::math::vector<M, T>& lhs );
 /* unary minus operator */
-template<unsigned M> glh::math::vector<M> operator- ( const glh::math::vector<M>& lhs );
+template<unsigned M, class T> glh::math::vector<M, T> operator- ( const glh::math::vector<M, T>& lhs );
 
 /* operator<<
  *
  * format as a one-line string
  */
-template<unsigned M> std::ostream& operator<< ( std::ostream& os, const glh::math::vector<M>& _vector );
+template<unsigned M, class T> std::ostream& operator<< ( std::ostream& os, const glh::math::vector<M, T>& _vector );
 
 
 
@@ -354,65 +386,72 @@ public:
 
 /* VECTOR IMPLEMENTATION */
 
-/* vector constructor
+/* resize constructor
  *
- * construct from any other vector
+ * construct from any other size of vector of the same type
  * smaller vectors will be promoted, and the rest of this vector will be filled with 0s
  * larger vectors will be demoted, and their excessive elements will be ignored
  */
-template<unsigned M>
-template<unsigned _M> inline glh::math::vector<M>::vector ( const vector<_M>& other )
-    : vector { 0. }
+template<unsigned M, class T>
+template<unsigned _M> inline glh::math::vector<M, T>::vector ( const vector<_M, T>& other )
+    : vector { 0 }
 {
     /* loop for whichever vector is smaller, copying values accordingly */
     for ( unsigned i = 0; i < M && i < _M; ++i ) at ( i ) = other.at ( i );
+}
+
+/* retype constructor
+ *
+ * construct from a vector of the same size but different type
+ */
+template<unsigned M, class T>
+template<class _T> glh::math::vector<M, T>::vector ( const vector<M, _T>& other )
+{
+    /* loop for each element and copy them */
+    for ( unsigned i = 0; i < M; ++i ) at ( i ) = static_cast<T> ( other.at ( i ) );
+}
+
+
+/* any type vector assignment operator */
+template<unsigned M, class T>
+template<class _T> inline glh::math::vector<M, T>& glh::math::vector<M, T>::operator= ( const vector<M, _T>& other )
+{
+    /* loop for each element and copy them */
+    for ( unsigned i = 0; i < M; ++i ) at ( i ) = static_cast<T> ( other.at ( i ) );
+
+    /* return * this */
+    return * this;
 }
 
 /* at
  *
  * get values out of the vector
  */
-template<unsigned M> inline double& glh::math::vector<M>::at ( const unsigned i )
+template<unsigned M, class T> inline T& glh::math::vector<M, T>::at ( const unsigned i )
 {
     /* check bounds then return if valid */
     if ( i >= M ) throw exception::vector_exception { "vector indices are out of bounds" };
     return data.at ( i );
 }
-template<unsigned M> inline const double& glh::math::vector<M>::at ( const unsigned i ) const
+template<unsigned M, class T> inline const T& glh::math::vector<M, T>::at ( const unsigned i ) const
 {
     /* check bounds then return if valid */
     if ( i >= M ) throw exception::vector_exception { "vector indices are out of bounds" };
     return data.at ( i );
 }
 
-/* export_data
- *
- * return: an std::array which can be used with OpenGL
- */
-template<unsigned M> std::array<float, M> glh::math::vector<M>::export_data () const
-{
-    /* create the new array */
-    std::array<float, M> new_data;
-
-    /* copy elements over */
-    for ( unsigned i = 0; i < M; ++i ) new_data.at ( i ) = at ( i );
-
-    /* return the float data */
-    return new_data;
-}
 
 
-
-/* MATRIX MODIFIER FUNCTIONS IMPLEMENTATIONS */
+/* VECTOR MODIFIER FUNCTIONS IMPLEMENTATIONS */
 
 /* concatenate
  *
  * concatenate two vectors, doubles or a combination into one vector
  */
-template<unsigned M0, unsigned M1> inline glh::math::vector<M0 + M1> glh::math::concatenate ( const vector<M0>& lhs, const vector<M1>& rhs )
+template<unsigned M0, unsigned M1, class T> inline glh::math::vector<M0 + M1, T> glh::math::concatenate ( const vector<M0, T>& lhs, const vector<M1, T>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M0 + M1> conc;
+    glh::math::vector<M0 + M1, T> conc;
     
     /* loop for the vectors */
     unsigned conci = 0;
@@ -422,23 +461,23 @@ template<unsigned M0, unsigned M1> inline glh::math::vector<M0 + M1> glh::math::
     /* return new vector */
     return conc;
 }
-template<unsigned M> inline glh::math::vector<M + 1> glh::math::concatenate ( const vector<M>& lhs, const double rhs )
+template<unsigned M, class T> inline glh::math::vector<M + 1, T> glh::math::concatenate ( const vector<M, T>& lhs, const T& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M + 1> conc;
+    glh::math::vector<M + 1, T> conc;
 
     /* loop for the vector */
-    unsigned conci  = 0;
+    unsigned conci = 0;
     for ( unsigned i = 0; i < M; ++i ) conc.at ( conci++ ) = lhs.at ( i );
     conc.at ( conci++ ) = rhs;
 
     /* return new vector */
     return conc;
 }
-template<unsigned M> inline glh::math::vector<M + 1> glh::math::concatenate ( const double lhs, const vector<M>& rhs )
+template<unsigned M, class T> inline glh::math::vector<M + 1, T> glh::math::concatenate ( const T& lhs, const vector<M, T>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M + 1> conc;
+    glh::math::vector<M + 1, T> conc;
 
     /* loop for the vector */
     unsigned conci  = 0;
@@ -448,10 +487,10 @@ template<unsigned M> inline glh::math::vector<M + 1> glh::math::concatenate ( co
     /* return new vector */
     return conc;
 }
-glh::math::vector<2> inline glh::math::concatenate ( const double lhs, const double rhs )
+template<class T> inline glh::math::vector<2, T> glh::math::concatenate ( const T& lhs, const T& rhs )
 {
     /* create the new vector */
-    glh::math::vector<2> conc;
+    glh::math::vector<2, T> conc;
 
     /* set the values */
     conc.at ( 0 ) = lhs;
@@ -465,10 +504,10 @@ glh::math::vector<2> inline glh::math::concatenate ( const double lhs, const dou
  *
  * find the dot product of two vectors
  */
-template<unsigned M> double glh::math::dot ( const vector<M>& lhs, const vector<M>& rhs )
+template<unsigned M, class T> inline double glh::math::dot ( const vector<M, T>& lhs, const vector<M, T>& rhs )
 {
     /* store cross product */
-    double result = 0;
+    double result = 0.0;
 
     /* loop to calculate */
     for ( unsigned i = 0; i < M; ++i ) result += ( lhs.at ( i ) * rhs.at ( i ) );
@@ -481,10 +520,10 @@ template<unsigned M> double glh::math::dot ( const vector<M>& lhs, const vector<
  *
  * find the cross product of a 3d vector
  */
-glh::math::vector<3> inline glh::math::cross ( const vector<3>& lhs, const vector<3>& rhs )
+template<class T> inline glh::math::vector<3, T> glh::math::cross ( const vector<3, T>& lhs, const vector<3, T>& rhs )
 {
     /* return cross product */
-    return glh::math::vector<3> 
+    return glh::math::vector<3, T> 
     { 
         ( lhs.at ( 1 ) * rhs.at ( 2 ) ) - ( lhs.at ( 2 ) * rhs.at ( 1 ) ),
         ( lhs.at ( 2 ) * rhs.at ( 0 ) ) - ( lhs.at ( 0 ) * rhs.at ( 2 ) ),
@@ -496,10 +535,10 @@ glh::math::vector<3> inline glh::math::cross ( const vector<3>& lhs, const vecto
  *
  * find the modulus of a vector
  */
-template<unsigned M> inline double glh::math::modulus ( const vector<M>& vec )
+template<unsigned M, class T> inline double glh::math::modulus ( const vector<M, T>& vec )
 {
     /* store the modulus */
-    double mod = 0;
+    double mod = 0.0;
 
     /* keep adding to the modulus */
     for ( unsigned i = 0; i < M; ++i ) mod += vec.at ( i ) * vec.at ( i );
@@ -512,7 +551,7 @@ template<unsigned M> inline double glh::math::modulus ( const vector<M>& vec )
  *
  * convert to a unit vector
  */
-template<unsigned M> inline glh::math::vector<M> glh::math::normalise ( const vector<M>& vec )
+template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::normalise ( const vector<M, T>& vec )
 {
     /* return the vector divided by its modulus */
     return vec / modulus ( vec );
@@ -522,7 +561,7 @@ template<unsigned M> inline glh::math::vector<M> glh::math::normalise ( const ve
  *
  * find the angle between two vectors
  */
-template<unsigned M> inline double glh::math::angle ( const vector<M>& lhs, const vector<M>& rhs )
+template<unsigned M, class T> inline double glh::math::angle ( const vector<M, T>& lhs, const vector<M, T>& rhs )
 {
     /* return the arccos of ( lhs.rhs / |lhs|.|rhs| ) */
     return std::acos ( dot ( lhs, rhs ) / ( modulus ( lhs ) * modulus ( rhs ) ) );
@@ -536,7 +575,7 @@ template<unsigned M> inline double glh::math::angle ( const vector<M>& lhs, cons
  *
  * compare the values of two vectors of the same size
  */
-template<unsigned M> inline bool operator== ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+template<unsigned M, class T> inline bool operator== ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
 {
     /* return false if any elements differ */
     for ( unsigned i = 0; i < M; ++i ) if ( lhs.at ( i ) != rhs.at ( i ) ) return false;
@@ -544,7 +583,7 @@ template<unsigned M> inline bool operator== ( const glh::math::vector<M>& lhs, c
     /* else return true */
     return true;
 }
-template<unsigned M> inline bool operator!= ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+template<unsigned M, class T> inline bool operator!= ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
 {
     /* return true if any elements differ */
     for ( unsigned i = 0; i < M; ++i ) if ( lhs.at ( i ) != rhs.at ( i ) ) return true;
@@ -560,10 +599,10 @@ template<unsigned M> inline bool operator!= ( const glh::math::vector<M>& lhs, c
  * vector + vector
  * vector += vector
  */
-template<unsigned M> inline glh::math::vector<M> operator+ ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T> operator+ ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M> result;
+    glh::math::vector<M, T> result;
 
     /* iterate for each value in result */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) + rhs.at ( i );
@@ -571,7 +610,7 @@ template<unsigned M> inline glh::math::vector<M> operator+ ( const glh::math::ve
     /* return the new vector */
     return result;
 }
-template<unsigned M> inline glh::math::vector<M>& operator+= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T>& operator+= ( glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
 {
     /* set lhs to equal lhs + rhs */
     return ( lhs = lhs + rhs );
@@ -584,10 +623,10 @@ template<unsigned M> inline glh::math::vector<M>& operator+= ( glh::math::vector
  * vector - vector
  * vector -= vector
  */
-template<unsigned M> inline glh::math::vector<M> operator- ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T> operator- ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M> result;
+    glh::math::vector<M, T> result;
 
     /* iterate for each value in result */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) - rhs.at ( i );
@@ -595,7 +634,7 @@ template<unsigned M> inline glh::math::vector<M> operator- ( const glh::math::ve
     /* return the new vector */
     return result;
 }
-template<unsigned M> inline glh::math::vector<M>& operator-= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T>& operator-= ( glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
 {
     /* set lhs to equal lhs - rhs */
     return ( lhs = lhs - rhs );
@@ -613,10 +652,10 @@ template<unsigned M> inline glh::math::vector<M>& operator-= ( glh::math::vector
  * NOTE: vector multiplication finds the component wise product
  *       use the cross_product and dot_product functions for other multiplication types
  */
-template<unsigned M> inline glh::math::vector<M> operator* ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T> operator* ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M> result;
+    glh::math::vector<M, T> result;
 
     /* iterate for each value in result */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) * rhs.at ( i );
@@ -624,10 +663,10 @@ template<unsigned M> inline glh::math::vector<M> operator* ( const glh::math::ve
     /* return the new vector */
     return result;
 }
-template<unsigned M> inline glh::math::vector<M> operator* ( const glh::math::vector<M>& lhs, const double rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T> operator* ( const glh::math::vector<M, T>& lhs, const double& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M> result;
+    glh::math::vector<M, T> result;
 
     /* iterate for each value in result */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) * rhs;
@@ -635,17 +674,17 @@ template<unsigned M> inline glh::math::vector<M> operator* ( const glh::math::ve
     /* return the new vector */
     return result;
 }
-template<unsigned M> inline glh::math::vector<M> operator* ( const double lhs, const glh::math::vector<M>& rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T> operator* ( const double& lhs, const glh::math::vector<M, T>& rhs )
 {
     /* equivalent to vector * scalar */
     return rhs * lhs;
 }
-template<unsigned M> inline glh::math::vector<M>& operator*= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T>& operator*= ( glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
 {
     /* set lhs to equal lhs * rhs */
     return ( lhs = lhs * rhs );
 }
-template<unsigned M> inline glh::math::vector<M>& operator*= ( glh::math::vector<M>& lhs, const double rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T>& operator*= ( glh::math::vector<M, T>& lhs, const double& rhs )
 {
     /* set lhs to equal lhs * rhs */
     return ( lhs = lhs * rhs );
@@ -662,10 +701,10 @@ template<unsigned M> inline glh::math::vector<M>& operator*= ( glh::math::vector
  * 
  * NOTE: vector division finds the component wise dividend
  */
-template<unsigned M> inline glh::math::vector<M> operator/ ( const glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T> operator/ ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M> result;
+    glh::math::vector<M, T> result;
 
     /* iterate for each value in result */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) / rhs.at ( i );
@@ -673,10 +712,10 @@ template<unsigned M> inline glh::math::vector<M> operator/ ( const glh::math::ve
     /* return the new vector */
     return result;
 }
-template<unsigned M> inline glh::math::vector<M> operator/ ( const glh::math::vector<M>& lhs, const double rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T> operator/ ( const glh::math::vector<M, T>& lhs, const double& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M> result;
+    glh::math::vector<M, T> result;
 
     /* iterate for each value in result */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) / rhs;
@@ -684,28 +723,28 @@ template<unsigned M> inline glh::math::vector<M> operator/ ( const glh::math::ve
     /* return the new vector */
     return result;
 }
-template<unsigned M> inline glh::math::vector<M> operator/= ( glh::math::vector<M>& lhs, const glh::math::vector<M>& rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T> operator/= ( glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
 {
     /* set lhs to equal lhs / rhs */
     return ( lhs = lhs / rhs );
 }
-template<unsigned M> inline glh::math::vector<M> operator/= ( glh::math::vector<M>& lhs, const double rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T> operator/= ( glh::math::vector<M, T>& lhs, const double& rhs )
 {
     /* set lhs to equal lhs * rhs */
     return ( lhs = lhs / rhs );
 }
 
 /* unary plus operator */
-template<unsigned M> inline glh::math::vector<M> operator+ ( const glh::math::vector<M>& lhs )
+template<unsigned M, class T> inline glh::math::vector<M, T> operator+ ( const glh::math::vector<M, T>& lhs )
 {
     /* return the same vector */
     return lhs;
 }
 /* unary minus operator */
-template<unsigned M> inline glh::math::vector<M> operator- ( const glh::math::vector<M>& lhs )
+template<unsigned M, class T> inline glh::math::vector<M, T> operator- ( const glh::math::vector<M, T>& lhs )
 {
     /* create new vector */
-    glh::math::vector<M> result { lhs };
+    glh::math::vector<M, T> result { lhs };
 
     /* negate all the values */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = - result.at ( i );
@@ -718,7 +757,7 @@ template<unsigned M> inline glh::math::vector<M> operator- ( const glh::math::ve
  *
  * format as a one-line string
  */
-template<unsigned M> inline std::ostream& operator<< ( std::ostream& os, const glh::math::vector<M>& _vector )
+template<unsigned M, class T> inline std::ostream& operator<< ( std::ostream& os, const glh::math::vector<M, T>& _vector )
 {
     /* stream intro into ostream */
     os << "vector<" << M << ">{";

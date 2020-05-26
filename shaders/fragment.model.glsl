@@ -6,11 +6,14 @@
 
 #version 330 core
 
+/* maximum number of color sets */
+#define MAX_COLOR_SETS 1
+
 /* maximum number of UV channels */
-#define MAX_UV_CHANNELS 8
+#define MAX_UV_CHANNELS 2
 
 /* maximum number of textures in texture stack */
-#define MAX_TEX_STACK_SIZE 8
+#define MAX_TEX_STACK_SIZE 2
 
 /* maximum number of lights */
 #define MAX_NUM_LIGHTS 8
@@ -91,10 +94,10 @@ struct trans_struct
 };
 
 /* texture coords, normal vector, position, vcolor */
-in vec3 texcoords [ MAX_UV_CHANNELS ];
-in vec3 normal;
 in vec3 fragpos;
-in vec4 vcolor;
+in vec3 normal;
+in vec4 vcolor [ MAX_COLOR_SETS ];
+in vec3 texcoords [ MAX_UV_CHANNELS ];
 
 /* output color */
 out vec4 fragcolor;
@@ -343,10 +346,16 @@ void main ()
     vec4 diffuse = evaluate_stack ( material, material.diffuse_stack );
     vec4 specular = evaluate_stack ( material, material.specular_stack );
 
+    //ambient = vec4 ( 0.5, 0.5, 0.5, 1.0 ); diffuse = vec4 ( 0.5, 0.5, 0.5, 1.0 );
+
+    //ambient = vec4 ( abs ( fragpos ) / 200, 1.0 ); diffuse = vec4 ( abs ( fragpos ) / 200, 1.0 );
+
+    //ambient = vec4 ( abs ( normal ), 1.0 ); diffuse = vec4 ( abs ( fragpos ) / 200, 1.0 );
+
     /* if there were no textures for any stack, multiply by the vertex color */
-    if ( material.ambient_stack.stack_size == 0 ) ambient *= vcolor;
-    if ( material.diffuse_stack.stack_size == 0 ) diffuse *= vcolor;
-    if ( material.specular_stack.stack_size == 0 ) specular *= vcolor;
+    if ( material.ambient_stack.stack_size == 0 ) ambient *= vcolor [ 0 ];
+    if ( material.diffuse_stack.stack_size == 0 ) diffuse *= vcolor [ 0 ];
+    if ( material.specular_stack.stack_size == 0 ) specular *= vcolor [ 0 ];
 
     /* if is completely transparent, discard regardless of whether in transparent mode */
     if ( ambient.a + diffuse.a == 0.0 ) discard;
@@ -369,5 +378,5 @@ void main ()
     if ( transparent_mode ) fragcolor = vec4 ( ambient.rgb + diffuse.rgb + specular.rgb, ambient.a + diffuse.a );
     else fragcolor = vec4 ( ambient.rgb + diffuse.rgb + specular.rgb, 1.0 );
 
-    fragcolor = texture ( skybox, S );
+    //fragcolor = texture ( skybox, S );
 }
