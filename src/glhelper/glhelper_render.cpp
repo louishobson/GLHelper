@@ -30,8 +30,9 @@
  * mode: the primative to render
  * start_index: the start index of the buffered data
  * count: number of vertices to draw
+ * instances: number of instances to draw (defaults to 1)
  */
-void glh::core::renderer::draw_arrays ( const vao& _vao, const GLenum mode, const GLint start_index, const GLsizei count )
+void glh::core::renderer::draw_arrays ( const vao& _vao, const GLenum mode, const GLint start_index, const GLsizei count, const unsigned instances )
 {
     /* prepare the vao */
     _vao.prepare_arrays ();
@@ -40,7 +41,8 @@ void glh::core::renderer::draw_arrays ( const vao& _vao, const GLenum mode, cons
     _vao.bind ();
 
     /* draw arrays */
-    glDrawArrays ( mode, start_index, count );
+    if ( instances == 1 ) glDrawArrays ( mode, start_index, count );
+    else glDrawArraysInstanced ( mode, start_index, count, instances );
 
     /* unbind vao */
     _vao.unbind ();
@@ -55,8 +57,9 @@ void glh::core::renderer::draw_arrays ( const vao& _vao, const GLenum mode, cons
  * count: number of vertices to draw
  * type: the type of the data in the ebo
  * start_index: the start index of the elements
+ * instances: number of instances to draw (defaults to 1)
  */
-void glh::core::renderer::draw_elements ( const vao& _vao, const GLenum mode, const GLint count, const GLenum type, const GLsizeiptr start_index )
+void glh::core::renderer::draw_elements ( const vao& _vao, const GLenum mode, const GLint count, const GLenum type, const GLsizeiptr start_index, const unsigned instances )
 {
     /* prepare the vao */
     _vao.prepare_elements ();
@@ -65,7 +68,8 @@ void glh::core::renderer::draw_elements ( const vao& _vao, const GLenum mode, co
     _vao.bind ();
 
     /* draw elements */
-    glDrawElements ( mode, count, type, reinterpret_cast<GLvoid *> ( start_index ) );
+    if ( instances == 1 ) glDrawElements ( mode, count, type, reinterpret_cast<GLvoid *> ( start_index ) );
+    else glDrawElementsInstanced ( mode, count, type, reinterpret_cast<GLvoid *> ( start_index ), instances );
 
     /* unbind vao */
     _vao.unbind ();
