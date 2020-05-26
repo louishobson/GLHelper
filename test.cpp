@@ -32,7 +32,7 @@ int main ()
 {
 
     {
-        
+     
     glh::glfw::window window { "Test Window", 600, 400, 4 };
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
     glh::core::renderer::enable_multisample ();
