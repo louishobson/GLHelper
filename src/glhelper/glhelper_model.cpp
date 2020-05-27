@@ -80,25 +80,6 @@ void glh::model::model::render ( const math::mat4& transform, const bool transpa
 
 
 
-/* collision_check
- *
- * given a modelview matrix and a movement vector, detect whether the movement will collide with a surface
- *
- * transform: the modelview matrix to apply
- * movement: the movement vector as a direction with magnitude from the origin
- *
- * return: true if a collision will occur 
- */
-bool glh::model::model::collision_check ( const math::mat4& transform, const math::vec3& movement ) const
-{
-    /* start the collision check at the root node */
-    collision_check_node ( root_node, transform, movement, math::normalise ( movement ), math::modulus ( movement ) );
-
-    return false;
-}
-
-
-
 /* cache_uniforms
  *
  * cache all uniforms
@@ -405,9 +386,6 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
     /* configure the buffers */
     configure_buffers ( _mesh );
 
-    /* calculate generalisations */
-    calculate_mesh_generalisations ( _mesh );
-
     /* return the mesh */
     return _mesh;
 }
@@ -462,58 +440,6 @@ void glh::model::model::configure_buffers ( mesh& _mesh )
         _mesh.array_object.set_vertex_attrib ( 2 + GLH_MODEL_MAX_COLOR_SETS + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 6 + ( GLH_MODEL_MAX_COLOR_SETS * 4 ) + ( i * 3 ) ) * sizeof ( GLfloat ) );
     }
     _mesh.array_object.bind_ebo ( _mesh.index_data );
-}
-
-/* calculate_mesh_generalisations
- * 
- * calculate generalisations of the mesh
- */
-void glh::model::model::calculate_mesh_generalisations ( mesh& _mesh )
-{
-    /* CENTRE AND RADIUS */
-
-    /* find average of all of the vertices */
-    for ( const vertex& _vertex: _mesh.vertices ) _mesh.centre += _vertex.position;
-    _mesh.centre /= _mesh.vertices.size ();
-
-    /* set square radius to 0.0 */
-    _mesh.square_radius = 0.0;
-
-    /* set max/min dimensions to that of the first vertex */
-    _mesh.max_components = _mesh.vertices.at ( 0 ).position;
-    _mesh.min_components = _mesh.vertices.at ( 0 ).position;
-
-    /* loop through the vertices to:
-     * 1. find the distance to the furthest vertex
-     * 2. fill in the correct values for the cuboid
-     */
-    for ( const vertex& _vertex: _mesh.vertices )
-    {
-        /* 1. */
-        double testing_square_modulus = math::square_modulus ( _vertex.position - _mesh.centre );
-        if ( testing_square_modulus > _mesh.square_radius ) _mesh.square_radius = testing_square_modulus;
-
-        /* 2. */
-        if ( _vertex.position.at ( 0 ) > _mesh.max_components.at ( 0 ) ) _mesh.max_components.at ( 0 ) = _vertex.position.at ( 0 );
-        if ( _vertex.position.at ( 0 ) < _mesh.min_components.at ( 0 ) ) _mesh.min_components.at ( 0 ) = _vertex.position.at ( 0 );
-        if ( _vertex.position.at ( 1 ) > _mesh.max_components.at ( 1 ) ) _mesh.max_components.at ( 1 ) = _vertex.position.at ( 1 );
-        if ( _vertex.position.at ( 1 ) < _mesh.min_components.at ( 1 ) ) _mesh.min_components.at ( 1 ) = _vertex.position.at ( 1 );
-        if ( _vertex.position.at ( 2 ) > _mesh.max_components.at ( 2 ) ) _mesh.max_components.at ( 2 ) = _vertex.position.at ( 2 );
-        if ( _vertex.position.at ( 2 ) < _mesh.min_components.at ( 2 ) ) _mesh.min_components.at ( 2 ) = _vertex.position.at ( 2 );
-    }
-
-    /* set the radius */
-    _mesh.radius = std::sqrt ( _mesh.square_radius );
-
-    /* set the corners of the cuboid */
-    _mesh.pxpypz = math::fvec4 { _mesh.max_components.at ( 0 ), _mesh.max_components.at ( 1 ), _mesh.max_components.at ( 2 ), 1.0 };
-    _mesh.pxpynz = math::fvec4 { _mesh.max_components.at ( 0 ), _mesh.max_components.at ( 1 ), _mesh.min_components.at ( 2 ), 1.0 };
-    _mesh.pxnypz = math::fvec4 { _mesh.max_components.at ( 0 ), _mesh.min_components.at ( 1 ), _mesh.max_components.at ( 2 ), 1.0 };
-    _mesh.pxnynz = math::fvec4 { _mesh.max_components.at ( 0 ), _mesh.min_components.at ( 1 ), _mesh.min_components.at ( 2 ), 1.0 };
-    _mesh.nxpypz = math::fvec4 { _mesh.min_components.at ( 0 ), _mesh.max_components.at ( 1 ), _mesh.max_components.at ( 2 ), 1.0 };
-    _mesh.nxpynz = math::fvec4 { _mesh.min_components.at ( 0 ), _mesh.max_components.at ( 1 ), _mesh.min_components.at ( 2 ), 1.0 };
-    _mesh.nxnypz = math::fvec4 { _mesh.min_components.at ( 0 ), _mesh.min_components.at ( 1 ), _mesh.max_components.at ( 2 ), 1.0 };
-    _mesh.nxnynz = math::fvec4 { _mesh.min_components.at ( 0 ), _mesh.min_components.at ( 1 ), _mesh.min_components.at ( 2 ), 1.0 };
 }
 
 /* add_node
@@ -647,41 +573,4 @@ void glh::model::model::render_mesh ( const mesh& _mesh ) const
 
     /* re-enable face culling if was previously disabled */
     if ( culling_active && _mesh.properties->two_sided ) core::renderer::enable_face_culling ();
-}
-
-/* collision_check_node
- *
- * check a node for collisions
- * 
- * _node: the node to render
- * transform: the current modelview transformation from all the previous nodes
- * movement: the movement vector to check against
- * direction: the direction of the movement vector (normalised movement)
- * magnitude: the magnitude of the movment vector
- * 
- * return: true if a collision will occur
- */
-bool glh::model::model::collision_check_node ( const node& _node, const math::fmat4& transform, const math::fvec3& movement, const math::fvec3& direction, const double magnitude ) const
-{
-    /* create transformation matrix */
-    math::fmat4 trans = transform * _node.transform;
-
-    /* first check child nodes
-     * we need to remember the smallest returned movement vector
-     */
-    double square_modulus = math::square_modulus ( movement );
-    for ( const node& child: _node.children ) 
-    {
-        double test_square_modulus = collision_check_node ( child, trans, movement, direction, magnitude );
-        if ( test_square_modulus < square_modulus ) square_modulus = test_square_modulus;
-    }
-
-    /* loop through the meshes to see if any collisions occur */
-    for ( const mesh * _mesh: _node.meshes )
-    {
-
-
-    }
-
-    return false;
 }
