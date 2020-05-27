@@ -264,14 +264,6 @@ public:
     T * internal_ptr () { return data.data (); }
     const T * internal_ptr () const { return data.data (); }
 
-    /* format_str
-     *
-     * format the vector to a string
-     */
-    std::string format_str () const;
-
-
-
 private:
 
     /* data
