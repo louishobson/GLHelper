@@ -33,7 +33,7 @@ glh::core::rbo::rbo ( const unsigned width, const unsigned height, const GLenum 
 {
     /* bind, set the storage, unbind */
     const bool binding_change = bind ();
-    glRenderbufferStorage ( GL_RENDERBUFFER, format, width, height );
+    glRenderbufferStorage ( opengl_bind_target, format, width, height );
     if ( binding_change ) unbind ();
 }
 
@@ -55,7 +55,7 @@ void glh::core::fbo::attach_texture2d ( const texture2d& texture, const GLenum a
     const bool binding_change = bind ();
 
     /* attach the rbo */
-    glFramebufferTexture2D ( GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture.internal_id (), mipmap );
+    glFramebufferTexture2D ( opengl_bind_target, attachment, texture.get_opengl_bind_taregt (), texture.internal_id (), mipmap );
 
     /* unbind fbo */
     if ( binding_change ) unbind ();
@@ -74,7 +74,7 @@ void glh::core::fbo::attach_rbo ( const rbo& _rbo, const GLenum attachment )
     const bool binding_change = bind ();
 
     /* attach the rbo */
-    glFramebufferRenderbuffer ( GL_FRAMEBUFFER, attachment, GL_RENDERBUFFER, _rbo.internal_id () );
+    glFramebufferRenderbuffer ( opengl_bind_target, attachment, _rbo.get_opengl_bind_taregt (), _rbo.internal_id () );
 
     /* unbind fbo */
     if ( binding_change ) unbind ();
@@ -88,7 +88,7 @@ bool glh::core::fbo::is_complete () const
 {
     /* bind, check if is complete, unbind and return */
     const bool binding_change = bind ();
-    const bool complete = ( glCheckFramebufferStatus ( GL_FRAMEBUFFER ) == GL_FRAMEBUFFER_COMPLETE );
+    const bool complete = ( glCheckFramebufferStatus ( opengl_bind_target ) == GL_FRAMEBUFFER_COMPLETE );
     if ( binding_change ) unbind ();
     return complete;
 }

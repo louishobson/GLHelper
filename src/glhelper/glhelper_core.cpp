@@ -32,9 +32,6 @@ glh::core::object::object ( const minor_object_type type )
     , minor_type { type }
     , major_type { to_major_object_type ( type ) }
     , bind_target { to_object_bind_target ( type ) }
-    , minor_type_index { static_cast<unsigned> ( minor_type ) }
-    , major_type_index { static_cast<unsigned> ( major_type ) }
-    , bind_target_index { static_cast <unsigned> ( bind_target ) }
     , opengl_bind_target { to_opengl_bind_target ( bind_target ) }
 {
     /* switch on type to generate object and store in id */
@@ -55,6 +52,7 @@ glh::core::object::object ( const minor_object_type type )
 
     case minor_object_type::GLH_TEXTURE2D_TYPE: glGenTextures ( 1, &id ); break;
     case minor_object_type::GLH_CUBEMAP_TYPE: glGenTextures ( 1, &id ); break;
+    case minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE: glGenTextures ( 1, &id ); break;
 
     default: throw exception::object_exception { "attempted to perform generation operation on unknown object type" };
     }
@@ -62,10 +60,10 @@ glh::core::object::object ( const minor_object_type type )
     /* successfully generated object, so add to object_pointers */
 
     /* resize the vector for object ids for this type if necessary */
-    if ( object_pointers.at ( major_type_index ).size () <= id ) object_pointers.at ( major_type_index ).resize ( id + 1, NULL );
+    if ( object_pointers.at ( static_cast<unsigned> ( major_type ) ).size () <= id ) object_pointers.at ( static_cast<unsigned> ( major_type ) ).resize ( id + 1, NULL );
 
     /* set the pointer to object_pointers */
-    object_pointers.at ( major_type_index ).at ( id ) = this;
+    object_pointers.at ( static_cast<unsigned> ( major_type ) ).at ( id ) = this;
 }
 
 /* move constructor */
@@ -74,13 +72,10 @@ glh::core::object::object ( object&& other )
     , minor_type { other.minor_type }
     , major_type { other.major_type }
     , bind_target { other.bind_target }
-    , minor_type_index { other.minor_type_index }
-    , major_type_index { other.major_type_index }
-    , bind_target_index { other.bind_target_index }
     , opengl_bind_target { other.opengl_bind_target }
 {
     /* set new pointer to object_pointers */
-    if ( is_object_valid () ) object_pointers.at ( major_type_index ).at ( id ) = this;
+    if ( is_object_valid () ) object_pointers.at ( static_cast<unsigned> ( major_type ) ).at ( id ) = this;
 
     /* set id of other object to 0 */
     other.id = 0;
@@ -96,8 +91,8 @@ glh::core::object::~object ()
     /* if not valid, return */
     if ( !is_object_valid () ) return;
     
-        /* unbind from all bind points */
-        unbind_all ();
+    /* unbind from all bind points */
+    unbind_all ();
 
     /* switch on type to destroy object */
     switch ( minor_type )
@@ -117,16 +112,16 @@ glh::core::object::~object ()
 
     case minor_object_type::GLH_TEXTURE2D_TYPE: glDeleteTextures ( 1, &id ); break;
     case minor_object_type::GLH_CUBEMAP_TYPE: glDeleteTextures ( 1, &id ); break;
+    case minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE: glDeleteTextures ( 1, &id ); break;
 
     default: break;
         /* throw exception::object_exception { "attempted to perform destroy operation on unknown object type" };
-         *
          * it would be nice to throw, but t'is a destructor
          */
     }
 
     /* set pointer to NULL */
-    object_pointers.at ( major_type_index ).at ( id ) = NULL;
+    object_pointers.at ( static_cast<unsigned> ( major_type ) ).at ( id ) = NULL;
 
     /* set id to 0 */
     id = 0;
@@ -149,61 +144,134 @@ glh::core::object * glh::core::object::get_bound_object_pointer ( const object_b
 
 
 
-/* bind/unbind
- * 
- * bind/unbind the object
- * unbinding is silently ignored if object is not already bound
+
+/* bind/unbind to a target
+ *
+ * bind/unbind to a given target
+ * binding/unbinding is silently ignored if object is already bound/not bound
  * 
  * returns true if a change in binding occured
  */
-bool glh::core::object::bind () const
+bool glh::core::object::bind ( const object_bind_target& target ) const
 {
     /* if invalid, throw */
     assert_is_object_valid ( "bind" );
 
+    /* get index of target */
+    const unsigned target_index = static_cast<unsigned> ( target );
+
+    /* get OpenGL enum for target */
+    const GLenum opengl_target = ( target == bind_target ? opengl_bind_target : to_opengl_bind_target ( target ) );
+
     /* if already bound, return false */
-    if ( object_bindings.at ( bind_target_index ) == id ) return false;
+    if ( object_bindings.at ( target_index ) == id ) return false;
 
     /* switch on target and bind to bind point */
-    switch ( bind_target )
+    switch ( target )
     {
-    case object_bind_target::GLH_VBO_TARGET: glBindBuffer ( GL_ARRAY_BUFFER, id ); break;
-    case object_bind_target::GLH_EBO_TARGET: glBindBuffer ( GL_ELEMENT_ARRAY_BUFFER, id ); break;
-    case object_bind_target::GLH_UBO_TARGET: glBindBuffer ( GL_UNIFORM_BUFFER, id ); break;
-    case object_bind_target::GLH_COPY_READ_BUFFER_TARGET: glBindBuffer ( GL_COPY_READ_BUFFER, id ); break;
-    case object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET: glBindBuffer ( GL_COPY_WRITE_BUFFER, id ); break;
+    case object_bind_target::GLH_VBO_TARGET: glBindBuffer ( opengl_target, id ); break;
+    case object_bind_target::GLH_EBO_TARGET: glBindBuffer ( opengl_target, id ); break;
+    case object_bind_target::GLH_UBO_TARGET: glBindBuffer ( opengl_target, id ); break;
+    case object_bind_target::GLH_COPY_READ_BUFFER_TARGET: glBindBuffer ( opengl_target, id ); break;
+    case object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET: glBindBuffer ( opengl_target, id ); break;
     case object_bind_target::GLH_VAO_TARGET: glBindVertexArray ( id ); break;
 
-    case object_bind_target::GLH_RBO_TARGET: glBindRenderbuffer ( GL_RENDERBUFFER, id ); break;
-    case object_bind_target::GLH_FBO_TARGET: glBindFramebuffer ( GL_FRAMEBUFFER, id ); break;
+    case object_bind_target::GLH_RBO_TARGET: glBindRenderbuffer ( opengl_target, id ); break;
+    case object_bind_target::GLH_FBO_TARGET: glBindFramebuffer ( opengl_target, id ); break;
 
     case object_bind_target::GLH_PROGRAM_TARGET: glUseProgram ( id ); break;
 
     case object_bind_target::GLH_UNKNOWN_TARGET: break;
 
-    case object_bind_target::GLH_TEXTURE2D_0_TARGET: glActiveTexture ( GL_TEXTURE0 ); glBindTexture ( GL_TEXTURE_2D, id ); break;
-    case object_bind_target::GLH_CUBEMAP_0_TARGET: glActiveTexture ( GL_TEXTURE0 ); glBindTexture ( GL_TEXTURE_CUBE_MAP, id ); break;
+    default:
+        if ( is_texture2d_bind_target ( target ) ) 
+        {
+            const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_0_TARGET );
+            glActiveTexture ( GL_TEXTURE0 + unit );
+            glBindTexture ( opengl_target, id );
+        } else
+        if ( is_cubemap_bind_target ( target ) )
+        {
+            const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET );
+            glActiveTexture ( GL_TEXTURE0 + unit );
+            glBindTexture ( opengl_target, id );
+        } else
+        if ( is_texture2d_multisample_bind_target ( target ) )
+        {
+            const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET );
+            glActiveTexture ( GL_TEXTURE0 + unit );
+            glBindTexture ( opengl_target, id );
+        } else throw exception::object_exception { "attempted to perform glh to opengl bind target conversion on unknown target" };
 
-    default: throw exception::object_exception { "attempted to perform bind operation to unknown target" };
     }
 
     /* record the binding */
-    object_bindings.at ( bind_target_index ) = id;
+    object_bindings.at ( target_index ) = id;
 
     /* return true */
     return true;
 }
-bool glh::core::object::unbind () const
+bool glh::core::object::unbind ( const object_bind_target& target ) const
 {
     /* if invalid, throw */
     assert_is_object_valid ( "unbind" );
 
-    /* if not bound, return false */
-    if ( object_bindings.at ( bind_target_index ) != id ) return false;
+    /* get index of target */
+    const unsigned target_index = static_cast<unsigned> ( target );
 
-    /* now force unbind */
-    return force_unbind ();
+    /* get OpenGL enum for target */
+    const GLenum opengl_target = ( target == bind_target ? opengl_bind_target : to_opengl_bind_target ( target ) );
+
+    /* if not bound, return false */
+    if ( object_bindings.at ( target_index ) != id ) return false;
+
+    /* switch on target and unbind from bind point */
+    switch ( target )
+    {
+    case object_bind_target::GLH_VBO_TARGET: glBindBuffer ( opengl_target, 0 ); break;
+    case object_bind_target::GLH_EBO_TARGET: glBindBuffer ( opengl_target, 0 ); break;
+    case object_bind_target::GLH_UBO_TARGET: glBindBuffer ( opengl_target, 0 ); break;
+    case object_bind_target::GLH_COPY_READ_BUFFER_TARGET: glBindBuffer ( opengl_target, 0 ); break;
+    case object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET: glBindBuffer ( opengl_target, 0 ); break;
+    case object_bind_target::GLH_VAO_TARGET: glBindVertexArray ( 0 ); break;
+
+    case object_bind_target::GLH_RBO_TARGET: glBindRenderbuffer ( opengl_target, 0 ); break;
+    case object_bind_target::GLH_FBO_TARGET: glBindFramebuffer ( opengl_target, 0 ); break;
+
+    case object_bind_target::GLH_PROGRAM_TARGET: glUseProgram ( id ); break;
+
+    case object_bind_target::GLH_UNKNOWN_TARGET: break;
+
+    default:
+        if ( is_texture2d_bind_target ( target ) ) 
+        {
+            const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_0_TARGET );
+            glActiveTexture ( GL_TEXTURE0 + unit );
+            glBindTexture ( opengl_target, 0 );
+        } else
+        if ( is_cubemap_bind_target ( target ) )
+        {
+            const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET );
+            glActiveTexture ( GL_TEXTURE0 + unit );
+            glBindTexture ( opengl_target, 0 );
+        } else
+        if ( is_texture2d_multisample_bind_target ( target ) )
+        {
+            const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET );
+            glActiveTexture ( GL_TEXTURE0 + unit );
+            glBindTexture ( opengl_target, 0 );
+        } else throw exception::object_exception { "attempted to perform glh to opengl bind target conversion on unknown target" };
+
+    }
+
+    /* record the unbinding */
+    object_bindings.at ( target_index ) = 0;
+
+    /* return true */
+    return true;
 }
+
+
 
 /* bind/unbind unit version
  *
@@ -222,53 +290,16 @@ bool glh::core::object::unbind ( const unsigned unit ) const
     throw exception::object_exception { "attempted to unbind object from a unit, without unit-binding capabilities being defined" };
 }
 
-/* force_unbind
- * 
- * force the unbinding of the target of this object
- */
-bool glh::core::object::force_unbind () const
-{
-    /* if nothing bound, return false */
-    if ( object_bindings.at ( bind_target_index ) == 0 ) return false;
-    
-    /* switch on target and unbind from bind point */
-    switch ( bind_target )
-    {
-    case object_bind_target::GLH_VBO_TARGET: glBindBuffer ( GL_ARRAY_BUFFER, 0 ); break;
-    case object_bind_target::GLH_EBO_TARGET: glBindBuffer ( GL_ELEMENT_ARRAY_BUFFER, 0 ); break;
-    case object_bind_target::GLH_UBO_TARGET: glBindBuffer ( GL_UNIFORM_BUFFER, 0 ); break;
-    case object_bind_target::GLH_COPY_READ_BUFFER_TARGET: glBindBuffer ( GL_COPY_READ_BUFFER, 0 ); break;
-    case object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET: glBindBuffer ( GL_COPY_WRITE_BUFFER, 0 ); break;
-    case object_bind_target::GLH_VAO_TARGET: glBindVertexArray ( 0 ); break;
 
-    case object_bind_target::GLH_RBO_TARGET: glBindRenderbuffer ( GL_RENDERBUFFER, 0 ); break;
-    case object_bind_target::GLH_FBO_TARGET: glBindFramebuffer ( GL_FRAMEBUFFER, 0 ); break;
 
-    case object_bind_target::GLH_PROGRAM_TARGET: glUseProgram ( 0 ); break;
-
-    case object_bind_target::GLH_UNKNOWN_TARGET: break;
-
-    case object_bind_target::GLH_TEXTURE2D_0_TARGET: glActiveTexture ( GL_TEXTURE0 ); glBindTexture ( GL_TEXTURE_2D, 0 ); break;
-    case object_bind_target::GLH_CUBEMAP_0_TARGET: glActiveTexture ( GL_TEXTURE0 ); glBindTexture ( GL_TEXTURE_CUBE_MAP, 0 ); break;
-
-    default: throw exception::object_exception { "attempted to perform unbind operation to unknown target" };
-    }
-
-    /* record the unbinding */
-    object_bindings.at ( bind_target_index ) = 0;
-
-    /* return true */
-    return true;
-}
-
-/* is_bound
+/* is_bound to a target
  *
- * returns true if the object is bound
- */
-bool glh::core::object::is_bound () const
+ * returns true if the object is bound to the target supplied
+*/
+bool glh::core::object::is_bound ( const object_bind_target& target ) const
 {
     /* return true if the object is valid and bound */
-    return ( is_object_valid () && object_bindings.at ( bind_target_index ) == id );
+    return ( is_object_valid () && object_bindings.at ( static_cast<unsigned> ( target ) ) == id );
 }
 
 
@@ -369,6 +400,7 @@ glh::core::object_bind_target glh::core::object::to_object_bind_target ( const m
 
     case minor_object_type::GLH_TEXTURE2D_TYPE: return object_bind_target::GLH_TEXTURE2D_0_TARGET;
     case minor_object_type::GLH_CUBEMAP_TYPE: return object_bind_target::GLH_CUBEMAP_0_TARGET;
+    case minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE: return object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET;
 
     case minor_object_type::GLH_UNKNOWN_TYPE: return object_bind_target::GLH_UNKNOWN_TARGET;
     
@@ -397,6 +429,7 @@ GLenum glh::core::object::to_opengl_bind_target ( const object_bind_target targe
     default:
         if ( is_texture2d_bind_target ( target ) ) return GL_TEXTURE_2D; else
         if ( is_cubemap_bind_target ( target ) ) return GL_TEXTURE_CUBE_MAP; else
+        if ( is_texture2d_multisample_bind_target ( target ) ) return GL_TEXTURE_2D_MULTISAMPLE;
         throw exception::object_exception { "attempted to perform glh to opengl bind target conversion on unknown target" };
     }
 }
@@ -422,6 +455,7 @@ glh::core::major_object_type glh::core::object::to_major_object_type ( const obj
     default:
         if ( is_texture2d_bind_target ( target ) ) return major_object_type::GLH_TEXTURE_TYPE; else
         if ( is_cubemap_bind_target ( target ) ) return major_object_type::GLH_TEXTURE_TYPE; else
+        if ( is_texture2d_multisample_bind_target ( target ) ) return major_object_type::GLH_TEXTURE_TYPE; else
         throw exception::object_exception { "attempted to perform glh to opengl bind target conversion on unknown target" };
     }
 }
@@ -431,7 +465,7 @@ glh::core::major_object_type glh::core::object::to_major_object_type ( const obj
 /* is_texture2d_bind_target
  * is_cubemap_bind_target
  * 
- * returns true if the target supplied is a texture/cubemap bind target
+ * returns true if the target supplied is one of the above bind targets
  */
 bool glh::core::object::is_texture2d_bind_target ( const object_bind_target target )
 {
@@ -442,6 +476,11 @@ bool glh::core::object::is_cubemap_bind_target ( const object_bind_target target
 {
     /* if the target is between __CUBEMAP_START__ and __CUBEMAP_END__ return true, else false */
     return ( target >= object_bind_target::__CUBEMAP_START__ && target <= object_bind_target::__CUBEMAP_END__ );
+}
+bool glh::core::object::is_texture2d_multisample_bind_target ( const object_bind_target target )
+{
+    /* if the target is between __TEXTURE2D_MULTISAMPLE_START__ and __TEXTURE2D_MULTISAMPLE_END__ return true, else false */
+    return ( target >= object_bind_target::__TEXTURE2D_MULTISAMPLE_START__ && target <= object_bind_target::__TEXTURE2D_MULTISAMPLE_END__ );
 }
 
 

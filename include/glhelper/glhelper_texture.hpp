@@ -168,7 +168,7 @@ public:
      * unit: the texture unit to bind to/unbind from
      */
     using object::bind;
-    bool bind ( const unsigned texture_unit ) const;
+    bool bind ( const unsigned texture_unit ) const { return bind ( static_cast<object_bind_target> ( static_cast<unsigned> ( bind_target ) + texture_unit ) ); }
 
     /* unbind
      *
@@ -177,7 +177,7 @@ public:
      * uniy: the texture unit to unbind from
      */
     using object::unbind;
-    bool unbind ( const unsigned texture_unit ) const;
+    bool unbind ( const unsigned texture_unit ) const { return unbind ( static_cast<object_bind_target> ( static_cast<unsigned> ( bind_target ) + texture_unit ) ); }
 
     /* unbind_all
      *
@@ -195,7 +195,7 @@ public:
      * return: boolean for if the texture is bound to the unit supplied
      */
     using object::is_bound;
-    bool is_bound ( const unsigned texture_unit ) const;
+    bool is_bound ( const unsigned texture_unit ) const { return is_bound ( static_cast<object_bind_target> ( static_cast<unsigned> ( bind_target ) + texture_unit ) ); }
 
 
 

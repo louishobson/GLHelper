@@ -165,6 +165,7 @@ enum struct glh::core::minor_object_type : unsigned
 
     GLH_TEXTURE2D_TYPE,
     GLH_CUBEMAP_TYPE,
+    GLH_TEXTURE2D_MULTISAMPLE_TYPE,
 
     GLH_UNKNOWN_TYPE,
 
@@ -202,6 +203,13 @@ enum struct glh::core::object_bind_target : unsigned
     GLH_CUBEMAP_16_TARGET, GLH_CUBEMAP_17_TARGET, GLH_CUBEMAP_18_TARGET, GLH_CUBEMAP_19_TARGET, GLH_CUBEMAP_20_TARGET, GLH_CUBEMAP_21_TARGET, GLH_CUBEMAP_22_TARGET, GLH_CUBEMAP_23_TARGET, 
     GLH_CUBEMAP_24_TARGET, GLH_CUBEMAP_25_TARGET, GLH_CUBEMAP_26_TARGET, GLH_CUBEMAP_27_TARGET, GLH_CUBEMAP_28_TARGET, GLH_CUBEMAP_29_TARGET, GLH_CUBEMAP_30_TARGET, GLH_CUBEMAP_31_TARGET,
     __CUBEMAP_END__,
+
+    __TEXTURE2D_MULTISAMPLE_START__,
+    GLH_TEXTURE2D_MULTISAMPLE_0_TARGET,  GLH_TEXTURE2D_MULTISAMPLE_1_TARGET,  GLH_TEXTURE2D_MULTISAMPLE_2_TARGET,  GLH_TEXTURE2D_MULTISAMPLE_3_TARGET,  GLH_TEXTURE2D_MULTISAMPLE_4_TARGET,  GLH_TEXTURE2D_MULTISAMPLE_5_TARGET,  GLH_TEXTURE2D_MULTISAMPLE_6_TARGET,  GLH_TEXTURE2D_MULTISAMPLE_7_TARGET, 
+    GLH_TEXTURE2D_MULTISAMPLE_8_TARGET,  GLH_TEXTURE2D_MULTISAMPLE_9_TARGET,  GLH_TEXTURE2D_MULTISAMPLE_10_TARGET, GLH_TEXTURE2D_MULTISAMPLE_11_TARGET, GLH_TEXTURE2D_MULTISAMPLE_12_TARGET, GLH_TEXTURE2D_MULTISAMPLE_13_TARGET, GLH_TEXTURE2D_MULTISAMPLE_14_TARGET, GLH_TEXTURE2D_MULTISAMPLE_15_TARGET, 
+    GLH_TEXTURE2D_MULTISAMPLE_16_TARGET, GLH_TEXTURE2D_MULTISAMPLE_17_TARGET, GLH_TEXTURE2D_MULTISAMPLE_18_TARGET, GLH_TEXTURE2D_MULTISAMPLE_19_TARGET, GLH_TEXTURE2D_MULTISAMPLE_20_TARGET, GLH_TEXTURE2D_MULTISAMPLE_21_TARGET, GLH_TEXTURE2D_MULTISAMPLE_22_TARGET, GLH_TEXTURE2D_MULTISAMPLE_23_TARGET, 
+    GLH_TEXTURE2D_MULTISAMPLE_24_TARGET, GLH_TEXTURE2D_MULTISAMPLE_25_TARGET, GLH_TEXTURE2D_MULTISAMPLE_26_TARGET, GLH_TEXTURE2D_MULTISAMPLE_27_TARGET, GLH_TEXTURE2D_MULTISAMPLE_28_TARGET, GLH_TEXTURE2D_MULTISAMPLE_29_TARGET, GLH_TEXTURE2D_MULTISAMPLE_30_TARGET, GLH_TEXTURE2D_MULTISAMPLE_31_TARGET, 
+    __TEXTURE2D_MULTISAMPLE_END__,
 
     GLH_UNKNOWN_TARGET,
 
@@ -262,15 +270,24 @@ public:
 
 
 
-    /* bind/unbind
+    /* bind/unbind to a target
      *
-     * bind/unbind the object
-     * unbinding is silently ignored if object is not already bound
+     * bind/unbind to a given target
+     * binding/unbinding is silently ignored if object is already bound/not bound
      * 
      * returns true if a change in binding occured
      */
-    bool bind () const;
-    bool unbind () const;
+    bool bind ( const object_bind_target& target ) const;
+    bool unbind ( const object_bind_target& target ) const;
+
+    /* bind/unbind to default target
+     *
+     * bind/unbind the object from its default bind target
+     * 
+     * returns true if a change in binding occured
+     */
+    bool bind () const { return bind ( bind_target ); }
+    bool unbind () const { return unbind ( bind_target ); }
 
     /* bind/unbind unit version
      *
@@ -283,14 +300,6 @@ public:
     virtual bool bind ( const unsigned unit ) const;
     virtual bool unbind ( const unsigned unit ) const;
 
-    /* force_unbind
-     *
-     * force the unbinding of the target of this object
-     * 
-     * returns true if a change in binding occured
-     */
-    bool force_unbind () const;
-
     /* unbind_all
      *
      * the base class definition purely calls unbind
@@ -300,11 +309,17 @@ public:
      */
     bool virtual unbind_all () const { return unbind (); }
 
-    /* is_bound
+    /* is_bound to a target
      *
-     * returns true if the object is bound
+     * returns true if the object is bound to the target supplied
      */
-    bool is_bound () const;
+    bool is_bound ( const object_bind_target& target ) const;
+
+    /* is bound to default target
+     *
+     * returns true if the object is bound to the default target
+     */
+    bool is_bound () const { return is_bound ( bind_target ); }
 
 
 
@@ -373,14 +388,6 @@ protected:
     const major_object_type major_type;
     const object_bind_target bind_target;
 
-    /* minor_type_index, major_type_index, bind_target_index
-     * 
-     * the above members, except cast to unsigned integers
-     */
-    const unsigned minor_type_index;
-    const unsigned major_type_index;
-    const unsigned bind_target_index;
-
     /* opengl_bind_target
      *
      * the opengl enum used for binding
@@ -428,11 +435,13 @@ protected:
 
     /* is_texture2d_bind_target
      * is_cubemap_bind_target
+     * is_texture2d_multisample_bind_target
      * 
-     * returns true if the target supplied is a texture/cubemap bind target
+     * returns true if the target supplied is one of the above bind targetss
      */
     static bool is_texture2d_bind_target ( const object_bind_target target );
     static bool is_cubemap_bind_target ( const object_bind_target target );
+    static bool is_texture2d_multisample_bind_target ( const object_bind_target target );
 
 };
 

@@ -165,138 +165,6 @@ void glh::core::buffer::clear_data ()
 
 
 
-/* bind_copy_read/write
- *
- * bind the buffer to the copy read/write targets
- * 
- * returns true if a change in binding occured
- */
-bool glh::core::buffer::bind_copy_read () const
-{
-    /* throw if not valid */
-    assert_is_object_valid ( "bind" );
-
-    /* get the index of the copy read target */
-    const unsigned copy_read_target_index = static_cast<unsigned> ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET );
-
-    /* if already bound, return false */
-    if ( object_bindings.at ( copy_read_target_index ) == id ) return false;
-
-    /* bind object */
-    glBindBuffer ( GL_COPY_READ_BUFFER, id );
-
-    /* record the binding */
-    object_bindings.at ( copy_read_target_index ) = id;
-
-    /* return true */
-    return true;
-}
-bool glh::core::buffer::bind_copy_write () const
-{
-    /* throw if not valid */
-    assert_is_object_valid ( "bind" );
-
-    /* get the index of the copy write target */
-    const unsigned copy_write_target_index = static_cast<unsigned> ( object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET );
-
-    /* if already bound, return false */
-    if ( object_bindings.at ( copy_write_target_index ) == id ) return false;
-
-    /* bind object */
-    glBindBuffer ( GL_COPY_WRITE_BUFFER, id );
-
-    /* record the binding */
-    object_bindings.at ( copy_write_target_index ) = id;
-
-    /* return true */
-    return true;
-}
-
-
-
-/* unbind_copy_read/write
- *
- * unbind the buffer to the copy read/write targets
- * 
- * returns true if a change in binding occured
- */
-bool glh::core::buffer::unbind_copy_read () const
-{
-    /* throw if not valid */
-    assert_is_object_valid ( "unbind" );
-
-    /* get the index of the copy read target */
-    const unsigned copy_read_target_index = static_cast<unsigned> ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET );
-
-    /* if not bound, return false */
-    if ( object_bindings.at ( copy_read_target_index ) != id ) return false;
-
-    /* un bind object */
-    glBindBuffer ( GL_COPY_READ_BUFFER, 0 );
-
-    /* record the unbinding */
-    object_bindings.at ( copy_read_target_index ) = 0;
-
-    /* return true */
-    return true;
-}
-bool glh::core::buffer::unbind_copy_write () const
-{
-    /* throw if not valid */
-    assert_is_object_valid ( "unbind" );
-
-    /* get the index of the copy write target */
-    const unsigned copy_write_target_index = static_cast<unsigned> ( object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET );
-
-    /* if not bound, return false */
-    if ( object_bindings.at ( copy_write_target_index ) != id ) false;
-
-    /* unbind object */
-    glBindBuffer ( GL_COPY_WRITE_BUFFER, 0 );
-
-    /* record the unbinding */
-    object_bindings.at ( copy_write_target_index ) = 0;
-
-    /* return true */
-    return true;
-}
-
-
-
-/* unbind_all
- *
- * unbind from all targets
- * this includes copy read/write targets
- * 
- * returns true if a change in binding occured
- */
-bool glh::core::buffer::unbind_all () const
-{
-    /* unbind normally, as well as unbinding from any copy read/write targets */
-    return ( unbind () | unbind_copy_read () | unbind_copy_write () );
-}
-
-
-
-/* is_copy_read/write_bound
- *
- * check if the buffer is bound to the copy read/write targets
- * 
- * returns true if a change in binding occured
- */
-bool glh::core::buffer::is_copy_read_bound () const
-{
-    /* return true if is valid and is bound */
-    return ( is_object_valid () && object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET ) ) == id );
-}
-bool glh::core::buffer::is_copy_write_bound () const
-{
-    /* return true if is valid and is bound */
-    return ( is_object_valid () && object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET ) ) == id );
-}
-
-
-
 /* map_buffer
  *
  * generate a mapping, if not already mapped
@@ -391,7 +259,7 @@ bool glh::core::ubo::bind_buffer_base ( const unsigned index )
     if ( ubo_indexed_bindings.at ( index ) == id ) return false;
 
     /* otherwise bind ubo to index */
-    glBindBufferBase ( GL_UNIFORM_BUFFER, index, id );
+    glBindBufferBase ( opengl_bind_target, index, id );
 
     /* record binding */
     ubo_indexed_bindings.at ( index ) = id;
@@ -405,7 +273,7 @@ bool glh::core::ubo::unbind_buffer_base ( const unsigned index )
     if ( ubo_indexed_bindings.size () <= index || ubo_indexed_bindings.at ( index ) != id ) return false;
 
     /* otherwise unbind ubo from index */
-    glBindBufferBase ( GL_UNIFORM_BUFFER, index, 0 );
+    glBindBufferBase ( opengl_bind_target, index, 0 );
 
     /* record binding */
     ubo_indexed_bindings.at ( index ) = 0;

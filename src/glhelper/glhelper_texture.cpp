@@ -47,56 +47,6 @@ glh::core::texture_base::texture_base ( const minor_object_type _minor_type, con
 
 
 
-/* bind/unbind
- *
- * bind the texture to a texture unit
- * 
- * unit: the texture unit to bind to/unbind from
- */
-bool glh::core::texture_base::bind ( const unsigned unit ) const
-{
-    /* throw if not valid */
-    assert_is_object_valid ( "bind" );
-
-    /* if already bound, return false */
-    if ( object_bindings.at ( bind_target_index + unit ) == id ) return false;
-
-    /* bind texture */
-    glActiveTexture ( GL_TEXTURE0 + unit );
-    glBindTexture ( opengl_bind_target, id );
-
-    /* set binding */
-    object_bindings.at ( bind_target_index + unit ) = id;
-
-    /* return true */
-    return true;
-}
-
-/* unbind
- *
- * unbind the texture from a texture unit
- * 
- * uniy: the texture unit to unbind from
- */
-bool glh::core::texture_base::unbind ( const unsigned unit ) const
-{
-    /* throw if not valid */
-    assert_is_object_valid ( "unbind" );
-
-    /* if not bound, return false */
-    if ( object_bindings.at ( bind_target_index + unit ) != id ) return false;
-
-    /* unbind */
-    glActiveTexture ( GL_TEXTURE0 + unit );
-    glBindTexture ( opengl_bind_target, 0 );
-
-    /* set unbinding */
-    object_bindings.at ( bind_target_index + unit ) = 0;
-
-    /* return true */
-    return true;
-}
-
 /* unbind_all
  *
  * unbind from all targets
@@ -107,42 +57,18 @@ bool glh::core::texture_base::unbind_all () const
     /* track whether anything was unbound */
     bool binding_change = false;
 
-    /* switch for bind target */
-    switch ( bind_target )
-    {
-    case object_bind_target::GLH_TEXTURE2D_0_TARGET:
-        {
-            const unsigned num_texture2d_units = static_cast<unsigned> ( object_bind_target::__TEXTURE2D_END__ ) - static_cast<unsigned> ( object_bind_target::__TEXTURE2D_START__ ) - 1;
-            for ( unsigned i = 0; i < num_texture2d_units; ++i ) binding_change &= unbind ( i );
-        }
-        break;
+    /* get number of units */
+    unsigned texture_units;
+    if ( is_texture2d_bind_target ( bind_target ) ) texture_units = static_cast<unsigned> ( object_bind_target::__TEXTURE2D_END__ ) - static_cast<unsigned> ( object_bind_target::__TEXTURE2D_START__ ) - 1; else
+    if ( is_cubemap_bind_target ( bind_target ) ) texture_units = static_cast<unsigned> ( object_bind_target::__CUBEMAP_START__ ) - static_cast<unsigned> ( object_bind_target::__CUBEMAP_END__ ) - 1; else
+    if ( is_texture2d_multisample_bind_target ( bind_target ) )  texture_units = static_cast<unsigned> ( object_bind_target::__TEXTURE2D_MULTISAMPLE_START__ ) - static_cast<unsigned> ( object_bind_target::__TEXTURE2D_MULTISAMPLE_END__ ) - 1;
+    else throw exception::object_exception { "attempted to perform unbind all operation to unknown target" };
 
-    case object_bind_target::GLH_CUBEMAP_0_TARGET:
-        { 
-            const unsigned num_cubemap_units = static_cast<unsigned> ( object_bind_target::__CUBEMAP_END__ ) - static_cast<unsigned> ( object_bind_target::__CUBEMAP_START__ ) - 1;
-            for ( unsigned i = 0; i < num_cubemap_units; ++i ) binding_change &= unbind ( i );
-        }
-        break;
-
-    default: throw exception::object_exception { "attempted to perform unbind all operation to unknown target" };
-    }
+    /* unbind all units */
+    for ( unsigned i = 0; i < texture_units; ++i ) binding_change |= unbind ( i );
 
     /* return binding change */
     return binding_change;
-}
-
-/* is_bound 
- *
- * check if is bound to a texture unit
- * 
- * unit: the texture unit to check if it is bound to
- * 
- * return: boolean for if the texture is bound to the unit supplied
- */
-bool glh::core::texture_base::is_bound ( const unsigned unit ) const
-{
-    /* return true if is valid and is bount to texture unit */
-    return ( is_object_valid () && object_bindings.at ( bind_target_index + unit ) == id );
 }
 
 
