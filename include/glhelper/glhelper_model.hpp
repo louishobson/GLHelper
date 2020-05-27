@@ -418,7 +418,7 @@ struct glh::model::mesh
 
     /* an array of faces */
     std::vector<face> faces;
-
+    
 
 
     /* definitely opaque
@@ -438,6 +438,36 @@ struct glh::model::mesh
 
     /* the vao controlling the vbo and the ebo */
     core::vao array_object;
+
+
+
+    /* centre
+     *
+     * the average vertex position for the mesh
+     * this acts as the centre of the mesh for colision detection
+     */
+    math::fvec3 centre;
+
+    /* radius
+     * square_radius
+     *
+     * the (square) radius from the centre, such that all vertices of the mesh are contained within it
+     */
+    double radius;
+    double square_radius;
+
+
+
+    /* corners of a cuboid surrounding the mesh
+     *
+     * the advantage of this over using the radius and centre is that stretching will cause all vertices to still be contained
+     */
+    math::fvec3 max_components;
+    math::fvec3 min_components;
+    math::fvec4 pxpypz; math::fvec4 pxpynz;
+    math::fvec4 pxnypz; math::fvec4 pxnynz;
+    math::fvec4 nxpypz; math::fvec4 nxpynz;
+    math::fvec4 nxnypz; math::fvec4 nxnynz;
 };
 
 
@@ -519,6 +549,21 @@ public:
      */
     void render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform = math::identity<4> (), const bool transparent_only = false );
     void render ( const math::mat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
+
+
+
+    /* collision_check
+     *
+     * given a modelview matrix and a movement vector, detect whether the movement will collide with a surface
+     *
+     * transform: the modelview matrix to apply
+     * movement: the movement vector as a direction with magnitude from the origin
+     *
+     * return: true if a collision will occur
+     */
+    bool collision_check ( const math::mat4& transform, const math::vec3& movement ) const;
+
+
 
     /* cache_uniforms
      *
@@ -701,6 +746,14 @@ private:
      */
     void configure_buffers ( mesh& _mesh );
 
+    /* calculate_mesh_generalisations
+     *
+     * calculate generalisations of the mesh
+     * 
+     * _mesh: the mesh to calculate generalisations for
+     */
+    void calculate_mesh_generalisations ( mesh& _mesh );
+
     /* add_node
      *
      * recursively add nodes to the node tree
@@ -730,6 +783,20 @@ private:
      * transparent_only: only render meshes with possible transparent elements (false by default)
      */
     void render_mesh ( const mesh& _mesh ) const;
+
+    /* collision_check_node
+     *
+     * check a node for collisions
+     * 
+     * _node: the node to render
+     * transform: the current modelview transformation from all the previous nodes
+     * movement: the movement vector to check against
+     * direction: the direction of the movement vector (normalised movement)
+     * magnitude: the magnitude of the movment vector
+     * 
+     * return: true if a collision will occur
+     */
+    bool collision_check_node ( const node& _node, const math::fmat4& transform, const math::fvec3& movement, const math::fvec3& direction, const double magnitude ) const;
 
 };
 

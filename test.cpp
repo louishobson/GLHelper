@@ -201,12 +201,14 @@ int main ()
         frames += 1;
         total_time += timeinfo.delta;
 
-        if ( frames % 5 == 0 ) std::cout << "\rfps: " << 1.0 / timeinfo.delta << std::flush;
+        //if ( frames % 5 == 0 ) std::cout << "\rfps: " << 1.0 / timeinfo.delta << std::flush;
 
         if ( dimensions.deltawidth != 0.0 || dimensions.deltaheight != 0.0 || frames % 60 == 0 ) 
         {
             camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
         }
+
+        glh::math::vec3 init_cam_pos = camera.get_position ();
 
         if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0.0, 0.0, -15.0 } );
         if ( window.get_key ( GLFW_KEY_A ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { -15.0, 0.0, 0.0 } );
@@ -231,6 +233,9 @@ int main ()
         mirror_matrix = glh::math::rotate3d ( mirror_matrix, mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } );
         //light_system.pointcoll.lights.at ( 0 ).set_position ( camera.get_position () );
 
+
+
+        island.collision_check ( camera.get_view () * island_matrix, camera.get_position () - init_cam_pos );
 
 
 
