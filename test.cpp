@@ -229,11 +229,11 @@ int main ()
 
 
 
-        //double mirror_angle = glh::math::rad ( 10 ) * timeinfo.delta;
-        //mirror_camera.set_normal ( glh::math::rotate3d ( mirror_camera.get_normal (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
-        //mirror_camera.set_position ( glh::math::rotate3d ( mirror_camera.get_position (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) ); 
-        //mirror_camera.set_ytan ( glh::math::rotate3d ( mirror_camera.get_ytan (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
-        //mirror_matrix = glh::math::rotate3d ( mirror_matrix, mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } );
+        double mirror_angle = glh::math::rad ( 10 ) * timeinfo.delta;
+        mirror_camera.set_normal ( glh::math::rotate3d ( mirror_camera.get_normal (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
+        mirror_camera.set_position ( glh::math::rotate3d ( mirror_camera.get_position (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) ); 
+        mirror_camera.set_ytan ( glh::math::rotate3d ( mirror_camera.get_ytan (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
+        mirror_matrix = glh::math::rotate3d ( mirror_matrix, mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } );
         //light_system.pointcoll.lights.at ( 0 ).set_position ( camera.get_position () );
         
 
