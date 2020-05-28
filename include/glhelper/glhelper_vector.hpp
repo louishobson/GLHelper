@@ -66,6 +66,15 @@
 
 namespace glh
 {
+    namespace meta
+    {
+        /* struct is_vector
+         *
+         * is_vector::value is true if the type supplied is a vector
+         */
+        template<class T> struct is_vector;
+    }
+
     namespace math
     {
         /* TYPES AND CLASSES */
@@ -102,9 +111,9 @@ namespace glh
          * concatenate two vectors, two Ts or a combination into one vector
          */
         template<unsigned M0, unsigned M1, class T> vector<M0 + M1, T> concatenate ( const vector<M0, T>& lhs, const vector<M1, T>& rhs );
-        template<unsigned M, class T> vector<M + 1, T> concatenate ( const vector<M, T>& lhs, const T& rhs );
-        template<unsigned M, class T> vector<M + 1, T> concatenate ( const T& lhs, const vector<M, T>& rhs );
-        template<class T> vector<2, T> concatenate ( const T& lhs, const T& rhs );
+        template<unsigned M, class T, class _T> std::enable_if_t<std::is_convertible<_T, T>::value, vector<M + 1, T>> concatenate ( const vector<M, T>& lhs, const _T& rhs );
+        template<unsigned M, class T, class _T> std::enable_if_t<std::is_convertible<_T, T>::value, vector<M + 1, T>> concatenate ( const _T& lhs, const vector<M, T>& rhs );
+        template<class T> std::enable_if_t<std::is_arithmetic<T>::value, vector<2, T>> concatenate ( const T& lhs, const T& rhs );
 
         /* dot
          *
@@ -124,6 +133,12 @@ namespace glh
          */
         template<unsigned M, class T> double modulus ( const vector<M, T>& vec );
 
+        /* square_modulus
+         *
+         * find the modulus of the vector without square-rooting it
+         */
+        template<unsigned M, class T> double square_modulus ( const vector<M, T>& vec );
+
         /* normalise
          *
          * convert to a unit vector
@@ -136,15 +151,6 @@ namespace glh
          */
         template<unsigned M, class T> double angle ( const vector<M, T>& lhs, const vector<M, T>& rhs );
 
-    }
-
-    namespace meta
-    {
-        /* struct is_vector
-         *
-         * is_vector::value is true if the type supplied is a vector
-         */
-        template<class T> struct is_vector;
     }
 
     namespace exception
@@ -257,14 +263,6 @@ public:
      */
     T * internal_ptr () { return data.data (); }
     const T * internal_ptr () const { return data.data (); }
-
-    /* format_str
-     *
-     * format the vector to a string
-     */
-    std::string format_str () const;
-
-
 
 private:
 
@@ -461,7 +459,7 @@ template<unsigned M0, unsigned M1, class T> inline glh::math::vector<M0 + M1, T>
     /* return new vector */
     return conc;
 }
-template<unsigned M, class T> inline glh::math::vector<M + 1, T> glh::math::concatenate ( const vector<M, T>& lhs, const T& rhs )
+template<unsigned M, class T, class _T> inline std::enable_if_t<std::is_convertible<_T, T>::value, glh::math::vector<M + 1, T>> glh::math::concatenate ( const vector<M, T>& lhs, const _T& rhs )
 {
     /* create the new vector */
     glh::math::vector<M + 1, T> conc;
@@ -474,7 +472,7 @@ template<unsigned M, class T> inline glh::math::vector<M + 1, T> glh::math::conc
     /* return new vector */
     return conc;
 }
-template<unsigned M, class T> inline glh::math::vector<M + 1, T> glh::math::concatenate ( const T& lhs, const vector<M, T>& rhs )
+template<unsigned M, class T, class _T> inline std::enable_if_t<std::is_convertible<_T, T>::value, glh::math::vector<M + 1, T>> glh::math::concatenate ( const _T& lhs, const vector<M, T>& rhs )
 {
     /* create the new vector */
     glh::math::vector<M + 1, T> conc;
@@ -487,7 +485,7 @@ template<unsigned M, class T> inline glh::math::vector<M + 1, T> glh::math::conc
     /* return new vector */
     return conc;
 }
-template<class T> inline glh::math::vector<2, T> glh::math::concatenate ( const T& lhs, const T& rhs )
+template<class T> inline std::enable_if_t<std::is_arithmetic<T>::value, glh::math::vector<2, T>> glh::math::concatenate ( const T& lhs, const T& rhs )
 {
     /* create the new vector */
     glh::math::vector<2, T> conc;
@@ -545,6 +543,22 @@ template<unsigned M, class T> inline double glh::math::modulus ( const vector<M,
 
     /* return the sqrt of the modulus */
     return std::sqrt ( mod );
+}
+
+/* square_modulus
+ *
+ * find the modulus of the vector without square-rooting it
+ */
+template<unsigned M, class T> inline double glh::math::square_modulus ( const vector<M, T>& vec )
+{
+    /* store the modulus */
+    double mod = 0.0;
+
+    /* keep adding to the modulus */
+    for ( unsigned i = 0; i < M; ++i ) mod += vec.at ( i ) * vec.at ( i );
+
+    /* return without square rooting */
+    return mod;
 }
 
 /* normalise
@@ -723,12 +737,12 @@ template<unsigned M, class T> inline glh::math::vector<M, T> operator/ ( const g
     /* return the new vector */
     return result;
 }
-template<unsigned M, class T> inline glh::math::vector<M, T> operator/= ( glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T>& operator/= ( glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
 {
     /* set lhs to equal lhs / rhs */
     return ( lhs = lhs / rhs );
 }
-template<unsigned M, class T> inline glh::math::vector<M, T> operator/= ( glh::math::vector<M, T>& lhs, const double& rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T>& operator/= ( glh::math::vector<M, T>& lhs, const double& rhs )
 {
     /* set lhs to equal lhs * rhs */
     return ( lhs = lhs / rhs );

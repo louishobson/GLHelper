@@ -119,8 +119,8 @@ namespace glh
          *
          * return: the determinant
          */
-        template<unsigned M, class T> double det ( const matrix<M, M, T>& _matrix );
-        template<class T> double det ( const matrix<1, 1, T>& _matrix );
+        template<unsigned M, class T> std::enable_if_t<( M > 1 ), double> det ( const matrix<M, M, T>& _matrix );
+        template<unsigned M, class T> std::enable_if_t<M == 1, double> det ( const matrix<M, M, T>& _matrix );
 
         /* minor
          *
@@ -137,8 +137,8 @@ namespace glh
          * 
          * return: the inverse matrix
          */
-        template<unsigned M, class T> matrix<M, M, T> inverse ( const matrix<M, M, T>& _matrix );
-        template<class T> matrix<1, 1, T> inverse ( const matrix<1, 1, T>& _matrix );
+        template<unsigned M, class T> std::enable_if_t<( M > 1 ), matrix<M, M, T>> inverse ( const matrix<M, M, T>& _matrix );
+        template<unsigned M, class T> std::enable_if_t<M == 1, matrix<M, M, T>> inverse ( const matrix<M, M, T>& _matrix );
     }
 
     namespace meta
@@ -577,7 +577,7 @@ template<unsigned M, unsigned N, class T> inline glh::math::matrix<M - 1, N - 1,
  *
  * return: the determinant
  */
-template<unsigned M, class T> inline double glh::math::det ( const matrix<M, M, T>& _matrix )
+template<unsigned M, class T> inline std::enable_if_t<( M > 1 ), double> glh::math::det ( const matrix<M, M, T>& _matrix )
 {
     /* store the running determinant */
     double det = 0.0;
@@ -600,7 +600,7 @@ template<unsigned M, class T> inline double glh::math::det ( const matrix<M, M, 
     /* return the determinant */
     return det;
 }
-template<class T> inline double glh::math::det ( const matrix<1, 1, T>& _matrix )
+template<unsigned M, class T> inline std::enable_if_t<M == 1, double> glh::math::det ( const matrix<M, M, T>& _matrix )
 {
     /* return the only value in the matrix */
     return _matrix.at ( 0, 0 );
@@ -625,7 +625,7 @@ template<unsigned M, class T> inline double glh::math::minor ( const matrix<M, M
  * 
  * return: the inverse matrix
  */
-template<unsigned M, class T> inline glh::math::matrix<M, M, T> glh::math::inverse ( const matrix<M, M, T>& _matrix )
+template<unsigned M, class T> inline std::enable_if_t<( M > 1 ), glh::math::matrix<M, M, T>> glh::math::inverse ( const matrix<M, M, T>& _matrix )
 {
     /* get the determinant */
     const double determinant = det ( _matrix );
@@ -648,7 +648,7 @@ template<unsigned M, class T> inline glh::math::matrix<M, M, T> glh::math::inver
     /* return the transpose of the new matrix divided the determinant of the original matrix */
     return transpose ( cof ) / determinant;
 }
-template<class T> inline glh::math::matrix<1, 1, T> glh::math::inverse ( const matrix<1, 1, T>& _matrix )
+template<unsigned M, class T> inline std::enable_if_t<M == 1, glh::math::matrix<M, M, T>> glh::math::inverse ( const matrix<M, M, T>& _matrix )
 {
     /* if only element is 0, throw */
     if ( _matrix.at ( 0 ) == 0 ) throw exception::matrix_exception { "cannot find inverse of a singular matrix" };

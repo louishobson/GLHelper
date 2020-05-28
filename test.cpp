@@ -32,9 +32,10 @@ int main ()
 {
 
     {
-        
-    glh::glfw::window window;
+     
+    glh::glfw::window window { "Test Window", 600, 400, 4 };
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
+    glh::core::renderer::enable_multisample ();
 
     glh::core::vshader basic_vshader { "shaders/vertex.basic.glsl" };
     glh::core::fshader basic_fshader { "shaders/fragment.basic.glsl" };
@@ -80,9 +81,14 @@ int main ()
 
     glh::core::texture2d mirror_tex { 1000, 1000, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE };
     glh::core::rbo mirror_rbo { 1000, 1000, GL_DEPTH24_STENCIL8 };
+    glh::core::texture2d_multisample mirror_tex_ms { 1000, 1000, GL_RGBA8, 4 };
+    glh::core::rbo mirror_rbo_ms { 1000, 1000, GL_DEPTH24_STENCIL8, 4 };
     glh::core::fbo mirror_fbo;
+    glh::core::fbo mirror_fbo_ms;
     mirror_fbo.attach_texture2d ( mirror_tex, GL_COLOR_ATTACHMENT0 );
     mirror_fbo.attach_rbo ( mirror_rbo, GL_DEPTH_STENCIL_ATTACHMENT );
+    mirror_fbo_ms.attach_texture2d ( mirror_tex_ms, GL_COLOR_ATTACHMENT0 );
+    mirror_fbo_ms.attach_rbo ( mirror_rbo_ms, GL_DEPTH_STENCIL_ATTACHMENT );
 
     glh::math::mat4 mirror_matrix = 
     glh::math::translate3d 
@@ -229,8 +235,7 @@ int main ()
         mirror_camera.set_ytan ( glh::math::rotate3d ( mirror_camera.get_ytan (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
         mirror_matrix = glh::math::rotate3d ( mirror_matrix, mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } );
         //light_system.pointcoll.lights.at ( 0 ).set_position ( camera.get_position () );
-
-
+        
 
 
         /*
@@ -289,7 +294,7 @@ int main ()
         glh::core::renderer::disable_blend ();
         glh::core::renderer::set_depth_mask ( GL_TRUE );
                 
-        mirror_fbo.unbind ();
+        mirror_fbo_ms.unbind ();
         glh::core::renderer::set_front_face ( GL_CCW );
         glh::core::renderer::clear ();
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
@@ -297,7 +302,7 @@ int main ()
         island.render ( island_matrix, false );
         chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, false );
 
-        mirror_fbo.bind ();
+        mirror_fbo_ms.bind ();
         glh::core::renderer::set_front_face ( GL_CW );
         glh::core::renderer::clear ();
         glh::core::renderer::viewport ( 0, 0, 1000, 1000 );
@@ -313,14 +318,14 @@ int main ()
 
 
 
-        mirror_fbo.unbind ();
+        mirror_fbo_ms.unbind ();
         glh::core::renderer::set_front_face ( GL_CCW );
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
         camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         island.render ( island_matrix, true );
         chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, true );
 
-        mirror_fbo.bind ();
+        mirror_fbo_ms.bind ();
         glh::core::renderer::set_front_face ( GL_CW );
         glh::core::renderer::viewport ( 0, 0, 1000, 1000 );
         mirror_camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
@@ -338,7 +343,8 @@ int main ()
         glh::core::renderer::set_depth_mask ( GL_TRUE );
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
 
-        mirror_fbo.unbind ();
+        mirror_fbo_ms.unbind ();
+        mirror_fbo.blit_copy ( mirror_fbo_ms, 0, 0, 1000, 1000, 0, 0, 1000, 1000, GL_COLOR_BUFFER_BIT, GL_LINEAR );
         mirror_tex.bind ( 0 );
         glh::core::renderer::draw_elements ( mirror_vao, GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
 

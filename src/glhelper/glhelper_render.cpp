@@ -246,6 +246,29 @@ void glh::core::renderer::set_front_face ( const GLenum winding )
     }
 }
 
+/* enable/disable_multisample
+ *
+ * enable/disable MSAA
+ */
+void glh::core::renderer::enable_multisample ()
+{
+    /* if is disabled, enable */
+    if ( !multisample_state )
+    {
+        glEnable ( GL_MULTISAMPLE );
+        multisample_state = true;
+    }
+}
+void glh::core::renderer::disable_multisample ()
+{
+    /* if is enabled, disable */
+    if ( multisample_state )
+    {
+        glDisable ( GL_MULTISAMPLE );
+        multisample_state = false;
+    }
+}
+
 
 
 /* RENDERER STATIC MEMBERS DEFINITIONS */
@@ -276,3 +299,6 @@ GLenum glh::core::renderer::cull_face { GL_BACK };
 
 /* front face is GL_CCW by default */
 GLenum glh::core::renderer::front_face ( GL_CCW );
+
+/* multisampling is disabled by default */
+bool glh::core::renderer::multisample_state { false };

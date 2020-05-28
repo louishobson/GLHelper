@@ -280,8 +280,8 @@ public:
      * 
      * returns true if a change in binding occured
      */
-    bool bind_copy_read () const;
-    bool bind_copy_write () const;
+    bool bind_copy_read () const { return bind ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
+    bool bind_copy_write () const  { return bind ( object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET ); }
 
     /* unbind_copy_read/write
      *
@@ -289,8 +289,8 @@ public:
      * 
      * returns true if a change in binding occured
      */
-    bool unbind_copy_read () const;
-    bool unbind_copy_write () const;
+    bool unbind_copy_read () const { return unbind ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
+    bool unbind_copy_write () const  { return unbind ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
 
     /* unbind_all
      *
@@ -299,14 +299,14 @@ public:
      * 
      * returns true if a change in binding occured
      */
-    bool unbind_all () const;
+    bool unbind_all () const { return ( unbind () | unbind_copy_read () | unbind_copy_write () ); }
 
     /* is_copy_read/write_bound
      *
      * check if the buffer is bound to the copy read/write targets
      */
-    bool is_copy_read_bound () const;
-    bool is_copy_write_bound () const;
+    bool is_copy_read_bound () const { return is_bound ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
+    bool is_copy_write_bound () const { return is_bound ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
 
 
 

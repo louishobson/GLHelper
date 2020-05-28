@@ -28,11 +28,14 @@
  * creates a working glfw window
  * glad will be implicity loaded to the window's context
  */
-glh::glfw::window::window ( const std::string& title, const int width, const int height )
+glh::glfw::window::window ( const std::string& title, const unsigned width, const unsigned height, const unsigned msaa_samples )
     : managed { true }
 {
     /* register object */
     register_object ();
+
+    /* hint at number of samples */
+    glfwWindowHint ( GLFW_SAMPLES, msaa_samples );
 
     /* create window */
     winptr = glfwCreateWindow ( width, height, title.c_str (), NULL, NULL );

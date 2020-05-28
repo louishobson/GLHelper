@@ -88,6 +88,13 @@ namespace glh
          * represents a cubemap
          */
         class cubemap;
+
+        /* class texture2d_multisample : texture_base
+         *
+         * multisample2d texture
+         * no image will be loaded into this texture, as it will be used as a buffer rather than to store images
+         */
+        class texture2d_multisample;
     }
 
     namespace exception
@@ -168,7 +175,7 @@ public:
      * unit: the texture unit to bind to/unbind from
      */
     using object::bind;
-    bool bind ( const unsigned texture_unit ) const;
+    bool bind ( const unsigned texture_unit ) const { return bind ( static_cast<object_bind_target> ( static_cast<unsigned> ( bind_target ) + texture_unit ) ); }
 
     /* unbind
      *
@@ -177,7 +184,7 @@ public:
      * uniy: the texture unit to unbind from
      */
     using object::unbind;
-    bool unbind ( const unsigned texture_unit ) const;
+    bool unbind ( const unsigned texture_unit ) const { return unbind ( static_cast<object_bind_target> ( static_cast<unsigned> ( bind_target ) + texture_unit ) ); }
 
     /* unbind_all
      *
@@ -195,9 +202,16 @@ public:
      * return: boolean for if the texture is bound to the unit supplied
      */
     using object::is_bound;
-    bool is_bound ( const unsigned texture_unit ) const;
+    bool is_bound ( const unsigned texture_unit ) const { return is_bound ( static_cast<object_bind_target> ( static_cast<unsigned> ( bind_target ) + texture_unit ) ); }
 
 
+
+    /* get_width/height
+     *
+     * get the width and height of the texture
+     */
+    const int& get_width () const { return width; }
+    const int& get_height () const { return height; }
 
 protected:
 
@@ -234,7 +248,7 @@ public:
      * 
      * _path: path to the image for the texture
      */
-    texture2d ( const std::string& _path );
+    explicit texture2d ( const std::string& _path );
 
     /* empty texture constructor
      *
@@ -284,13 +298,6 @@ public:
      * get the path the texture was originally imported from
      */
     const std::string& get_path () const { return path; }
-
-    /* get_width/height
-     *
-     * get the width and height of the texture
-     */
-    const int& get_width () const { return width; }
-    const int& get_height () const { return height; }
 
     /* get_channels
      *
@@ -376,13 +383,6 @@ public:
      */
     const std::string& get_path ( const unsigned i ) const { return face_textures.at ( i ).path; }
 
-    /* get_width/height
-     *
-     * get the width and height of the texture
-     */
-    const int& get_width () const { return width; }
-    const int& get_height () const { return height; }
-
     /* get_channels
      *
      * get the number of channels the face at layer i orginally had
@@ -402,6 +402,71 @@ private:
 
     /* array of face_texture structs to store info on each face texture */
     std::array<face_texture, 6> face_textures;
+
+};
+
+
+
+/* TEXTURE2D_MULTISAMPLE DEFINITION */
+
+/* class texture2d_multisample : texture_base
+ *
+ * multisample2d texture
+ * no image will be loaded into this texture, as it will be used as a buffer rather than to store images
+ */
+class glh::core::texture2d_multisample : public texture_base
+{
+public:
+
+    /* empty texture constructor
+     * 
+     * constructs a multisample texture with a given size and number of samples 
+     * 
+     * _width/_height: the width and height of the texture
+     * _internal_format: the internal format of the texture (e.g. specific bit arrangements)
+     * _samples: the number of sampes the texture should contain
+     * _fixed_sample_locations: defaults to true - I don't know what this setting does tbh
+     */
+    texture2d_multisample ( const int _width, const int _height, const GLenum _internal_format, const unsigned _samples, const bool _fixed_sample_locations = GL_TRUE );
+    
+    /* deleted zero-parameter constructor */
+    texture2d_multisample () = delete;
+
+    /* deleted copy comstructor */
+    texture2d_multisample ( const texture2d_multisample& other ) = delete;
+
+    /* default move constructor */
+    texture2d_multisample ( texture2d_multisample&& other ) = default;
+
+    /* default destructor */
+    ~texture2d_multisample () = default;
+
+
+
+    /* get_bound_object_pointer
+     *
+     * produce a pointer to the texture2d_multisample currently bound
+     * NULL is returned if no object is bound to the bind point
+     * unit: the texture unit to get the object bound to
+     */
+    using object::get_bound_object_pointer;
+    static texture2d_multisample * get_bound_object_pointer ( const unsigned unit = 0 );
+
+
+
+    /* get_samples
+     * 
+     * get the number of samples the texture has
+     */
+    const unsigned& get_samples () const { return samples; }
+
+private:
+
+    /* number of samples of the texture */
+    const unsigned samples;
+
+    /* whether fixed sample locations are being used */
+    const bool fixed_sample_locations;
 
 };
 

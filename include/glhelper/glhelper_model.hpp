@@ -418,7 +418,7 @@ struct glh::model::mesh
 
     /* an array of faces */
     std::vector<face> faces;
-
+    
 
 
     /* definitely opaque
@@ -438,6 +438,7 @@ struct glh::model::mesh
 
     /* the vao controlling the vbo and the ebo */
     core::vao array_object;
+
 };
 
 
@@ -519,6 +520,8 @@ public:
      */
     void render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform = math::identity<4> (), const bool transparent_only = false );
     void render ( const math::mat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
+
+
 
     /* cache_uniforms
      *

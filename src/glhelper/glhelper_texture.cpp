@@ -47,80 +47,6 @@ glh::core::texture_base::texture_base ( const minor_object_type _minor_type, con
 
 
 
-/* bind/unbind
- *
- * bind the texture to a texture unit
- * 
- * unit: the texture unit to bind to/unbind from
- */
-bool glh::core::texture_base::bind ( const unsigned unit ) const
-{
-    /* throw if not valid */
-    assert_is_object_valid ( "bind" );
-
-    /* if already bound, return false */
-    if ( object_bindings.at ( bind_target_index + unit ) == id ) return false;
-
-    /* switch for bind target */
-    switch ( bind_target )
-    {
-    case object_bind_target::GLH_TEXTURE2D_0_TARGET: 
-        glActiveTexture ( GL_TEXTURE0 + unit );
-        glBindTexture ( GL_TEXTURE_2D, id );
-        break;
-
-    case object_bind_target::GLH_CUBEMAP_0_TARGET: 
-        glActiveTexture ( GL_TEXTURE0 + unit );
-        glBindTexture ( GL_TEXTURE_CUBE_MAP, id );
-        break;
-
-    default: throw exception::object_exception { "attempted to perform unbind operation to unknown target" };
-    }
-
-    /* set binding */
-    object_bindings.at ( bind_target_index + unit ) = id;
-
-    /* return true */
-    return true;
-}
-
-/* unbind
- *
- * unbind the texture from a texture unit
- * 
- * uniy: the texture unit to unbind from
- */
-bool glh::core::texture_base::unbind ( const unsigned unit ) const
-{
-    /* throw if not valid */
-    assert_is_object_valid ( "unbind" );
-
-    /* if not bound, return false */
-    if ( object_bindings.at ( bind_target_index + unit ) != id ) return false;
-
-    /* switch for bind target */
-    switch ( bind_target )
-    {
-    case object_bind_target::GLH_TEXTURE2D_0_TARGET: 
-        glActiveTexture ( GL_TEXTURE0 + unit );
-        glBindTexture ( GL_TEXTURE_2D, 0 );
-        break;
-
-    case object_bind_target::GLH_CUBEMAP_0_TARGET: 
-        glActiveTexture ( GL_TEXTURE0 + unit );
-        glBindTexture ( GL_TEXTURE_CUBE_MAP, 0 );
-        break;
-
-    default: throw exception::object_exception { "attempted to perform unbind operation to unknown target" };
-    }
-
-    /* set unbinding */
-    object_bindings.at ( bind_target_index + unit ) = 0;
-
-    /* return true */
-    return true;
-}
-
 /* unbind_all
  *
  * unbind from all targets
@@ -131,42 +57,18 @@ bool glh::core::texture_base::unbind_all () const
     /* track whether anything was unbound */
     bool binding_change = false;
 
-    /* switch for bind target */
-    switch ( bind_target )
-    {
-    case object_bind_target::GLH_TEXTURE2D_0_TARGET:
-        {
-            const unsigned num_texture2d_units = static_cast<unsigned> ( object_bind_target::__TEXTURE2D_END__ ) - static_cast<unsigned> ( object_bind_target::__TEXTURE2D_START__ ) - 1;
-            for ( unsigned i = 0; i < num_texture2d_units; ++i ) binding_change &= unbind ( i );
-        }
-        break;
+    /* get number of units */
+    unsigned texture_units;
+    if ( is_texture2d_bind_target ( bind_target ) ) texture_units = static_cast<unsigned> ( object_bind_target::__TEXTURE2D_END__ ) - static_cast<unsigned> ( object_bind_target::__TEXTURE2D_START__ ) - 1; else
+    if ( is_cubemap_bind_target ( bind_target ) ) texture_units = static_cast<unsigned> ( object_bind_target::__CUBEMAP_START__ ) - static_cast<unsigned> ( object_bind_target::__CUBEMAP_END__ ) - 1; else
+    if ( is_texture2d_multisample_bind_target ( bind_target ) )  texture_units = static_cast<unsigned> ( object_bind_target::__TEXTURE2D_MULTISAMPLE_START__ ) - static_cast<unsigned> ( object_bind_target::__TEXTURE2D_MULTISAMPLE_END__ ) - 1;
+    else throw exception::object_exception { "attempted to perform unbind all operation to unknown target" };
 
-    case object_bind_target::GLH_CUBEMAP_0_TARGET:
-        { 
-            const unsigned num_cubemap_units = static_cast<unsigned> ( object_bind_target::__CUBEMAP_END__ ) - static_cast<unsigned> ( object_bind_target::__CUBEMAP_START__ ) - 1;
-            for ( unsigned i = 0; i < num_cubemap_units; ++i ) binding_change &= unbind ( i );
-        }
-        break;
-
-    default: throw exception::object_exception { "attempted to perform unbind all operation to unknown target" };
-    }
+    /* unbind all units */
+    for ( unsigned i = 0; i < texture_units; ++i ) binding_change |= unbind ( i );
 
     /* return binding change */
     return binding_change;
-}
-
-/* is_bound 
- *
- * check if is bound to a texture unit
- * 
- * unit: the texture unit to check if it is bound to
- * 
- * return: boolean for if the texture is bound to the unit supplied
- */
-bool glh::core::texture_base::is_bound ( const unsigned unit ) const
-{
-    /* return true if is valid and is bount to texture unit */
-    return ( is_object_valid () && object_bindings.at ( bind_target_index + unit ) == id );
 }
 
 
@@ -179,13 +81,13 @@ void glh::core::texture_base::set_mag_filter ( const GLenum opt )
 { 
     /* bind, set paramater, unbind */
     bind (); 
-    glTexParameteri ( gl_target, GL_TEXTURE_MAG_FILTER, opt ); 
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_MAG_FILTER, opt ); 
 }
 void glh::core::texture_base::set_min_filter ( const GLenum opt ) 
 { 
     /* bind, set paramater */
     bind (); 
-    glTexParameteri ( gl_target, GL_TEXTURE_MIN_FILTER, opt );
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_MIN_FILTER, opt );
 }
 
 /* set_(s/t/r)_wrap
@@ -196,27 +98,27 @@ void glh::core::texture_base::set_s_wrap ( const GLenum opt )
 { 
     /* bind, set paramater */
     bind (); 
-    glTexParameteri ( gl_target, GL_TEXTURE_WRAP_S, opt );
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_S, opt );
 }
 void glh::core::texture_base::set_t_wrap ( const GLenum opt ) 
 { 
     /* bind, set paramater */
     bind (); 
-    glTexParameteri ( gl_target, GL_TEXTURE_WRAP_T, opt );
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_T, opt );
 }
 void glh::core::texture_base::set_r_wrap ( const GLenum opt ) 
 { 
     /* bind, set paramater */
     bind (); 
-    glTexParameteri ( gl_target, GL_TEXTURE_WRAP_R, opt );
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_R, opt );
 }
 void glh::core::texture_base::set_wrap ( const GLenum opt ) 
 {
     /* bind, set paramaters */
     bind (); 
-    glTexParameteri ( gl_target, GL_TEXTURE_WRAP_S, opt ); 
-    glTexParameteri ( gl_target, GL_TEXTURE_WRAP_T, opt );
-    glTexParameteri ( gl_target, GL_TEXTURE_WRAP_R, opt );
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_S, opt ); 
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_T, opt );
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_R, opt );
 }
 
 /* generate_mipmap
@@ -227,7 +129,7 @@ void glh::core::texture_base::generate_mipmap ()
 {
     /* bind and generate mipmap */
     bind ();
-    glGenerateMipmap ( gl_target );
+    glGenerateMipmap ( opengl_bind_target );
 }
 
 
@@ -258,7 +160,7 @@ glh::core::texture2d::texture2d ( const std::string& _path )
      * although the original image may not have 4 channels, by putting the last parameter as 4 in stbi_load,
      * the image is forced to have 4 channels
      */
-    glTexImage2D ( gl_target, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
+    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
     
     /* generate mipmap */
     generate_mipmap ();
@@ -293,7 +195,10 @@ glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height,
     bind ();
 
     /* set texture data */
-    glTexImage2D ( gl_target, 0, internal_format, width, height, 0, format, _type, NULL );
+    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, _type, NULL );
+
+    /* set default wrapping options */
+    set_wrap ( GL_REPEAT );
 
     /* set mag/min options */
     set_mag_filter ( GL_LINEAR );
@@ -435,11 +340,57 @@ glh::core::cubemap::cubemap ( const std::string& path )
  * produce a pointer to the cubemap currently bound
  * NULL is returned if no object is bound to the bind point
  *
- * target: the bind target to get the object from
  * unit: the texture unit to get the object bound to
  */
 glh::core::cubemap * glh::core::cubemap::get_bound_object_pointer ( const unsigned unit )
 {
     /* return the casted object */
     return dynamic_cast<cubemap *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_TEXTURE_TYPE ) ).at ( object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET ) + unit ) ) );    
+}
+
+
+
+/* TEXTURE2D_MULTISAMPLE IMPLEMENTATION */
+
+/* empty texture constructor
+ * 
+ * constructs a multisample texture with a given size and number of samples 
+ * 
+ * _width/_height: the width and height of the texture
+ * _internal_format: the internal format of the texture (e.g. specific bit arrangements)
+ * _samples: the number of sampes the texture should contain
+ * _fixed_sample_locations: defaults to true - I don't know what this setting does tbh
+ */
+glh::core::texture2d_multisample::texture2d_multisample ( const int _width, const int _height, const GLenum _internal_format, const unsigned _samples, const bool _fixed_sample_locations )
+    : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE, _internal_format, GL_NONE, _width, _height }
+    , samples { _samples }
+    , fixed_sample_locations { _fixed_sample_locations }
+{
+    /* bind texture object */
+    bind ();
+
+    /* set texture data */
+    glTexImage2DMultisample ( opengl_bind_target, samples, internal_format, width, height, fixed_sample_locations );
+
+    /* set default wrapping options */
+    set_wrap ( GL_REPEAT );
+
+    /* set mag/min options */
+    set_mag_filter ( GL_LINEAR );
+    set_min_filter ( GL_LINEAR );
+}
+
+
+
+/* get_bound_object_pointer
+ *
+ * produce a pointer to the texture2d_multisample currently bound
+ * NULL is returned if no object is bound to the bind point
+ *
+ * unit: the texture unit to get the object bound to
+ */
+glh::core::texture2d_multisample * glh::core::texture2d_multisample::get_bound_object_pointer ( const unsigned unit )
+{
+    /* return the casted object */
+    return dynamic_cast<texture2d_multisample *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_TEXTURE_TYPE ) ).at ( object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET ) + unit ) ) );    
 }

@@ -78,6 +78,8 @@ void glh::model::model::render ( const math::mat4& transform, const bool transpa
     render_node ( root_node, transform );
 }
 
+
+
 /* cache_uniforms
  *
  * cache all uniforms
@@ -110,6 +112,7 @@ void glh::model::model::cache_uniforms ( core::struct_uniform& material_uni, cor
         } );
     }
 }
+
 
 
 /* process_scene
