@@ -197,6 +197,9 @@ glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height,
     /* set texture data */
     glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, _type, NULL );
 
+    /* set default wrapping options */
+    set_wrap ( GL_REPEAT );
+
     /* set mag/min options */
     set_mag_filter ( GL_LINEAR );
     set_min_filter ( GL_LINEAR );
@@ -337,11 +340,57 @@ glh::core::cubemap::cubemap ( const std::string& path )
  * produce a pointer to the cubemap currently bound
  * NULL is returned if no object is bound to the bind point
  *
- * target: the bind target to get the object from
  * unit: the texture unit to get the object bound to
  */
 glh::core::cubemap * glh::core::cubemap::get_bound_object_pointer ( const unsigned unit )
 {
     /* return the casted object */
     return dynamic_cast<cubemap *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_TEXTURE_TYPE ) ).at ( object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET ) + unit ) ) );    
+}
+
+
+
+/* TEXTURE2D_MULTISAMPLE IMPLEMENTATION */
+
+/* empty texture constructor
+ * 
+ * constructs a multisample texture with a given size and number of samples 
+ * 
+ * _width/_height: the width and height of the texture
+ * _internal_format: the internal format of the texture (e.g. specific bit arrangements)
+ * _samples: the number of sampes the texture should contain
+ * _fixed_sample_locations: defaults to true - I don't know what this setting does tbh
+ */
+glh::core::texture2d_multisample::texture2d_multisample ( const int _width, const int _height, const GLenum _internal_format, const unsigned _samples, const bool _fixed_sample_locations )
+    : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE, _internal_format, GL_NONE, _width, _height }
+    , samples { _samples }
+    , fixed_sample_locations { _fixed_sample_locations }
+{
+    /* bind texture object */
+    bind ();
+
+    /* set texture data */
+    glTexImage2DMultisample ( opengl_bind_target, samples, internal_format, width, height, fixed_sample_locations );
+
+    /* set default wrapping options */
+    set_wrap ( GL_REPEAT );
+
+    /* set mag/min options */
+    set_mag_filter ( GL_LINEAR );
+    set_min_filter ( GL_LINEAR );
+}
+
+
+
+/* get_bound_object_pointer
+ *
+ * produce a pointer to the texture2d_multisample currently bound
+ * NULL is returned if no object is bound to the bind point
+ *
+ * unit: the texture unit to get the object bound to
+ */
+glh::core::texture2d_multisample * glh::core::texture2d_multisample::get_bound_object_pointer ( const unsigned unit )
+{
+    /* return the casted object */
+    return dynamic_cast<texture2d_multisample *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_TEXTURE_TYPE ) ).at ( object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET ) + unit ) ) );    
 }
