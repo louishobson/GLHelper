@@ -178,6 +178,8 @@ bool glh::core::object::bind ( const object_bind_target& target ) const
 
     case object_bind_target::GLH_RBO_TARGET: glBindRenderbuffer ( opengl_target, id ); break;
     case object_bind_target::GLH_FBO_TARGET: glBindFramebuffer ( opengl_target, id ); break;
+    case object_bind_target::GLH_READ_FBO_TARGET: glBindFramebuffer ( opengl_target, id ); break;
+    case object_bind_target::GLH_DRAW_FBO_TARGET: glBindFramebuffer ( opengl_target, id ); break;
 
     case object_bind_target::GLH_PROGRAM_TARGET: glUseProgram ( id ); break;
 
@@ -201,7 +203,7 @@ bool glh::core::object::bind ( const object_bind_target& target ) const
             const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET );
             glActiveTexture ( GL_TEXTURE0 + unit );
             glBindTexture ( opengl_target, id );
-        } else throw exception::object_exception { "attempted to perform glh to opengl bind target conversion on unknown target" };
+        } else throw exception::object_exception { "attempted to bind unknown bind target" };
 
     }
 
@@ -237,6 +239,8 @@ bool glh::core::object::unbind ( const object_bind_target& target ) const
 
     case object_bind_target::GLH_RBO_TARGET: glBindRenderbuffer ( opengl_target, 0 ); break;
     case object_bind_target::GLH_FBO_TARGET: glBindFramebuffer ( opengl_target, 0 ); break;
+    case object_bind_target::GLH_READ_FBO_TARGET: glBindFramebuffer ( opengl_target, 0 ); break;
+    case object_bind_target::GLH_DRAW_FBO_TARGET: glBindFramebuffer ( opengl_target, 0 ); break;
 
     case object_bind_target::GLH_PROGRAM_TARGET: glUseProgram ( id ); break;
 
@@ -260,7 +264,7 @@ bool glh::core::object::unbind ( const object_bind_target& target ) const
             const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET );
             glActiveTexture ( GL_TEXTURE0 + unit );
             glBindTexture ( opengl_target, 0 );
-        } else throw exception::object_exception { "attempted to perform glh to opengl bind target conversion on unknown target" };
+        } else throw exception::object_exception { "attempted to unbind unknown bind target" };
 
     }
 
@@ -374,6 +378,7 @@ glh::core::major_object_type glh::core::object::to_major_object_type ( const min
 
     case minor_object_type::GLH_TEXTURE2D_TYPE: return major_object_type::GLH_TEXTURE_TYPE;
     case minor_object_type::GLH_CUBEMAP_TYPE: return major_object_type::GLH_TEXTURE_TYPE;
+    case minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE: return major_object_type::GLH_TEXTURE_TYPE;
 
     case minor_object_type::GLH_UNKNOWN_TYPE: return major_object_type::GLH_UNKNOWN_TYPE;
     
@@ -421,6 +426,8 @@ GLenum glh::core::object::to_opengl_bind_target ( const object_bind_target targe
 
     case object_bind_target::GLH_RBO_TARGET: return GL_RENDERBUFFER;
     case object_bind_target::GLH_FBO_TARGET: return GL_FRAMEBUFFER;
+    case object_bind_target::GLH_READ_FBO_TARGET: return GL_READ_FRAMEBUFFER;
+    case object_bind_target::GLH_DRAW_FBO_TARGET: return GL_DRAW_FRAMEBUFFER;
 
     case object_bind_target::GLH_PROGRAM_TARGET: return GL_NONE;
 
@@ -429,7 +436,7 @@ GLenum glh::core::object::to_opengl_bind_target ( const object_bind_target targe
     default:
         if ( is_texture2d_bind_target ( target ) ) return GL_TEXTURE_2D; else
         if ( is_cubemap_bind_target ( target ) ) return GL_TEXTURE_CUBE_MAP; else
-        if ( is_texture2d_multisample_bind_target ( target ) ) return GL_TEXTURE_2D_MULTISAMPLE;
+        if ( is_texture2d_multisample_bind_target ( target ) ) return GL_TEXTURE_2D_MULTISAMPLE; else
         throw exception::object_exception { "attempted to perform glh to opengl bind target conversion on unknown target" };
     }
 }
@@ -447,6 +454,8 @@ glh::core::major_object_type glh::core::object::to_major_object_type ( const obj
 
     case object_bind_target::GLH_RBO_TARGET: return major_object_type::GLH_RBO_TYPE;
     case object_bind_target::GLH_FBO_TARGET: return major_object_type::GLH_FBO_TYPE;
+    case object_bind_target::GLH_READ_FBO_TARGET: return major_object_type::GLH_FBO_TYPE;
+    case object_bind_target::GLH_DRAW_FBO_TARGET: return major_object_type::GLH_FBO_TYPE;
 
     case object_bind_target::GLH_PROGRAM_TARGET: return major_object_type::GLH_PROGRAM_TYPE;
 
@@ -456,7 +465,7 @@ glh::core::major_object_type glh::core::object::to_major_object_type ( const obj
         if ( is_texture2d_bind_target ( target ) ) return major_object_type::GLH_TEXTURE_TYPE; else
         if ( is_cubemap_bind_target ( target ) ) return major_object_type::GLH_TEXTURE_TYPE; else
         if ( is_texture2d_multisample_bind_target ( target ) ) return major_object_type::GLH_TEXTURE_TYPE; else
-        throw exception::object_exception { "attempted to perform glh to opengl bind target conversion on unknown target" };
+        throw exception::object_exception { "attempted to perform glh to major object type conversion on unknown target" };
     }
 }
 

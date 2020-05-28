@@ -187,6 +187,8 @@ enum struct glh::core::object_bind_target : unsigned
     
     GLH_RBO_TARGET,
     GLH_FBO_TARGET,
+    GLH_READ_FBO_TARGET,
+    GLH_DRAW_FBO_TARGET,
 
     GLH_PROGRAM_TARGET,
 
