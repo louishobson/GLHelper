@@ -87,9 +87,9 @@ public:
      * 
      * _width/_height: the width/height of the renderbuffer
      * _format: the storage format of the renderbuffer
-     * _samples: the number of samples the renderbuffer should contain (defaults to 1)
+     * _samples: the number of samples the renderbuffer should contain (defaults to 0, meaning no multisampling)
      */
-    rbo ( const unsigned _width, const unsigned _height, const GLenum _format, const unsigned _samples = 1 );
+    rbo ( const unsigned _width, const unsigned _height, const GLenum _format, const unsigned _samples = 0 );
 
     /* deleted zero-parameter constructor */
     rbo () = delete;

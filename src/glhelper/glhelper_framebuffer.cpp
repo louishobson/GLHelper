@@ -27,7 +27,7 @@
  * 
  * _width/_height: the width/height of the renderbuffer
  * _format: the storage format of the renderbuffer
- * _samples: the number of samples the renderbuffer should contain (defaults to 1)
+ * _samples: the number of samples the renderbuffer should contain defaults to 0, (meaning no multisampling)
  */
 glh::core::rbo::rbo ( const unsigned _width, const unsigned _height, const GLenum _format, const unsigned _samples )
     : object { minor_object_type::GLH_RBO_TYPE }
@@ -38,7 +38,7 @@ glh::core::rbo::rbo ( const unsigned _width, const unsigned _height, const GLenu
 {
     /* bind, set the storage, unbind */
     const bool binding_change = bind ();
-    if ( samples <= 1 ) glRenderbufferStorage ( opengl_bind_target, format, width, height );
+    if ( samples == 0 ) glRenderbufferStorage ( opengl_bind_target, format, width, height );
     else glRenderbufferStorageMultisample ( opengl_bind_target, samples, format, width, height );
     if ( binding_change ) unbind ();
 }
