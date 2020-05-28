@@ -25,15 +25,21 @@
  *
  * construct a renderbuffer with a given size and storage type
  * 
- * width/height: the width/height of the renderbuffer
- * format: the storage format of the renderbuffer
+ * _width/_height: the width/height of the renderbuffer
+ * _format: the storage format of the renderbuffer
+ * _samples: the number of samples the renderbuffer should contain (defaults to 1)
  */
-glh::core::rbo::rbo ( const unsigned width, const unsigned height, const GLenum format )
+glh::core::rbo::rbo ( const unsigned _width, const unsigned _height, const GLenum _format, const unsigned _samples )
     : object { minor_object_type::GLH_RBO_TYPE }
+    , width { _width }
+    , height { _height }
+    , format { _format }
+    , samples { _samples }
 {
     /* bind, set the storage, unbind */
     const bool binding_change = bind ();
-    glRenderbufferStorage ( opengl_bind_target, format, width, height );
+    if ( samples <= 1 ) glRenderbufferStorage ( opengl_bind_target, format, width, height );
+    else glRenderbufferStorageMultisample ( opengl_bind_target, samples, format, width, height );
     if ( binding_change ) unbind ();
 }
 
@@ -54,7 +60,18 @@ void glh::core::fbo::attach_texture2d ( const texture2d& texture, const GLenum a
     /* bind the fbo */
     const bool binding_change = bind ();
 
-    /* attach the rbo */
+    /* attach the texture */
+    glFramebufferTexture2D ( opengl_bind_target, attachment, texture.get_opengl_bind_taregt (), texture.internal_id (), mipmap );
+
+    /* unbind fbo */
+    if ( binding_change ) unbind ();
+}
+void glh::core::fbo::attach_texture2d ( const texture2d_multisample& texture, const GLenum attachment, GLint mipmap )
+{
+    /* bind the fbo */
+    const bool binding_change = bind ();
+
+    /* attach the texture */
     glFramebufferTexture2D ( opengl_bind_target, attachment, texture.get_opengl_bind_taregt (), texture.internal_id (), mipmap );
 
     /* unbind fbo */
@@ -91,4 +108,31 @@ bool glh::core::fbo::is_complete () const
     const bool complete = ( glCheckFramebufferStatus ( opengl_bind_target ) == GL_FRAMEBUFFER_COMPLETE );
     if ( binding_change ) unbind ();
     return complete;
+}
+
+
+
+/* blit_copy
+ *
+ * copy a region FROM ANOTHER FBO INTO THIS FBO
+ * 
+ * other: the other fbo to copy from
+ * srcx0, srcy0, srcx1, srcy1: the x and y positions in the other fbo to read from
+ * dstx0, dsty0, dstx1, dsty1: the x and y positions in this fbo to write to
+ * copy_mask: mask for which buffers to copy
+ * filter: the interpolation settings for any stretches applied
+ */
+void glh::core::fbo::blit_copy ( const fbo& other, const unsigned srcx0, const unsigned srcy0, const unsigned srcx1, const unsigned srcy1, 
+                                 const unsigned dstx0, const unsigned dsty0, const unsigned dstx1, const unsigned dsty1, const GLbitfield copy_mask, const GLenum filter )
+{
+    /* bind both framebuffers */
+    const bool read_binding_change = other.bind_read ();
+    const bool draw_binding_change = bind_draw ();
+
+    /* copy data */
+    glBlitFramebuffer ( srcx0, srcy0, srcx1, srcy1, dstx0, dsty0, dstx1, dsty1, copy_mask, filter );
+
+    /* unbind both framebuffers */
+    if ( draw_binding_change ) unbind_draw ();
+    if ( read_binding_change ) other.unbind_read ();
 }
