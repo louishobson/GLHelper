@@ -344,6 +344,9 @@ template<unsigned M, class T> glh::math::vector<M, T> operator+ ( const glh::mat
 /* unary minus operator */
 template<unsigned M, class T> glh::math::vector<M, T> operator- ( const glh::math::vector<M, T>& lhs );
 
+/* pow operator */
+template<unsigned M, class T> glh::math::vector<M, T> std::pow ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs );
+
 /* operator<<
  *
  * format as a one-line string
@@ -764,6 +767,19 @@ template<unsigned M, class T> inline glh::math::vector<M, T> operator- ( const g
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = - result.at ( i );
 
     /* return the result */
+    return result;
+}
+
+/* pow operator */
+template<unsigned M, class T> inline glh::math::vector<M, T> std::pow ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
+{
+    /* create new vector */
+    glh::math::vector<M, T> result;
+
+    /* pow each of the elements of the vector */
+    for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = std::pow ( lhs.at ( i ), rhs.at ( i ) );
+
+    /* return result */
     return result;
 }
 
