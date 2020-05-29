@@ -65,7 +65,7 @@ int main ()
 
 
     glh::lighting::light_system light_system;
-    light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
+    light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 0.5 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
     //light_system.pointcoll.lights.emplace_back ( glh::math::vec3 {}, 1.0, 0.045, 0.0075, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
     light_system.cache_uniforms ( model_program.get_struct_uniform ( "light_system" ) );
 
@@ -170,7 +170,7 @@ int main ()
             glh::math::rad ( 180.0 ), 
             glh::math::vec3 { 0.0, 1.0, 0.0 } 
         ), 
-        glh::math::vec3 { 0.0, 0.0, 2.0 } 
+        glh::math::vec3 { 0.0, 0.0, 0.0 } 
     );
 
 
@@ -307,7 +307,7 @@ int main ()
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
         camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         island.render ( island_matrix, false );
-        chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, false );
+        //chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, false );
 
         mirror_fbo_ms.bind ();
         glh::core::renderer::set_front_face ( GL_CW );
@@ -330,7 +330,7 @@ int main ()
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
         camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         island.render ( island_matrix, true );
-        chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, true );
+        //chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, true );
 
         mirror_fbo_ms.bind ();
         glh::core::renderer::set_front_face ( GL_CW );
