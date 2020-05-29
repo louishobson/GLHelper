@@ -16,6 +16,13 @@
  * 
  * 
  * 
+ * STRUCT GLH::MODEL::IMPORT_FLAGS
+ * 
+ * struct of static integers for import flags
+ * best way to have scoped enum-style interface, while allowing int conversion
+ * 
+ * 
+ * 
  * CLASS GLH::MODEL::MODEL
  * 
  * stores a model in a renderable format
@@ -193,6 +200,16 @@ namespace glh
 {
     namespace model
     {
+        /* IMPORT FLAGS */
+
+        /* struct import_flags
+         *
+         * model import flags
+         */
+        struct import_flags;
+
+
+
         /* MODEL STRUCTURES */
 
         /* struct vertex
@@ -238,6 +255,10 @@ namespace glh
          */
         struct node;
 
+
+
+        /* MODEL CLASS */
+
         /* class model
          *
          * a class for a model
@@ -254,6 +275,48 @@ namespace glh
         class model_exception;
     }
 }
+
+
+
+/* IMPORT FLAGS DEFINITION */
+
+/* struct import_flags
+ *
+ * model import flags
+ */
+struct glh::model::import_flags
+{
+    /* CORE VALUES */
+
+    /* dummy value */
+    static const unsigned GLH_NONE = 0x00;
+
+    /* use sRGBA textures */
+    static const unsigned GLH_AMBIENT_TEXTURE_SRGBA = 0x01;
+    static const unsigned GLH_DIFFUSE_TEXTURE_SRGBA = 0x02;
+    static const unsigned GLH_SPECULAR_TEXTURE_SRGBA = 0x04;
+
+    /* use sRGBA base colors */
+    static const unsigned GLH_AMBIENT_BASE_COLOR_SRGBA = 0x08;
+    static const unsigned GLH_DIFFUSE_BASE_COLOR_SRGBA = 0x10;
+    static const unsigned GLH_SPECULAR_BASE_COLOR_SRGBA = 0x20;
+
+    /* use sRGBA vertex colors */
+    static const unsigned GLH_VERTEX_SRGBA = 0x40;
+
+
+
+    /* PRESET VALUES */
+
+    /* preset for sRGBA textures and base colors */
+    static const unsigned GLH_AMBIENT_SRGBA = GLH_AMBIENT_TEXTURE_SRGBA | GLH_AMBIENT_BASE_COLOR_SRGBA;
+    static const unsigned GLH_DIFFUSE_SRGBA = GLH_DIFFUSE_TEXTURE_SRGBA | GLH_DIFFUSE_BASE_COLOR_SRGBA;
+    static const unsigned GLH_SPECULAR_SRGBA = GLH_SPECULAR_TEXTURE_SRGBA | GLH_SPECULAR_BASE_COLOR_SRGBA;
+    
+    /* preset for sRGBA visual texture stacks and vertex colors */
+    static const unsigned GLH_VISUAL_SRGBA = GLH_AMBIENT_SRGBA | GLH_DIFFUSE_SRGBA | GLH_VERTEX_SRGBA;
+
+};
 
 
 
@@ -487,9 +550,10 @@ public:
      * 
      * _directory: directory in which the model resides
      * _entry: the entry file to the model
+     * _flags: import flags for the model (or default recommended)
      * _pps: post processing steps (or default recommended)
      */
-    model ( const std::string& _directory, const std::string& _entry, const unsigned _pps = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone | aiProcess_OptimizeGraph );
+    model ( const std::string& _directory, const std::string& _entry, const unsigned _flags = import_flags::GLH_VISUAL_SRGBA, const unsigned _pps = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone | aiProcess_OptimizeGraph );
 
     /* deleted zero parameter constructor */
     model () = delete;
@@ -540,6 +604,9 @@ private:
 
     /* the entry file for the model */
     const std::string entry;
+
+    /* import flags */
+    const unsigned flags;
 
     /* the post processing steps used to import the model */
     const unsigned pps;
@@ -656,10 +723,11 @@ private:
      * aimaterial: the material the texture is being added from
      * index: the index of the texture
      * aitexturetype: the type of the stack
+     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
      * 
      * return: the texture stack level just added
      */
-    texture_stack_level& add_texture ( texture_stack_level& _texture_stack_level, const aiMaterial& aimaterial, const unsigned index, const aiTextureType aitexturetype );
+    texture_stack_level& add_texture ( texture_stack_level& _texture_stack_level, const aiMaterial& aimaterial, const unsigned index, const aiTextureType aitexturetype, const bool is_srgb = false );
 
     /* is_definitely_opaque
      *

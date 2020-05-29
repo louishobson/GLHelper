@@ -27,11 +27,13 @@
  * 
  * _directory: directory in which the model resides
  * _entry: the entry file to the model
+ * _flags: import flags for the model (or default recommended)
  * _pps: post processing steps (or default recommended)
  */
-glh::model::model::model ( const std::string& _directory, const std::string& _entry, const unsigned _pps )
+glh::model::model::model ( const std::string& _directory, const std::string& _entry, const unsigned _flags, const unsigned _pps )
     : directory { _directory }
     , entry { _entry }
+    , flags { _flags }
     , pps { _pps | aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_TransformUVCoords }
 {
     /* create the importer */
@@ -175,25 +177,30 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
     if ( aimaterial.Get ( AI_MATKEY_COLOR_SPECULAR, temp_color ) == aiReturn_SUCCESS )
     _material.specular_stack.base_color = cast_vector ( temp_color ); else _material.specular_stack.base_color = math::fvec3 { 0.0 };
 
+    /* apply sRGBA transformations to base colors */
+    if ( flags & import_flags::GLH_AMBIENT_BASE_COLOR_SRGBA ) _material.ambient_stack.base_color = std::pow ( _material.ambient_stack.base_color, math::fvec3 { 2.2 } );
+    if ( flags & import_flags::GLH_DIFFUSE_BASE_COLOR_SRGBA ) _material.diffuse_stack.base_color = std::pow ( _material.diffuse_stack.base_color, math::fvec3 { 2.2 } );
+    if ( flags & import_flags::GLH_SPECULAR_BASE_COLOR_SRGBA ) _material.specular_stack.base_color = std::pow ( _material.specular_stack.base_color, math::fvec3 { 2.2 } );
+
     /* set up the ambient texture stack textures  */
     _material.ambient_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_AMBIENT ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_AMBIENT ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
-        add_texture ( _material.ambient_stack.levels.at ( i ), aimaterial, i, aiTextureType_AMBIENT );  
+        add_texture ( _material.ambient_stack.levels.at ( i ), aimaterial, i, aiTextureType_AMBIENT, flags & import_flags::GLH_AMBIENT_TEXTURE_SRGBA );  
     }
 
     /* set up the diffuse texture stack textures */
     _material.diffuse_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
-        add_texture ( _material.diffuse_stack.levels.at ( i ), aimaterial, i, aiTextureType_DIFFUSE );  
+        add_texture ( _material.diffuse_stack.levels.at ( i ), aimaterial, i, aiTextureType_DIFFUSE, flags & import_flags::GLH_DIFFUSE_TEXTURE_SRGBA );  
     }
 
     /* set up the specular texture stack textures */
     _material.specular_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_SPECULAR ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_SPECULAR ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
-        add_texture ( _material.specular_stack.levels.at ( i ), aimaterial, i, aiTextureType_SPECULAR );  
+        add_texture ( _material.specular_stack.levels.at ( i ), aimaterial, i, aiTextureType_SPECULAR, flags & import_flags::GLH_SPECULAR_TEXTURE_SRGBA );  
     }
 
     /* get the blend mode */
@@ -233,10 +240,11 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
  * aimaterial: the material the texture is being added from
  * index: the index of the texture
  * aitexturetype: the type of the stack
+ * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
  * 
  * return: the texture stack level just added
  */
-glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack_level& _texture_stack_level, const aiMaterial& aimaterial, const unsigned index, const aiTextureType aitexturetype )
+glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack_level& _texture_stack_level, const aiMaterial& aimaterial, const unsigned index, const aiTextureType aitexturetype, const bool is_srgb )
 {
     /* temporary variables */
     aiString temp_string;
@@ -283,7 +291,7 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack_
     }
 
     /* not already imported, so import and set the index */
-    textures.push_back ( core::texture2d { directory + "/" + texpath } );
+    textures.push_back ( core::texture2d { directory + "/" + texpath, is_srgb } );
     _texture_stack_level.index = textures.size () - 1;
 
     /* return texture reference */
@@ -353,11 +361,16 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
 
         /* set color sets */
         for ( unsigned j = 0; j < _mesh.num_color_sets; ++j )
-        _mesh.vertices.at ( i ).colorsets.at ( j ) = cast_vector ( aimesh.mColors [ j ][ i ] );
+            _mesh.vertices.at ( i ).colorsets.at ( j ) = cast_vector ( aimesh.mColors [ j ][ i ] );
+
+        /* apply gamma correction */
+        if ( flags & import_flags::GLH_VERTEX_SRGBA ) for ( unsigned j = 0; j < _mesh.num_color_sets; ++j )
+            _mesh.vertices.at ( i ).colorsets.at ( j ) = 
+            math::fvec4 { std::pow ( math::fvec3 { _mesh.vertices.at ( i ).colorsets.at ( j ) }, math::fvec3 ( 2.2 ) ), _mesh.vertices.at ( i ).colorsets.at ( j ).at ( 3 ) };
 
         /* set uv channel coords */
         for ( unsigned j = 0; j < _mesh.num_uv_channels; ++j )
-        _mesh.vertices.at ( i ).texcoords.at ( j ) = cast_vector ( aimesh.mTextureCoords [ j ][ i ] );
+            _mesh.vertices.at ( i ).texcoords.at ( j ) = cast_vector ( aimesh.mTextureCoords [ j ][ i ] );
     }
 
     /* add material reference */
