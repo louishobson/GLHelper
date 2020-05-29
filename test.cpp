@@ -20,7 +20,7 @@
 #include <thread>
 
 #define GLH_MODEL_MAX_COLOR_SETS 1
-#define GLH_MODEL_MAX_UV_CHANNELS 2
+#define GLH_MODEL_MAX_UV_CHANNELS 4
 #define GLH_MODEL_MAX_TEXTURE_STACK_SIZE 2
 
 /* include glhelper.hpp */
@@ -189,10 +189,15 @@ int main ()
     glh::core::renderer::set_clear_color ( glh::math::vec4 { 0.5, 1.0, 1.0, 1.0 } );
     glh::core::renderer::enable_depth_test ();
     glh::core::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+    glh::core::renderer::set_front_face ( GL_CCW );
+    glh::core::renderer::enable_face_culling ();
+    glh::core::renderer::set_depth_mask ( GL_TRUE );
 
     window.get_timeinfo ();
     window.get_dimensions ();
     window.get_mouseinfo ();
+
+    
 
     double total_time = 0.0;
     int frames = -1;
@@ -238,7 +243,7 @@ int main ()
         
 
 
-        /*
+        /* XENOMORPHE SCENE
 
         cubemap_program.use ();
         cubemap_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
@@ -285,6 +290,8 @@ int main ()
 
 
 
+        /* ISLAND SCENE */
+
         model_program.use ();
         model_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
         light_system.apply ();
@@ -293,7 +300,7 @@ int main ()
         glh::core::renderer::enable_face_culling ();
         glh::core::renderer::disable_blend ();
         glh::core::renderer::set_depth_mask ( GL_TRUE );
-                
+            
         mirror_fbo_ms.unbind ();
         glh::core::renderer::set_front_face ( GL_CCW );
         glh::core::renderer::clear ();
