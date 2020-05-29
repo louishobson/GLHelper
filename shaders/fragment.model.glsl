@@ -299,11 +299,14 @@ vec3 compute_specular_component ( vec3 base_color, material_struct mat, light_sy
         /* continue if disabled */
         if ( !lighting.dircoll.lights [ i ].enabled ) continue;
 
-        /* reflect the light off of the fragment */
-        vec3 reflectlightdir = normalize ( reflect ( lighting.dircoll.lights [ i ].direction, normal ) );
+        /* get normailsed vector from fragment to light */
+        vec3 lightdir = normalize ( -lighting.dircoll.lights [ i ].direction );
+
+        /* get halfway vector */
+        vec3 halfway = normalize ( fragviewdir + lightdir );
 
         /* get specular multiplier */
-        float spec = pow ( max ( dot ( fragviewdir, reflectlightdir ), 0.0 ), material.shininess );
+        float spec = pow ( max ( dot ( normal, halfway ), 0.0 ), material.shininess );
         /* add specular light from directional source */
         specular_color += base_color * lighting.dircoll.lights [ i ].specular_color * spec;
     }
@@ -313,12 +316,14 @@ vec3 compute_specular_component ( vec3 base_color, material_struct mat, light_sy
         /* continue if disabled */
         if ( !lighting.pointcoll.lights [ i ].enabled ) continue;
 
-        /* get normalised vector from light to fragment */
-        vec3 fraglightdir = normalize ( fragpos - lighting.pointcoll.lights [ i ].position );
-        /* reflect the light off of the fragment */
-        vec3 reflectlightdir = normalize ( reflect ( fraglightdir, normal ) );
+        /* get normailsed vector from fragment to light */
+        vec3 lightdir = normalize ( lighting.pointcoll.lights [ i ].position - fragpos );
+
+        /* get halfway vector */
+        vec3 halfway = normalize ( fragviewdir + lightdir );
+
         /* get specular multiplier */
-        float spec = pow ( max ( dot ( fragviewdir, reflectlightdir ), 0.0 ), material.shininess );
+        float spec = pow ( max ( dot ( normal, halfway ), 0.0 ), material.shininess );
         /* add specular light from point source, including attenuation */
         specular_color += base_color * lighting.pointcoll.lights [ i ].specular_color * spec * compute_attenuation
         (

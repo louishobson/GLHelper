@@ -216,7 +216,7 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
 
     /* get the shading mode and the program to use */
     if ( aimaterial.Get ( AI_MATKEY_SHADING_MODEL, temp_int ) == aiReturn_SUCCESS )
-    _material.shading_model = temp_int; else _material.shading_model = 0;
+    _material.shading_model = temp_int; else _material.shading_model = aiShadingMode_Blinn;
 
     /* set definitely opaque flag */
     _material.definitely_opaque = is_definitely_opaque ( _material );
