@@ -10,7 +10,7 @@
 #define MAX_COLOR_SETS 1
 
 /* maximum number of UV channels */
-#define MAX_UV_CHANNELS 2
+#define MAX_UV_CHANNELS 4
 
 /* maximum number of textures in texture stack */
 #define MAX_TEX_STACK_SIZE 2
@@ -290,7 +290,7 @@ vec3 compute_specular_component ( vec3 base_color, material_struct mat, light_sy
     /* specular fragment color */
     vec3 specular_color = vec3 ( 0.0, 0.0, 0.0 );
 
-    /* get normaalised vector from fragment to viewer */
+    /* get normalised vector from fragment to viewer */
     vec3 fragviewdir = normalize ( trans.viewpos - fragpos );
 
     /* loop over lights and apply attenuation where necesarry */
@@ -300,7 +300,8 @@ vec3 compute_specular_component ( vec3 base_color, material_struct mat, light_sy
         if ( !lighting.dircoll.lights [ i ].enabled ) continue;
 
         /* reflect the light off of the fragment */
-        vec3 reflectlightdir = normalize ( reflect ( -lighting.dircoll.lights [ i ].direction, normal ) );
+        vec3 reflectlightdir = normalize ( reflect ( lighting.dircoll.lights [ i ].direction, normal ) );
+
         /* get specular multiplier */
         float spec = pow ( max ( dot ( fragviewdir, reflectlightdir ), 0.0 ), material.shininess );
         /* add specular light from directional source */
@@ -312,8 +313,8 @@ vec3 compute_specular_component ( vec3 base_color, material_struct mat, light_sy
         /* continue if disabled */
         if ( !lighting.pointcoll.lights [ i ].enabled ) continue;
 
-        /* get normalised vector from fragment to light */
-        vec3 fraglightdir = normalize ( lighting.pointcoll.lights [ i ].position - fragpos );
+        /* get normalised vector from light to fragment */
+        vec3 fraglightdir = normalize ( fragpos - lighting.pointcoll.lights [ i ].position );
         /* reflect the light off of the fragment */
         vec3 reflectlightdir = normalize ( reflect ( fraglightdir, normal ) );
         /* get specular multiplier */
@@ -342,7 +343,9 @@ void main ()
     vec3 S = refract ( I, normal, 1 / 1.1 );
 
     /* evaluate stacks */
-    vec4 ambient = evaluate_stack ( material, material.ambient_stack );
+    vec4 ambient;
+    if ( material.ambient_stack.stack_size > 0 ) ambient = evaluate_stack ( material, material.ambient_stack );
+    else ambient = evaluate_stack ( material, material.diffuse_stack );
     vec4 diffuse = evaluate_stack ( material, material.diffuse_stack );
     vec4 specular = evaluate_stack ( material, material.specular_stack );
 
@@ -353,9 +356,12 @@ void main ()
     //ambient = vec4 ( abs ( normal ), 1.0 ); diffuse = vec4 ( abs ( fragpos ) / 200, 1.0 );
 
     /* if there were no textures for any stack, multiply by the vertex color */
-    if ( material.ambient_stack.stack_size == 0 ) ambient *= vcolor [ 0 ];
-    if ( material.diffuse_stack.stack_size == 0 ) diffuse *= vcolor [ 0 ];
-    if ( material.specular_stack.stack_size == 0 ) specular *= vcolor [ 0 ];
+    if ( material.ambient_stack.stack_size == 0 && material.diffuse_stack.stack_size == 0 && material.specular_stack.stack_size == 0 )
+    {
+        ambient *= vcolor [ 0 ];
+        diffuse *= vcolor [ 0 ];
+        specular *= vcolor [ 0 ];
+    } 
 
     /* if is completely transparent, discard regardless of whether in transparent mode */
     if ( ambient.a + diffuse.a == 0.0 ) discard;
