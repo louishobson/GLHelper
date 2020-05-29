@@ -165,6 +165,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <assimp/pbrmaterial.h>
 
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
@@ -488,9 +489,7 @@ public:
      * _entry: the entry file to the model
      * _pps: post processing steps (or default recommended)
      */
-    model ( const std::string& _directory, const std::string& _entry, const unsigned _pps = 
-    aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenUVCoords | aiProcess_TransformUVCoords | aiProcess_GenNormals | 
-    aiProcess_JoinIdenticalVertices | aiProcess_RemoveRedundantMaterials | aiProcess_OptimizeMeshes | aiProcess_Debone | aiProcess_OptimizeGraph );
+    model ( const std::string& _directory, const std::string& _entry, const unsigned _pps = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone | aiProcess_OptimizeGraph );
 
     /* deleted zero parameter constructor */
     model () = delete;
@@ -733,6 +732,16 @@ private:
      * transparent_only: only render meshes with possible transparent elements (false by default)
      */
     void render_mesh ( const mesh& _mesh ) const;
+
+    /* apply_stack
+     *
+     * apply a texture stack during mesh rendering
+     * 
+     * stack: the texture stack to apply
+     * stack_size_uni/stack_base_color_uni/stack_levels_uni: cached stack uniforms
+     * tex_unit: the first texture unit to use, will be incremented for each texture
+     */
+    void apply_stack ( const texture_stack& stack, core::uniform& stack_size_uni, core::uniform& stack_base_color_uni, core::struct_array_uniform& stack_levels_uni, unsigned& tex_unit ) const;
 
 };
 
