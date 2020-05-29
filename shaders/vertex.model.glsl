@@ -10,7 +10,7 @@
 #define MAX_COLOR_SETS 1
 
 /* maximum number of UV channels */
-#define MAX_UV_CHANNELS 2
+#define MAX_UV_CHANNELS 4
 
 /* transformations structure */
 struct trans_struct
