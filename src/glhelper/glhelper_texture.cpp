@@ -142,9 +142,10 @@ void glh::core::texture_base::generate_mipmap ()
  * default settings are applied
  * 
  * _path: path to the image for the texture
+ * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
  */
-glh::core::texture2d::texture2d ( const std::string& _path )
-    : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE, GL_RGBA, GL_RGBA }
+glh::core::texture2d::texture2d ( const std::string& _path, const bool is_srgb )
+    : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE, static_cast<GLenum> ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA }
     , path { _path }
 {
     /* load the image */
@@ -231,9 +232,10 @@ glh::core::texture2d * glh::core::texture2d::get_bound_object_pointer ( const un
  * the order of the paths is the same as the order of cubemap layers
  * 
  * paths: array of 6 paths to the images for the cubemap faces
+ * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
  */
-glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths )
-    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, GL_RGBA, GL_RGBA }
+glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths, const bool is_srgb )
+    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, static_cast<GLenum> ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA }
 {
     /* bind cubemap object */
     bind ();
@@ -289,9 +291,10 @@ glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths )
  * construct the cubemap width one image for all six sides
  *
  * path: path to the image 
+ * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
  */
-glh::core::cubemap::cubemap ( const std::string& path )
-    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, GL_RGBA, GL_RGBA }
+glh::core::cubemap::cubemap ( const std::string& path, const bool is_srgb )
+    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, static_cast<GLenum> ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA }
 {
     /* bind cubemap object */
     bind ();

@@ -247,8 +247,9 @@ public:
      * default settings are applied
      * 
      * _path: path to the image for the texture
+     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
      */
-    explicit texture2d ( const std::string& _path );
+    explicit texture2d ( const std::string& _path, const bool is_srgb = false );
 
     /* empty texture constructor
      *
@@ -341,16 +342,18 @@ public:
      * the order of the paths is the same as the order of cubemap layers
      * 
      * paths: array of 6 paths to the images for the cubemap faces
+     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
      */
-    explicit cubemap ( const std::array<std::string, 6>& paths );
+    explicit cubemap ( const std::array<std::string, 6>& paths, const bool is_srgb = false );
 
     /* 1-image constructor
      *
      * construct the cubemap width one image for all six sides
      *
      * path: path to the image 
+     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
      */
-    explicit cubemap ( const std::string& path );
+    explicit cubemap ( const std::string& path, const bool is_srgb = false );
 
     /* deleted zero-parameter constructor */
     cubemap () = delete;
