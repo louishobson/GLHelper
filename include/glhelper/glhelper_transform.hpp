@@ -288,6 +288,21 @@ namespace glh
          */
         template<class T> matrix<4, 4, T> perspective_fov ( const double fov, const double aspect, const double n, const double f );
 
+        /* othographic
+         *
+         * produce an othographic projection matrix
+         * 
+         * l: the (x) position of the LEFT of the near rectangle of the cuboid
+         * r: the (x) position of the RIGHT of the near rectangle of the cuboid
+         * b: the (y) position of the BOTTOM of the near rectangle of the cuboid
+         * t: the (y) position of the TOP of the near rectangle of the cuboid
+         * n: the (z) position of the NEAR rectangle of the cuboid
+         * f: the (z) position of the FAR rectangle of the cuboid
+         * 
+         * return: the othographic projection matrix
+         */
+        template<class T> matrix<4, 4, T> orthographic ( const double l, const double r, const double b, const double t, const double n, const double f );
+
         /* camera
          *
          * produce a camera matrix from vectors
@@ -857,6 +872,31 @@ template<class T> inline glh::math::matrix<4, 4, T> glh::math::perspective_fov (
     const double r = n * std::tan ( fov / 2 );
     /* call perspective */
     return perspective<T> ( -r, r, - r / aspect, r / aspect, n, f );
+}
+
+/* othographic
+ *
+ * produce an othographic projection matrix
+ * 
+ * l: the (x) position of the LEFT of the near rectangle of the cuboid
+ * r: the (x) position of the RIGHT of the near rectangle of the cuboid
+ * b: the (y) position of the BOTTOM of the near rectangle of the cuboid
+ * t: the (y) position of the TOP of the near rectangle of the cuboid
+ * n: the (z) position of the NEAR rectangle of the cuboid
+ * f: the (z) position of the FAR rectangle of the cuboid
+ * 
+ * return: the othographic projection matrix
+ */
+template<class T> inline glh::math::matrix<4, 4, T> glh::math::orthographic ( const double l, const double r, const double b, const double t, const double n, const double f )
+{
+    /* return the new matrix */
+    return matrix<4, 4, T>
+    {
+        2 / ( r - l ),      0,              0,        -( r + l ) / ( r - l ),
+             0,        2 / ( t - b ),       0,        -( t + b ) / ( t - b ),
+             0,             0,        -2 / ( f - n ), -( f + n ) / ( f - n ),
+             0,             0,              0,                   1
+    };
 }
 
 /* camera
