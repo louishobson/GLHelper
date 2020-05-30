@@ -29,6 +29,7 @@
  */
 glh::core::object::object ( const minor_object_type type )
     : id { 0 }
+    , unique_id { next_unique_id++ }
     , minor_type { type }
     , major_type { to_major_object_type ( type ) }
     , bind_target { to_object_bind_target ( type ) }
@@ -69,6 +70,7 @@ glh::core::object::object ( const minor_object_type type )
 /* move constructor */
 glh::core::object::object ( object&& other )
     : id { other.id }
+    , unique_id { other.unique_id }
     , minor_type { other.minor_type }
     , major_type { other.major_type }
     , bind_target { other.bind_target }
@@ -495,6 +497,9 @@ bool glh::core::object::is_texture2d_multisample_bind_target ( const object_bind
 
 
 /* STATIC MEMBERS OF OBJECT DEFINITIONS */
+
+/* next_unique_id is zero at start */
+GLuint glh::core::object::next_unique_id { 0 };
 
 /* number of existing object ids per major type */
 std::array<std::vector<glh::core::object *>, static_cast<unsigned> ( glh::core::major_object_type::__COUNT__ )> glh::core::object::object_pointers

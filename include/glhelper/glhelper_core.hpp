@@ -359,6 +359,12 @@ public:
      */
     const GLuint& internal_id () const { return id; }
 
+    /* internal_unique_id
+     *
+     * returns the unique id of the object
+     */
+    const GLuint& internal_unique_id () const { return id; }
+
     /* get_minor/major_object_type
      * get_object_bind_target
      * get_opengl_bind_taregt
@@ -376,11 +382,19 @@ protected:
 
     /* NON-STATIC MEMBERS */
 
-    /* GLint id
+    /* id
      *
      * the OpenGL id of the object
      */
     GLuint id;
+
+    /* unique_id
+     *
+     * the unique id of the object
+     * will be different for EVERY object that ever exists
+     * will not be changed for move-constructed objects, however
+     */
+    const GLuint unique_id;
 
     /* minor_type, major_type, bind_target
      *
@@ -399,6 +413,13 @@ protected:
 
 
     /* STATIC MEMBERS */
+
+    /* next_unique_id
+     *
+     * the next unique id to be used
+     * incremented for each new object
+     */
+    static GLuint next_unique_id;
 
     /* pointers to the object of each type and id */
     static std::array<std::vector<object *>, static_cast<unsigned> ( major_object_type::__COUNT__ )> object_pointers;
