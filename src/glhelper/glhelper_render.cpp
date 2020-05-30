@@ -271,6 +271,31 @@ void glh::core::renderer::disable_multisample ()
 
 
 
+/* enable/disable_framebuffer_srgb
+ *
+ * enable/disable implicit conversion to srgb in framebuffer color buffer attachments
+ */
+void glh::core::renderer::enable_framebuffer_srgb ()
+{
+    /* if is disabled, enable */
+    if ( !framebuffer_srgb_state )
+    {
+        glEnable ( GL_FRAMEBUFFER_SRGB );
+        framebuffer_srgb_state = true;
+    }
+}
+void glh::core::renderer::disable_framebuffer_srgb ()
+{
+    /* if is enabled, disable */
+    if ( framebuffer_srgb_state )
+    {
+        glDisable ( GL_FRAMEBUFFER_SRGB );
+        framebuffer_srgb_state = false;
+    }
+}
+
+
+
 /* RENDERER STATIC MEMBERS DEFINITIONS */
 
 /* clear color is black by default */
@@ -302,3 +327,6 @@ GLenum glh::core::renderer::front_face ( GL_CCW );
 
 /* multisampling is disabled by default */
 bool glh::core::renderer::multisample_state { false };
+
+/* framebuffer srgb is disabled by default */
+bool glh::core::renderer::framebuffer_srgb_state { false };

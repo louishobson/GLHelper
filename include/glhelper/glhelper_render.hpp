@@ -51,9 +51,7 @@ namespace glh
     {
         /* class renderer
          *
-         * base class for renderable objects
-         * indented to be inherited from to create more complex classes
-         * contains static methods to configure OpenGL
+         * contains static methods to control rendering
          */
         class renderer;
     }
@@ -65,25 +63,23 @@ namespace glh
 
 /* class renderer
  *
- * base class for renderable objects
- * indented to be inherited from to create more complex classes
- * contains static methods to configure OpenGL
+ * contains static methods to control rendering
  */
 class glh::core::renderer
 {
 public:
 
-    /* default constructor */
-    renderer () = default;
+    /* deleted constructor */
+    renderer () = delete;
 
-    /* default copy constructor */
-    renderer ( const renderer& other ) = default;
+    /* deleted copy constructor */
+    renderer ( const renderer& other ) = delete;
 
-    /* default copy assignment operator */
-    renderer& operator= ( const renderer& other ) = default;
+    /* deleted copy assignment operator */
+    renderer& operator= ( const renderer& other ) = delete;
 
-    /* default destructor */
-    ~renderer () = default;
+    /* deleted destructor */
+    ~renderer () = delete;
 
 
 
@@ -100,6 +96,8 @@ public:
      */
     static void draw_arrays ( const vao& _vao, const GLenum mode, const GLint start_index, const GLsizei count, const unsigned instances = 1 );
 
+
+
     /* draw_elements
      *
      * draw vertices from an ebo (via a vao)
@@ -113,6 +111,8 @@ public:
      */
     static void draw_elements ( const vao& _vao, const GLenum mode, const GLint count, const GLenum type, const GLsizeiptr start_index, const unsigned instances = 1 );
 
+
+
     /* get/set_clear_color
      *
      * get.set the clear color
@@ -121,12 +121,15 @@ public:
      */
     static const math::vec4& get_clear_color () { return clear_color; }
     static void set_clear_color ( const math::vec4& color );
+
     /* clear
      *
      * clears the screen
      */
     static void clear ()
     { glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT ); }
+
+
 
     /* enable/disable_depth_test
      * 
@@ -157,6 +160,8 @@ public:
      * func: the function to use (GL_LESS is the default)
      */
     static void set_depth_func ( const GLenum func ) { glDepthFunc ( func ); }
+
+    
 
     /* enable/disable_stencil_test
      *
@@ -202,6 +207,8 @@ public:
     static void stencil_op ( const GLenum sfail, const GLenum dpfail, const GLenum dppass )
     { glStencilOp ( sfail, dpfail, dppass ); }
 
+
+
     /* enable/disable_blend
      *
      * enable/disable blending
@@ -246,6 +253,8 @@ public:
      */
     static void blend_equation ( const GLenum equ ) { glBlendEquation ( equ ); }
 
+
+
     /* enable/disable_face_culling
      *
      * enable/disable face culling
@@ -275,12 +284,16 @@ public:
     static GLenum get_front_face () { return front_face; }
     static void set_front_face ( const GLenum winding );
 
+
+
     /* viewport
      *
      * set the viewport size
      */
     static void viewport ( GLint x, GLint y, GLsizei width, GLsizei height )
     { glViewport ( x, y, width, height ); }
+
+
 
     /* enable/disable_multisample
      *
@@ -294,6 +307,23 @@ public:
      * return true if MSAA is enabled
      */
     static bool multisample_enabled () { return multisample_state; }
+
+
+
+    /* enable/disable_framebuffer_srgb
+     *
+     * enable/disable implicit conversion to srgb in framebuffer color buffer attachments
+     */
+    static void enable_framebuffer_srgb ();
+    static void disable_framebuffer_srgb ();
+
+    /* framebuffer_srg_enabled
+     *
+     * return true if framebuffer srgb is enabled
+     */
+    static bool framebuffer_srg_enabled () { return framebuffer_srgb_state; }
+
+
 
 
 
@@ -368,6 +398,14 @@ private:
      * defaults to false
      */
     static bool multisample_state;
+
+    /* framebuffer_srgb_state
+     *
+     * whether srgb is enabled for framebuffers
+     * defaults to false
+     */
+    static bool framebuffer_srgb_state;
+
 
 };
 
