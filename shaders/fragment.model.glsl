@@ -94,10 +94,13 @@ struct trans_struct
 };
 
 /* texture coords, normal vector, position, vcolor */
-in vec3 fragpos;
-in vec3 normal;
-in vec4 vcolor [ MAX_COLOR_SETS ];
-in vec3 texcoords [ MAX_UV_CHANNELS ];
+in VS_OUT
+{
+    vec3 fragpos;
+    vec3 normal;
+    vec4 vcolor [ MAX_COLOR_SETS ];
+    vec3 texcoords [ MAX_UV_CHANNELS ];
+} fs_in;
 
 /* output color */
 out vec4 fragcolor;
@@ -132,7 +135,7 @@ vec4 evaluate_stack ( material_struct mat, texture_stack_struct stack )
     for ( int i = 0; i < stack.stack_size; ++i )
     {
         /* get the level color from the texture */
-        vec4 level_color = texture ( stack.levels [ i ].texunit, texcoords [ stack.levels [ i ].uvwsrc ].xy );
+        vec4 level_color = texture ( stack.levels [ i ].texunit, fs_in.texcoords [ stack.levels [ i ].uvwsrc ].xy );
         /* multiply by blend strength */
         level_color *= stack.levels [ i ].blend_strength;
         /* add to the stack */
@@ -204,7 +207,7 @@ vec3 compute_ambient_component ( vec3 base_color, material_struct mat, light_sys
         /* add ambient light from point source, including attenuation */
         ambient_color += base_color * lighting.pointcoll.lights [ i ].ambient_color * compute_attenuation
         (
-            length ( lighting.pointcoll.lights [ i ].position - fragpos ),
+            length ( lighting.pointcoll.lights [ i ].position - fs_in.fragpos ),
             lighting.pointcoll.lights [ i ].att_const,
             lighting.pointcoll.lights [ i ].att_linear,
             lighting.pointcoll.lights [ i ].att_quad
@@ -242,7 +245,7 @@ vec3 compute_diffuse_component ( vec3 base_color, material_struct mat, light_sys
         if ( !lighting.dircoll.lights [ i ].enabled ) continue;
 
         /* get diffuse multiplier */
-        float diff = max ( dot ( normal, -lighting.dircoll.lights [ i ].direction ), 0.0 );
+        float diff = max ( dot ( fs_in.normal, -lighting.dircoll.lights [ i ].direction ), 0.0 );
         /* add diffuse light from directional source */
         diffuse_color += base_color * lighting.dircoll.lights [ i ].diffuse_color * diff;
     }
@@ -253,13 +256,13 @@ vec3 compute_diffuse_component ( vec3 base_color, material_struct mat, light_sys
         if ( !lighting.pointcoll.lights [ i ].enabled ) continue;
 
         /* get normalised vector from fragment to light */
-        vec3 fraglightdir = normalize ( lighting.pointcoll.lights [ i ].position - fragpos );
+        vec3 fraglightdir = normalize ( lighting.pointcoll.lights [ i ].position - fs_in.fragpos );
         /* get diffuse multiplier */
-        float diff = max ( dot ( normal, fraglightdir ), 0.0 );
+        float diff = max ( dot ( fs_in.normal, fraglightdir ), 0.0 );
         /* add diffuse light from point source, including attenuation */
         diffuse_color += base_color * lighting.pointcoll.lights [ i ].diffuse_color * diff * compute_attenuation
         (
-            length ( lighting.pointcoll.lights [ i ].position - fragpos ),
+            length ( lighting.pointcoll.lights [ i ].position - fs_in.fragpos ),
             lighting.pointcoll.lights [ i ].att_const,
             lighting.pointcoll.lights [ i ].att_linear,
             lighting.pointcoll.lights [ i ].att_quad
@@ -291,7 +294,7 @@ vec3 compute_specular_component ( vec3 base_color, material_struct mat, light_sy
     vec3 specular_color = vec3 ( 0.0, 0.0, 0.0 );
 
     /* get normalised vector from fragment to viewer */
-    vec3 fragviewdir = normalize ( trans.viewpos - fragpos );
+    vec3 fragviewdir = normalize ( trans.viewpos - fs_in.fragpos );
 
     /* loop over lights and apply attenuation where necesarry */
     for ( int i = 0; i < lighting.dircoll.size; ++i )
@@ -306,7 +309,7 @@ vec3 compute_specular_component ( vec3 base_color, material_struct mat, light_sy
         vec3 halfway = normalize ( fragviewdir + lightdir );
 
         /* get specular multiplier */
-        float spec = pow ( max ( dot ( normal, halfway ), 0.0 ), material.shininess );
+        float spec = pow ( max ( dot ( fs_in.normal, halfway ), 0.0 ), material.shininess );
         /* add specular light from directional source */
         specular_color += base_color * lighting.dircoll.lights [ i ].specular_color * spec;
     }
@@ -317,17 +320,17 @@ vec3 compute_specular_component ( vec3 base_color, material_struct mat, light_sy
         if ( !lighting.pointcoll.lights [ i ].enabled ) continue;
 
         /* get normailsed vector from fragment to light */
-        vec3 lightdir = normalize ( lighting.pointcoll.lights [ i ].position - fragpos );
+        vec3 lightdir = normalize ( lighting.pointcoll.lights [ i ].position - fs_in.fragpos );
 
         /* get halfway vector */
         vec3 halfway = normalize ( fragviewdir + lightdir );
 
         /* get specular multiplier */
-        float spec = pow ( max ( dot ( normal, halfway ), 0.0 ), material.shininess );
+        float spec = pow ( max ( dot ( fs_in.normal, halfway ), 0.0 ), material.shininess );
         /* add specular light from point source, including attenuation */
         specular_color += base_color * lighting.pointcoll.lights [ i ].specular_color * spec * compute_attenuation
         (
-            length ( lighting.pointcoll.lights [ i ].position - fragpos ),
+            length ( lighting.pointcoll.lights [ i ].position - fs_in.fragpos ),
             lighting.pointcoll.lights [ i ].att_const,
             lighting.pointcoll.lights [ i ].att_linear,
             lighting.pointcoll.lights [ i ].att_quad
@@ -343,9 +346,9 @@ uniform samplerCube skybox;
 /* main */
 void main ()
 {
-    vec3 I = normalize ( fragpos - trans.viewpos );
-    vec3 R = reflect ( I, normal );
-    vec3 S = refract ( I, normal, 1 / 1.1 );
+    vec3 I = normalize ( fs_in.fragpos - trans.viewpos );
+    vec3 R = reflect ( I, fs_in.normal );
+    vec3 S = refract ( I, fs_in.normal, 1 / 1.1 );
 
     /* evaluate stacks */
     vec4 ambient;
@@ -356,16 +359,16 @@ void main ()
 
     //ambient = vec4 ( 0.5, 0.5, 0.5, 1.0 ); diffuse = vec4 ( 0.5, 0.5, 0.5, 1.0 );
 
-    //ambient = vec4 ( abs ( fragpos ) / 200, 1.0 ); diffuse = vec4 ( abs ( fragpos ) / 200, 1.0 );
+    //ambient = vec4 ( abs ( fs_in.fragpos ) / 200, 1.0 ); diffuse = vec4 ( abs ( fs_in.fragpos ) / 200, 1.0 );
 
-    //ambient = vec4 ( abs ( normal ), 1.0 ); diffuse = vec4 ( abs ( fragpos ) / 200, 1.0 );
+    //ambient = vec4 ( abs ( fs_in.normal ), 1.0 ); diffuse = vec4 ( abs ( fs_in.fragpos ) / 200, 1.0 );
 
     /* if there were no textures for any stack, multiply by the vertex color */
     if ( material.ambient_stack.stack_size == 0 && material.diffuse_stack.stack_size == 0 && material.specular_stack.stack_size == 0 )
     {
-        ambient *= vcolor [ 0 ];
-        diffuse *= vcolor [ 0 ];
-        specular *= vcolor [ 0 ];
+        ambient *= fs_in.vcolor [ 0 ];
+        diffuse *= fs_in.vcolor [ 0 ];
+        specular *= fs_in.vcolor [ 0 ];
     } 
 
     /* if is completely transparent, discard regardless of whether in transparent mode */
