@@ -536,7 +536,7 @@ glh::core::program::program ( const vshader& vs, const gshader& gs, const fshade
     , uniform_2d_array_uniforms { "", * this }, struct_2d_array_uniforms { "", * this }
 {
     /* check shaders are valid */
-    if ( !vs.is_object_valid () || gs.is_object_valid () || !fs.is_object_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
+    if ( !vs.is_object_valid () || !gs.is_object_valid () || !fs.is_object_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
 
     /* attach shaders */
     glAttachShader ( id, vs.internal_id () );
