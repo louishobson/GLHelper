@@ -591,7 +591,7 @@ template<unsigned M, class T> inline double glh::math::angle ( const vector<M, T
  *
  * raise a vector to a power
  */
-template<unsigned M, class T> glh::math::vector<M, T> glh::math::pow ( const vector<M, T>& lhs, const double& rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::pow ( const vector<M, T>& lhs, const double& rhs )
 {
     /* create new vector */
     vector<M, T> result;
@@ -602,7 +602,7 @@ template<unsigned M, class T> glh::math::vector<M, T> glh::math::pow ( const vec
     /* return the result */
     return result;
 }
-template<unsigned M, class T> glh::math::vector<M, T> glh::math::pow ( const vector<M, T>& lhs, const vector<M, T>& rhs )
+template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::pow ( const vector<M, T>& lhs, const vector<M, T>& rhs )
 {
     /* create new vector */
     vector<M, T> result;
