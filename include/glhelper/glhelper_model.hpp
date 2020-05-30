@@ -581,8 +581,8 @@ public:
      * transform: the overall model transformation to apply (identity by default)
      * transparent_only: only render meshes with possible transparent elements (false by default)
      */
-    void render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform = math::identity<4> (), const bool transparent_only = false );
-    void render ( const math::mat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
+    void render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::fmat4& transform = math::identity<4> (), const bool transparent_only = false );
+    void render ( const math::fmat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
 
 
 
@@ -676,9 +676,9 @@ private:
      * 
      * return: a glh matrix
      */
-    template<typename T> math::mat4 cast_matrix ( const aiMatrix4x4t<T>& mat )
+    template<typename T> math::fmat4 cast_matrix ( const aiMatrix4x4t<T>& mat )
     {
-        math::mat4 result;
+        math::fmat4 result;
         for ( unsigned i = 0; i < 4; ++i ) for ( unsigned j = 0; j < 4; ++j ) result.at ( i, j ) = mat [ i ][ j ];
         return result;
     }

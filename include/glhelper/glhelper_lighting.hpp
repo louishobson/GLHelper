@@ -235,9 +235,9 @@ public:
      *
      * set all of the values of the light
      */
-    light ( const math::vec3& _position, const math::vec3& _direction
+    light ( const math::fvec3& _position, const math::fvec3& _direction
           , const double _inner_cone, const double _outer_cone, const double _att_const, const double _att_linear, const double _att_quad
-          , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
+          , const math::fvec3& _ambient_color, const math::fvec3& _diffuse_color, const math::fvec3& _specular_color
           , const bool _enabled = true )
         : position { _position }, direction { _direction }
         , inner_cone { _inner_cone }, outer_cone { _outer_cone }, att_const { _att_const }, att_linear { _att_linear }, att_quad { _att_quad }
@@ -250,9 +250,9 @@ public:
      * a black light at the origin with no direction and no attenuation
      */
     light ()
-        : light { math::vec3 { 0.0 }, math::vec3 { 0.0 }
+        : light { math::fvec3 { 0.0 }, math::fvec3 { 0.0 }
                 , 0.0, 0.0, 1.0, 0.0, 0.0
-                , math::vec3 { 0.0 }, math::vec3 { 0.0 }, math::vec3 { 0.0 } }
+                , math::fvec3 { 0.0 }, math::fvec3 { 0.0 }, math::fvec3 { 0.0 } }
     {}
 
     /* copy constructor
@@ -307,15 +307,15 @@ public:
      *
      * get/set the position of the light
      */
-    const math::vec3 get_position () const { return position; }
-    void set_position ( const math::vec3& _position ) { position = _position; }
+    const math::fvec3 get_position () const { return position; }
+    void set_position ( const math::fvec3& _position ) { position = _position; }
 
     /* get/set_direction
      *
      * get/set the direction of the light
      */
-    const math::vec3 get_direction () const { return direction; }
-    void set_direction ( const math::vec3& _direction ) { direction = _direction; }
+    const math::fvec3 get_direction () const { return direction; }
+    void set_direction ( const math::fvec3& _direction ) { direction = _direction; }
 
     /* get/set_inner/outer_cone
      *
@@ -341,12 +341,12 @@ public:
      *
      * get/set color components
      */
-    math::vec3 get_ambient_color () const { return ambient_color; }
-    const void set_ambient_color ( const glh::math::vec3& _ambient_color ) { ambient_color = _ambient_color; }
-    math::vec3 get_diffuse_color () const { return diffuse_color; }
-    const void set_diffuse_color ( const glh::math::vec3& _diffuse_color ) { diffuse_color = _diffuse_color; }
-    math::vec3 get_specular_color () const { return specular_color; }
-    const void set_specular_color ( const glh::math::vec3& _specular_color ) { specular_color = _specular_color; }
+    math::fvec3 get_ambient_color () const { return ambient_color; }
+    const void set_ambient_color ( const glh::math::fvec3& _ambient_color ) { ambient_color = _ambient_color; }
+    math::fvec3 get_diffuse_color () const { return diffuse_color; }
+    const void set_diffuse_color ( const glh::math::fvec3& _diffuse_color ) { diffuse_color = _diffuse_color; }
+    math::fvec3 get_specular_color () const { return specular_color; }
+    const void set_specular_color ( const glh::math::fvec3& _specular_color ) { specular_color = _specular_color; }
 
     /* enable/disable
      *
@@ -420,10 +420,10 @@ public:
      *
      * set all of the values associated with directional light
      */
-    dirlight ( const math::vec3& _direction
-             , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
+    dirlight ( const math::fvec3& _direction
+             , const math::fvec3& _ambient_color, const math::fvec3& _diffuse_color, const math::fvec3& _specular_color
              , const bool _enabled = true )
-        : light { math::vec3 { 0.0 }, _direction, 0.0, 0.0, 1.0, 0.0, 0.0, _ambient_color, _diffuse_color, _specular_color, _enabled }
+        : light { math::fvec3 { 0.0 }, _direction, 0.0, 0.0, 1.0, 0.0, 0.0, _ambient_color, _diffuse_color, _specular_color, _enabled }
     {}
 
     /* default zero-parameter constructor */
@@ -490,11 +490,11 @@ public:
      *
      * set all of the values associated with directional light
      */
-    pointlight ( const math::vec3& _position
+    pointlight ( const math::fvec3& _position
                , const double _att_const, const double _att_linear, const double _att_quad
-               , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
+               , const math::fvec3& _ambient_color, const math::fvec3& _diffuse_color, const math::fvec3& _specular_color
                , const bool _enabled = true )
-        : light { _position, math::vec3 { 0.0 }, 0.0, 0.0, _att_const, _att_linear, _att_quad, _ambient_color, _diffuse_color, _specular_color, _enabled }
+        : light { _position, math::fvec3 { 0.0 }, 0.0, 0.0, _att_const, _att_linear, _att_quad, _ambient_color, _diffuse_color, _specular_color, _enabled }
     {}
 
     /* default zero-parameter constructor */
@@ -553,9 +553,9 @@ public:
      *
      * set all of the values associated with directional light
      */
-    spotlight ( const math::vec3& _position, const math::vec3& _direction
+    spotlight ( const math::fvec3& _position, const math::fvec3& _direction
               , const double _inner_cone, const double _outer_cone,const double _att_const, const double _att_linear, const double _att_quad
-              , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
+              , const math::fvec3& _ambient_color, const math::fvec3& _diffuse_color, const math::fvec3& _specular_color
               , const bool _enabled = true )
         : light { _position, _direction, _inner_cone, _outer_cone, _att_const, _att_linear, _att_quad, _ambient_color, _diffuse_color, _specular_color, _enabled }
     {}
