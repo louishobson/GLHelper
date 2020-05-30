@@ -60,7 +60,7 @@ glh::model::model::model ( const std::string& _directory, const std::string& _en
  * transform: the overall model transformation to apply (identity by default)
  * transparent_only: only render meshes with possible transparent elements (false by default)
  */
-void glh::model::model::render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform, const bool transparent_only )
+void glh::model::model::render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::fmat4& transform, const bool transparent_only )
 {
     /* reload the cache of uniforms  */
     cache_uniforms ( material_uni, model_uni );
@@ -68,7 +68,7 @@ void glh::model::model::render ( core::struct_uniform& material_uni, core::unifo
     /* render */
     render ( transform, transparent_only );
 }
-void glh::model::model::render ( const math::mat4& transform, const bool transparent_only ) const
+void glh::model::model::render ( const math::fmat4& transform, const bool transparent_only ) const
 {
     /* throw if uniforms are not already cached */
     if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to render model without a complete uniform cache" };
@@ -178,9 +178,9 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
     _material.specular_stack.base_color = cast_vector ( temp_color ); else _material.specular_stack.base_color = math::fvec3 { 0.0 };
 
     /* apply sRGBA transformations to base colors */
-    if ( flags & import_flags::GLH_AMBIENT_BASE_COLOR_SRGBA ) _material.ambient_stack.base_color = std::pow ( _material.ambient_stack.base_color, math::fvec3 { 2.2 } );
-    if ( flags & import_flags::GLH_DIFFUSE_BASE_COLOR_SRGBA ) _material.diffuse_stack.base_color = std::pow ( _material.diffuse_stack.base_color, math::fvec3 { 2.2 } );
-    if ( flags & import_flags::GLH_SPECULAR_BASE_COLOR_SRGBA ) _material.specular_stack.base_color = std::pow ( _material.specular_stack.base_color, math::fvec3 { 2.2 } );
+    if ( flags & import_flags::GLH_AMBIENT_BASE_COLOR_SRGBA ) _material.ambient_stack.base_color = math::pow ( _material.ambient_stack.base_color, math::fvec3 { 2.2 } );
+    if ( flags & import_flags::GLH_DIFFUSE_BASE_COLOR_SRGBA ) _material.diffuse_stack.base_color = math::pow ( _material.diffuse_stack.base_color, math::fvec3 { 2.2 } );
+    if ( flags & import_flags::GLH_SPECULAR_BASE_COLOR_SRGBA ) _material.specular_stack.base_color = math::pow ( _material.specular_stack.base_color, math::fvec3 { 2.2 } );
 
     /* set up the ambient texture stack textures  */
     _material.ambient_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_AMBIENT ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
@@ -366,7 +366,7 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
         /* apply gamma correction */
         if ( flags & import_flags::GLH_VERTEX_SRGBA ) for ( unsigned j = 0; j < _mesh.num_color_sets; ++j )
             _mesh.vertices.at ( i ).colorsets.at ( j ) = 
-            math::fvec4 { std::pow ( math::fvec3 { _mesh.vertices.at ( i ).colorsets.at ( j ) }, math::fvec3 ( 2.2 ) ), _mesh.vertices.at ( i ).colorsets.at ( j ).at ( 3 ) };
+            math::fvec4 { math::pow ( math::fvec3 { _mesh.vertices.at ( i ).colorsets.at ( j ) }, math::fvec3 { 2.2 } ), _mesh.vertices.at ( i ).colorsets.at ( j ).at ( 3 ) };
 
         /* set uv channel coords */
         for ( unsigned j = 0; j < _mesh.num_uv_channels; ++j )

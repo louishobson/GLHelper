@@ -151,6 +151,12 @@ namespace glh
          */
         template<unsigned M, class T> double angle ( const vector<M, T>& lhs, const vector<M, T>& rhs );
 
+        /* pow
+         *
+         * raise a vector to a power
+         */
+        template<unsigned M, class T> vector<M, T> pow ( const vector<M, T>& lhs, const double& rhs );
+        template<unsigned M, class T> vector<M, T> pow ( const vector<M, T>& lhs, const vector<M, T>& rhs ); 
     }
 
     namespace exception
@@ -343,9 +349,6 @@ template<unsigned M, class T> glh::math::vector<M, T>& operator/= ( glh::math::v
 template<unsigned M, class T> glh::math::vector<M, T> operator+ ( const glh::math::vector<M, T>& lhs );
 /* unary minus operator */
 template<unsigned M, class T> glh::math::vector<M, T> operator- ( const glh::math::vector<M, T>& lhs );
-
-/* pow operator */
-template<unsigned M, class T> glh::math::vector<M, T> std::pow ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs );
 
 /* operator<<
  *
@@ -584,6 +587,33 @@ template<unsigned M, class T> inline double glh::math::angle ( const vector<M, T
     return std::acos ( dot ( lhs, rhs ) / ( modulus ( lhs ) * modulus ( rhs ) ) );
 }
 
+/* pow
+ *
+ * raise a vector to a power
+ */
+template<unsigned M, class T> glh::math::vector<M, T> glh::math::pow ( const vector<M, T>& lhs, const double& rhs )
+{
+    /* create new vector */
+    vector<M, T> result;
+
+    /* raise each component to the same power */
+    for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = std::pow ( lhs.at ( i ), rhs );
+
+    /* return the result */
+    return result;
+}
+template<unsigned M, class T> glh::math::vector<M, T> glh::math::pow ( const vector<M, T>& lhs, const vector<M, T>& rhs )
+{
+    /* create new vector */
+    vector<M, T> result;
+
+    /* raise each component to the corresponding powers of rhs */
+    for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = std::pow ( lhs.at ( i ), rhs.at ( i ) );
+
+    /* return the result */
+    return result;
+}
+
 
 
 /* VECTOR OPERATORS IMPLEMENTATION */
@@ -757,6 +787,7 @@ template<unsigned M, class T> inline glh::math::vector<M, T> operator+ ( const g
     /* return the same vector */
     return lhs;
 }
+
 /* unary minus operator */
 template<unsigned M, class T> inline glh::math::vector<M, T> operator- ( const glh::math::vector<M, T>& lhs )
 {
@@ -767,19 +798,6 @@ template<unsigned M, class T> inline glh::math::vector<M, T> operator- ( const g
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = - result.at ( i );
 
     /* return the result */
-    return result;
-}
-
-/* pow operator */
-template<unsigned M, class T> inline glh::math::vector<M, T> std::pow ( const glh::math::vector<M, T>& lhs, const glh::math::vector<M, T>& rhs )
-{
-    /* create new vector */
-    glh::math::vector<M, T> result;
-
-    /* pow each of the elements of the vector */
-    for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = std::pow ( lhs.at ( i ), rhs.at ( i ) );
-
-    /* return result */
     return result;
 }
 

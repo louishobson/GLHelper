@@ -139,6 +139,14 @@ namespace glh
          */
         template<unsigned M, class T> std::enable_if_t<( M > 1 ), matrix<M, M, T>> inverse ( const matrix<M, M, T>& _matrix );
         template<unsigned M, class T> std::enable_if_t<M == 1, matrix<M, M, T>> inverse ( const matrix<M, M, T>& _matrix );
+    
+        /* pow
+         *
+         * raise a matrix to a power
+         * a negative power uses the inverse as the base
+         */
+        template<unsigned M, class T> glh::math::matrix<M, M, T> pow ( const glh::math::matrix<M, M, T>& base, const int exp );
+    
     }
 
     namespace meta
@@ -351,13 +359,6 @@ template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T>& operator/=
 template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator+ ( const glh::math::matrix<M, N, T>& lhs );
 /* unary minus operator */
 template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator- ( const glh::math::matrix<M, N, T>& lhs );
-
-/* overload of std::pow
- *
- * raise a matrix to a power
- * a negative power uses the determinant as the base
- */
-template<unsigned M, class T> glh::math::matrix<M, M, T> std::pow ( const glh::math::matrix<M, M, T>& base, const int exp );
 
 /* operator<<
  *
@@ -656,6 +657,32 @@ template<unsigned M, class T> inline std::enable_if_t<M == 1, glh::math::matrix<
     return matrix<1, 1, T> { 1.0 / _matrix.at ( 0 ) };
 }
 
+/* pow
+ *
+ * raise a matrix to a power
+ * a negative power uses the inverse as the base
+ */
+template<unsigned M, class T> inline glh::math::matrix<M, M, T> glh::math::pow ( const matrix<M, M, T>& lhs, const int rhs )
+{
+    /* produce new base based on sign of exp */
+    matrix<M, M, T> base { ( exp >= 0 ? lhs : inverse ( lhs ) ) };
+
+    /* make exp positive */
+    unsigned exp = std::abs ( rhs );
+
+    /* produce result matrix
+     * not going to include glh_transform.hpp just for the identity matrix
+     */
+    matrix<M, M, T> result { 0.0 };
+    for ( unsigned i = 0; i < M; ++i ) result.at ( i, i ) = 1.0;
+
+    /* apply power */
+    for ( unsigned i = 0; i < exp; ++i ) result = result * base;
+
+    /* return result */
+    return result;
+}
+
 
 
 /* MATRIX OPERATORS IMPLEMENTATION */
@@ -858,32 +885,6 @@ template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> oper
 
     /* set its values */
     for ( unsigned i = 0; i < M * N; ++i ) result.at ( i ) = -lhs.at ( i );
-
-    /* return result */
-    return result;
-}
-
-/* overload of std::pow
- *
- * raise a matrix to a power
- * a negative power uses the determinant as the base
- */
-template<unsigned M, class T> inline glh::math::matrix<M, M, T> std::pow ( const glh::math::matrix<M, M, T>& base, const int exp )
-{
-    /* produce new base based on sign of exp */
-    glh::math::matrix<M, M, T> newbase { ( exp >= 0 ? base : inverse ( base ) ) };
-
-    /* make exp positive */
-    unsigned newexp = std::abs ( exp );
-
-    /* produce result matrix
-     * not going to include glh_transform.hpp just for the identity matrix
-     */
-    glh::math::matrix<M, M, T> result;
-    for ( unsigned i = 0; i < M; ++i ) result.at ( i, i ) = 1.0;
-
-    /* apply power */
-    for ( unsigned i = 0; i < newexp; ++i ) result = result * newbase;
 
     /* return result */
     return result;
