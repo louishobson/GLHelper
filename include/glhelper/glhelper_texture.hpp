@@ -59,6 +59,9 @@
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
+/* include math */
+#include <glhelper/glhelper_math.hpp>
+
 /* indlude stb_image.h without implementation */
 #include <stb/stb_image.h>
 
@@ -159,6 +162,12 @@ public:
     void set_t_wrap ( const GLenum opt );
     void set_r_wrap ( const GLenum opt );
     void set_wrap ( const GLenum opt );
+
+    /* set_border_color
+     *
+     * set the color of the boarder, such that the texture can be clamped to the edge with a specific color
+     */
+    void set_border_color ( const math::fvec3& color );
 
     /* generate_mipmap
      *
@@ -312,7 +321,7 @@ private:
 
     /* path
      *
-     * path to the shader
+     * path to the texture
      */
     const std::string path;
 

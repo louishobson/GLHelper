@@ -121,6 +121,17 @@ void glh::core::texture_base::set_wrap ( const GLenum opt )
     glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_R, opt );
 }
 
+/* set_border_color
+ *
+ * set the color of the boarder, such that the texture can be clamped to the edge with a specific color
+ */
+void glh::core::texture_base::set_border_color ( const math::fvec3& color )
+{
+    /* bind, set paramater */
+    bind (); 
+    glTexParameterfv ( opengl_bind_target, GL_TEXTURE_BORDER_COLOR, color.internal_ptr () );
+}
+
 /* generate_mipmap
  *
  * generate texture mipmap
