@@ -40,6 +40,7 @@ int main ()
     glh::core::vshader basic_vshader { "shaders/vertex.basic.glsl" };
     glh::core::fshader basic_fshader { "shaders/fragment.basic.glsl" };
     glh::core::vshader model_vshader { "shaders/vertex.model.glsl" };
+    glh::core::gshader model_gshader { "shaders/geometry.model.glsl" };
     glh::core::fshader model_fshader { "shaders/fragment.model.glsl" };
     glh::core::fshader mirror_fshader { "shaders/fragment.mirror.glsl" };
     glh::core::vshader cubemap_vshader { "shaders/vertex.cubemap.glsl" };
@@ -307,7 +308,6 @@ int main ()
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
         camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         island.render ( island_matrix, false );
-        //chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, false );
 
         mirror_fbo_ms.bind ();
         glh::core::renderer::set_front_face ( GL_CW );
@@ -330,7 +330,6 @@ int main ()
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
         camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
         island.render ( island_matrix, true );
-        //chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, true );
 
         mirror_fbo_ms.bind ();
         glh::core::renderer::set_front_face ( GL_CW );
