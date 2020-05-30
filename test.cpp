@@ -66,7 +66,7 @@ int main ()
 
 
     glh::lighting::light_system light_system;
-    light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 0.5 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
+    light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 0.75 }, glh::math::vec3 { 1.5 }, glh::math::vec3 { 1.0 } );
     //light_system.pointcoll.lights.emplace_back ( glh::math::vec3 {}, 1.0, 0.045, 0.0075, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
     light_system.cache_uniforms ( model_program.get_struct_uniform ( "light_system" ) );
 
