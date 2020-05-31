@@ -55,20 +55,21 @@ glh::model::model::model ( const std::string& _directory, const std::string& _en
  *
  * render the model
  * 
+ * prog: the program to use for rendering
  * material_uni: material uniform to cache and set the material properties to
  * model_uni: a 4x4 matrix uniform to cache and apply set the model transformations to
  * transform: the overall model transformation to apply (identity by default)
  * transparent_only: only render meshes with possible transparent elements (false by default)
  */
-void glh::model::model::render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::fmat4& transform, const bool transparent_only )
+void glh::model::model::render ( const core::program& prog, core::struct_uniform& material_uni, core::uniform& model_uni, const math::fmat4& transform, const bool transparent_only )
 {
     /* reload the cache of uniforms  */
     cache_uniforms ( material_uni, model_uni );
 
     /* render */
-    render ( transform, transparent_only );
+    render ( prog, transform, transparent_only );
 }
-void glh::model::model::render ( const math::fmat4& transform, const bool transparent_only ) const
+void glh::model::model::render ( const core::program& prog, const math::fmat4& transform, const bool transparent_only ) const
 {
     /* throw if uniforms are not already cached */
     if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to render model without a complete uniform cache" };
@@ -77,7 +78,7 @@ void glh::model::model::render ( const math::fmat4& transform, const bool transp
     draw_transparent_only = transparent_only;
 
     /* render the root node */
-    render_node ( root_node, transform );
+    render_node ( prog, root_node, transform );
 }
 
 
@@ -186,21 +187,21 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
     _material.ambient_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_AMBIENT ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_AMBIENT ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
-        add_texture ( _material.ambient_stack.levels.at ( i ), aimaterial, i, aiTextureType_AMBIENT, flags & import_flags::GLH_AMBIENT_TEXTURE_SRGBA );  
+        add_texture ( _material.ambient_stack, aimaterial, i, aiTextureType_AMBIENT, flags & import_flags::GLH_AMBIENT_TEXTURE_SRGBA );  
     }
 
     /* set up the diffuse texture stack textures */
     _material.diffuse_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
-        add_texture ( _material.diffuse_stack.levels.at ( i ), aimaterial, i, aiTextureType_DIFFUSE, flags & import_flags::GLH_DIFFUSE_TEXTURE_SRGBA );  
+        add_texture ( _material.diffuse_stack, aimaterial, i, aiTextureType_DIFFUSE, flags & import_flags::GLH_DIFFUSE_TEXTURE_SRGBA );  
     }
 
     /* set up the specular texture stack textures */
     _material.specular_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_SPECULAR ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_SPECULAR ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
-        add_texture ( _material.specular_stack.levels.at ( i ), aimaterial, i, aiTextureType_SPECULAR, flags & import_flags::GLH_SPECULAR_TEXTURE_SRGBA );  
+        add_texture ( _material.specular_stack, aimaterial, i, aiTextureType_SPECULAR, flags & import_flags::GLH_SPECULAR_TEXTURE_SRGBA );  
     }
 
     /* get the blend mode */
@@ -236,7 +237,7 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
  *
  * add a texture to a texture stack
  * 
- * _texture_stack_level: the location of the level in the stack texture
+ * _texture_stack the texture stack being configured
  * aimaterial: the material the texture is being added from
  * index: the index of the texture
  * aitexturetype: the type of the stack
@@ -244,7 +245,7 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
  * 
  * return: the texture stack level just added
  */
-glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack_level& _texture_stack_level, const aiMaterial& aimaterial, const unsigned index, const aiTextureType aitexturetype, const bool is_srgb )
+glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack& _texture_stack, const aiMaterial& aimaterial, const unsigned index, const aiTextureType aitexturetype, const bool is_srgb )
 {
     /* temporary variables */
     aiString temp_string;
@@ -263,39 +264,40 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack_
 
     /* set the blend attributes */
     if ( aimaterial.Get ( AI_MATKEY_TEXOP ( aitexturetype, index ), temp_int ) == aiReturn_SUCCESS )
-    _texture_stack_level.blend_operation = temp_int; else _texture_stack_level.blend_operation = 0;
+    _texture_stack.levels.at ( index ).blend_operation = temp_int; else
+    _texture_stack.levels.at ( index ).blend_operation = ( _texture_stack.base_color == math::fvec3 { 0.0 } && index == 0 ? 1 : 0 );
     if ( aimaterial.Get ( AI_MATKEY_TEXBLEND ( aitexturetype, index ), temp_float ) == aiReturn_SUCCESS ) 
-    _texture_stack_level.blend_strength = temp_float; else _texture_stack_level.blend_strength = 1.0;
+    _texture_stack.levels.at ( index ).blend_strength = temp_float; else _texture_stack.levels.at ( index ).blend_strength = 1.0;
 
     /* set wrapping modes */
     if ( aimaterial.Get ( AI_MATKEY_MAPPINGMODE_U ( aitexturetype, index ), temp_int ) == aiReturn_SUCCESS )
-    _texture_stack_level.wrapping_u = temp_int; else _texture_stack_level.wrapping_u = aiTextureMapMode_Wrap;
+    _texture_stack.levels.at ( index ).wrapping_u = temp_int; else _texture_stack.levels.at ( index ).wrapping_u = aiTextureMapMode_Wrap;
     if ( aimaterial.Get ( AI_MATKEY_MAPPINGMODE_V ( aitexturetype, index ), temp_int ) == aiReturn_SUCCESS )
-    _texture_stack_level.wrapping_v = temp_int; else _texture_stack_level.wrapping_v = aiTextureMapMode_Wrap;
+    _texture_stack.levels.at ( index ).wrapping_v = temp_int; else _texture_stack.levels.at ( index ).wrapping_v = aiTextureMapMode_Wrap;
 
     /* set uvwsrc */
     if ( aimaterial.Get ( AI_MATKEY_UVWSRC ( aitexturetype, index ), temp_int ) == aiReturn_SUCCESS )
-    _texture_stack_level.uvwsrc = temp_int; else _texture_stack_level.uvwsrc = 0;
+    _texture_stack.levels.at ( index ).uvwsrc = temp_int; else _texture_stack.levels.at ( index ).uvwsrc = 0;
 
     /* check that the uv channel is actually possible */
-    if ( _texture_stack_level.uvwsrc >= GLH_MODEL_MAX_UV_CHANNELS ) throw exception::model_exception { "level of texture stack requires UV channel greater than the maximum allowed channels" };
+    if ( _texture_stack.levels.at ( index ).uvwsrc >= GLH_MODEL_MAX_UV_CHANNELS ) throw exception::model_exception { "level of texture stack requires UV channel greater than the maximum allowed channels" };
 
     /* check if already inported */
     for ( unsigned i = 0; i < textures.size (); ++i ) if ( textures.at ( i ).get_path () == texpath )
     {
         /* already imported, so purely set the index */
-        _texture_stack_level.index = i;
+        _texture_stack.levels.at ( index ).index = i;
 
         /* return texture reference */
-        return _texture_stack_level;
+        return _texture_stack.levels.at ( index );
     }
 
     /* not already imported, so import and set the index */
     textures.push_back ( core::texture2d { directory + "/" + texpath, is_srgb } );
-    _texture_stack_level.index = textures.size () - 1;
+    _texture_stack.levels.at ( index ).index = textures.size () - 1;
 
     /* return texture reference */
-    return _texture_stack_level;
+    return _texture_stack.levels.at ( index );
 }
 
 /* is_definitely_opaque
@@ -480,31 +482,33 @@ glh::model::node& glh::model::model::add_node ( node& _node, const aiNode& ainod
  *
  * render the model
  * 
+ * prog: the program to use for rendering
  * _node: the node to render
  * transform: the current model transformation from all the previous nodes
  */
-void glh::model::model::render_node ( const node& _node, const math::fmat4& transform ) const
+void glh::model::model::render_node ( const core::program& prog, const node& _node, const math::fmat4& transform ) const
 {
     /* create transformation matrix */
     math::fmat4 trans = transform * _node.transform;
 
     /* first render the child nodes */
-    for ( const node& child: _node.children ) render_node ( child, trans );
+    for ( const node& child: _node.children ) render_node ( prog, child, trans );
 
     /* set the model matrix */
     cached_uniforms->model_uni.set_matrix ( trans );
 
     /* render all of the meshes */
-    for ( const mesh * _mesh: _node.meshes ) render_mesh ( * _mesh );
+    for ( const mesh * _mesh: _node.meshes ) render_mesh ( prog, * _mesh );
 }
 
 /* render_mesh
  *
  * render a mesh
  * 
+ * prog: the program to use for rendering
  * _mesh: the mesh to render
  */
-void glh::model::model::render_mesh ( const mesh& _mesh ) const
+void glh::model::model::render_mesh ( const core::program& prog, const mesh& _mesh ) const
 {
     /* don't draw if transparent only is set mesh is definitely opaque */
     if ( draw_transparent_only && _mesh.definitely_opaque ) return;
@@ -530,7 +534,7 @@ void glh::model::model::render_mesh ( const mesh& _mesh ) const
     cached_uniforms->opacity_uni.set_float ( _mesh.properties->opacity );
 
     /* draw elements */
-    core::renderer::draw_elements ( _mesh.array_object, GL_TRIANGLES, _mesh.faces.size () * 3, GL_UNSIGNED_INT, 0 );
+    core::renderer::draw_elements ( prog, _mesh.array_object, GL_TRIANGLES, _mesh.faces.size () * 3, GL_UNSIGNED_INT, 0 );
 
     /* re-enable face culling if was previously disabled */
     if ( culling_active && _mesh.properties->two_sided ) core::renderer::enable_face_culling ();

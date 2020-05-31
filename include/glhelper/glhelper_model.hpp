@@ -576,13 +576,14 @@ public:
      *
      * render the model
      * 
+     * prog: the program to use for rendering
      * material_uni: material uniform to cache and set the material properties to
      * model_uni: a 4x4 matrix uniform to cache and apply set the model transformations to
      * transform: the overall model transformation to apply (identity by default)
      * transparent_only: only render meshes with possible transparent elements (false by default)
      */
-    void render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::fmat4& transform = math::identity<4> (), const bool transparent_only = false );
-    void render ( const math::fmat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
+    void render ( const core::program& prog, core::struct_uniform& material_uni, core::uniform& model_uni, const math::fmat4& transform = math::identity<4> (), const bool transparent_only = false );
+    void render ( const core::program& prog, const math::fmat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
 
 
 
@@ -719,7 +720,7 @@ private:
      *
      * add a texture to a texture stack
      * 
-     * _texture_stack_level: the location of the level in the texture stack
+     * _texture_stack: the texture stack to configure
      * aimaterial: the material the texture is being added from
      * index: the index of the texture
      * aitexturetype: the type of the stack
@@ -727,7 +728,7 @@ private:
      * 
      * return: the texture stack level just added
      */
-    texture_stack_level& add_texture ( texture_stack_level& _texture_stack_level, const aiMaterial& aimaterial, const unsigned index, const aiTextureType aitexturetype, const bool is_srgb = false );
+    texture_stack_level& add_texture ( texture_stack& _texture_stack, const aiMaterial& aimaterial, const unsigned index, const aiTextureType aitexturetype, const bool is_srgb = false );
 
     /* is_definitely_opaque
      *
@@ -786,20 +787,22 @@ private:
      *
      * render a node and all of its children
      * 
+     * prog: the program to use for rendering
      * _node: the node to render
      * transform: the current model transformation from all the previous nodes
      * transparent_only: only render meshes with possible transparent elements (false by default)
      */
-    void render_node ( const node& _node, const math::fmat4& transform ) const;
+    void render_node ( const core::program& prog, const node& _node, const math::fmat4& transform ) const;
 
     /* render_mesh
      *
      * render a mesh
      * 
+     * prog: the program to use for rendering
      * _mesh: the mesh to render
      * transparent_only: only render meshes with possible transparent elements (false by default)
      */
-    void render_mesh ( const mesh& _mesh ) const;
+    void render_mesh ( const core::program& prog, const mesh& _mesh ) const;
 
     /* apply_stack
      *
