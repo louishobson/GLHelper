@@ -94,8 +94,6 @@ void glh::core::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data
  */
 void glh::core::buffer::buffer_sub_data ( const GLintptr offset, const GLsizeiptr size, const GLvoid * data = NULL )
 {
-    std::cout << "hi\n";
-
     /* unmap */
     unmap_buffer ();
 
@@ -228,20 +226,20 @@ void glh::core::buffer::assert_not_is_buffer_mapped ( const std::string& operati
 /* get_index_bound_ubo_pointer
  *
  * produce a pointer to the ubo currently bound to an index bind point
- * NULL is returned if no UBO is bound to that index
  * 
  * index: the index to produce the pointer from
  */
-glh::core::ubo * glh::core::ubo::get_index_bound_ubo_pointer ( const unsigned index )
+glh::core::object_pointer<glh::core::ubo> glh::core::ubo::get_index_bound_ubo_pointer ( const unsigned index )
 {
     /* if object is bound, return pointer to it */
     if ( ubo_indexed_bindings.size () > index && ubo_indexed_bindings.at ( index ) > 0 )
     {
-        return dynamic_cast<ubo *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_BUFFER_TYPE ) ).at ( ubo_indexed_bindings.at ( index ) ) );
+        return object_pointer<ubo>
+        { dynamic_cast<ubo *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_BUFFER_TYPE ) ).at ( ubo_indexed_bindings.at ( index ) ) ) };
     }
 
-    /* else return NULL */
-    else return NULL;
+    /* else return NULL pointer */
+    else return object_pointer<ubo> {};
 }
 
 /* bind/unbind_buffer_base
@@ -330,8 +328,8 @@ void glh::core::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, c
     glEnableVertexAttribArray ( attrib );
 
     /* add the attribute to vertex_attribs */
-    if ( attrib >= vertex_attribs.size () ) vertex_attribs.resize ( attrib + 1, { 0, GL_NONE, GL_NONE, 0, 0, NULL, false } );
-    vertex_attribs.at ( attrib ) = { size, type, norm, stride, offset, &buff, true };
+    if ( attrib >= vertex_attribs.size () ) vertex_attribs.resize ( attrib + 1, { 0, GL_NONE, GL_NONE, 0, 0, {}, false } );
+    vertex_attribs.at ( attrib ) = { size, type, norm, stride, offset, buff, true };
 
     /* unbind vao */
     if ( vao_binding_change ) unbind ();
@@ -382,7 +380,7 @@ void glh::core::vao::bind_ebo ( const ebo& buff )
     const bool ebo_binding_change = buff.bind ();
 
     /* set the ebo */
-    bound_ebo = &buff;
+    bound_ebo = buff;
 
     /* unbind vao, then ebo */
     if ( vao_binding_change ) unbind ();
@@ -400,7 +398,7 @@ void glh::core::vao::bind_ebo ( const ebo& buff )
 void glh::core::vao::prepare_arrays () const
 {
     /* throw if invalid object */
-    assert_is_object_valid ( "prepare arrays" );
+    if ( !is_object_valid () ) throw exception::buffer_exception { "failed to prepare vao arrays: vao is an invalid object" };
 
     /* loop through enabled vertex attributes and check buffers are valid */
     for ( const auto& att: vertex_attribs )
@@ -408,7 +406,7 @@ void glh::core::vao::prepare_arrays () const
         if ( att.enabled ) 
         {
             /* assert is valid */
-            att.buff->assert_is_object_valid ( "prepare arrays" );
+            if ( !att.buff ) throw exception::buffer_exception { "failed to prepare vao arrays: vbo is invalid" };
             /* assure that buffer is not mapped */
             att.buff->unmap_buffer ();
         }
@@ -427,7 +425,6 @@ void glh::core::vao::prepare_elements () const
     prepare_arrays ();
 
     /* assert that ebo is valid and that it is not mapped */
-    if ( !bound_ebo ) throw exception::buffer_exception { "attempted to perform draw elements operation, however no ebo has been bound to the vao" };
-    bound_ebo->assert_is_object_valid ( "draw elements" );
+    if ( !bound_ebo ) throw exception::buffer_exception { "failed to prepare vao elements: ebo is invalid" };
     bound_ebo->unmap_buffer ();
 }

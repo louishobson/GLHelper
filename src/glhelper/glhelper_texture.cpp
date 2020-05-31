@@ -219,22 +219,6 @@ glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height,
 
 
 
-/* get_bound_object_pointer
- *
- * produce a pointer to the texture2d currently bound
- * NULL is returned if no object is bound to the bind point
- *
- * target: the bind target to get the object from
- * unit: the texture unit to get the object bound to
- */
-glh::core::texture2d * glh::core::texture2d::get_bound_object_pointer ( const unsigned unit )
-{
-    /* return the casted object */
-    return dynamic_cast<texture2d *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_TEXTURE_TYPE ) ).at ( object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_0_TARGET ) + unit ) ) );    
-}
-
-
-
 /* CUBEMAP IMPLEMENTATION */
 
 /* image constructor
@@ -349,21 +333,6 @@ glh::core::cubemap::cubemap ( const std::string& path, const bool is_srgb )
 
 
 
-/* get_bound_object_pointer
- *
- * produce a pointer to the cubemap currently bound
- * NULL is returned if no object is bound to the bind point
- *
- * unit: the texture unit to get the object bound to
- */
-glh::core::cubemap * glh::core::cubemap::get_bound_object_pointer ( const unsigned unit )
-{
-    /* return the casted object */
-    return dynamic_cast<cubemap *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_TEXTURE_TYPE ) ).at ( object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET ) + unit ) ) );    
-}
-
-
-
 /* TEXTURE2D_MULTISAMPLE IMPLEMENTATION */
 
 /* empty texture constructor
@@ -392,19 +361,4 @@ glh::core::texture2d_multisample::texture2d_multisample ( const int _width, cons
     /* set mag/min options */
     set_mag_filter ( GL_LINEAR );
     set_min_filter ( GL_LINEAR );
-}
-
-
-
-/* get_bound_object_pointer
- *
- * produce a pointer to the texture2d_multisample currently bound
- * NULL is returned if no object is bound to the bind point
- *
- * unit: the texture unit to get the object bound to
- */
-glh::core::texture2d_multisample * glh::core::texture2d_multisample::get_bound_object_pointer ( const unsigned unit )
-{
-    /* return the casted object */
-    return dynamic_cast<texture2d_multisample *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_TEXTURE_TYPE ) ).at ( object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET ) + unit ) ) );    
 }

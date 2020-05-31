@@ -111,10 +111,9 @@ public:
     /* get_bound_object_pointer
      *
      * produce a pointer to the rbo currently bound
-     * NULL is returned if no object is bound to the bind point
      */
     using object::get_bound_object_pointer;
-    static rbo * get_bound_object_pointer () { return dynamic_cast<rbo *> ( get_bound_object_pointer ( object_bind_target::GLH_RBO_TARGET ) ); }
+    static object_pointer<rbo> get_bound_object_pointer () { return get_bound_object_pointer<rbo> ( object_bind_target::GLH_RBO_TARGET ); }
 
 
 
@@ -179,13 +178,13 @@ public:
 
 
 
-    /* get_bound_object_pointer
+        /* get_bound_object_pointer
      *
      * produce a pointer to the fbo currently bound
-     * NULL is returned if no object is bound to the bind point
      */
     using object::get_bound_object_pointer;
-    static fbo * get_bound_object_pointer () { return dynamic_cast<fbo *> ( get_bound_object_pointer ( object_bind_target::GLH_FBO_TARGET ) ); }
+    static object_pointer<fbo> get_bound_object_pointer () { return get_bound_object_pointer<fbo> ( object_bind_target::GLH_FBO_TARGET ); }
+
 
 
 

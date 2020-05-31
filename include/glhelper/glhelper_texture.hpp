@@ -294,12 +294,12 @@ public:
 
     /* get_bound_object_pointer
      *
-     * produce a pointer to the texture2d currently bound
-     * NULL is returned if no object is bound to the bind point
-     * unit: the texture unit to get the object bound to
+     * produce a pointer to the texture2d currently bound to a unit
      */
     using object::get_bound_object_pointer;
-    static texture2d * get_bound_object_pointer ( const unsigned unit = 0 );
+    static object_pointer<texture2d> get_bound_object_pointer ( const unsigned unit = 0 )
+    { return get_bound_object_pointer<texture2d> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_0_TARGET ) + unit ) ); }
+
 
 
 
@@ -380,12 +380,12 @@ public:
 
     /* get_bound_object_pointer
      *
-     * produce a pointer to the cubemap currently bound
-     * NULL is returned if no object is bound to the bind point
-     * unit: the texture unit to get the object bound to
+     * produce a pointer to the cubemap currently bound to a unit
      */
     using object::get_bound_object_pointer;
-    static cubemap * get_bound_object_pointer ( const unsigned unit = 0 );
+    static object_pointer<cubemap> get_bound_object_pointer ( const unsigned unit = 0 )
+    { return get_bound_object_pointer<cubemap> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET ) + unit ) ); }
+
 
 
 
@@ -457,12 +457,12 @@ public:
 
     /* get_bound_object_pointer
      *
-     * produce a pointer to the texture2d_multisample currently bound
-     * NULL is returned if no object is bound to the bind point
-     * unit: the texture unit to get the object bound to
+     * produce a pointer to the texture2d_multisample currently bound to a unit
      */
     using object::get_bound_object_pointer;
-    static texture2d_multisample * get_bound_object_pointer ( const unsigned unit = 0 );
+    static object_pointer<texture2d_multisample> get_bound_object_pointer ( const unsigned unit = 0 )
+    { return get_bound_object_pointer<texture2d_multisample> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET ) + unit ) ); }
+
 
 
 

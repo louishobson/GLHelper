@@ -605,10 +605,9 @@ public:
     /* get_bound_object_pointer
      *
      * produce a pointer to the vbo currently bound
-     * NULL is returned if no object is bound to the bind point
      */
     using object::get_bound_object_pointer;
-    static vbo * get_bound_object_pointer () { return dynamic_cast<vbo *> ( get_bound_object_pointer ( object_bind_target::GLH_VBO_TARGET ) ); }
+    static object_pointer<vbo> get_bound_object_pointer () { return get_bound_object_pointer<vbo> ( object_bind_target::GLH_VBO_TARGET ); }
 
 };
 
@@ -661,10 +660,9 @@ public:
     /* get_bound_object_pointer
      *
      * produce a pointer to the ebo currently bound
-     * NULL is returned if no object is bound to the bind point
      */
     using object::get_bound_object_pointer;
-    static ebo * get_bound_object_pointer () { return dynamic_cast<ebo *> ( get_bound_object_pointer ( object_bind_target::GLH_EBO_TARGET ) ); }
+    static object_pointer<ebo> get_bound_object_pointer () { return get_bound_object_pointer<ebo> ( object_bind_target::GLH_EBO_TARGET ); }
 
 };
 
@@ -716,20 +714,18 @@ public:
 
     /* get_bound_object_pointer
      *
-     * produce a pointer to the ubo currently bound
-     * NULL is returned if no object is bound to the bind point
+     * produce a pointer to the ebo currently bound
      */
     using object::get_bound_object_pointer;
-    static ubo * get_bound_object_pointer () { return dynamic_cast<ubo *> ( get_bound_object_pointer ( object_bind_target::GLH_UBO_TARGET ) ); }
+    static object_pointer<ubo> get_bound_object_pointer () { return get_bound_object_pointer<ubo> ( object_bind_target::GLH_UBO_TARGET ); }
 
     /* get_index_bound_ubo_pointer
      *
      * produce a pointer to the ubo currently bound to an index bind point
-     * NULL is returned if no UBO is bound to that index
      * 
      * index: the index to produce the pointer from
      */
-    static ubo * get_index_bound_ubo_pointer ( const unsigned index );
+    static object_pointer<ubo> get_index_bound_ubo_pointer ( const unsigned index );
 
 
 
@@ -781,8 +777,8 @@ public:
      */
     vao ()
         : object { minor_object_type::GLH_VAO_TYPE }
-        , vertex_attribs { 8, { 0, GL_NONE, GL_NONE, 0, 0, NULL, false } }
-        , bound_ebo { NULL }
+        , vertex_attribs { 8, { 0, GL_NONE, GL_NONE, 0, 0, {}, false } }
+        , bound_ebo {}
     {}
 
     /* deleted copy constructor */
@@ -802,10 +798,9 @@ public:
     /* get_bound_object_pointer
      *
      * produce a pointer to the vao currently bound
-     * NULL is returned if no object is bound to the bind point
      */
     using object::get_bound_object_pointer;
-    static vao * get_bound_object_pointer () { return dynamic_cast<vao *> ( get_bound_object_pointer ( object_bind_target::GLH_VAO_TARGET ) ); }
+    static object_pointer<vao> get_bound_object_pointer () { return get_bound_object_pointer<vao> ( object_bind_target::GLH_VAO_TARGET ); }
 
 
 
@@ -878,7 +873,7 @@ private:
         GLenum norm;
         GLsizei stride;
         GLsizeiptr offset;
-        const vbo * buff;
+        const_object_pointer<vbo> buff;
         bool enabled;
     };
 
@@ -886,7 +881,7 @@ private:
     std::vector<vertex_attrib> vertex_attribs;
 
     /* bound ebo */
-    const ebo * bound_ebo;
+    const_object_pointer<ebo> bound_ebo;
 
 };
 
