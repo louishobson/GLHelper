@@ -41,6 +41,9 @@
 /* include glhelper_buffer.hpp */
 #include <glhelper/glhelper_buffer.hpp>
 
+/* include glhelper_shader.hpp */
+#include <glhelper/glhelper_shader.hpp>
+
 
 
 /* NAMESPACE DECLARATIONS */
@@ -88,13 +91,14 @@ public:
      * draw vertices straight from a vbo (via a vao)
      * all ebo data is ignored
      * 
+     * prog: the program to use for drawing
      * _vao: the vao to draw from
      * mode: the primative to render
      * start_index: the start index of the buffered data
      * count: number of vertices to draw
      * instances: number of instances to draw (defaults to 1)
      */
-    static void draw_arrays ( const vao& _vao, const GLenum mode, const GLint start_index, const GLsizei count, const unsigned instances = 1 );
+    static void draw_arrays ( const program& prog, const vao& _vao, const GLenum mode, const GLint start_index, const GLsizei count, const unsigned instances = 1 );
 
 
 
@@ -102,6 +106,7 @@ public:
      *
      * draw vertices from an ebo (via a vao)
      * 
+     * prog: the program to use for drawing
      * _vao: the vao to draw from
      * mode: the primative to render
      * count: number of vertices to draw
@@ -109,7 +114,7 @@ public:
      * start_index: the start index of the elements
      * instances: number of instances to draw (defaults to 1)
      */
-    static void draw_elements ( const vao& _vao, const GLenum mode, const GLint count, const GLenum type, const GLsizeiptr start_index, const unsigned instances = 1 );
+    static void draw_elements ( const program& prog, const vao& _vao, const GLenum mode, const GLint count, const GLenum type, const GLsizeiptr start_index, const unsigned instances = 1 );
 
 
 
@@ -117,10 +122,10 @@ public:
      *
      * get.set the clear color
      * 
-     * color: vec4 containing rgba components of clear color
+     * color: fvec4 containing rgba components of clear color
      */
-    static const math::vec4& get_clear_color () { return clear_color; }
-    static void set_clear_color ( const math::vec4& color );
+    static const math::fvec4& get_clear_color () { return clear_color; }
+    static void set_clear_color ( const math::fvec4& color );
 
     /* clear
      *
@@ -334,7 +339,7 @@ private:
      * the current clear color for the screen
      * defaults to black
      */
-    static math::vec4 clear_color;
+    static math::fvec4 clear_color;
 
     /* depth_test_state
      *
