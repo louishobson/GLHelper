@@ -49,22 +49,6 @@ void glh::core::glad_loader::load ()
     active_window = win;
 }
 
-/* assert_is_loaded
- *
- * throws if glad has not been loaded
- * 
- * operation: description of the operation
- */
-void glh::core::glad_loader::assert_is_loaded ( const std::string& operation )
-{
-    /* throw if not loaded */
-    if ( !is_loaded () )
-    {
-        if ( operation.size () > 0 ) throw exception::glad_exception { "attempted to perform " + operation + " operation before loading glad" };
-        else throw exception::glad_exception { "attempted to perform OpenGL operation before loading glad" };
-    }
-}
-
 /* GLFWwindow * active_window
  *
  * a pointer to the currently active window
