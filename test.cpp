@@ -81,7 +81,7 @@ int main ()
     /* IMPORT MODEL */
 
     /* import the model */
-    glh::model::model island { "assets/island", "scene.gltf", glh::model::import_flags::GLH_NONE };
+    glh::model::model island { "assets/island", "scene.gltf" };
     const glh::math::mat4 island_matrix =
     glh::math::enlarge3d
     (
@@ -115,13 +115,12 @@ int main ()
 
     /* SET UP RENDERER */
 
-    glh::core::renderer::set_clear_color ( glh::math::vec4 { 0.0 } );
+    glh::core::renderer::set_clear_color ( glh::math::vec4 { 1.0, 0.0, 1.0, 1.0 } );
     glh::core::renderer::enable_depth_test ();
     glh::core::renderer::enable_face_culling ();
     glh::core::renderer::enable_multisample ();
     glh::core::renderer::enable_blend ();
     glh::core::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-    //glh::core::renderer::enable_framebuffer_srgb ();
 
 
 
@@ -172,12 +171,12 @@ int main ()
         /* render opaque */
         transparent_mode_uni.set_int ( false );
         glh::core::renderer::disable_blend ();
-        island.render ( program, island_matrix, false );
+        island.render ( program, island_matrix );
 
         /* render transparent */
         transparent_mode_uni.set_int ( true );
         glh::core::renderer::enable_blend ();
-        island.render ( program, island_matrix, true );
+        island.render ( program, island_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
 
 
 
