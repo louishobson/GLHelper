@@ -23,6 +23,13 @@
  * 
  * 
  * 
+ * STRUCT GLH::MODEL::RENDER_FLAGS
+ * 
+ * struct of static integers for rendering flags 
+ * best way to have scoped enum-style interface, while allowing int conversion
+ * 
+ * 
+ * 
  * CLASS GLH::MODEL::MODEL
  * 
  * stores a model in a renderable format
@@ -200,16 +207,6 @@ namespace glh
 {
     namespace model
     {
-        /* IMPORT FLAGS */
-
-        /* struct import_flags
-         *
-         * model import flags
-         */
-        struct import_flags;
-
-
-
         /* MODEL STRUCTURES */
 
         /* struct vertex
@@ -257,6 +254,22 @@ namespace glh
 
 
 
+        /* FLAGS */
+
+        /* struct import_flags
+         *
+         * model import flags
+         */
+        struct import_flags;
+
+        /* struct render_flags
+         *
+         * model rendering flags
+         */
+        struct render_flags;
+
+
+
         /* MODEL CLASS */
 
         /* class model
@@ -275,48 +288,6 @@ namespace glh
         class model_exception;
     }
 }
-
-
-
-/* IMPORT FLAGS DEFINITION */
-
-/* struct import_flags
- *
- * model import flags
- */
-struct glh::model::import_flags
-{
-    /* CORE VALUES */
-
-    /* dummy value */
-    static const unsigned GLH_NONE = 0x00;
-
-    /* use sRGBA textures */
-    static const unsigned GLH_AMBIENT_TEXTURE_SRGBA = 0x01;
-    static const unsigned GLH_DIFFUSE_TEXTURE_SRGBA = 0x02;
-    static const unsigned GLH_SPECULAR_TEXTURE_SRGBA = 0x04;
-
-    /* use sRGBA base colors */
-    static const unsigned GLH_AMBIENT_BASE_COLOR_SRGBA = 0x08;
-    static const unsigned GLH_DIFFUSE_BASE_COLOR_SRGBA = 0x10;
-    static const unsigned GLH_SPECULAR_BASE_COLOR_SRGBA = 0x20;
-
-    /* use sRGBA vertex colors */
-    static const unsigned GLH_VERTEX_SRGBA = 0x40;
-
-
-
-    /* PRESET VALUES */
-
-    /* preset for sRGBA textures and base colors */
-    static const unsigned GLH_AMBIENT_SRGBA = GLH_AMBIENT_TEXTURE_SRGBA | GLH_AMBIENT_BASE_COLOR_SRGBA;
-    static const unsigned GLH_DIFFUSE_SRGBA = GLH_DIFFUSE_TEXTURE_SRGBA | GLH_DIFFUSE_BASE_COLOR_SRGBA;
-    static const unsigned GLH_SPECULAR_SRGBA = GLH_SPECULAR_TEXTURE_SRGBA | GLH_SPECULAR_BASE_COLOR_SRGBA;
-    
-    /* preset for sRGBA visual texture stacks and vertex colors */
-    static const unsigned GLH_VISUAL_SRGBA = GLH_AMBIENT_SRGBA | GLH_DIFFUSE_SRGBA | GLH_VERTEX_SRGBA;
-
-};
 
 
 
@@ -534,6 +505,86 @@ struct glh::model::node
 
 
 
+/* IMPORT_FLAGS DEFINITION */
+
+/* struct import_flags
+ *
+ * model import flags
+ */
+struct glh::model::import_flags
+{
+    /* CORE VALUES */
+
+    /* dummy value */
+    static const unsigned GLH_NONE = 0x00;
+
+    /* use sRGBA textures
+     * texture will have the internal format GL_SRGB_ALPHA
+     * this means that gamma correction will be applied on import
+     */
+    static const unsigned GLH_AMBIENT_TEXTURE_SRGBA = 0x01;
+    static const unsigned GLH_DIFFUSE_TEXTURE_SRGBA = 0x02;
+    static const unsigned GLH_SPECULAR_TEXTURE_SRGBA = 0x04;
+
+    /* use sRGBA base colors
+     * texture stack base colors will be risen to the power of 2.2
+     */
+    static const unsigned GLH_AMBIENT_BASE_COLOR_SRGBA = 0x08;
+    static const unsigned GLH_DIFFUSE_BASE_COLOR_SRGBA = 0x10;
+    static const unsigned GLH_SPECULAR_BASE_COLOR_SRGBA = 0x20;
+
+    /* use sRGBA vertex colors
+     * vertex colors will be risen to the power of 2.2
+     */
+    static const unsigned GLH_VERTEX_SRGBA = 0x40;
+
+
+
+    /* PRESET VALUES */
+
+    /* preset for sRGBA textures and base colors */
+    static const unsigned GLH_AMBIENT_SRGBA = GLH_AMBIENT_TEXTURE_SRGBA | GLH_AMBIENT_BASE_COLOR_SRGBA;
+    static const unsigned GLH_DIFFUSE_SRGBA = GLH_DIFFUSE_TEXTURE_SRGBA | GLH_DIFFUSE_BASE_COLOR_SRGBA;
+    static const unsigned GLH_SPECULAR_SRGBA = GLH_SPECULAR_TEXTURE_SRGBA | GLH_SPECULAR_BASE_COLOR_SRGBA;
+    
+    /* preset for sRGBA visual texture stacks and vertex colors
+     * these are the texture stacks that are likely to be used for coloring
+     */
+    static const unsigned GLH_VISUAL_SRGBA = GLH_AMBIENT_SRGBA | GLH_DIFFUSE_SRGBA | GLH_VERTEX_SRGBA;
+
+};
+
+
+
+/* RENDER_FLAGS DEFINITION */
+
+/* struct render_flags
+ *
+ * model rendering flags
+ */
+struct glh::model::render_flags
+{
+    /* CORE VALUES */
+
+    /* dummy value */
+    static const unsigned GLH_NONE = 0x00;
+
+    /* transparent mode 
+     * meshes which are flagged as definitely opaque will not be drawn
+     * this is useful for doing a separate opaque and transparent rendering calls
+     */
+    static const unsigned GLH_TRANSPARENT_MODE = 0x01;
+
+    /* no matierials
+     * no material-associated uniforms are set
+     * this is useful for shadow mapping and such, where material is not important
+     */
+    static const unsigned GLH_NO_MATERIAL = 0x02;
+
+};
+
+
+
 /* MODEL DEFINITION */
 
 /* class model
@@ -550,10 +601,10 @@ public:
      * 
      * _directory: directory in which the model resides
      * _entry: the entry file to the model
-     * _flags: import flags for the model (or default recommended)
+     * _import_flags: import flags for the model (or default recommended)
      * _pps: post processing steps (or default recommended)
      */
-    model ( const std::string& _directory, const std::string& _entry, const unsigned _flags = import_flags::GLH_VISUAL_SRGBA, const unsigned _pps = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone | aiProcess_OptimizeGraph );
+    model ( const std::string& _directory, const std::string& _entry, const unsigned _import_flags = import_flags::GLH_NONE, const unsigned _pps = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone | aiProcess_OptimizeGraph );
 
     /* deleted zero parameter constructor */
     model () = delete;
@@ -580,10 +631,10 @@ public:
      * material_uni: material uniform to cache and set the material properties to
      * model_uni: a 4x4 matrix uniform to cache and apply set the model transformations to
      * transform: the overall model transformation to apply (identity by default)
-     * transparent_only: only render meshes with possible transparent elements (false by default)
+     * flags: rendering flags (none by default)
      */
-    void render ( const core::program& prog, core::struct_uniform& material_uni, core::uniform& model_uni, const math::fmat4& transform = math::identity<4> (), const bool transparent_only = false );
-    void render ( const core::program& prog, const math::fmat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
+    void render ( const core::program& prog, core::struct_uniform& material_uni, core::uniform& model_uni, const math::fmat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE );
+    void render ( const core::program& prog, const math::fmat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE ) const;
 
 
 
@@ -607,7 +658,7 @@ private:
     const std::string entry;
 
     /* import flags */
-    const unsigned flags;
+    const unsigned import_flags;
 
     /* the post processing steps used to import the model */
     const unsigned pps;
@@ -651,8 +702,10 @@ private:
     /* cached uniforms */
     std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 
-    /* transparent_only flag */
-    mutable bool draw_transparent_only;
+    
+
+    /* the rendering flags currently being used */
+    mutable unsigned render_flags;
 
 
 
@@ -783,36 +836,44 @@ private:
      */
     node& add_node ( node& _node, const aiNode& ainode );
 
+
+
     /* render_node
      *
      * render a node and all of its children
      * 
-     * prog: the program to use for rendering
      * _node: the node to render
+     * prog: the program to use for rendering
      * transform: the current model transformation from all the previous nodes
-     * transparent_only: only render meshes with possible transparent elements (false by default)
      */
-    void render_node ( const core::program& prog, const node& _node, const math::fmat4& transform ) const;
+    void render_node ( const node& _node, const core::program& prog, const math::fmat4& transform ) const;
 
     /* render_mesh
      *
      * render a mesh
      * 
-     * prog: the program to use for rendering
      * _mesh: the mesh to render
-     * transparent_only: only render meshes with possible transparent elements (false by default)
+     * prog: the program to use for rendering
      */
-    void render_mesh ( const core::program& prog, const mesh& _mesh ) const;
+    void render_mesh ( const mesh& _mesh, const core::program& prog ) const;
 
-    /* apply_stack
+    /* apply_material
+     *
+     * apply material uniforms during mesh rendering
+     * 
+     * _material: the material to apply
+     */
+    void apply_material ( const material& _material ) const;
+
+    /* apply_texture_stack
      *
      * apply a texture stack during mesh rendering
      * 
-     * stack: the texture stack to apply
+     * _texture_stack: the texture stack to apply
      * stack_size_uni/stack_base_color_uni/stack_levels_uni: cached stack uniforms
      * tex_unit: the first texture unit to use, will be incremented for each texture
      */
-    void apply_stack ( const texture_stack& stack, core::uniform& stack_size_uni, core::uniform& stack_base_color_uni, core::struct_array_uniform& stack_levels_uni, unsigned& tex_unit ) const;
+    void apply_texture_stack ( const texture_stack& _texture_stack, core::uniform& stack_size_uni, core::uniform& stack_base_color_uni, core::struct_array_uniform& stack_levels_uni, unsigned& tex_unit ) const;
 
 };
 
