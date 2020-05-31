@@ -12,10 +12,29 @@
  * 
  * 
  * 
+ * ENUM STRUCT GLH::CORE::MINOR_OBJECT_TYPE
+ * ENUM STRUCT GLH::CORE::OBJECT_BIND_TARGET
+ * ENUM STRUCT GLH::CORE::MAJOR_OBJECT_TYPE
+ * 
+ * different types of object and bind points
+ * a minor object type can be converted to a more general major type
+ * a minor object type can be converted to its default bind point
+ * there may also be more bind points available to that object type, however
+ * this is up to derivations to implement access to those
+ * 
+ * 
+ * 
  * CLASS GLH::CORE::OBJECT
  * 
  * abstract base class to derive all OpenGL object classes from
  * it provides the basis for storing the object id as well as defining several operator overloads
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::OBJECT_POINTER
+ * 
+ * acts as a pointer to an object that may at some point be destroyed
+ * one can get an actual pointer to the object through a static method of the object class or through the operators in this class
  * 
  */
 
@@ -32,6 +51,7 @@
 /* include core headers */
 #include <array>
 #include <iostream>
+#include <type_traits>
 #include <vector>
 
 /* include GLAD followed by GLLFW
@@ -86,13 +106,28 @@ namespace glh
 
 
 
-        /* DECLARATIONS FOR THIS HEADER */
-
         /* class object
          *
          * abstract base class to represent any OpenGL object
          */
         class object;
+
+        /* class object_pointer
+         *
+         * safely references an object
+         */
+        template<class T> class object_pointer;
+        template<class T> using const_object_pointer = object_pointer<const T>;
+
+    }
+
+    namespace meta
+    {
+        /* struct is_object
+         *
+         * if T is an object, value is true, else is false
+         */
+        template<class T, class = void> struct is_object;
     }
 
     namespace exception
@@ -220,6 +255,17 @@ enum struct glh::core::object_bind_target : unsigned
 
 
 
+/* IS_OBJECT DEFINITION */
+
+/* struct is_object
+ *
+ * if T is an object, value is true, else is false
+ */
+template<class T, class> struct glh::meta::is_object : public std::false_type {};
+template<class T> struct glh::meta::is_object<T, std::enable_if_t<std::is_base_of<glh::core::object, T>::value>> : public std::true_type {}; 
+
+
+
 /* OBJECT DEFINITION */
 
 /* class object
@@ -228,6 +274,10 @@ enum struct glh::core::object_bind_target : unsigned
  */
 class glh::core::object
 {
+
+    /* friend of object_pointer */
+    template<class T> friend class object_pointer;
+
 public:
 
     /* new object constructor
@@ -266,9 +316,11 @@ public:
     /* get_bound_object_pointer
      *
      * produce a pointer to the object bound to a given bind point
-     * NULL is returned if no object is bound to the bind point
+     *
+     * target: the bind target to get the object from
      */
-    static object * get_bound_object_pointer ( const object_bind_target target );
+    template<class T = object> 
+    static object_pointer<T> get_bound_object_pointer ( const object_bind_target target );
 
 
 
@@ -342,14 +394,6 @@ public:
      * return: boolean representing invalidity
      */
     bool operator! () const { return !is_object_valid (); }
-
-    /* assert_is_object_valid
-     *
-     * throws if the object is not valid
-     * 
-     * operation: description of the operation
-     */
-    void assert_is_object_valid ( const std::string& operation = "" ) const;
 
 
 
@@ -471,6 +515,103 @@ protected:
 
 
 
+/* OBJECT_REFERENCE DEFINITION */
+
+/* class object_pointer
+ *
+ * safely references an object 
+ */
+template<class T> class glh::core::object_pointer
+{
+
+    /* static assert that T is an object type */
+    static_assert ( meta::is_object<T>::value, "object_pointer cannot be instantiated from non-object-derived type" );
+
+public:
+
+    /* construct from an object */
+    object_pointer ( T& obj )
+        : id { obj.internal_id () }
+        , unique_id { obj.internal_unique_id () }
+        , minor_type { obj.get_minor_object_type () }
+        , major_type { obj.get_major_object_type () }
+        , bind_target { obj.get_object_bind_target () }
+    {}
+
+    /* pointer constructor */
+    object_pointer ( T * obj )
+        : id ( obj ? obj->internal_id (): 0 )
+        , unique_id { obj ? obj->internal_unique_id () : 0 }
+        , minor_type { obj ? obj->get_minor_object_type () : minor_object_type::GLH_UNKNOWN_TYPE }
+        , major_type { obj ? obj->get_major_object_type () : major_object_type::GLH_UNKNOWN_TYPE }
+        , bind_target { obj ? obj->get_object_bind_target () : object_bind_target::GLH_UNKNOWN_TARGET }
+    {}
+
+    /* zero-parameter constructor */
+    object_pointer ()
+        : id { 0 }
+        , unique_id { 0 }
+        , minor_type { minor_object_type::GLH_UNKNOWN_TYPE }
+        , major_type { major_object_type::GLH_UNKNOWN_TYPE }
+        , bind_target { object_bind_target::GLH_UNKNOWN_TARGET } 
+    {}
+
+    /* default copy constructor */
+    object_pointer ( const object_pointer& other ) = default;
+
+    /* default copy assignment operator */
+    object_pointer& operator= ( const object_pointer& other ) = default;
+
+    /* default destructor */
+    ~object_pointer () = default;
+
+
+
+    /* pointer operators */
+    T * operator* () const { return get (); }
+    T * operator-> () const { return get (); }
+
+    /* get
+     *
+     * get pointer to object
+     * returns NULL if invalid
+     */
+    T * get () const;
+
+
+
+    /* is_valid
+     *
+     * returns true if the pointer is valid
+     */
+    bool is_pointer_valid () const;
+
+    /* operator!
+     *
+     * returns true if the pointer is invalid
+     */
+    bool operator! () const { return !is_pointer_valid (); }
+
+
+
+private:
+
+    /* id and unique id */
+    GLuint id;
+    GLuint unique_id;
+
+    /* minor and major type */
+    minor_object_type minor_type;
+    major_object_type major_type;
+
+    /* target */
+    object_bind_target bind_target;
+
+};
+
+
+
+
 /* OBJECT_EXCEPTION DEFINITION */
 
 /* class object_exception : exception
@@ -498,6 +639,67 @@ public:
     /* default everything else and inherits what () function */
 
 };
+
+
+
+
+/* OBJECT TEMPLATE METHODS IMPLEMENTATIONS */
+
+/* get_bound_object_pointer
+ *
+ * produce a pointer to the object bound to a given bind point
+ *
+ * target: the bind target to get the object from
+ */
+template<class T> inline glh::core::object_pointer<T> glh::core::object::get_bound_object_pointer ( const object_bind_target target )
+{
+    /* return object pointer */
+    return object_pointer<T> 
+    { dynamic_cast<T *> ( object_pointers.at ( static_cast<unsigned> ( to_major_object_type ( target ) ) ).at ( object_bindings.at ( static_cast<unsigned> ( target ) ) ) ) };
+}
+
+
+
+
+/* OBJECT_POINTER IMPLEMENTATION */
+
+/* get
+ *
+ * get pointer to object
+ * returns NULL if invalid
+ */
+template<class T> inline T * glh::core::object_pointer<T>::get () const
+{
+    /* if id == 0, throw */
+    if ( id == 0 ) throw exception::object_exception { "attempted to dereference invalidated object pointer" };
+
+    /* get pointer to object
+     * we know it will have an entry in the object pointers vector, as its id has previously been created
+     */
+    T * ptr = dynamic_cast<T *> ( object::object_pointers.at ( static_cast<unsigned> ( major_type ) ).at ( id ) );
+
+    /* throw if pointer is invalid or to wrong object */
+    if ( !ptr || ptr->internal_unique_id () != unique_id ) throw exception::object_exception { "attempted to dereference invalidated object pointer" };
+
+    /* return ptr */
+    return ptr;
+}
+
+/* is_valid
+ *
+ * returns true if the pointer is valid
+ */
+template<class T> inline bool glh::core::object_pointer<T>::is_pointer_valid () const
+{
+    /* if no exception caught, return true, else false */
+    try
+    {
+        return get ();
+    } catch ( std::exception& e )
+    {
+        return false;
+    }
+}
 
 
 

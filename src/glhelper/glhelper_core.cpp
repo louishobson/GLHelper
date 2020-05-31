@@ -131,21 +131,6 @@ glh::core::object::~object ()
 
 
 
-/* get_bound_object_pointer
- *
- * produce a pointer to the object bound to a given bind point
- * NULL is returned if no object is bound to the bind point
- *
- * target: the bind target to get the object from
- */
-glh::core::object * glh::core::object::get_bound_object_pointer ( const object_bind_target target )
-{
-    /* cast target to unsigned and return the object bound to that bind point */
-    return object_pointers.at ( static_cast<unsigned> ( to_major_object_type ( target ) ) ).at ( object_bindings.at ( static_cast<unsigned> ( target ) ) );
-}
-
-
-
 
 /* bind/unbind to a target
  *
@@ -157,7 +142,7 @@ glh::core::object * glh::core::object::get_bound_object_pointer ( const object_b
 bool glh::core::object::bind ( const object_bind_target& target ) const
 {
     /* if invalid, throw */
-    assert_is_object_valid ( "bind" );
+    if ( !is_object_valid () ) throw exception::object_exception { "attempted to bind invalid object" };
 
     /* get index of target */
     const unsigned target_index = static_cast<unsigned> ( target );
@@ -218,7 +203,7 @@ bool glh::core::object::bind ( const object_bind_target& target ) const
 bool glh::core::object::unbind ( const object_bind_target& target ) const
 {
     /* if invalid, throw */
-    assert_is_object_valid ( "unbind" );
+    if ( !is_object_valid () ) throw exception::object_exception { "attempted to unbind invalid object" };
 
     /* get index of target */
     const unsigned target_index = static_cast<unsigned> ( target );
@@ -306,24 +291,6 @@ bool glh::core::object::is_bound ( const object_bind_target& target ) const
 {
     /* return true if the object is valid and bound */
     return ( is_object_valid () && object_bindings.at ( static_cast<unsigned> ( target ) ) == id );
-}
-
-
-
-/* assert_is_object_valid
- *
- * throws if the object is not valid
- * 
- * operation: description of the operation
- */
-void glh::core::object::assert_is_object_valid ( const std::string& operation ) const
-{ 
-    /* throw if invalid */
-    if ( !is_object_valid () ) 
-    {
-        if ( operation.size () > 0 ) throw exception::object_exception { "attempted to perform " + operation + " operation on invalid object" }; 
-        else throw exception::object_exception { "attempted to perform operation on invalid object" }; 
-    }
 }
 
 
