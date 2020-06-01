@@ -149,19 +149,19 @@
 /* GLH_MODEL_MAX_UV_CHANNELS
  *
  * the maximum number of uv channels a model can contain
- * defaults to 2
+ * defaults to 4
  */
 #ifndef GLH_MODEL_MAX_UV_CHANNELS
-    #define GLH_MODEL_MAX_UV_CHANNELS 2
+    #define GLH_MODEL_MAX_UV_CHANNELS 4
 #endif
 
 /* GLH_MODEL_MAX_TEXTURE_STACK_SIZE
  *
  * the maximum levels to a texture stack of a matrial
- * defaults to 2
+ * defaults to 4
  */
 #ifndef GLH_MODEL_MAX_TEXTURE_STACK_SIZE
-    #define GLH_MODEL_MAX_TEXTURE_STACK_SIZE 2
+    #define GLH_MODEL_MAX_TEXTURE_STACK_SIZE 4
 #endif
 
 
