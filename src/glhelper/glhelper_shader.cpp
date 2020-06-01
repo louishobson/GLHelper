@@ -222,14 +222,12 @@ void glh::core::uniform::set_vector ( const math::fvec2& v0 )
         glUniform2f ( location, v0.at ( 0 ), v0.at ( 1 ) );
     } else
     {   
-        /* convert to uniform-aligned vector */
-        math::ua_fvec2 ua_v0 { v0 };
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
         const int bind_point = prog.get_uniform_block_binding ( block_index );
         if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
         object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
-        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+        bound_ubo->buffer_sub_data ( offset, sizeof ( v0 ), v0.internal_ptr () );
     }
     
 }
@@ -246,14 +244,12 @@ void glh::core::uniform::set_vector ( const math::fvec3& v0 )
         glUniform3f ( location, v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ) );
     } else
     {   
-        /* convert to uniform-aligned vector */
-        math::ua_fvec3 ua_v0 { v0 };
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
         const int bind_point = prog.get_uniform_block_binding ( block_index );
         if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
         object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
-        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+        bound_ubo->buffer_sub_data ( offset, sizeof ( v0 ), v0.internal_ptr () );
     }
 }
 void glh::core::uniform::set_vector ( const math::fvec4& v0 )
@@ -269,14 +265,12 @@ void glh::core::uniform::set_vector ( const math::fvec4& v0 )
         glUniform4f ( location, v0.at ( 0 ), v0.at ( 1 ), v0.at ( 2 ), v0.at ( 3 ) );
     } else
     {   
-        /* convert to uniform-aligned vector */
-        math::ua_fvec4 ua_v0 { v0 };
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
         const int bind_point = prog.get_uniform_block_binding ( block_index );
         if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
         object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
-        bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
+        bound_ubo->buffer_sub_data ( offset, sizeof ( v0 ), v0.internal_ptr () );
     }
 }
 void glh::core::uniform::set_matrix ( const math::fmat2& v0 )
