@@ -55,7 +55,7 @@ glh::core::rbo::rbo ( const unsigned _width, const unsigned _height, const GLenu
  * attachment: which attachment the texture should be used as
  * mipmap: the mipmap level to attach (defaults to 0)
  */
-void glh::core::fbo::attach_texture2d ( const texture2d& texture, const GLenum attachment, GLint mipmap )
+void glh::core::fbo::attach_texture2d ( const texture2d& texture, const GLenum attachment, const GLint mipmap )
 {
     /* bind the fbo */
     const bool binding_change = bind ();
@@ -66,7 +66,7 @@ void glh::core::fbo::attach_texture2d ( const texture2d& texture, const GLenum a
     /* unbind fbo */
     if ( binding_change ) unbind ();
 }
-void glh::core::fbo::attach_texture2d ( const texture2d_multisample& texture, const GLenum attachment, GLint mipmap )
+void glh::core::fbo::attach_texture2d ( const texture2d_multisample& texture, const GLenum attachment, const GLint mipmap )
 {
     /* bind the fbo */
     const bool binding_change = bind ();
@@ -108,6 +108,30 @@ bool glh::core::fbo::is_complete () const
     const bool complete = ( glCheckFramebufferStatus ( opengl_bind_target ) == GL_FRAMEBUFFER_COMPLETE );
     if ( binding_change ) unbind ();
     return complete;
+}
+
+
+
+/* draw/read_buffer
+ *
+ * sets where to use as a draw/read buffer
+ * by default is GL_COLOR_ATTACHMENT0
+ * 
+ * buff: GLenum for what buffer to use
+ */
+void glh::core::fbo::draw_buffer ( const GLenum buff )
+{
+    /* bind, set option, unbind */
+    const bool binding_change = bind_draw ();
+    glDrawBuffer ( buff );
+    if ( binding_change ) unbind_draw ();
+}
+void glh::core::fbo::read_buffer ( const GLenum buff )
+{
+    /* bind, set option, unbind */
+    const bool binding_change = bind_read ();
+    glReadBuffer ( buff );
+    if ( binding_change ) unbind_read ();
 }
 
 

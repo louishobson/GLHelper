@@ -38,6 +38,7 @@
 
 /* include core headers */
 #include <algorithm>
+#include <array>
 #include <iostream>
 #include <string>
 
@@ -231,8 +232,8 @@ public:
      * attachment: which attachment the texture should be used as
      * mipmap: the mipmap level to attach (defaults to 0)
      */
-    void attach_texture2d ( const texture2d& texture, const GLenum attachment, GLint mipmap = 0 );
-    void attach_texture2d ( const texture2d_multisample& texture, const GLenum attachment, GLint mipmap = 0 );
+    void attach_texture2d ( const texture2d& texture, const GLenum attachment, const GLint mipmap = 0 );
+    void attach_texture2d ( const texture2d_multisample& texture, const GLenum attachment, const GLint mipmap = 0 );
 
     /* attach_rbo
      *
@@ -251,6 +252,25 @@ public:
 
 
 
+    /* draw/read_buffer
+     *
+     * sets which buffer to use as the draw/read buffer
+     * 
+     * buff: GLenum for what buffer to use
+     */
+    void draw_buffer ( const GLenum buff );
+    void read_buffer ( const GLenum buff );
+
+    /* draw_buffers
+     *
+     * sets multiple buffers to be used as the read/draw buffer
+     * 
+     * buffs...: a list of GLenums for which buffers to use
+     */
+    template<class ...Ts> void draw_buffers ( const Ts... buffs ); 
+
+
+
     /* blit_copy
      *
      * copy a region FROM ANOTHER FBO INTO THIS FBO
@@ -265,6 +285,27 @@ public:
                      const unsigned dstx0, const unsigned dsty0, const unsigned dstx1, const unsigned dsty1, const GLbitfield copy_mask, const GLenum filter );
 
 };
+
+
+
+/* FBO TEMPLATE METHOD IMPLEMENTATIONS */
+
+/* draw_buffers
+ *
+ * sets multiple buffers to be used as the read/draw buffer
+ * 
+ * buffs...: a list of GLenums for which buffers to use
+ */
+template<class ...Ts> void glh::core::fbo::draw_buffers ( const Ts... buffs )
+{
+    /* create array of buffs */
+    std::array<const GLenum, sizeof...( Ts )> buff_array { buffs... };
+
+    /* bind, set options, unbind */
+    const bool binding_change = bind_draw ();
+    glDrawBuffers ( sizeof...( Ts ), buff_array.data () );
+    if ( binding_change ) unbind_draw ();
+}
 
 
 
