@@ -13,7 +13,7 @@
 #define MAX_UV_CHANNELS 4
 
 /* maximum number of textures in texture stack */
-#define MAX_TEX_STACK_SIZE 2
+#define MAX_TEX_STACK_SIZE 4
 
 /* maximum number of lights */
 #define MAX_NUM_LIGHTS 8

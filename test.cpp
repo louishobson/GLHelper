@@ -21,7 +21,7 @@
 
 #define GLH_MODEL_MAX_COLOR_SETS 1
 #define GLH_MODEL_MAX_UV_CHANNELS 4
-#define GLH_MODEL_MAX_TEXTURE_STACK_SIZE 2
+#define GLH_MODEL_MAX_TEXTURE_STACK_SIZE 4
 
 /* include glhelper.hpp */
 #include <glhelper/glhelper.hpp>
