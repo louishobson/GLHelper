@@ -155,15 +155,6 @@
     #define GLH_MODEL_MAX_UV_CHANNELS 4
 #endif
 
-/* GLH_MODEL_MAX_TEXTURE_STACK_SIZE
- *
- * the maximum levels to a texture stack of a matrial
- * defaults to 4
- */
-#ifndef GLH_MODEL_MAX_TEXTURE_STACK_SIZE
-    #define GLH_MODEL_MAX_TEXTURE_STACK_SIZE 4
-#endif
-
 
 
 /* INCLUDES */
@@ -359,7 +350,7 @@ struct glh::model::texture_stack_level
     unsigned stack_size;
 
     /* array of texture references */
-    std::array<texture_stack_level, GLH_MODEL_MAX_TEXTURE_STACK_SIZE> levels;
+    std::vector<texture_stack_level> levels;
  };
 
 

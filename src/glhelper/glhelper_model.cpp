@@ -184,21 +184,24 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
     if ( import_flags & import_flags::GLH_SPECULAR_BASE_COLOR_SRGBA ) _material.specular_stack.base_color = math::pow ( _material.specular_stack.base_color, math::fvec3 { 2.2 } );
 
     /* set up the ambient texture stack textures  */
-    _material.ambient_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_AMBIENT ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
+    _material.ambient_stack.stack_size = aimaterial.GetTextureCount ( aiTextureType_AMBIENT );
+    _material.ambient_stack.levels.resize ( _material.ambient_stack.stack_size );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_AMBIENT ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
         add_texture ( _material.ambient_stack, aimaterial, i, aiTextureType_AMBIENT, import_flags & import_flags::GLH_AMBIENT_TEXTURE_SRGBA );  
     }
 
     /* set up the diffuse texture stack textures */
-    _material.diffuse_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
+    _material.diffuse_stack.stack_size = aimaterial.GetTextureCount ( aiTextureType_DIFFUSE );
+    _material.diffuse_stack.levels.resize ( _material.diffuse_stack.stack_size );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
         add_texture ( _material.diffuse_stack, aimaterial, i, aiTextureType_DIFFUSE, import_flags & import_flags::GLH_DIFFUSE_TEXTURE_SRGBA );  
     }
 
     /* set up the specular texture stack textures */
-    _material.specular_stack.stack_size = std::min<unsigned> ( aimaterial.GetTextureCount ( aiTextureType_SPECULAR ), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
+    _material.specular_stack.stack_size = aimaterial.GetTextureCount ( aiTextureType_SPECULAR );
+    _material.specular_stack.levels.resize ( _material.specular_stack.stack_size );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_SPECULAR ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
         add_texture ( _material.specular_stack, aimaterial, i, aiTextureType_SPECULAR, import_flags & import_flags::GLH_SPECULAR_TEXTURE_SRGBA );  
