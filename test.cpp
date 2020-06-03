@@ -58,8 +58,11 @@ int main ()
     /* SET UP CAMERA */
 
     /* create camera */
-    glh::camera::camera camera { glh::math::rad ( 90.0 ), 16.0 / 9.0, 0.5, 200.0 };
-    camera.set_position ( glh::math::vec3 { 0.0, 25.0, 25.0 } );
+    glh::camera::camera_perspective_movement camera 
+    { 
+        glh::math::vec3 { 0.0, 25.0, 25.0 }, glh::math::vec3 { 0.0, 0.0, -1.0 }, glh::math::vec3 { 0.0, 1.0, 0.0 },
+        glh::math::rad ( 90.0 ), 16.0 / 9.0, 0.5, 200.0 
+    };
 
     /* restrict movement */
     camera.enable_restrictive_mode ();
