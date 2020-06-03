@@ -604,6 +604,10 @@ public:
 
 };
 
+
+
+/* CAMERA_ORTHOGRAPHIC_MOVEMENT DEFINITION */
+
 /* class camera_orthographic_movement : camera_movement, camera_orthographic
  * 
  * camera with movement functionality and an orthographic projection matrix
@@ -665,6 +669,21 @@ public:
     mirror_camera ( const camera_perspective_movement& _cam, const math::vec3& _position, const math::vec3& _normal, const math::vec3& _ytan, const double _width, const double _height )
         : cam { _cam }, position { _position }, normal { math::normalise ( _normal ) }, ytan { math::normalise ( _ytan ) }, half_width { _width / 2.0 }, half_height { _height / 2.0 }
     {}
+
+    /* deleted zero-parameter constructor */
+    mirror_camera () = delete;
+
+    /* default copy constructor */
+    mirror_camera ( const mirror_camera& other ) = default;
+
+    /* deleted copy assignment operator
+     *
+     * it is too unclear what should be copied from one to another
+     */
+    mirror_camera& operator= ( const mirror_camera& other ) = delete;
+
+    /* default destructor */
+    ~mirror_camera () = default;
 
 
 
