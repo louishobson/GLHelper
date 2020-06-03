@@ -176,7 +176,7 @@ public:
      * non-default for same reason as copy constructor
      */
     camera_base& operator= ( const camera_base& other ) 
-    { return * this; }
+    { view_change = true; proj_change = true; return * this; }
 
     /* default move assignment operator */
     camera_base& operator= ( camera_base&& other ) = default;
