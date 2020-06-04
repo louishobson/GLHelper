@@ -129,9 +129,7 @@ void glh::model::model::process_scene ( const aiScene& aiscene )
     /* firstly process all of the materials */
     materials.resize ( aiscene.mNumMaterials );
     for ( unsigned i = 0; i < aiscene.mNumMaterials; ++i )
-    {
         add_material ( materials.at ( i ), * aiscene.mMaterials [ i ] );
-    }
 
     /* add the texture pointers to the materials */
     for ( material& _material: materials )
@@ -144,9 +142,7 @@ void glh::model::model::process_scene ( const aiScene& aiscene )
     /* now add the meshes */
     meshes.resize ( aiscene.mNumMeshes );
     for ( unsigned i = 0; i < aiscene.mNumMeshes; ++i )
-    {
         add_mesh ( meshes.at ( i ), * aiscene.mMeshes [ i ] );
-    }
 
     /* now recursively process all of the nodes */
     root_node.parent = NULL;
@@ -260,10 +256,7 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack&
     std::string texpath { temp_string.C_Str () };
     
     /* replace possibly bas lettes */
-    for ( char& c: texpath )
-    {
-        if ( c == '\\' ) c = '/';
-    }
+    for ( char& c: texpath ) if ( c == '\\' ) c = '/';
 
     /* set the blend attributes */
     if ( aimaterial.Get ( AI_MATKEY_TEXOP ( aitexturetype, index ), temp_int ) == aiReturn_SUCCESS )
@@ -435,13 +428,9 @@ void glh::model::model::configure_buffers ( mesh& _mesh )
     _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 0 );
     _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 3 * sizeof ( GLfloat ) );
     for ( unsigned i = 0; i < _mesh.num_color_sets; ++i )
-    {
         _mesh.array_object.set_vertex_attrib ( 2 + i, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 6 + ( i * 4 ) ) * sizeof ( GLfloat ) );
-    }
     for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
-    {
         _mesh.array_object.set_vertex_attrib ( 2 + GLH_MODEL_MAX_COLOR_SETS + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 6 + ( GLH_MODEL_MAX_COLOR_SETS * 4 ) + ( i * 3 ) ) * sizeof ( GLfloat ) );
-    }
     _mesh.array_object.bind_ebo ( _mesh.index_data );
 }
 
