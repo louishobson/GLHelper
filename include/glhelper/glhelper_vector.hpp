@@ -86,9 +86,9 @@ namespace glh
         template<unsigned M, class T> class vector;
 
         /* default vector types */
-        template<unsigned M> using fvector = vector<M, GLfloat>;
-        template<unsigned M> using dvector = vector<M, GLdouble>;
-        template<unsigned M> using ivector = vector<M, GLint>;
+        template<unsigned M> using fvector = vector<M, float>;
+        template<unsigned M> using dvector = vector<M, double>;
+        template<unsigned M> using ivector = vector<M, int>;
         using fvec2 = fvector<2>;
         using fvec3 = fvector<3>;
         using fvec4 = fvector<4>;

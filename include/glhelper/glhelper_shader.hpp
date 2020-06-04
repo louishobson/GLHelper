@@ -204,9 +204,9 @@ namespace glh
 
         /* default uniform_aligned_vector types */
         template<unsigned M, class T> using ua_vector = uniform_aligned_vector<M, T>;
-        template<unsigned M> using ua_fvector = ua_vector<M, GLfloat>;
-        template<unsigned M> using ua_dvector = ua_vector<M, GLdouble>;
-        template<unsigned M> using ua_ivector = ua_vector<M, GLint>;
+        template<unsigned M> using ua_fvector = ua_vector<M, float>;
+        template<unsigned M> using ua_dvector = ua_vector<M, double>;
+        template<unsigned M> using ua_ivector = ua_vector<M, int>;
         using ua_fvec2 = ua_fvector<2>;
         using ua_fvec3 = ua_fvector<3>;
         using ua_fvec4 = ua_fvector<4>;

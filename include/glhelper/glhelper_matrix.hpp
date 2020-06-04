@@ -77,9 +77,9 @@ namespace glh
         template<unsigned M, unsigned N, class T> class matrix;
 
         /* default matrix types */
-        template<unsigned M, unsigned N> using fmatrix = matrix<M, N, GLfloat>;
-        template<unsigned M, unsigned N> using dmatrix = matrix<M, N, GLdouble>;
-        template<unsigned M, unsigned N> using imatrix = matrix<M, N, GLint>;
+        template<unsigned M, unsigned N> using fmatrix = matrix<M, N, float>;
+        template<unsigned M, unsigned N> using dmatrix = matrix<M, N, double>;
+        template<unsigned M, unsigned N> using imatrix = matrix<M, N, int>;
         using fmat2 = fmatrix<2, 2>; using fmat2x3 = fmatrix<2, 3>; using fmat2x4 = fmatrix<2, 4>;
         using fmat3 = fmatrix<3, 3>; using fmat3x2 = fmatrix<3, 2>; using fmat3x4 = fmatrix<3, 4>;
         using fmat4 = fmatrix<4, 4>; using fmat4x2 = fmatrix<4, 2>; using fmat4x3 = fmatrix<4, 3>;
