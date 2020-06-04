@@ -127,7 +127,14 @@ namespace glh
          *
          * if T is an object, value is true, else is false
          */
-        template<class T, class = void> struct is_object;
+        template<class T> struct is_object;
+
+        /* stuct promote_arithmetic_type
+         *
+         * if A preferred type can be determined, the class has a member type of that type
+         */
+        template<class T0, class T1, class = void> struct promote_arithmetic_type;
+        template<class T0, class T1> using promote_arithmetic_type_t = typename promote_arithmetic_type<T0, T1>::type;
     }
 
     namespace exception
@@ -261,8 +268,45 @@ enum struct glh::core::object_bind_target : unsigned
  *
  * if T is an object, value is true, else is false
  */
-template<class T, class> struct glh::meta::is_object : public std::false_type {};
-template<class T> struct glh::meta::is_object<T, std::enable_if_t<std::is_base_of<glh::core::object, T>::value>> : public std::true_type {}; 
+template<class T> struct glh::meta::is_object : public std::is_base_of<glh::core::object, T> {};
+
+
+
+/* PROMOTE_ARITHMETIC_TYPE DEFINITION */
+
+/* stuct promote_arithmetic_type
+ *
+ * if A preferred type can be determined, the class has a member type of that type
+ */
+/* default empty struct */
+template<class T0, class T1, class> struct glh::meta::promote_arithmetic_type {};
+/* if one is floating, and the other is not, choose the floating point */
+template<class T0, class T1> struct glh::meta::promote_arithmetic_type<T0, T1, std::enable_if_t
+<
+    std::is_arithmetic<T0>::value && std::is_arithmetic<T1>::value &&
+    ( ( std::is_floating_point<T0>::value && !std::is_floating_point<T1>::value ) || ( std::is_floating_point<T1>::value && !std::is_floating_point<T0>::value ) )
+>> { typedef std::conditional_t<std::is_floating_point<T0>::value, T0, T1> type; };
+/* if both are floating, choose the larger floating point */
+template<class T0, class T1> struct glh::meta::promote_arithmetic_type<T0, T1, std::enable_if_t
+<
+    std::is_arithmetic<T0>::value && std::is_arithmetic<T1>::value &&
+    std::is_floating_point<T0>::value && std::is_floating_point<T1>::value
+>> { typedef std::conditional_t<sizeof ( T0 ) >= sizeof ( T1 ), T0, T1> type; };
+/* if both are signed ints or both are unsigned ints, choose the larger int */
+template<class T0, class T1> struct glh::meta::promote_arithmetic_type<T0, T1, std::enable_if_t
+<
+    std::is_arithmetic<T0>::value && std::is_arithmetic<T1>::value &&
+    std::is_integral<T0>::value && std::is_integral<T1>::value &&
+    ( ( std::is_signed<T0>::value && std::is_signed<T1>::value ) || ( std::is_unsigned<T0>::value && std::is_unsigned<T1>::value ) )
+>> { typedef std::conditional_t<sizeof ( T0 ) >= sizeof ( T1 ), T0, T1> type; };
+/* if one is signed, and the other is unsigned, choose the signed int */
+template<class T0, class T1> struct glh::meta::promote_arithmetic_type<T0, T1, std::enable_if_t
+<
+    std::is_arithmetic<T0>::value && std::is_arithmetic<T1>::value &&
+    std::is_integral<T0>::value && std::is_integral<T1>::value &&
+    ( ( std::is_signed<T0>::value && std::is_unsigned<T1>::value ) || ( std::is_signed<T1>::value && std::is_unsigned<T0>::value ) )
+>> { typedef std::conditional_t<std::is_signed<T0>::value, T0, T1> type; };
+
 
 
 
