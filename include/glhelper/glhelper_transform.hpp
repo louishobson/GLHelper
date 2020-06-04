@@ -254,9 +254,9 @@ namespace glh
          * return: the new transformation matrix/vector
          */
         template<class T> matrix<3, 3, T> reflect3d ( const matrix<3, 3, T>& trans, const vector<3, T>& norm );
-        template<class T> vector<3, T> reflect3d ( const vector<3, T>& vec, const vector<3, T>& norm, const vector<3, T>& pos = vector<3, T> { 0.0 } );
-        template<class T> matrix<4, 4, T> reflect3d ( const matrix<4, 4, T>& trans, const vector<3, T>& norm, const vector<3, T>& pos = vector<3, T> { 0.0 } );
-        template<class T> vector<4, T> reflect3d ( const vector<4, T>& vec, const vector<3, T>& norm, const vector<3, T>& pos = vector<3, T> { 0.0 } );
+        template<class T> vector<3, T> reflect3d ( const vector<3, T>& vec, const vector<3, T>& norm, const vector<3, T>& pos = vector<3, T> { 0 } );
+        template<class T> matrix<4, 4, T> reflect3d ( const matrix<4, 4, T>& trans, const vector<3, T>& norm, const vector<3, T>& pos = vector<3, T> { 0 } );
+        template<class T> vector<4, T> reflect3d ( const vector<4, T>& vec, const vector<3, T>& norm, const vector<3, T>& pos = vector<3, T> { 0 } );
 
 
 
@@ -273,7 +273,7 @@ namespace glh
          * 
          * return: the perspective projection matrix
          */
-        template<class T> matrix<4, 4, T> perspective ( const double l, const double r, const double b, const double t, const double n, const double f );
+        template<class T = double> matrix<4, 4, T> perspective ( const double l, const double r, const double b, const double t, const double n, const double f );
 
         /* perspective_fov
          *
@@ -286,7 +286,7 @@ namespace glh
          * 
          * return: the perspective projection matrix
          */
-        template<class T> matrix<4, 4, T> perspective_fov ( const double fov, const double aspect, const double n, const double f );
+        template<class T = double> matrix<4, 4, T> perspective_fov ( const double fov, const double aspect, const double n, const double f );
 
         /* othographic
          *
@@ -301,7 +301,7 @@ namespace glh
          * 
          * return: the othographic projection matrix
          */
-        template<class T> matrix<4, 4, T> orthographic ( const double l, const double r, const double b, const double t, const double n, const double f );
+        template<class T = double> matrix<4, 4, T> orthographic ( const double l, const double r, const double b, const double t, const double n, const double f );
 
         /* camera
          *
@@ -362,13 +362,7 @@ namespace glh
  *
  * multiplication of a matrix before a vector
  */
-template<unsigned M, unsigned N, class T> glh::math::vector<M, T> operator* ( const glh::math::matrix<M, N, T>& lhs, const glh::math::vector<N, T>& rhs );
-
-/* operator*=
- *
- * takes a vector and multiplies it by a matrix on its left
- */
-template<unsigned M, class T> glh::math::vector<M, T>& operator*= ( const glh::math::vector<M, T>& lhs, const glh::math::matrix<M, M, T>& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::vector<M, glh::meta::promote_arithmetic_type_t<T0, T1>> operator* ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::vector<N, T1>& rhs );
 
 
 
@@ -381,7 +375,7 @@ template<unsigned M, class T> glh::math::vector<M, T>& operator*= ( const glh::m
 template<unsigned M, class T> inline glh::math::matrix<M, M, T> glh::math::zero_matrix ()
 {
     /* return a default matrix */
-    return matrix<M, M, T> { 0. };
+    return matrix<M, M, T> { 0 };
 }
 
 /* identity_matrix
@@ -517,7 +511,7 @@ template<class T> inline glh::math::matrix<4, 4, T> glh::math::stretch3d ( const
 template<class T> inline glh::math::vector<4, T> glh::math::stretch3d ( const vector<4, T>& vec, const vector<3, T>& sfs )
 {
     /* multiply vectors, adding component to sfs */
-    return vec * vector<4, T> { sfs, 1.0 };
+    return vec * vector<4, T> { sfs, 1 };
 }
 
 /* enlarge
@@ -892,10 +886,10 @@ template<class T> inline glh::math::matrix<4, 4, T> glh::math::orthographic ( co
     /* return the new matrix */
     return matrix<4, 4, T>
     {
-        2 / ( r - l ),      0,              0,        -( r + l ) / ( r - l ),
-             0,        2 / ( t - b ),       0,        -( t + b ) / ( t - b ),
-             0,             0,        -2 / ( f - n ), -( f + n ) / ( f - n ),
-             0,             0,              0,                   1
+        2.0 / ( r - l ),        0,                0,        -( r + l ) / ( r - l ),
+               0,        2.0 / ( t - b ),         0,        -( t + b ) / ( t - b ),
+               0,               0,        -2.0 / ( f - n ), -( f + n ) / ( f - n ),
+               0,               0,                0,                   1
     };
 }
 
@@ -997,10 +991,10 @@ template<class T> inline glh::math::matrix<3, 3, T> glh::math::normal ( const ma
  *
  * multiplication of a matrix before a vector
  */
-template<unsigned M, unsigned N, class T> inline glh::math::vector<M, T> operator* ( const glh::math::matrix<M, N, T>& lhs, const glh::math::vector<N, T>& rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::vector<M, glh::meta::promote_arithmetic_type_t<T0, T1>> operator* ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::vector<N, T1>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M, T> result;
+    glh::math::vector<M, glh::meta::promote_arithmetic_type_t<T0, T1>> result;
 
     /* iterate for each value in result, and then each value in a row of the matrix */
     for ( unsigned i = 0; i < M; ++i ) for ( unsigned j = 0; j < N; ++j )
@@ -1011,16 +1005,6 @@ template<unsigned M, unsigned N, class T> inline glh::math::vector<M, T> operato
 
     /* return result */
     return result;
-}
-
-/* operator*=
- *
- * takes a vector and multiplies it by a matrix on its left
- */
-template<unsigned M, class T> inline glh::math::vector<M, T>& operator*= ( const glh::math::vector<M, T>& lhs, const glh::math::matrix<M, M, T>& rhs )
-{
-    /* return lhs = rhs * lhs */
-    return ( lhs = rhs * lhs );
 }
 
 

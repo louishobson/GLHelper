@@ -170,6 +170,87 @@ namespace glh
 
 
 
+/* MATRIX OPERATORS DECLARATIONS */
+
+/* operator== and operator!=
+ *
+ * compares two matrices of the same size value by value
+ */
+template<unsigned M, unsigned N, class T0, class T1> bool operator== ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::matrix<M, N, T1>& rhs );
+template<unsigned M, unsigned N, class T0, class T1> bool operator!= ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::matrix<M, N, T1>& rhs );
+
+/* operator+(=)
+ *
+ * addition operations on matrices include:
+ * 
+ * matrix + matrix
+ * matrix + scalar == scalar + matrix
+ * matrix += matrix
+ * matrix += scalar
+ */
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator+ ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::matrix<M, N, T1>& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator+ ( const glh::math::matrix<M, N, T0>& lhs, const T1& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator+ ( const T0& lhs,const glh::math::matrix<M, N, T1>& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator+= ( glh::math::matrix<M, N, T0>& lhs, const glh::math::matrix<M, N, T1>& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator+= ( glh::math::matrix<M, N, T0>& lhs, const T1& rhs );
+
+/* operator-(=)
+ *
+ * subtraction operations on matrices include:
+ * 
+ * matrix - matrix
+ * matrix - scalar
+ * matrix -= matrix
+ * matrix -= scalar
+ */
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator- ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::matrix<M, N, T1>& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator- ( const glh::math::matrix<M, N, T0>& lhs, const T1& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator-= ( glh::math::matrix<M, N, T0>& lhs, const glh::math::matrix<M, N, T1>& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator-= ( glh::math::matrix<M, N, T0>& lhs, const T1& rhs );
+
+/* operator*(=)
+ * 
+ * multiplication operations on matrices include
+ * 
+ * matrix * matrix (of compatible sizes)
+ * matrix * scalar == scalar * matrix
+ * matrix *= matrix (SEE BELOW)
+ * matrix *= scalar
+ * 
+ * NOTE: mat1 *= mat2 is equivalent to mat1 = MAT2 * MAT1
+ *       this is for the purpose of adding transformations
+ */
+template<unsigned M0, unsigned N0M1, unsigned N1, class T0, class T1> glh::math::matrix<M0, N1, glh::meta::promote_arithmetic_type_t<T0, T1>> operator* ( const glh::math::matrix<M0, N0M1, T0>& lhs, const glh::math::matrix<N0M1, N1, T1>& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator* ( const glh::math::matrix<M, N, T0>& lhs, const T1& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator* ( const T0& lhs, const glh::math::matrix<M, N, T1>& rhs );
+template<unsigned M0, unsigned N0M1, unsigned N1, class T0, class T1> glh::math::matrix<M0, N1, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator*= ( glh::math::matrix<M0, N0M1, T0>& lhs, const glh::math::matrix<N0M1, N1, T1>& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator*= ( glh::math::matrix<M, N, T0>& lhs, const T1& rhs );
+
+/* operator/(=)
+ *
+ * division operations on matrices include:
+ * 
+ * matrix / scalar
+ * matrix /= scalar
+ * 
+ * to get matrix division, use multiplication with inverse matrices
+ */
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator/ ( const glh::math::matrix<M, N, T0>& lhs, const T1& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator/= ( glh::math::matrix<M, N, T0>& lhs, const T1& rhs );
+
+/* unary plus operator */
+template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator+ ( const glh::math::matrix<M, N, T>& lhs );
+/* unary minus operator */
+template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator- ( const glh::math::matrix<M, N, T>& lhs );
+
+/* operator<<
+ *
+ * format as a one-line string
+ */
+template<unsigned M, unsigned N, class T> std::ostream& operator<< ( std::ostream& os, const glh::math::matrix<M, N, T>& _matrix );
+
+
+
 /* IS_MATRIX DEFINITION */
 
 /* struct is_matrix
@@ -287,88 +368,7 @@ private:
 
 
 
-/* MATRIX OPERATORS DECLARATIONS */
-
-/* operator== and operator!=
- *
- * compares two matrices of the same size value by value
- */
-template<unsigned M, unsigned N, class T> bool operator== ( const glh::math::matrix<M, N, T>& lhs, const glh::math::matrix<M, N, T>& rhs );
-template<unsigned M, unsigned N, class T> bool operator!= ( const glh::math::matrix<M, N, T>& lhs, const glh::math::matrix<M, N, T>& rhs );
-
-/* operator+(=)
- *
- * addition operations on matrices include:
- * 
- * matrix + matrix
- * matrix + scalar == scalar + matrix
- * matrix += matrix
- * matrix += scalar
- */
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator+ ( const glh::math::matrix<M, N, T>& lhs, const glh::math::matrix<M, N, T>& rhs );
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator+ ( const glh::math::matrix<M, N, T>& lhs, const double rhs );
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator+ ( const double lhs,const glh::math::matrix<M, N, T>& rhs );
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T>& operator+= ( glh::math::matrix<M, N, T>& lhs, const glh::math::matrix<M, N, T>& rhs );
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T>& operator+= ( glh::math::matrix<M, N, T>& lhs, const double rhs );
-
-/* operator-(=)
- *
- * subtraction operations on matrices include:
- * 
- * matrix - matrix
- * matrix - scalar
- * matrix -= matrix
- * matrix -= scalar
- */
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator- ( const glh::math::matrix<M, N, T>& lhs, const glh::math::matrix<M, N, T>& rhs );
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator- ( const glh::math::matrix<M, N, T>& lhs, const double rhs );
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T>& operator-= ( glh::math::matrix<M, N, T>& lhs, const glh::math::matrix<M, N, T>& rhs );
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T>& operator-= ( glh::math::matrix<M, N, T>& lhs, const double rhs );
-
-/* operator*(=)
- * 
- * multiplication operations on matrices include
- * 
- * matrix * matrix (of compatible sizes)
- * matrix * scalar == scalar * matrix
- * matrix *= matrix (SEE BELOW)
- * matrix *= scalar
- * 
- * NOTE: mat1 *= mat2 is equivalent to mat1 = MAT2 * MAT1
- *       this is for the purpose of adding transformations
- */
-template<unsigned M0, unsigned N0M1, unsigned N1, class T> glh::math::matrix<M0, N1, T> operator* ( const glh::math::matrix<M0, N0M1, T>& lhs, const glh::math::matrix<N0M1, N1, T>& rhs );
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator* ( const glh::math::matrix<M, N, T>& lhs, const double rhs );
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator* ( const double lhs, const glh::math::matrix<M, N, T>& rhs );
-template<unsigned M0, unsigned N0M1, unsigned N1, class T> glh::math::matrix<M0, N1, T>& operator*= ( glh::math::matrix<M0, N0M1, T>& lhs, const glh::math::matrix<N0M1, N1, T>& rhs );
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T>& operator*= ( glh::math::matrix<M, N, T>& lhs, const double rhs );
-
-/* operator/(=)
- *
- * division operations on matrices include:
- * 
- * matrix / scalar
- * matrix /= scalar
- * 
- * to get matrix division, use multiplication with inverse matrices
- */
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator/ ( const glh::math::matrix<M, N, T>& lhs, const double rhs );
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T>& operator/= ( glh::math::matrix<M, N, T>& lhs, const double rhs );
-
-/* unary plus operator */
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator+ ( const glh::math::matrix<M, N, T>& lhs );
-/* unary minus operator */
-template<unsigned M, unsigned N, class T> glh::math::matrix<M, N, T> operator- ( const glh::math::matrix<M, N, T>& lhs );
-
-/* operator<<
- *
- * format as a one-line string
- */
-template<unsigned M, unsigned N, class T> std::ostream& operator<< ( std::ostream& os, const glh::math::matrix<M, N, T>& _matrix );
-
-
-
-/* MATRIX_EXCEPTION DECLARATION */
+/* MATRIX_EXCEPTION DEFINITION */
 
 /* class matrix_exception : exception
  *
@@ -408,7 +408,7 @@ template<unsigned M, unsigned N, class T>
 template<class _T> inline glh::math::matrix<M, N, T>::matrix ( const matrix<M, N, _T>& other )
 {
     /* copy values from other to this */
-    for ( unsigned i = 0; i < M * N; ++i ) __at ( i ) = static_cast<T> ( other.__at ( i ) );
+    for ( unsigned i = 0; i < M * N; ++i ) __at ( i ) = other.__at ( i );
 }
 
 /* initialiser list constructor
@@ -438,7 +438,7 @@ template<unsigned M, unsigned N, class T>
 template<class _T> inline glh::math::matrix<M, N, T>& glh::math::matrix<M, N, T>::operator= ( const matrix<M, N, _T>& other )
 {
     /* copy values from other to this */
-    for ( unsigned i = 0; i < M * N; ++i ) __at ( i ) = static_cast<T> ( other.__at ( i ) );
+    for ( unsigned i = 0; i < M * N; ++i ) __at ( i ) = other.__at ( i );
 
     /* return * this */
     return * this;
@@ -581,21 +581,21 @@ template<unsigned M, unsigned N, class T> inline glh::math::matrix<M - 1, N - 1,
 template<unsigned M, class T> inline std::enable_if_t<( M > 1 ), double> glh::math::det ( const matrix<M, M, T>& _matrix )
 {
     /* store the running determinant */
-    double det = 0.0;
+    T determinant = 0;
 
     /* multiplier for working out the determinant
      * starts as 1, and is multiplied by -1 for each value on the top row
      * this allows for the positive negative pattern to occur
      */
-    double det_mult = 1.0;
+    int det_mult = 1;
     
     /* loop for each value in the top row */
     for ( unsigned i = 0; i < M; ++i )
     {
         /* add to the determinant */
-        det += ( _matrix.at ( 0, i ) * minor ( _matrix, 0, i ) * det_mult );
+        determinant += ( _matrix.at ( 0, i ) * minor ( _matrix, 0, i ) * det_mult );
         /* multiply det_mult by -1 */
-        det_mult *= -1.0;
+        det_mult *= -1;
     }
 
     /* return the determinant */
@@ -629,7 +629,7 @@ template<unsigned M, class T> inline double glh::math::minor ( const matrix<M, M
 template<unsigned M, class T> inline std::enable_if_t<( M > 1 ), glh::math::matrix<M, M, T>> glh::math::inverse ( const matrix<M, M, T>& _matrix )
 {
     /* get the determinant */
-    const double determinant = det ( _matrix );
+    const T determinant = det ( _matrix );
 
     /* if the determinant is 0, throw */
     if ( determinant == 0.0 ) throw exception::matrix_exception { "cannot find inverse of a singular matrix" };
@@ -673,7 +673,7 @@ template<unsigned M, class T> inline glh::math::matrix<M, M, T> glh::math::pow (
     /* produce result matrix
      * not going to include glh_transform.hpp just for the identity matrix
      */
-    matrix<M, M, T> result { 0.0 };
+    matrix<M, M, T> result { 0 };
     for ( unsigned i = 0; i < M; ++i ) result.at ( i, i ) = 1.0;
 
     /* apply power */
@@ -691,7 +691,7 @@ template<unsigned M, class T> inline glh::math::matrix<M, M, T> glh::math::pow (
  *
  * compares two matrices of the same size value by value
  */
-template<unsigned M, unsigned N, class T> inline bool operator== ( const glh::math::matrix<M, N, T>& lhs, const glh::math::matrix<M, N, T>& rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline bool operator== ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::matrix<M, N, T1>& rhs )
 {
     /* return false if any elements differ */
     for ( unsigned i = 0; i < M * N; ++i ) if ( lhs.at ( i ) != rhs.at ( i ) ) return false;
@@ -699,7 +699,7 @@ template<unsigned M, unsigned N, class T> inline bool operator== ( const glh::ma
     /* else return true */
     return true;
 }
-template<unsigned M, unsigned N, class T> inline bool operator!= ( const glh::math::matrix<M, N, T>& lhs, const glh::math::matrix<M, N, T>& rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline bool operator!= ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::matrix<M, N, T1>& rhs )
 {
     /* return true if any elements differ */
     for ( unsigned i = 0; i < M * N; ++i ) if ( lhs.at ( i ) != rhs.at ( i ) ) return true;
@@ -717,10 +717,10 @@ template<unsigned M, unsigned N, class T> inline bool operator!= ( const glh::ma
  * matrix += matrix
  * matrix += scalar
  */
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> operator+ ( const glh::math::matrix<M, N, T>& lhs, const glh::math::matrix<M, N, T>& rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator+ ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::matrix<M, N, T1>& rhs )
 {
     /* create the new matrix */
-    glh::math::matrix<M, N, T> result;
+    glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> result;
 
     /* set its values */
     for ( unsigned i = 0; i < M * N; ++i ) result.at ( i ) = lhs.at ( i ) + rhs.at ( i );
@@ -728,10 +728,10 @@ template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> oper
     /* return the result */
     return result;
 }
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> operator+ ( const glh::math::matrix<M, N, T>& lhs, const double rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator+ ( const glh::math::matrix<M, N, T0>& lhs, const T1& rhs )
 {
     /* create the new matrix */
-    glh::math::matrix<M, N, T> result;
+    glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> result;
 
     /* set its values */
     for ( unsigned i = 0; i < M * N; ++i ) result.at ( i ) = lhs.at ( i ) + rhs;
@@ -739,17 +739,17 @@ template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> oper
     /* return the result */
     return result;
 }
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> operator+ ( const double lhs,const glh::math::matrix<M, N, T>& rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator+ ( const T0& lhs,const glh::math::matrix<M, N, T1>& rhs )
 {
     /* equivalent to matrix + scalar */
     return rhs + lhs;
 }
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T>& operator+= ( glh::math::matrix<M, N, T>& lhs, const glh::math::matrix<M, N, T>& rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator+= ( glh::math::matrix<M, N, T0>& lhs, const glh::math::matrix<M, N, T1>& rhs )
 {
     /* set lhs to the addition of lhs and rhs */
     return ( lhs = lhs + rhs );
 }
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T>& operator+= ( glh::math::matrix<M, N, T>& lhs, const double rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator+= ( glh::math::matrix<M, N, T0>& lhs, const T1& rhs )
 {
     /* set lhs to the addition of lhs and rhs */
     return ( lhs = lhs + rhs );
@@ -764,10 +764,10 @@ template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T>& ope
  * matrix -= matrix
  * matrix -= scalar
  */
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> operator- ( const glh::math::matrix<M, N, T>& lhs, const glh::math::matrix<M, N, T>& rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator- ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::matrix<M, N, T1>& rhs )
 {
     /* create the new matrix */
-    glh::math::matrix<M, N, T> result;
+    glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> result;
 
     /* set its values */
     for ( unsigned i = 0; i < M * N; ++i ) result.at ( i ) = lhs.at ( i ) - rhs.at ( i );
@@ -775,10 +775,10 @@ template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> oper
     /* return the result */
     return result;
 }
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> operator- ( const glh::math::matrix<M, N, T>& lhs, const double rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator- ( const glh::math::matrix<M, N, T0>& lhs, const T1& rhs )
 {
     /* create the new matrix */
-    glh::math::matrix<M, N, T> result;
+    glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> result;
 
     /* set its values */
     for ( unsigned i = 0; i < M * N; ++i ) result.at ( i ) = lhs.at ( i ) - rhs;
@@ -786,12 +786,12 @@ template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> oper
     /* return the result */
     return result;
 }
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T>& operator-= ( glh::math::matrix<M, N, T>& lhs, const glh::math::matrix<M, N, T>& rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator-= ( glh::math::matrix<M, N, T0>& lhs, const glh::math::matrix<M, N, T1>& rhs )
 {
     /* set lhs to the subtraction of lhs and rhs */
     return ( lhs = lhs - rhs );
 }
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T>& operator-= ( glh::math::matrix<M, N, T>& lhs, const double rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator-= ( glh::math::matrix<M, N, T0>& lhs, const T1& rhs )
 {
     /* set lhs to the subtraction of lhs and rhs */
     return ( lhs = lhs - rhs );
@@ -809,10 +809,10 @@ template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T>& ope
  * NOTE: mat1 *= mat2 is equivalent to mat1 = MAT2 * MAT1
  *       this is for the purpose of adding transformations
  */
-template<unsigned M0, unsigned N0M1, unsigned N1, class T> inline glh::math::matrix<M0, N1, T> operator* ( const glh::math::matrix<M0, N0M1, T>& lhs, const glh::math::matrix<N0M1, N1, T>& rhs )
+template<unsigned M0, unsigned N0M1, unsigned N1, class T0, class T1> inline glh::math::matrix<M0, N1, glh::meta::promote_arithmetic_type_t<T0, T1>> operator* ( const glh::math::matrix<M0, N0M1, T0>& lhs, const glh::math::matrix<N0M1, N1, T1>& rhs )
 {
     /* create the new matrix */
-    glh::math::matrix<M0, N1, T> result;
+    glh::math::matrix<M0, N1, glh::meta::promote_arithmetic_type_t<T0, T1>> result;
 
     /* double loop for each row/column of result */
     for ( unsigned i = 0; i < M0; ++i ) for ( unsigned j = 0; j < N1; ++j )
@@ -824,10 +824,10 @@ template<unsigned M0, unsigned N0M1, unsigned N1, class T> inline glh::math::mat
     /* return result */
     return result;
 }
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> operator* ( const glh::math::matrix<M, N, T>& lhs, const double rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator* ( const glh::math::matrix<M, N, T0>& lhs, const T1& rhs )
 {
     /* create the new matrix */
-    glh::math::matrix<M, N, T> result;
+    glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> result;
 
     /* set its values */
     for ( unsigned i = 0; i < M * N; ++i ) result.__at ( i ) = lhs.__at ( i ) * rhs;
@@ -835,17 +835,17 @@ template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> oper
     /* return result */
     return result;
 }
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> operator* ( const double lhs, const glh::math::matrix<M, N, T>& rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator* ( const T0& lhs, const glh::math::matrix<M, N, T1>& rhs )
 {
     /* equivalent to matrix * scalar */
     return rhs * lhs;
 }
-template<unsigned M0, unsigned N0M1, unsigned N1, class T> inline glh::math::matrix<M0, N1, T>& operator*= ( glh::math::matrix<M0, N0M1, T>& lhs, const glh::math::matrix<N0M1, N1, T>& rhs )
+template<unsigned M0, unsigned N0M1, unsigned N1, class T0, class T1> inline glh::math::matrix<M0, N1, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator*= ( glh::math::matrix<M0, N0M1, T0>& lhs, const glh::math::matrix<N0M1, N1, T1>& rhs )
 {
     /* set lhs to the multiplication of rhs * lhs */
     return ( lhs = rhs * lhs );
 }
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T>& operator*= ( glh::math::matrix<M, N, T>& lhs, const double rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator*= ( glh::math::matrix<M, N, T0>& lhs, const T1& rhs )
 {
     /* set lhs to the multiplication of lhs * rhs */
     return ( lhs = lhs * rhs );
@@ -860,12 +860,12 @@ template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T>& ope
  * 
  * to get matrix division, use multiplication with inverse matrices
  */
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T> operator/ ( const glh::math::matrix<M, N, T>& lhs, const double rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>> operator/ ( const glh::math::matrix<M, N, T0>& lhs, const T1& rhs )
 {
     /* return the multiplication of lhs and 1/rhs */
     return lhs * ( 1.0 / rhs );
 }
-template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T>& operator/= ( glh::math::matrix<M, N, T>& lhs, const double rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::matrix<M, N, glh::meta::promote_arithmetic_type_t<T0, T1>>& operator/= ( glh::math::matrix<M, N, T0>& lhs, const T1& rhs )
 {
     /* set lhs to the division of lhs / rhs */
     return ( lhs = lhs / rhs );
