@@ -624,8 +624,8 @@ public:
      * transform: the overall model transformation to apply (identity by default)
      * flags: rendering flags (none by default)
      */
-    void render ( const core::program& prog, core::struct_uniform& material_uni, core::uniform& model_uni, const math::fmat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE );
-    void render ( const core::program& prog, const math::fmat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE ) const;
+    void render ( const core::program& prog, core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE );
+    void render ( const core::program& prog, const math::mat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE ) const;
 
 
 

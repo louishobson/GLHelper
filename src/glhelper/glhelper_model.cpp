@@ -61,7 +61,7 @@ glh::model::model::model ( const std::string& _directory, const std::string& _en
  * transform: the overall model transformation to apply (identity by default)
  * flags: rendering flags (none by default)
  */
-void glh::model::model::render ( const core::program& prog, core::struct_uniform& material_uni, core::uniform& model_uni, const math::fmat4& transform, const unsigned flags )
+void glh::model::model::render ( const core::program& prog, core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform, const unsigned flags )
 {
     /* reload the cache of uniforms  */
     cache_uniforms ( material_uni, model_uni );
@@ -69,7 +69,7 @@ void glh::model::model::render ( const core::program& prog, core::struct_uniform
     /* render */
     render ( prog, transform, flags );
 }
-void glh::model::model::render ( const core::program& prog, const math::fmat4& transform, const unsigned flags ) const
+void glh::model::model::render ( const core::program& prog, const math::mat4& transform, const unsigned flags ) const
 {
     /* throw if uniforms are not already cached */
     if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to render model without a complete uniform cache" };
