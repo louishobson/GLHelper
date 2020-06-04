@@ -135,6 +135,8 @@ namespace glh
          */
         template<class T0, class T1, class = void> struct promote_arithmetic_type;
         template<class T0, class T1> using promote_arithmetic_type_t = typename promote_arithmetic_type<T0, T1>::type;
+        template<class T0, class T1> using pat = promote_arithmetic_type<T0, T1>;
+        template<class T0, class T1> using pat_t = typename promote_arithmetic_type<T0, T1>::type;
     }
 
     namespace exception
