@@ -362,7 +362,7 @@ namespace glh
  *
  * multiplication of a matrix before a vector
  */
-template<unsigned M, unsigned N, class T0, class T1> glh::math::vector<M, glh::meta::promote_arithmetic_type_t<T0, T1>> operator* ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::vector<N, T1>& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::vector<N, T1>& rhs );
 
 
 
@@ -991,10 +991,10 @@ template<class T> inline glh::math::matrix<3, 3, T> glh::math::normal ( const ma
  *
  * multiplication of a matrix before a vector
  */
-template<unsigned M, unsigned N, class T0, class T1> inline glh::math::vector<M, glh::meta::promote_arithmetic_type_t<T0, T1>> operator* ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::vector<N, T1>& rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::vector<N, T1>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M, glh::meta::promote_arithmetic_type_t<T0, T1>> result;
+    glh::math::vector<M, glh::meta::pat_t<T0, T1>> result;
 
     /* iterate for each value in result, and then each value in a row of the matrix */
     for ( unsigned i = 0; i < M; ++i ) for ( unsigned j = 0; j < N; ++j )
