@@ -117,7 +117,7 @@ int main ()
 
     /* SET UP RENDERER */
 
-    glh::core::renderer::set_clear_color ( glh::math::vec4 { 1.0, 0.0, 1.0, 1.0 } );
+    glh::core::renderer::set_clear_color ( glh::math::vec4 { 0.0, 0.5, 1.0, 1.0 } );
     glh::core::renderer::enable_depth_test ();
     glh::core::renderer::enable_face_culling ();
     glh::core::renderer::enable_multisample ();
