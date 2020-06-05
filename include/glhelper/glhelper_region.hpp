@@ -29,6 +29,8 @@
 /* INCLUDES */
 
 /* include core headers */
+#include <algorithm>
+#include <array>
 #include <iostream>
 #include <type_traits>
 
@@ -92,13 +94,14 @@ namespace glh
  *
  * returns true if the regions are the same
  */
-template<unsigned M, class T> bool operator== ( const glh::region::uniform_region<M, T>& lhs, const glh::region::uniform_region<M, T>& rhs );
+template<unsigned M, class T0, class T1> bool operator== ( const glh::region::uniform_region<M, T0>& lhs, const glh::region::uniform_region<M, T0>& rhs );
 
 /* operator*
  *
  * calculates a new region based on a transformation matrix
  */
-template<unsigned M, class T> glh::region::uniform_region<M, T> operator* ( const glh::math::matrix<M, M, T>& lhs, const glh::region::uniform_region<M, T>& rhs );
+template<unsigned M, class T0, class T1> glh::region::uniform_region<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::matrix<M, M, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs );
+template<unsigned M, class T0, class T1> glh::region::uniform_region<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::matrix<M + 1, M + 1, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs );
 
 
 
@@ -218,6 +221,39 @@ template<unsigned M, class T0, class T1> inline glh::region::uniform_region<M, g
     {
         lhs.centre - ( norm_difference * lhs.radius ) + ( ( ( lhs.radius + distance + rhs.radius ) / 2.0 ) * norm_difference ),
         ( lhs.radius + distance + rhs.radius ) / 2.0
+    };
+}
+
+
+
+/* operator*
+ *
+ * calculates a new region based on a transformation matrix
+ */
+template<unsigned M, class T0, class T1> inline glh::region::uniform_region<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::matrix<M, M, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs )
+{
+    /* get the stretch of each axis */
+    std::array<glh::meta::pat_t<T0, T1>, M> stretches;
+    for ( unsigned i = 0; i < M; ++i ) stretches.at ( i ) = glh::math::modulus ( glh::math::promote_vector<M, T0, T1> ( glh::math::column_vector ( lhs, i ) ) );
+
+    /* apply the transformation to the centre of the region and alter the radius by the maximum stretch */
+    return glh::region::uniform_region<M, glh::meta::pat_t<T0, T1>> 
+    {
+        lhs * rhs.centre,
+        std::max_element ( stretches.begin (), stretches.end () ) * rhs.radius
+    };
+}
+template<unsigned M, class T0, class T1> inline glh::region::uniform_region<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::matrix<M + 1, M + 1, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs )
+{
+    /* get the stretch of each axis */
+    std::array<glh::meta::pat_t<T0, T1>, M> stretches;
+    for ( unsigned i = 0; i < M; ++i ) stretches.at ( i ) = glh::math::modulus ( glh::math::promote_vector<M, T0, T1> ( glh::math::column_vector ( lhs, i ) ) );
+
+    /* apply the transformation to the centre of the region and alter the radius by the maximum stretch */
+    return glh::region::uniform_region<M, glh::meta::pat_t<T0, T1>> 
+    {
+        lhs * rhs.centre,
+        std::max_element ( stretches.begin (), stretches.end () ) * rhs.radius
     };
 }
 
