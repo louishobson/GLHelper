@@ -90,11 +90,12 @@ namespace glh
 
 /* UNIFORM_REGION OPERATORS DECLARATIONS */
 
-/* operator==
+/* operator==/!=
  *
  * returns true if the regions are the same
  */
-template<unsigned M, class T0, class T1> bool operator== ( const glh::region::uniform_region<M, T0>& lhs, const glh::region::uniform_region<M, T0>& rhs );
+template<unsigned M, class T0, class T1> bool operator== ( const glh::region::uniform_region<M, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs );
+template<unsigned M, class T0, class T1> bool operator!= ( const glh::region::uniform_region<M, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs );
 
 /* operator*
  *
@@ -222,6 +223,23 @@ template<unsigned M, class T0, class T1> inline glh::region::uniform_region<M, g
         lhs.centre - ( norm_difference * lhs.radius ) + ( ( ( lhs.radius + distance + rhs.radius ) / 2.0 ) * norm_difference ),
         ( lhs.radius + distance + rhs.radius ) / 2.0
     };
+}
+
+
+
+/* UNIFORM_REGION OPERATORS IMPLEMENTATIONS */
+
+/* operator==/!=
+ *
+ * returns true if the regions are the same
+ */
+template<unsigned M, class T0, class T1> inline bool operator== ( const glh::region::uniform_region<M, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs )
+{
+    return ( lhs.centre == rhs.centre && lhs.radius == rhs.radius );
+}
+template<unsigned M, class T0, class T1> inline bool operator!= ( const glh::region::uniform_region<M, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs )
+{
+    return ( lhs.centre != rhs.centre || lhs.radius != rhs.radius );
 }
 
 
