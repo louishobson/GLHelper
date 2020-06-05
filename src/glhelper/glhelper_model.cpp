@@ -382,6 +382,9 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
     /* configure the buffers */
     configure_buffers ( _mesh );
 
+    /* configure mesh region */
+    if ( import_flags & import_flags::GLH_CONFIGURE_REGIONS ) configure_mesh_region ( _mesh );
+
     /* return the mesh */
     return _mesh;
 }
@@ -434,6 +437,48 @@ void glh::model::model::configure_buffers ( mesh& _mesh )
     _mesh.array_object.bind_ebo ( _mesh.index_data );
 }
 
+/* configure_mesh_region
+ *
+ * configure the region of a mesh
+ * 
+ * _mesh: the mesh to configure
+ */
+void glh::model::model::configure_mesh_region ( mesh& _mesh )
+{
+    /* two vectors to store max/min coordinate components of vertices */
+    math::vec3 max_components;
+    math::vec3 min_components;
+
+    /* loop through vectices to fill max_min_components */
+    for ( unsigned i = 0; i < _mesh.vertices.size (); ++i )
+    {
+        if ( _mesh.vertices.at ( i ).position.at ( 0 ) > max_components.at ( 0 ) || i == 0 ) max_components.at ( 0 ) = _mesh.vertices.at ( i ).position.at ( 0 );
+        if ( _mesh.vertices.at ( i ).position.at ( 0 ) < min_components.at ( 0 ) || i == 0 ) min_components.at ( 0 ) = _mesh.vertices.at ( i ).position.at ( 0 );
+        if ( _mesh.vertices.at ( i ).position.at ( 1 ) > max_components.at ( 1 ) || i == 0 ) max_components.at ( 1 ) = _mesh.vertices.at ( i ).position.at ( 1 );
+        if ( _mesh.vertices.at ( i ).position.at ( 1 ) < min_components.at ( 1 ) || i == 0 ) min_components.at ( 1 ) = _mesh.vertices.at ( i ).position.at ( 1 );
+        if ( _mesh.vertices.at ( i ).position.at ( 2 ) > max_components.at ( 2 ) || i == 0 ) max_components.at ( 2 ) = _mesh.vertices.at ( i ).position.at ( 2 );
+        if ( _mesh.vertices.at ( i ).position.at ( 2 ) < min_components.at ( 2 ) || i == 0 ) min_components.at ( 2 ) = _mesh.vertices.at ( i ).position.at ( 2 );
+    }
+
+    /* find central vertex */
+    _mesh.mesh_region.centre = ( max_components + min_components ) / 2.0;
+
+    /* if accurate regions is set, find the furthest vertex and set the radius to that */
+    if ( import_flags & import_flags::GLH_ACCURATE_REGIONS )
+    {
+        _mesh.mesh_region.radius = 0;
+        for ( unsigned i = 0; i < _mesh.vertices.size (); ++i )
+        {
+            const double distance = math::modulus ( _mesh.vertices.at ( i ).position - _mesh.mesh_region.centre );
+            if ( distance > _mesh.mesh_region.radius ) _mesh.mesh_region.radius = distance;
+        }
+    } else
+    /* if accurate regions is not set, set radius to maximum possible and set region */
+    {
+        _mesh.mesh_region.radius = math::modulus ( max_components );
+    }
+}
+
 /* add_node
  *
  * recursively add nodes to the node tree
@@ -466,8 +511,32 @@ glh::model::node& glh::model::model::add_node ( node& _node, const aiNode& ainod
     /* set transformation */
     _node.transform = cast_matrix ( ainode.mTransformation );
 
+    /* configure region */
+    if ( import_flags & import_flags::GLH_CONFIGURE_REGIONS ) configure_node_region ( _node );
+
     /* return node */
     return _node;
+}
+
+/* configure_node_region
+ *
+ * configure the region of a node
+ * child nodes must have already been processed
+ * 
+ *  _node: the node to configure
+ */
+void glh::model::model::configure_node_region ( node& _node )
+{
+    /* set region to first node or first mesh */
+    if ( _node.children.size () > 0 ) _node.node_region = _node.children.at ( 0 ).node_region;
+    else _node.node_region = _node.meshes.at ( 0 )->mesh_region;
+
+    /* loop through the child nodes and meshes and combind the regions */
+    for ( unsigned i = 0; i < _node.children.size (); ++i ) _node.node_region = region::combine ( _node.node_region, _node.children.at ( i ).node_region );
+    for ( unsigned i = 0; i < _node.meshes.size (); ++i ) _node.node_region = region::combine ( _node.node_region, _node.meshes.at ( i )->mesh_region );
+
+    /* apply the transformation matrix */
+    _node.node_region = _node.transform * _node.node_region;
 }
 
 /* render_node

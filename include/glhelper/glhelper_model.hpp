@@ -190,6 +190,9 @@
 /* include glhelper_math.hpp */
 #include <glhelper/glhelper_math.hpp>
 
+/* include glhelper_region.hpp */
+#include <glhelper/glhelper_region.hpp>
+
 
 
 /* NAMESPACE DECLARATIONS */
@@ -465,6 +468,10 @@ struct glh::model::mesh
     /* the vao controlling the vbo and the ebo */
     core::vao array_object;
 
+
+
+    /* a spherical region encompassing the mesh */
+    region::spherical_region<> mesh_region;
 };
 
 
@@ -484,14 +491,23 @@ struct glh::model::node
     /* parent node */
     node * parent;
 
+
+
     /* mesh indices */
     std::vector<unsigned> mesh_indices;
 
     /* meshes */
     std::vector<mesh *> meshes;
 
+
+
     /* transformation relative to parent's node */
     math::fmat4 transform;
+
+
+
+    /* a spherical region encompassing the node, including the transformation matrix */
+    region::spherical_region<> node_region;
 };
 
 
@@ -513,21 +529,32 @@ struct glh::model::import_flags
      * texture will have the internal format GL_SRGB_ALPHA
      * this means that gamma correction will be applied on import
      */
-    static const unsigned GLH_AMBIENT_TEXTURE_SRGBA = 0x01;
-    static const unsigned GLH_DIFFUSE_TEXTURE_SRGBA = 0x02;
-    static const unsigned GLH_SPECULAR_TEXTURE_SRGBA = 0x04;
+    static const unsigned GLH_AMBIENT_TEXTURE_SRGBA = 0x0001;
+    static const unsigned GLH_DIFFUSE_TEXTURE_SRGBA = 0x0002;
+    static const unsigned GLH_SPECULAR_TEXTURE_SRGBA = 0x0004;
 
     /* use sRGBA base colors
      * texture stack base colors will be risen to the power of 2.2
      */
-    static const unsigned GLH_AMBIENT_BASE_COLOR_SRGBA = 0x08;
-    static const unsigned GLH_DIFFUSE_BASE_COLOR_SRGBA = 0x10;
-    static const unsigned GLH_SPECULAR_BASE_COLOR_SRGBA = 0x20;
+    static const unsigned GLH_AMBIENT_BASE_COLOR_SRGBA = 0x0008;
+    static const unsigned GLH_DIFFUSE_BASE_COLOR_SRGBA = 0x0010;
+    static const unsigned GLH_SPECULAR_BASE_COLOR_SRGBA = 0x0020;
 
     /* use sRGBA vertex colors
      * vertex colors will be risen to the power of 2.2
      */
-    static const unsigned GLH_VERTEX_SRGBA = 0x40;
+    static const unsigned GLH_VERTEX_SRGBA = 0x0040;
+
+    /* configure regions
+     * if set, mesh regions will be configured
+     */
+    static const unsigned GLH_CONFIGURE_REGIONS = 0x0080;
+
+    /* make regions more accurate
+     * for a time penalty, one can make the regions more accurate
+     * only takes effect is GLH_CONFIGURE_REGIONS is set
+     */
+    static const unsigned GLH_ACCURATE_REGIONS = 0x0100;
 
 
 
@@ -637,6 +664,14 @@ public:
      * model_uni: model uniform to cache
      */
     void cache_uniforms ( core::struct_uniform& material_uni, core::uniform& model_uni );
+
+
+
+    /* model_region
+     *
+     * get the region of the model based on a model matrix
+     */
+    region::spherical_region<> model_region ( const math::mat4& trans = math::identity<4> () ) { return trans * root_node.node_region; }
 
 
 
@@ -816,6 +851,14 @@ private:
      */
     void configure_buffers ( mesh& _mesh );
 
+    /* configure_mesh_region
+     *
+     * configure the region of a mesh
+     * 
+     * _mesh: the mesh to configure
+     */
+    void configure_mesh_region ( mesh& _mesh );
+
     /* add_node
      *
      * recursively add nodes to the node tree
@@ -826,6 +869,15 @@ private:
      * return: the node just added
      */
     node& add_node ( node& _node, const aiNode& ainode );
+
+    /* configure_node_region
+     *
+     * configure the region of a node
+     * child nodes must have already been processed
+     *
+     * _node: the node to configure
+     */
+    void configure_node_region ( node& _node );
 
 
 
