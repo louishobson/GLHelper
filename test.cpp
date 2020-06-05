@@ -83,14 +83,14 @@ int main ()
     /* IMPORT MODEL */
 
     /* import the model */
-    glh::model::model island { "assets/island", "scene.gltf" };
+    glh::model::model island { "assets/island", "scene.gltf", glh::model::import_flags::GLH_CONFIGURE_REGIONS | glh::model::import_flags::GLH_ACCURATE_REGIONS };
     const glh::math::mat4 island_matrix =
     glh::math::enlarge3d
     (
         glh::math::identity<4, GLdouble> (),
         0.1
     );
-
+    
     /* cache uniforms */
     island.cache_uniforms ( material_uni, trans_uni.get_uniform ( "model" ) );
 
@@ -137,7 +137,7 @@ int main ()
 
         /* print framerate every 10th frame */
         if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
-
+        
         /* apply any viewport size changes */
         if ( dimensions.deltaheight || dimensions.deltawidth || frame % 15 == 0 )
         {
