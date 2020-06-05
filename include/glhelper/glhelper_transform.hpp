@@ -109,6 +109,12 @@ namespace glh
          */
         template<unsigned M, unsigned _M, class T> matrix<_M, _M, T> resize ( const matrix<M, M, T>& trans );
 
+        /* column_vector
+         *
+         * get the column vector at a position on a matrix
+         */
+        template<unsigned M, unsigned N, class T> vector<M, T> column_vector ( const matrix<M, N, T>& _matrix, const unsigned index );
+
         /* stretch
          *
          * stretch along one axis
@@ -411,6 +417,23 @@ template<unsigned M, unsigned _M, class T> inline glh::math::matrix<_M, _M, T> g
     }
 
     /* return result */
+    return result;
+}
+
+/* column_vector
+ *
+ * get the column vector at a position on a matrix
+ */
+template<unsigned M, unsigned N, class T> inline glh::math::vector<M, T> glh::math::column_vector ( const matrix<M, N, T>& _matrix, const unsigned index )
+{
+    /* throw if i >= N */
+    if ( index >= N ) throw exception::matrix_exception { "index is out of range for producing column vector from matrix" };
+
+    /* produce column vector */
+    glh::math::vector<M, T> result;
+    for ( unsigned i = 0; i < N; ++i ) result.at ( i ) = _matrix.at ( i, index );
+
+    /* return column vector */
     return result;
 }
 
