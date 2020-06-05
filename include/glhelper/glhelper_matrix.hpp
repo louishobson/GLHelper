@@ -119,8 +119,8 @@ namespace glh
          *
          * return: the determinant
          */
-        template<unsigned M, class T> std::enable_if_t<( M > 1 ), double> det ( const matrix<M, M, T>& _matrix );
-        template<unsigned M, class T> std::enable_if_t<M == 1, double> det ( const matrix<M, M, T>& _matrix );
+        template<unsigned M, class T> std::enable_if_t<( M > 1 ), T> det ( const matrix<M, M, T>& _matrix );
+        template<unsigned M, class T> std::enable_if_t<M == 1, T> det ( const matrix<M, M, T>& _matrix );
 
         /* minor
          *
@@ -129,7 +129,7 @@ namespace glh
          * 
          * return: the minor of the element requested
          */
-        template<unsigned M, class T> double minor ( const matrix<M, M, T>& _matrix, const unsigned i, const unsigned j );
+        template<unsigned M, class T> T minor ( const matrix<M, M, T>& _matrix, const unsigned i, const unsigned j );
 
         /* inverse
          *
@@ -578,7 +578,7 @@ template<unsigned M, unsigned N, class T> inline glh::math::matrix<M - 1, N - 1,
  *
  * return: the determinant
  */
-template<unsigned M, class T> inline std::enable_if_t<( M > 1 ), double> glh::math::det ( const matrix<M, M, T>& _matrix )
+template<unsigned M, class T> inline std::enable_if_t<( M > 1 ), T> glh::math::det ( const matrix<M, M, T>& _matrix )
 {
     /* store the running determinant */
     T determinant = 0;
@@ -601,7 +601,7 @@ template<unsigned M, class T> inline std::enable_if_t<( M > 1 ), double> glh::ma
     /* return the determinant */
     return det;
 }
-template<unsigned M, class T> inline std::enable_if_t<M == 1, double> glh::math::det ( const matrix<M, M, T>& _matrix )
+template<unsigned M, class T> inline std::enable_if_t<M == 1, T> glh::math::det ( const matrix<M, M, T>& _matrix )
 {
     /* return the only value in the matrix */
     return _matrix.at ( 0, 0 );
@@ -614,7 +614,7 @@ template<unsigned M, class T> inline std::enable_if_t<M == 1, double> glh::math:
  * 
  * return: the minor of the element requested
  */
-template<unsigned M, class T> inline double glh::math::minor ( const matrix<M, M, T>& _matrix, const unsigned i, const unsigned j )
+template<unsigned M, class T> inline T glh::math::minor ( const matrix<M, M, T>& _matrix, const unsigned i, const unsigned j )
 {
     /* return the determinant of the submatrix given by i and j */
     return det ( submatrix ( _matrix, i, j ) );
