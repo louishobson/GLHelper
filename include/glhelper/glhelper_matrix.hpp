@@ -96,6 +96,12 @@ namespace glh
 
         /* MATRIX MODIFIER FUNCTIONS DECLARATIONS */
 
+        /* promote_matrix
+         *
+         * promte a matrix to the preferred type give another type
+         */
+        template<unsigned M, unsigned N, class T0, class T1> std::conditional_t<std::is_same<T0, meta::pat_t<T0, T1>>::value, const matrix<M, N, T0>&, matrix<M, N, meta::pat_t<T0, T1>>> promote_matrix ( const matrix<M, N, T0>& lhs );
+
         /* transpose
          * 
          * _matrix: the matrix to transpose
@@ -331,7 +337,7 @@ public:
 
 
 
-    /* __at_collumn
+    /* __at
      *
      * accesses the internal array
      * the internal array is in column-major order, hence the '__'
@@ -515,6 +521,16 @@ template<unsigned M, unsigned N, class T> inline std::string glh::math::matrix<M
 
 
 /* MATRIX MODIFIER FUNCTIONS IMPLEMENTATIONS */
+
+/* promote_matrix
+ *
+ * promte a matrix to the preferred type give another type
+ */
+template<unsigned M, unsigned N, class T0, class T1> inline std::conditional_t<std::is_same<T0, glh::meta::pat_t<T0, T1>>::value, const glh::math::matrix<M, N, T0>&, glh::math::matrix<M, N, glh::meta::pat_t<T0, T1>>> glh::math::promote_matrix ( const matrix<M, N, T0>& lhs )
+{
+    return lhs;
+}
+
 
 /* transpose
  * 
