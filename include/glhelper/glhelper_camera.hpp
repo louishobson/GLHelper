@@ -481,7 +481,7 @@ public:
 
 
 
-private:
+protected:
 
     /* perspective projection matrix parameters */
     double fov;
@@ -552,7 +552,7 @@ public:
 
 
 
-private:
+protected:
 
     /* orthographic projection matrix parameters */
     math::vec3 lbn;
@@ -719,7 +719,7 @@ public:
 
 
 
-private:
+protected:
 
     /* the camera the user is looking through */
     const camera_perspective_movement& cam;
