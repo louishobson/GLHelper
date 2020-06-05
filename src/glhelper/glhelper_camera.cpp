@@ -360,7 +360,7 @@ bool glh::camera::camera_perspective::update_proj () const
     /* if proj has been changed, update */
     if ( proj_change )
     {
-        proj = math::perspective_fov<double> ( fov, aspect, near, far );
+        proj = math::perspective_fov ( fov, aspect, near, far );
         proj_change = false;
         return true;
     }
@@ -395,7 +395,7 @@ bool glh::camera::camera_orthographic::update_proj () const
     /* if proj has been changed, update */
     if ( proj_change )
     {
-        proj = math::orthographic<double> ( lbn.at ( 0 ), rtf.at ( 0 ), lbn.at ( 1 ), rtf.at ( 1 ), lbn.at ( 2 ), rtf.at ( 2 ) );
+        proj = math::orthographic ( lbn.at ( 0 ), rtf.at ( 0 ), lbn.at ( 1 ), rtf.at ( 1 ), lbn.at ( 2 ), rtf.at ( 2 ) );
         proj_change = false;
         return true;
     }
@@ -446,7 +446,7 @@ bool glh::camera::mirror_camera::update_proj () const
      * notice the sign of the half_widths vs the half_heights
      * we reflect the texture in the x-axis
      */
-    proj = math::perspective<double> ( mirror_pos.at ( 0 ) + half_width, mirror_pos.at ( 0 ) - half_width, mirror_pos.at ( 1 ) - half_height, mirror_pos.at ( 1 ) + half_height, -mirror_pos.at ( 2 ), cam.get_far () );
+    proj = math::perspective ( mirror_pos.at ( 0 ) + half_width, mirror_pos.at ( 0 ) - half_width, mirror_pos.at ( 1 ) - half_height, mirror_pos.at ( 1 ) + half_height, -mirror_pos.at ( 2 ), cam.get_far () );
     /* return true */
     return true;
 
