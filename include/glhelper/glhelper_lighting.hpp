@@ -283,6 +283,28 @@ public:
 
 
 
+    /* position of the light */
+    math::vec3 position;
+
+    /* direction of the light */
+    math::vec3 direction;
+
+    /* inner cone and outer cone angles of spotlights */
+    double inner_cone;
+    double outer_cone;
+
+    /* attenuation parameters */
+    double att_const;
+    double att_linear;
+    double att_quad;
+
+    /* colors of light */
+    math::vec3 ambient_color;
+    math::vec3 diffuse_color;
+    math::vec3 specular_color;
+
+
+
     /* apply
      *
      * apply the lighting to a uniform
@@ -303,51 +325,6 @@ public:
 
 
 
-    /* get/set_position
-     *
-     * get/set the position of the light
-     */
-    const math::vec3 get_position () const { return position; }
-    void set_position ( const math::vec3& _position ) { position = _position; }
-
-    /* get/set_direction
-     *
-     * get/set the direction of the light
-     */
-    const math::vec3 get_direction () const { return direction; }
-    void set_direction ( const math::vec3& _direction ) { direction = _direction; }
-
-    /* get/set_inner/outer_cone
-     *
-     * get/set the different cone angles
-     */
-    double get_inner_cone () const { return inner_cone; }
-    void set_inner_cone ( const double _inner_cone ) { inner_cone = _inner_cone; }
-    double get_outer_cone () const { return outer_cone; }
-    void set_outer_cone ( const double _outer_cone ) { inner_cone = _outer_cone; }
-
-    /* get/set_att_...
-     *
-     * get/set attenuation constants
-     */
-    double get_att_const () const { return att_const; }
-    void set_att_const ( const double _att_const ) { att_const = _att_const; }
-    double get_att_linear () const { return att_linear; }
-    void set_att_linear ( const double _att_linear ) { att_linear = _att_linear; }
-    double get_att_quad () const { return att_quad; }
-    void set_att_quad ( const double _att_quad ) { att_quad = _att_quad; }
-
-    /* get/set_ambient/diffuse/specular_color
-     *
-     * get/set color components
-     */
-    math::vec3 get_ambient_color () const { return ambient_color; }
-    const void set_ambient_color ( const glh::math::vec3& _ambient_color ) { ambient_color = _ambient_color; }
-    math::vec3 get_diffuse_color () const { return diffuse_color; }
-    const void set_diffuse_color ( const glh::math::vec3& _diffuse_color ) { diffuse_color = _diffuse_color; }
-    math::vec3 get_specular_color () const { return specular_color; }
-    const void set_specular_color ( const glh::math::vec3& _specular_color ) { specular_color = _specular_color; }
-
     /* enable/disable
      *
      * enable/disable the light
@@ -358,26 +335,6 @@ public:
 
 
 private:
-
-    /* position of the light */
-    math::vec3 position;
-
-    /* direction of the light */
-    math::vec3 direction;
-
-    /* inner cone and outer cone angles of spotlights */
-    double inner_cone;
-    double outer_cone;
-
-    /* attenuation parameters */
-    double att_const;
-    double att_linear;
-    double att_quad;
-
-    /* colors of light */
-    math::vec3 ambient_color;
-    math::vec3 diffuse_color;
-    math::vec3 specular_color;
 
     /* whether the light is enables */
     bool enabled;
@@ -454,23 +411,17 @@ public:
 
 private:
 
-    /* make get/set_position functions private */
-    using light::get_position;
-    using light::set_position;
+    /* make position private */
+    using light::position;
 
-    /* make get/set_att_... functions private */
-    using light::get_att_const;
-    using light::set_att_const;
-    using light::get_att_linear;
-    using light::set_att_linear;
-    using light::get_att_quad;
-    using light::set_att_quad;
+    /* make attenuation private */
+    using light::att_const;
+    using light::att_linear;
+    using light::att_quad;
 
-    /* make get/set_inner/outer_cone functions private */
-    using light::get_inner_cone;
-    using light::set_inner_cone;
-    using light::get_outer_cone;
-    using light::set_outer_cone;
+    /* make inner/outer_cone private */
+    using light::inner_cone;
+    using light::outer_cone;
 
 };
 
@@ -525,15 +476,12 @@ public:
 
 private:
 
-    /* make get/set_direction functions private */
-    using light::get_direction;
-    using light::set_direction;
+    /* make direction private */
+    using light::direction;
 
-    /* make get/set_inner/outer_cone functions private */
-    using light::get_inner_cone;
-    using light::set_inner_cone;
-    using light::get_outer_cone;
-    using light::set_outer_cone;
+    /* make inner/outer_cone private */
+    using light::inner_cone;
+    using light::outer_cone;
 
 };
 
@@ -633,8 +581,31 @@ public:
 
 
 
-    /* array of lights */
-    std::vector<T> lights;
+    /* at
+     *
+     * get the light at an index
+     */
+    T& at ( const unsigned index ) { return lights.at ( index ); }
+    const T& at ( const unsigned index ) const { return lights.at ( index ); }
+
+    /* size
+     *
+     * get the number of lights in the light collection
+     */
+    unsigned size () const { return lights.size (); }
+
+    /* add_light
+     *
+     * add a light to the collection
+     */
+    void add_light ( const T& _light ) { lights.push_back ( _light ); }
+    void add_light ( T&& _light ) { lights.push_back ( _light ); }
+
+    /* remove_light
+     *
+     * remove a light at an index
+     */
+    void remove_light ( const unsigned index ) { lights.erase ( lights.begin () + index ); }
 
 
 
@@ -664,6 +635,9 @@ public:
 
 
 private:
+
+    /* array of lights */
+    std::vector<T> lights;
 
     /* struct for cached uniforms */
     struct cached_uniforms_struct
@@ -724,6 +698,19 @@ public:
     dirlight_collection dircoll;
     pointlight_collection pointcoll;
     spotlight_collection spotcoll;
+
+
+
+    /* add_light
+     *
+     * adds a light to a collection based on its type
+     */
+    void add_light ( const dirlight& _light ) { dircoll.add_light ( _light ); }
+    void add_light ( dirlight&& _light ) { dircoll.add_light ( _light ); }
+    void add_light ( const pointlight& _light ) { pointcoll.add_light ( _light ); }
+    void add_light ( pointlight&& _light ) { pointcoll.add_light ( _light ); }  
+    void add_light ( const spotlight& _light ) { spotcoll.add_light ( _light ); }
+    void add_light ( spotlight&& _light ) { spotcoll.add_light ( _light ); }      
 
 
 
