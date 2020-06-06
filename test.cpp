@@ -104,9 +104,9 @@ int main ()
     /* add directional light */
     light_system.add_light ( glh::lighting::dirlight
     {
-        glh::math::vec3 { 0.0, -1.0, 0.0 },
+        glh::math::vec3 { 1.0, -1.0, 0.0 },
         glh::math::vec3 { 1.0 }, 
-        glh::math::vec3 { 1.5 }, 
+        glh::math::vec3 { 0.5 }, 
         glh::math::vec3 { 1.0 }
     } );
 
@@ -166,6 +166,7 @@ int main ()
         /* apply camera and light system */
         camera.apply ();
         light_system.apply ();
+        //light_system.dircoll.at ( 0 ).shadow_camera ( island.model_region ( island_matrix ) ).apply ( trans_uni.get_uniform ( "view" ), trans_uni.get_uniform ( "proj" ) );
 
         /* clear screen */
         glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
