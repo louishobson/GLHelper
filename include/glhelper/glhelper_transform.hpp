@@ -149,10 +149,10 @@ namespace glh
          * 
          * return: the new transformation matrix/vector
          */
-        template<class T> matrix<3, 3, T> stretch3d ( const matrix<3, 3, T>& trans, const dvec3& sfs );
-        template<class T> vector<3, T> stretch3d ( const vector<3, T>& vec, const dvec3& sfs );
-        template<class T> matrix<4, 4, T> stretch3d ( const matrix<4, 4, T>& trans, const dvec3& sfs );
-        template<class T> vector<4, T> stretch3d ( const vector<4, T>& vec, const dvec3& sfs );
+        template<class T> matrix<3, 3, T> stretch3d ( const matrix<3, 3, T>& trans, const vec3& sfs );
+        template<class T> vector<3, T> stretch3d ( const vector<3, T>& vec, const vec3& sfs );
+        template<class T> matrix<4, 4, T> stretch3d ( const matrix<4, 4, T>& trans, const vec3& sfs );
+        template<class T> vector<4, T> stretch3d ( const vector<4, T>& vec, const vec3& sfs );
 
         /* enlarge
          *
@@ -204,10 +204,10 @@ namespace glh
          * 
          * return: the new transformation matrix/vector
          */
-        template<class T> matrix<3, 3, T> rotate3d ( const matrix<3, 3, T>& trans, const double arg, const dvec3& axis );
-        template<class T> vector<3, T> rotate3d ( const vector<3, T>& vec, const double arg, const dvec3& axis );
-        template<class T> matrix<4, 4, T> rotate3d ( const matrix<4, 4, T>& trans, const double arg, const dvec3& axis );
-        template<class T> vector<4, T> rotate3d ( const vector<4, T>& vec, const double arg, const dvec3& axis );
+        template<class T> matrix<3, 3, T> rotate3d ( const matrix<3, 3, T>& trans, const double arg, const vec3& axis );
+        template<class T> vector<3, T> rotate3d ( const vector<3, T>& vec, const double arg, const vec3& axis );
+        template<class T> matrix<4, 4, T> rotate3d ( const matrix<4, 4, T>& trans, const double arg, const vec3& axis );
+        template<class T> vector<4, T> rotate3d ( const vector<4, T>& vec, const double arg, const vec3& axis );
 
         /* translate
          *
@@ -245,9 +245,9 @@ namespace glh
          * 
          * return: the new transformation matrix/vector
          */
-        template<class T> vector<3, T> translate3d ( const vector<3, T>& vec, const dvec3& translation );
-        template<class T> matrix<4, 4, T> translate3d ( const matrix<4, 4, T>& trans, const dvec3& translation );
-        template<class T> vector<4, T> translate3d ( const vector<4, T>& vec, const dvec3& translation );
+        template<class T> vector<3, T> translate3d ( const vector<3, T>& vec, const vec3& translation );
+        template<class T> matrix<4, 4, T> translate3d ( const matrix<4, 4, T>& trans, const vec3& translation );
+        template<class T> vector<4, T> translate3d ( const vector<4, T>& vec, const vec3& translation );
 
         /* reflect3d
          *
@@ -259,10 +259,10 @@ namespace glh
          *
          * return: the new transformation matrix/vector
          */
-        template<class T> matrix<3, 3, T> reflect3d ( const matrix<3, 3, T>& trans, const dvec3& norm );
-        template<class T> vector<3, T> reflect3d ( const vector<3, T>& vec, const dvec3& norm, const dvec3& pos = dvec3 { 0 } );
-        template<class T> matrix<4, 4, T> reflect3d ( const matrix<4, 4, T>& trans, const dvec3& norm, const dvec3& pos = dvec3 { 0 } );
-        template<class T> vector<4, T> reflect3d ( const vector<4, T>& vec, const dvec3& norm, const dvec3& pos = dvec3 { 0 } );
+        template<class T> matrix<3, 3, T> reflect3d ( const matrix<3, 3, T>& trans, const vec3& norm );
+        template<class T> vector<3, T> reflect3d ( const vector<3, T>& vec, const vec3& norm, const vec3& pos = vec3 { 0 } );
+        template<class T> matrix<4, 4, T> reflect3d ( const matrix<4, 4, T>& trans, const vec3& norm, const vec3& pos = vec3 { 0 } );
+        template<class T> vector<4, T> reflect3d ( const vector<4, T>& vec, const vec3& norm, const vec3& pos = vec3 { 0 } );
 
 
 
@@ -279,7 +279,7 @@ namespace glh
          * 
          * return: the perspective projection matrix
          */
-        dmat4 perspective ( const double l, const double r, const double b, const double t, const double n, const double f );
+        mat4 perspective ( const double l, const double r, const double b, const double t, const double n, const double f );
 
         /* perspective_fov
          *
@@ -292,7 +292,7 @@ namespace glh
          * 
          * return: the perspective projection matrix
          */
-        dmat4 perspective_fov ( const double fov, const double aspect, const double n, const double f );
+        mat4 perspective_fov ( const double fov, const double aspect, const double n, const double f );
 
         /* othographic
          *
@@ -307,7 +307,7 @@ namespace glh
          * 
          * return: the othographic projection matrix
          */
-        dmat4 orthographic ( const double l, const double r, const double b, const double t, const double n, const double f );
+        mat4 orthographic ( const double l, const double r, const double b, const double t, const double n, const double f );
 
         /* camera
          *
@@ -318,7 +318,7 @@ namespace glh
          * 
          * return: camera matrix based on vectors provided
          */
-        dmat4 camera ( const dvec3& p, const dvec3& x, const dvec3& y, const dvec3& z );
+        mat4 camera ( const vec3& p, const vec3& x, const vec3& y, const vec3& z );
 
         /* look_at
          *
@@ -331,7 +331,7 @@ namespace glh
          * 
          * return: camera matrix based on vectors provided
          */
-        dmat4 look_at ( const dvec3& p, const dvec3& t, const dvec3& wup, const dvec3& fbx = dvec3 { 1.0, 0.0, 0.0 } );
+        mat4 look_at ( const vec3& p, const vec3& t, const vec3& wup, const vec3& fbx = vec3 { 1.0, 0.0, 0.0 } );
 
         /* look_along
          *
@@ -344,7 +344,7 @@ namespace glh
          * 
          * return: camera matrix based on vectors provided
          */
-        dmat4 look_along ( const dvec3& p, const dvec3& d, const dvec3& wup, const dvec3& fbx = dvec3 { 1.0, 0.0, 0.0 } );
+        mat4 look_along ( const vec3& p, const vec3& d, const vec3& wup, const vec3& fbx = vec3 { 1.0, 0.0, 0.0 } );
 
         /* normal
          *
@@ -507,17 +507,17 @@ template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::stretch 
  * 
  * return: the new transformation matrix/vector
  */
-template<class T> inline glh::math::matrix<3, 3, T> glh::math::stretch3d ( const matrix<3, 3, T>& trans, const dvec3& sfs )
+template<class T> inline glh::math::matrix<3, 3, T> glh::math::stretch3d ( const matrix<3, 3, T>& trans, const vec3& sfs )
 {
     /* the same as the default stretch function */
     return stretch ( trans, sfs );
 }
-template<class T> inline glh::math::vector<3, T> glh::math::stretch3d ( const vector<3, T>& vec, const dvec3& sfs )
+template<class T> inline glh::math::vector<3, T> glh::math::stretch3d ( const vector<3, T>& vec, const vec3& sfs )
 {
     /* same as the default stretch function */
     return stretch ( vec, sfs );
 }
-template<class T> inline glh::math::matrix<4, 4, T> glh::math::stretch3d ( const matrix<4, 4, T>& trans, const dvec3& sfs )
+template<class T> inline glh::math::matrix<4, 4, T> glh::math::stretch3d ( const matrix<4, 4, T>& trans, const vec3& sfs )
 {
     /* create new matrix */
     matrix<4, 4, T> result { trans };
@@ -531,7 +531,7 @@ template<class T> inline glh::math::matrix<4, 4, T> glh::math::stretch3d ( const
     /* return result */
     return result;
 }
-template<class T> inline glh::math::vector<4, T> glh::math::stretch3d ( const vector<4, T>& vec, const dvec3& sfs )
+template<class T> inline glh::math::vector<4, T> glh::math::stretch3d ( const vector<4, T>& vec, const vec3& sfs )
 {
     /* multiply vectors, adding component to sfs */
     return vec * vector<4, T> { sfs, 1 };
@@ -634,7 +634,7 @@ template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::rotate (
  * 
  * return: the new transformation matrix/vector
  */
-template<class T> inline glh::math::matrix<3, 3, T> glh::math::rotate3d ( const matrix<3, 3, T>& trans, const double arg, const dvec3& axis )
+template<class T> inline glh::math::matrix<3, 3, T> glh::math::rotate3d ( const matrix<3, 3, T>& trans, const double arg, const vec3& axis )
 {
     /* return the new transformation matrix */
     return matrix<3, 3, T>
@@ -652,12 +652,12 @@ template<class T> inline glh::math::matrix<3, 3, T> glh::math::rotate3d ( const 
         ( std::cos ( arg ) ) + ( axis.at ( 2 ) * axis.at ( 2 ) * ( 1 - std::cos ( arg ) ) ) 
     } * trans;
 }
-template<class T> inline glh::math::vector<3, T> glh::math::rotate3d ( const vector<3, T>& vec, const double arg, const dvec3& axis )
+template<class T> inline glh::math::vector<3, T> glh::math::rotate3d ( const vector<3, T>& vec, const double arg, const vec3& axis )
 {
     /* return the vector multiplied by the rotational matrix */
     return rotate3d ( identity<3, T> (), arg, axis ) * vec;
 }
-template<class T> inline glh::math::matrix<4, 4, T> glh::math::rotate3d ( const matrix<4, 4, T>& trans, const double arg, const dvec3& axis )
+template<class T> inline glh::math::matrix<4, 4, T> glh::math::rotate3d ( const matrix<4, 4, T>& trans, const double arg, const vec3& axis )
 {
     /* return the new transformation matrix */
     return matrix<4, 4, T>
@@ -680,7 +680,7 @@ template<class T> inline glh::math::matrix<4, 4, T> glh::math::rotate3d ( const 
         0, 0, 0, 1
     } * trans;
 }
-template<class T> inline glh::math::vector<4, T> glh::math::rotate3d ( const vector<4, T>& vec, const double arg, const dvec3& axis )
+template<class T> inline glh::math::vector<4, T> glh::math::rotate3d ( const vector<4, T>& vec, const double arg, const vec3& axis )
 {
     /* return the vector multiplied by the rotational matrix */
     return rotate3d ( identity<4, T> (), arg, axis ) * vec;
@@ -756,12 +756,12 @@ template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::translat
  * 
  * return: the new transformation matrix/vector
  */
-template<class T> inline glh::math::vector<3, T> glh::math::translate3d ( const vector<3, T>& vec, const dvec3& translation )
+template<class T> inline glh::math::vector<3, T> glh::math::translate3d ( const vector<3, T>& vec, const vec3& translation )
 {
     /* return the sum of the two vectors */
     return vec + translation;
 }
-template<class T> inline glh::math::matrix<4, 4, T> glh::math::translate3d ( const matrix<4, 4, T>& trans, const dvec3& translation )
+template<class T> inline glh::math::matrix<4, 4, T> glh::math::translate3d ( const matrix<4, 4, T>& trans, const vec3& translation )
 {
     /* create new matrix */
     matrix<4, 4, T> result { trans };
@@ -774,7 +774,7 @@ template<class T> inline glh::math::matrix<4, 4, T> glh::math::translate3d ( con
     /* return new matrix */
     return result;
 }
-template<class T> inline glh::math::vector<4, T> glh::math::translate3d ( const vector<4, T>& vec, const dvec3& translation )
+template<class T> inline glh::math::vector<4, T> glh::math::translate3d ( const vector<4, T>& vec, const vec3& translation )
 {
     /* return the sum of the two vectors */
     return vec + vector<4, T> { translation, 0.0 };
@@ -790,7 +790,7 @@ template<class T> inline glh::math::vector<4, T> glh::math::translate3d ( const 
  *
  * return: the new transformation matrix/vector
  */
-template<class T> inline glh::math::matrix<3, 3, T> glh::math::reflect3d ( const matrix<3, 3, T>& trans, const dvec3& norm )
+template<class T> inline glh::math::matrix<3, 3, T> glh::math::reflect3d ( const matrix<3, 3, T>& trans, const vec3& norm )
 {
     /* return the reflection matrix */
     return matrix<3, 3, T>
@@ -808,12 +808,12 @@ template<class T> inline glh::math::matrix<3, 3, T> glh::math::reflect3d ( const
         1 - ( 2 * norm.at ( 2 ) * norm.at ( 2 ) )
     } * trans;
 }
-template<class T> inline glh::math::vector<3, T> glh::math::reflect3d ( const vector<3, T>& vec, const dvec3& norm, const dvec3& pos )
+template<class T> inline glh::math::vector<3, T> glh::math::reflect3d ( const vector<3, T>& vec, const vec3& norm, const vec3& pos )
 {
     /* reflect using matrix */
     return vector<3, T> { reflect3d ( vector<4, T> { vec, 1.0 }, norm, pos ) };
 }
-template<class T> inline glh::math::matrix<4, 4, T> glh::math::reflect3d ( const matrix<4, 4, T>& trans, const dvec3& norm, const dvec3& pos )
+template<class T> inline glh::math::matrix<4, 4, T> glh::math::reflect3d ( const matrix<4, 4, T>& trans, const vec3& norm, const vec3& pos )
 {
     /* get the value of d */
     const double d = dot ( -pos, norm );
@@ -839,7 +839,7 @@ template<class T> inline glh::math::matrix<4, 4, T> glh::math::reflect3d ( const
         0, 0, 0, 1
     } * trans;
 }
-template<class T> inline glh::math::vector<4, T> glh::math::reflect3d ( const vector<4, T>& vec, const dvec3& norm, const dvec3& pos )
+template<class T> inline glh::math::vector<4, T> glh::math::reflect3d ( const vector<4, T>& vec, const vec3& norm, const vec3& pos )
 {
     /* reflect using matrix */
     return reflect3d ( identity<4, T> (), norm, pos ) * vec;
@@ -860,10 +860,10 @@ template<class T> inline glh::math::vector<4, T> glh::math::reflect3d ( const ve
  * 
  * return: the perspective projection matrix
  */
-inline glh::math::dmat4 glh::math::perspective ( const double l, const double r, const double b, const double t, const double n, const double f )
+inline glh::math::mat4 glh::math::perspective ( const double l, const double r, const double b, const double t, const double n, const double f )
 {
     /* return the new matrix */
-    return dmat4
+    return mat4
     {
         ( 2 * n ) / ( r - l ),           0,            ( r + l ) / ( r - l ),             0,
                   0,           ( 2 * n ) / ( t - b ),  ( t + b ) / ( t - b ),             0,
@@ -883,7 +883,7 @@ inline glh::math::dmat4 glh::math::perspective ( const double l, const double r,
  * 
  * return: the perspective projection matrix
  */
-inline glh::math::dmat4 glh::math::perspective_fov ( const double fov, const double aspect, const double n, const double f )
+inline glh::math::mat4 glh::math::perspective_fov ( const double fov, const double aspect, const double n, const double f )
 {
     /* calculate the right position */
     const double r = n * std::tan ( fov / 2 );
@@ -904,10 +904,10 @@ inline glh::math::dmat4 glh::math::perspective_fov ( const double fov, const dou
  * 
  * return: the othographic projection matrix
  */
-inline glh::math::dmat4 glh::math::orthographic ( const double l, const double r, const double b, const double t, const double n, const double f )
+inline glh::math::mat4 glh::math::orthographic ( const double l, const double r, const double b, const double t, const double n, const double f )
 {
     /* return the new matrix */
-    return dmat4
+    return mat4
     {
         2.0 / ( r - l ),        0,                0,        -( r + l ) / ( r - l ),
                0,        2.0 / ( t - b ),         0,        -( t + b ) / ( t - b ),
@@ -925,16 +925,16 @@ inline glh::math::dmat4 glh::math::orthographic ( const double l, const double r
  * 
  * return: camera matrix based on vectors provided
  */
-inline glh::math::dmat4 glh::math::camera ( const dvec3& p, const dvec3& x, const dvec3& y, const dvec3& z )
+inline glh::math::mat4 glh::math::camera ( const vec3& p, const vec3& x, const vec3& y, const vec3& z )
 {
     /* return the camera matrix */
-    return dmat4
+    return mat4
     {
         x.at ( 0 ), x.at ( 1 ), x.at ( 2 ), 0,
         y.at ( 0 ), y.at ( 1 ), y.at ( 2 ), 0,
         z.at ( 0 ), z.at ( 1 ), z.at ( 2 ), 0,
             0     ,     0     ,     0     , 1
-    } * dmat4
+    } * mat4
     {
         1, 0, 0, -p.at ( 0 ),
         0, 1, 0, -p.at ( 1 ),
@@ -954,15 +954,15 @@ inline glh::math::dmat4 glh::math::camera ( const dvec3& p, const dvec3& x, cons
  * 
  * return: camera matrix based on vectors provided
  */
-inline glh::math::dmat4 glh::math::look_at ( const dvec3& p, const dvec3& t, const dvec3& wup, const dvec3& fbx )
+inline glh::math::mat4 glh::math::look_at ( const vec3& p, const vec3& t, const vec3& wup, const vec3& fbx )
 {
     /* z = norm ( p - t )
      * if ( z.wup < 1.0 ) X = norm ( wup x z ) else X = fbx
      * y = z x X
      */
-    const dvec3 z = normalise ( t - p );
-    const dvec3 x = ( std::abs ( dot ( z, wup ) ) < 1.0 ? cross ( wup, z ) : fbx );
-    const dvec3 y = cross ( z, x );
+    const vec3 z = normalise ( t - p );
+    const vec3 x = ( std::abs ( dot ( z, wup ) ) < 1.0 ? cross ( wup, z ) : fbx );
+    const vec3 y = cross ( z, x );
     /* return the camera matrix */
     return camera ( p, x, y, z );
 }
@@ -978,16 +978,16 @@ inline glh::math::dmat4 glh::math::look_at ( const dvec3& p, const dvec3& t, con
  * 
  * return: camera matrix based on vectors provided
  */
-inline glh::math::dmat4 glh::math::look_along ( const dvec3& p, const dvec3& d, const dvec3& wup, const dvec3& fbx )
+inline glh::math::mat4 glh::math::look_along ( const vec3& p, const vec3& d, const vec3& wup, const vec3& fbx )
 {
 
     /* z = -d
      * if ( z.wup < 1.0 ) X = norm ( wup x z ) else X = fbx
      * y = z x X
      */
-    const dvec3 z = -d;
-    const dvec3 x = ( std::abs ( dot ( z, wup ) ) < 1.0 ? cross ( wup, z ) : fbx );
-    const dvec3 y = cross ( z, x );
+    const vec3 z = -d;
+    const vec3 x = ( std::abs ( dot ( z, wup ) ) < 1.0 ? cross ( wup, z ) : fbx );
+    const vec3 y = cross ( z, x );
     /* return the camera matrix */
     return camera ( p, x, y, z );
 }
