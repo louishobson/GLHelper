@@ -130,9 +130,11 @@ public:
     /* clear
      *
      * clears the screen
+     *
+     * buffer_bits: bitfield for the buffers to clear (or all by default)
      */
-    static void clear ()
-    { glClear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT ); }
+    static void clear ( const GLbitfield buffer_bits = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT )
+    { glClear ( buffer_bits ); }
 
 
 
