@@ -168,7 +168,7 @@ int main ()
         light_system.apply ();
 
         /* clear screen */
-        glh::core::renderer::clear ();
+        glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
 
         /* render opaque */
         transparent_mode_uni.set_int ( false );
