@@ -145,6 +145,9 @@
 /* include glhelper_math.hpp */
 #include <glhelper/glhelper_math.hpp>
 
+/* include glhelper_region.hpp */
+#include <glhelper/glhelper_region.hpp>
+
 
 
 /* NAMESPACE DECLARATIONS */
@@ -278,8 +281,8 @@ public:
     /* default move assignment operator */
     light& operator= ( light&& other ) = default;
 
-    /* default virtual destructor */
-    virtual ~light () = default;
+    /* default pure virtual destructor */
+    virtual ~light () = 0;
 
 
 
@@ -322,15 +325,16 @@ public:
      * light_uni: the uniform to cache
      */
     void cache_uniforms ( core::struct_uniform& light_uni );
+    
 
 
-
-    /* enable/disable
+    /* enable/disable/is_enabled
      *
-     * enable/disable the light
+     * enable/disable the light or get whether is enabled
      */
     void enable () { enabled = true; }
     void disable () { enabled = false; }
+    bool is_enabled () const { return enabled; }
 
 
 
@@ -360,6 +364,9 @@ private:
     std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 
 };
+
+/* make destructor default */
+glh::lighting::light::~light () = default;
 
 
 
