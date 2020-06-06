@@ -166,7 +166,10 @@ public:
      *
      * non-default as cannot copy cached uniforms
      */
-    camera_base ( const camera_base& other ) {}
+    camera_base ( const camera_base& other )
+        : view_change { true }
+        , proj_change { true }
+    {}
 
     /* default move constructor */
     camera_base ( camera_base&& other ) = default;
@@ -389,6 +392,8 @@ public:
     const math::vec3& get_x () const { return x; }
     const math::vec3& get_y () const { return y; }
     const math::vec3& get_z () const { return z; }
+
+
 
 
 protected:
