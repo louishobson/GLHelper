@@ -278,7 +278,7 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack&
     /* check that the uv channel is actually possible */
     if ( _texture_stack.levels.at ( index ).uvwsrc >= GLH_MODEL_MAX_UV_CHANNELS ) throw exception::model_exception { "level of texture stack requires UV channel greater than the maximum allowed channels" };
 
-    /* check if already inported */
+    /* check if already imported */
     for ( unsigned i = 0; i < textures.size (); ++i ) if ( textures.at ( i ).get_path () == texpath )
     {
         /* already imported, so purely set the index */
@@ -291,6 +291,9 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack&
     /* not already imported, so import and set the index */
     textures.push_back ( core::texture2d { directory + "/" + texpath, is_srgb } );
     _texture_stack.levels.at ( index ).index = textures.size () - 1;
+
+    /* check if is the same texture as the previous level in the stack */
+    _texture_stack.levels.at ( index ).same_as_previous = ( index > 0 && _texture_stack.levels.at ( index ).index == _texture_stack.levels.at ( index - 1 ).index );
 
     /* return texture reference */
     return _texture_stack.levels.at ( index );
@@ -597,10 +600,9 @@ void glh::model::model::render_mesh ( const mesh& _mesh, const core::program& pr
 void glh::model::model::apply_material ( const material& _material ) const
 {
     /* apply the texture stacks */
-    unsigned tex_unit = 1;
-    apply_texture_stack ( _material.ambient_stack, cached_uniforms->ambient_stack_size_uni, cached_uniforms->ambient_stack_base_color_uni, cached_uniforms->ambient_stack_levels_uni, tex_unit );
-    apply_texture_stack ( _material.diffuse_stack, cached_uniforms->diffuse_stack_size_uni, cached_uniforms->diffuse_stack_base_color_uni, cached_uniforms->diffuse_stack_levels_uni, tex_unit );
-    apply_texture_stack ( _material.specular_stack, cached_uniforms->specular_stack_size_uni, cached_uniforms->specular_stack_base_color_uni, cached_uniforms->specular_stack_levels_uni, tex_unit );
+    apply_texture_stack ( _material.ambient_stack, cached_uniforms->ambient_stack_size_uni, cached_uniforms->ambient_stack_base_color_uni, cached_uniforms->ambient_stack_levels_uni );
+    apply_texture_stack ( _material.diffuse_stack, cached_uniforms->diffuse_stack_size_uni, cached_uniforms->diffuse_stack_base_color_uni, cached_uniforms->diffuse_stack_levels_uni );
+    apply_texture_stack ( _material.specular_stack, cached_uniforms->specular_stack_size_uni, cached_uniforms->specular_stack_base_color_uni, cached_uniforms->specular_stack_levels_uni );
 
     /* set blending mode */
     cached_uniforms->blending_mode_uni.set_int ( _material.blending_mode );
@@ -619,9 +621,8 @@ void glh::model::model::apply_material ( const material& _material ) const
  * 
  * _texture_stack: the texture stack to apply
  * stack_size_uni/stack_base_color_uni/stack_levels_uni: cached stack uniforms
- * tex_unit: the first texture unit to use, will be incremented for each texture
  */
-void glh::model::model::apply_texture_stack ( const texture_stack& _texture_stack, core::uniform& stack_size_uni, core::uniform& stack_base_color_uni, core::struct_array_uniform& stack_levels_uni, unsigned& tex_unit ) const
+void glh::model::model::apply_texture_stack ( const texture_stack& _texture_stack, core::uniform& stack_size_uni, core::uniform& stack_base_color_uni, core::struct_array_uniform& stack_levels_uni ) const
 {
     /* set the stack size */
     stack_size_uni.set_int ( _texture_stack.stack_size );
@@ -632,10 +633,16 @@ void glh::model::model::apply_texture_stack ( const texture_stack& _texture_stac
     /* bind each level of the texture stack */
     for ( unsigned i = 0; i < _texture_stack.stack_size; ++i ) 
     {
-        _texture_stack.levels.at ( i ).texture->bind ( tex_unit );
-        _texture_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( _texture_stack.levels.at ( i ).wrapping_u ) );
-        _texture_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( _texture_stack.levels.at ( i ).wrapping_v ) );
-        stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( tex_unit++ );
+        /* if same as previous level, purely set the correct */
+        if ( _texture_stack.levels.at ( i ).same_as_previous )
+        {
+            stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( _texture_stack.levels.at ( i ).texture->bind_loop_previous () );
+        } else
+        {
+            _texture_stack.levels.at ( i ).texture->set_s_wrap ( cast_wrapping ( _texture_stack.levels.at ( i ).wrapping_u ) );
+            _texture_stack.levels.at ( i ).texture->set_t_wrap ( cast_wrapping ( _texture_stack.levels.at ( i ).wrapping_v ) );
+            stack_levels_uni.at ( i ).get_uniform ( "texunit" ).set_int ( _texture_stack.levels.at ( i ).texture->bind_loop () );
+        }
         stack_levels_uni.at ( i ).get_uniform ( "blend_operation" ).set_int ( _texture_stack.levels.at ( i ).blend_operation );
         stack_levels_uni.at ( i ).get_uniform ( "blend_strength" ).set_float ( _texture_stack.levels.at ( i ).blend_strength );
         stack_levels_uni.at ( i ).get_uniform ( "uvwsrc" ).set_int ( _texture_stack.levels.at ( i ).uvwsrc );

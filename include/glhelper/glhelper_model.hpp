@@ -334,6 +334,9 @@ struct glh::model::texture_stack_level
 
     /* texture reference */
     core::texture2d * texture;
+
+    /* true if is the same texture as the previous level */
+    bool same_as_previous;
 };
 
 
@@ -914,9 +917,8 @@ private:
      * 
      * _texture_stack: the texture stack to apply
      * stack_size_uni/stack_base_color_uni/stack_levels_uni: cached stack uniforms
-     * tex_unit: the first texture unit to use, will be incremented for each texture
      */
-    void apply_texture_stack ( const texture_stack& _texture_stack, core::uniform& stack_size_uni, core::uniform& stack_base_color_uni, core::struct_array_uniform& stack_levels_uni, unsigned& tex_unit ) const;
+    void apply_texture_stack ( const texture_stack& _texture_stack, core::uniform& stack_size_uni, core::uniform& stack_base_color_uni, core::struct_array_uniform& stack_levels_uni ) const;
 
 };
 
