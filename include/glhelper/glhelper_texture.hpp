@@ -215,6 +215,29 @@ public:
 
 
 
+    /* bind_loop
+     *
+     * this will keep looping around texture units, disincluding 0, and making subsequent binds to the next unit
+     * this avoids binding a texture to a unit already in use
+     * 
+     * returns the unit just bound to
+     */
+    unsigned bind_loop () const;
+
+    /* bind_loop_next
+     *
+     * return the next index of the bind loop without binding
+     */
+    unsigned bind_loop_next () const { return bind_loop_index; }
+
+    /* bind_loop_previous
+     *
+     * return the previous binding of the loop
+     */
+    unsigned bind_loop_previous () const;
+
+
+
     /* get_width/height
      *
      * get the width and height of the texture
@@ -234,6 +257,14 @@ protected:
     /* width/height of each face of the cube map */
     int width;
     int height;
+
+
+
+    /* bind_loop_index
+     *
+     * the next unit to bind the texture to in the bind loop
+     */
+    static unsigned bind_loop_index;
 
 };
 

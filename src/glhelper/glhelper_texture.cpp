@@ -73,6 +73,39 @@ bool glh::core::texture_base::unbind_all () const
 
 
 
+/* bind_loop
+ *
+ * this will keep looping around texture units, disincluding 0, and making subsequent binds to the next unit
+ * this avoids binding a texture to a unit already in use
+ * 
+ * returns the unit just bound to
+ */
+unsigned glh::core::texture_base::bind_loop () const
+{ 
+    /* bind and get the unit bound to */
+    bind ( bind_loop_index ); 
+    const unsigned temp_unit = bind_loop_index++;
+
+    /* loop if necesary */
+    if ( bind_loop_index == 32 ) bind_loop_index = 1;
+
+    /* return unit just bound to */
+    return temp_unit;
+}
+
+/* bind_loop_previous
+ *
+ * return the previous binding of the loop
+ */
+unsigned glh::core::texture_base::bind_loop_previous () const
+{
+    /* if is 1, return 31, else return next index - 1 */
+    if ( bind_loop_index == 1 ) return 31;
+    else return bind_loop_index - 1;
+}
+
+
+
 /* set_mag/min_filter
  *
  * set the texture filtering parameters of magnified/minified texture
@@ -142,6 +175,10 @@ void glh::core::texture_base::generate_mipmap ()
     bind ();
     glGenerateMipmap ( opengl_bind_target );
 }
+
+
+/* bind_loop_next defaults to 1 */
+unsigned glh::core::texture_base::bind_loop_index = 1;
 
 
 
