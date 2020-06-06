@@ -163,6 +163,14 @@ namespace glh
          */
         template<unsigned M, class T> vector<M, T> pow ( const vector<M, T>& lhs, const T& rhs );
         template<unsigned M, class T> vector<M, T> pow ( const vector<M, T>& lhs, const vector<M, T>& rhs ); 
+
+        /* any_perpandicular
+         *
+         * find a perpandicular vector to a single input
+         * obviously there are infinite possibilities, however only one example will be returned
+         * the same input will always return the same output
+         */
+        template<unsigned M, class T> vector<M, T> any_perpandicular ( const vector<M, T>& lhs );
     }
 
     namespace exception
@@ -627,6 +635,49 @@ template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::pow ( co
 
     /* return the result */
     return result;
+}
+
+/* any_perpandicular
+ *
+ * find a perpandicular vector to a single input
+ * obviously there are infinite possibilities, however only one example will be returned
+ * the same input will always return the same output
+ */
+template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::any_perpandicular ( const vector<M, T>& lhs )
+{
+    /* the vector returned will be in the form (x, y, [0, 0, 0...])
+     *
+     * 
+     * let lhs = {a, b, ...} and result = {x, y, ...}
+     * 
+     * if a = 0, x = 1, y = 0
+     * if b = 0, x = 0, x = 1
+     * 
+     * otherwise a and b are both non-zero, therefore
+     * 
+     * ax + by = 0
+     * ax = -by
+     * (x/y) = -(b/a)
+     * 
+     * if we let y = 1
+     * x = -(b/a) 
+     */
+    vector<M, T> result { 0 };
+    if ( lhs.at ( 0 ) == 0 )
+    {
+        result.at ( 0 ) = 1;
+        return result;
+    } else
+    if ( lhs.at ( 1 ) == 0 )
+    {
+        result.at ( 1 ) = 1;
+        return result;
+    } else
+    {
+        result.at ( 1 ) = 1;
+        result.at ( 0 ) = - ( lhs.at ( 1 ) / lhs.at ( 0 ) );
+        return normalise ( result );
+    }
 }
 
 
