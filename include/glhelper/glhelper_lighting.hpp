@@ -148,6 +148,9 @@
 /* include glhelper_region.hpp */
 #include <glhelper/glhelper_region.hpp>
 
+/* include glhelper_camera.hpp */
+#include <glhelper/glhelper_camera.hpp>
+
 
 
 /* NAMESPACE DECLARATIONS */
@@ -416,6 +419,17 @@ public:
 
 
 
+    /* shadow_camera
+     *
+     * produce a camera for shadow mapping based on a region of space to capture
+     * returns an orthographic movement camera capturing the whole scene
+     * 
+     * capture_region: a spherical region of what to capture in the shadow map
+     */
+    camera::camera_orthographic_movement shadow_camera ( const region::spherical_region<>& capture_region ) const;    
+
+
+
 private:
 
     /* make position private */
@@ -481,6 +495,18 @@ public:
 
 
 
+    /* shadow_camera
+     *
+     * produce a camera for shadow mapping based on a region of space to capture
+     * returns a perspective movement camera in the +ve-x direction
+     * 90 degree rotation can be applied to the view matrix to aquire different directions
+     * 
+     * capture_region: a spherical region of what to capture in the shadow map
+     */
+    camera::camera_perspective_movement shadow_camera ( const region::spherical_region<>& capture_region ) const;
+
+
+
 private:
 
     /* make direction private */
@@ -538,6 +564,17 @@ public:
 
     /* default destructor */
     ~spotlight () = default;
+
+
+
+    /* shadow_camera
+     *
+     * produce a camera for shadow mapping based on a region of space to capture
+     * returns a perspective movement camera, aspect ratio 1:1, capturing all up to the outer cone
+     * 
+     * capture_region: a spherical region of what to capture in the shadow map
+     */
+    camera::camera_perspective_movement shadow_camera ( const region::spherical_region<>& capture_region ) const;    
 
 };
 
