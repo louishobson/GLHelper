@@ -297,11 +297,11 @@ public:
 
     /* resize constructor
      *
-     * construct from any other vector size but same type
+     * construct from any other vector size or type
      * smaller vectors will be promoted, and the rest of this vector will be filled with 0s
      * larger vectors will be demoted, and their excessive elements will be ignored
      */
-    template<unsigned _M> explicit vector ( const vector<_M, T>& other );
+    template<unsigned _M, class _T> explicit vector ( const vector<_M, _T>& other );
 
     /* retype constructor
      *
@@ -311,7 +311,7 @@ public:
 
     /* compound constructor
      *
-     * construct from a mix of vectors, swizzle_vectors and integral types
+     * construct from a mix of vectors and integral types
      * the sum of the components of the parameters must be equal to the size of this vector (M)
      * 
      * the constructor is delegated onwards until vs... resolves to nothing, at which point the copy constructor should be called
@@ -411,7 +411,7 @@ public:
  * larger vectors will be demoted, and their excessive elements will be ignored
  */
 template<unsigned M, class T>
-template<unsigned _M> inline glh::math::vector<M, T>::vector ( const vector<_M, T>& other )
+template<unsigned _M, class _T> inline glh::math::vector<M, T>::vector ( const vector<_M, _T>& other )
     : vector { 0 }
 {
     /* loop for whichever vector is smaller, copying values accordingly */
@@ -647,11 +647,10 @@ template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::any_perp
 {
     /* the vector returned will be in the form (x, y, [0, 0, 0...])
      *
-     * 
      * let lhs = {a, b, ...} and result = {x, y, ...}
      * 
-     * if a = 0, x = 1, y = 0
-     * if b = 0, x = 0, x = 1
+     * if a = 0, then x = 1, y = 0, return
+     * if b = 0, then x = 0, x = 1, return
      * 
      * otherwise a and b are both non-zero, therefore
      * 
@@ -661,23 +660,12 @@ template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::any_perp
      * 
      * if we let y = 1
      * x = -(b/a) 
+     * 
+     * then return the normalised vector
      */
-    vector<M, T> result { 0 };
-    if ( lhs.at ( 0 ) == 0 )
-    {
-        result.at ( 0 ) = 1;
-        return result;
-    } else
-    if ( lhs.at ( 1 ) == 0 )
-    {
-        result.at ( 1 ) = 1;
-        return result;
-    } else
-    {
-        result.at ( 1 ) = 1;
-        result.at ( 0 ) = - ( lhs.at ( 1 ) / lhs.at ( 0 ) );
-        return normalise ( result );
-    }
+    if ( lhs.at ( 0 ) == 0 ) return vector<M, T> { 1 };
+    if ( lhs.at ( 1 ) == 0 ) return vector<M, T> { 0, 1 };
+    return normalise ( vector<M, T> { - ( lhs.at ( 1 ) / lhs.at ( 0 ) ), 1 } );
 }
 
 
