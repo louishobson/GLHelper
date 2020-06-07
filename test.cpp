@@ -106,7 +106,7 @@ int main ()
     {
         glh::math::vec3 { 1.0, -1.0, 0.0 },
         glh::math::vec3 { 1.0 },
-        glh::math::vec3 { 0.5 }, 
+        glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 }
     } );
 
