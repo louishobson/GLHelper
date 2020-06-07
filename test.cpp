@@ -74,7 +74,7 @@ int main ()
      * angle of rotation per side to side of window movement of mouse
      * the angle to change the fov per second of button hold
      */
-    const double movement_sensitivity = 10;
+    const double movement_sensitivity = 10.0;
     const double mouse_sensitivity = glh::math::rad ( 120.0 );
     const double fov_sensitivity = glh::math::rad ( 15.0 );
 
@@ -105,7 +105,7 @@ int main ()
     light_system.add_light ( glh::lighting::dirlight
     {
         glh::math::vec3 { 1.0, -1.0, 0.0 },
-        glh::math::vec3 { 1.0 }, 
+        glh::math::vec3 { 1.0 },
         glh::math::vec3 { 0.5 }, 
         glh::math::vec3 { 1.0 }
     } );
