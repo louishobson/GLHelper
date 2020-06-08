@@ -29,17 +29,19 @@
  *
  * only supply the texture target
  * 
+ * _width/height: width/height of the texture
  * _minor_type: the minor type of the texture
  * _internal_format: the internal format of the data (e.g. specific bit arrangements)
  * _format: the format of the data (e.g. what the data will be used for)
- * _width/height: width/height of the texture (defaults to 0)
+ * _type: the type of the data stored in the texture
  */
-glh::core::texture_base::texture_base ( const minor_object_type _minor_type, const GLenum _internal_format, const GLenum _format, const int _width, const int _height )
+glh::core::texture_base::texture_base ( const minor_object_type _minor_type, const int _width, const int _height, const GLenum _internal_format, const GLenum _format, const GLenum _type )
     : object { _minor_type }
-    , internal_format ( _internal_format )
-    , format ( _format )
     , width { _width }
     , height { _height }
+    , internal_format { _internal_format }
+    , format { _format }
+    , type { _type }
 {
     /* assert major type is a texture */ 
     if ( major_type != major_object_type::GLH_TEXTURE_TYPE ) throw exception::texture_exception { "attempted to construct texture_base with non-texture type" }; 
@@ -193,7 +195,7 @@ unsigned glh::core::texture_base::bind_loop_index = 1;
  * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
  */
 glh::core::texture2d::texture2d ( const std::string& _path, const bool is_srgb )
-    : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE, static_cast<GLenum> ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA }
+    : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE, 0, 0, static_cast<GLenum> ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA, GL_UNSIGNED_BYTE }
     , path { _path }
 {
     /* load the image */
@@ -209,7 +211,7 @@ glh::core::texture2d::texture2d ( const std::string& _path, const bool is_srgb )
      * although the original image may not have 4 channels, by putting the last parameter as 4 in stbi_load,
      * the image is forced to have 4 channels
      */
-    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
+    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, type, image_data );
     
     /* generate mipmap */
     generate_mipmap ();
@@ -236,7 +238,7 @@ glh::core::texture2d::texture2d ( const std::string& _path, const bool is_srgb )
  * data: the data to put in the texture (defaults to NULL)
  */
 glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data )
-    : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE, _internal_format, _format, ( int ) _width, ( int ) _height }
+    : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE, static_cast<int> ( _width ), static_cast<int> ( _height ), _internal_format, _format, _type }
     , path {}
     , channels { 4 }
 {
@@ -244,7 +246,7 @@ glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height,
     bind ();
 
     /* set texture data */
-    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, _type, NULL );
+    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, type, NULL );
 
     /* set default wrapping options */
     set_wrap ( GL_REPEAT );
@@ -267,7 +269,7 @@ glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height,
  * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
  */
 glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths, const bool is_srgb )
-    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, static_cast<GLenum> ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA }
+    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, 0, 0, static_cast<GLenum> ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA, GL_UNSIGNED_BYTE }
 {
     /* bind cubemap object */
     bind ();
@@ -301,7 +303,7 @@ glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths, const boo
          * although the original image may not have 4 channels, by putting the last parameter as 4 in stbi_load,
          * the image is forced to have 4 channels
          */
-        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
+        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, format, type, image_data );
 
         /* free image data */
         stbi_image_free ( image_data );
@@ -326,7 +328,7 @@ glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths, const boo
  * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
  */
 glh::core::cubemap::cubemap ( const std::string& path, const bool is_srgb )
-    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, static_cast<GLenum> ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA }
+    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, 0, 0, static_cast<GLenum> ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA, GL_UNSIGNED_BYTE }
 {
     /* bind cubemap object */
     bind ();
@@ -351,7 +353,7 @@ glh::core::cubemap::cubemap ( const std::string& path, const bool is_srgb )
          * although the original image may not have 4 channels, by putting the last parameter as 4 in stbi_load,
          * the image is forced to have 4 channels
          */
-        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
+        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, format, type, image_data );
     }
 
     /* free image data */
@@ -368,6 +370,35 @@ glh::core::cubemap::cubemap ( const std::string& path, const bool is_srgb )
     set_min_filter ( GL_LINEAR_MIPMAP_LINEAR );
 }
 
+/* empty cubemap constructor
+ *
+ * all of the sizes are initialised to the same parameters
+ * 
+ * _width/_height: the width and height of the texture
+ * _internal_format: the internal format of the data (e.g. specific bit arrangements)
+ * _format: the format of the data (e.g. what the data will be used for)
+ * _type: the type of the pixel data (specific type macro with bit arrangements)
+ * data: the data to put in the texture (defaults to NULL)
+ */
+glh::core::cubemap::cubemap ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data )
+    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, static_cast<int> ( _width ), static_cast<int> ( _height ), _internal_format, _format, _type }
+{
+    /* bind cubemap object */
+    bind ();
+
+    /* loop for each face of the cube and configure that face */
+    for ( unsigned i = 0; i < 6; ++i )
+        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, format, type, data );
+
+    /* set default wrapping options */
+    set_wrap ( GL_REPEAT );
+
+    /* set mag/min options */
+    set_mag_filter ( GL_LINEAR );
+    set_min_filter ( GL_LINEAR_MIPMAP_LINEAR );
+}
+
+
 
 
 /* TEXTURE2D_MULTISAMPLE IMPLEMENTATION */
@@ -382,7 +413,7 @@ glh::core::cubemap::cubemap ( const std::string& path, const bool is_srgb )
  * _fixed_sample_locations: defaults to true - I don't know what this setting does tbh
  */
 glh::core::texture2d_multisample::texture2d_multisample ( const int _width, const int _height, const GLenum _internal_format, const unsigned _samples, const bool _fixed_sample_locations )
-    : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE, _internal_format, GL_NONE, _width, _height }
+    : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE, _width, _height, _internal_format, GL_NONE, GL_NONE }
     , samples { _samples }
     , fixed_sample_locations { _fixed_sample_locations }
 {
