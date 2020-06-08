@@ -148,7 +148,7 @@ glh::camera::camera_perspective_movement glh::lighting::pointlight::shadow_camer
 
 
 
-/* SPOTLIGHT DEFINITION */
+/* SPOTLIGHT IMPLEMENTATION */
 
 /* shadow_camera
  *
@@ -167,6 +167,44 @@ glh::camera::camera_perspective_movement glh::lighting::spotlight::shadow_camera
         position, direction, math::any_perpandicular ( direction ),
         outer_cone, 1.0, 0.1, math::modulus ( capture_region.centre - position ) + capture_region.radius
     };    
+}
+
+
+
+/* SHADOW_MAP_2D IMPLEMENTATION */
+
+/* full constructor
+*
+ * initialise the texture to a given size and attach it to the fbo
+ * 
+ * width: the width and height to assign the texture to
+ */
+glh::lighting::shadow_map_2d::shadow_map_2d ( const unsigned width )
+    : depth_texture { width, width, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT }
+{
+    /* attach the texture to the fbo and set the fbo to have no color component */
+    shadow_fbo.attach_texture2d ( depth_texture, GL_DEPTH_ATTACHMENT );
+    shadow_fbo.draw_buffer ( GL_NONE );
+    shadow_fbo.read_buffer ( GL_NONE );
+}
+
+
+
+/* SHADOW_MAP_CUBE IMPLEMENTATION */
+
+/* full constructor
+ *
+ * initialise the cubemap to a given size and attach it to the fbo
+ * 
+ * width: the width and height to set the cubemap to
+ */
+glh::lighting::shadow_map_cube::shadow_map_cube ( const unsigned width )
+    : depth_texture { width, width, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT }
+{
+    /* attach the cubemap to the fbo and set the fbo to have no color component */
+    shadow_fbo.attach_cubemap ( depth_texture, GL_DEPTH_ATTACHMENT );
+    shadow_fbo.draw_buffer ( GL_NONE );
+    shadow_fbo.read_buffer ( GL_NONE );
 }
 
 

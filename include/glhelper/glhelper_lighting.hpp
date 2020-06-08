@@ -135,6 +135,12 @@
 /* include glhelper_camera.hpp */
 #include <glhelper/glhelper_camera.hpp>
 
+/* include glhelper_texture.hpp */
+#include <glhelper/glhelper_texture.hpp>
+
+/* include glhelper_framebuffer.hpp */
+#include <glhelper/glhelper_framebuffer.hpp>
+
 
 
 /* NAMESPACE DECLARATIONS */
@@ -185,11 +191,17 @@ namespace glh
 
 
 
-        /* class planar_shadow_map
+        /* class shadow_map_2d
          *
          * stores the objects necessary for a 2d shadow map
          */
-        class planar_shadow_map;
+        class shadow_map_2d;
+
+        /* class shadow_map_cube
+         *
+         * stores the objects necessary for a cubemap shadow map
+         */
+        class shadow_map_cube;
 
 
 
@@ -614,6 +626,9 @@ public:
     /* default move assignment operator */
     light_collection& operator= ( light_collection&& other ) = default;
 
+    /* default destructor */
+    ~light_collection () = default;
+
 
 
     /* typedef of T */
@@ -688,6 +703,100 @@ private:
 
     /* cached uniforms */
     std::unique_ptr<cached_uniforms_struct> cached_uniforms;
+};
+
+
+
+/* SHADOW_MAP_2D DEFINITION */
+
+/* class shadow_map_2d
+ *
+ * stores the objects necessary for a 2d shadow map
+ */
+class glh::lighting::shadow_map_2d
+{
+public:
+
+    /* full constructor
+     *
+     * initialise the texture to a given size and attach it to the fbo
+     * 
+     * width: the width and height to set the texture to
+     */
+    shadow_map_2d ( const unsigned width );
+
+    /* deleted zero-paramater constructor */
+    shadow_map_2d () = delete;
+
+    /* deleted copy constructor */
+    shadow_map_2d ( const shadow_map_2d& other ) = delete;
+
+    /* default move constructor */
+    shadow_map_2d ( shadow_map_2d&& other ) = default;
+
+    /* deleted copy assignment operator */
+    shadow_map_2d& operator= ( const shadow_map_2d& other ) = delete;
+
+    /* default destructor */
+    ~shadow_map_2d () = default;
+
+
+
+private:
+
+    /* the texture2d that will be used for the depth map */
+    core::texture2d depth_texture;
+
+    /* the fbo that will be used for generating the depth map */
+    core::fbo shadow_fbo;
+
+};
+
+
+
+/* SHADOW_MAP_CUBE DEFINITION */
+
+/* class shadow_map_cube
+ *
+ * stores the objects necessary for a cubemap shadow map
+ */
+class glh::lighting::shadow_map_cube
+{
+public:
+
+    /* full constructor
+     *
+     * initialise the cubemap to a given size and attach it to the fbo
+     * 
+     * width: the width and height to set the cubemap to
+     */
+    shadow_map_cube ( const unsigned width );
+
+    /* deleted zero-parameter constructor */
+    shadow_map_cube () = delete;
+
+    /* deleted copy constructor */
+    shadow_map_cube ( const shadow_map_cube& other ) = delete;
+
+    /* default move constructor */
+    shadow_map_cube ( shadow_map_cube&& other ) = default;
+
+    /* deleted copy assignment operator */
+    shadow_map_cube& operator= ( const shadow_map_cube& other ) = delete;
+
+    /* default destructor */
+    ~shadow_map_cube () = default;
+
+
+
+private:
+
+    /* the cubemap that will be used for the depth map */
+    core::cubemap depth_texture;
+
+    /* the fbo that will be used for generating the depth map */
+    core::fbo shadow_fbo;
+
 };
 
 
