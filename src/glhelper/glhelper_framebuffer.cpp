@@ -78,6 +78,26 @@ void glh::core::fbo::attach_texture2d ( const texture2d_multisample& texture, co
     if ( binding_change ) unbind ();
 }
 
+/* attach_cubemap
+ *
+ * add a cubemap attachment
+ * 
+ * _cubemap: the cubemap to attach
+ * attachment: which attachment the cubemap should be used as
+ * mipmap: the mipmap level to attach (defaults to 0)
+ */
+void glh::core::fbo::attach_cubemap ( const cubemap& _cubemap, const GLenum attachment, const GLuint mipmap )
+{
+    /* bind the fbo */
+    const bool binding_change = bind ();
+
+    /* attach the cubemap */
+    glFramebufferTexture ( opengl_bind_target, attachment, _cubemap.internal_id (), mipmap );
+
+    /* unbind fbo */
+    if ( binding_change ) unbind ();
+}
+
 /* attach_rbo
  *
  * add a renderbuffer attachment
