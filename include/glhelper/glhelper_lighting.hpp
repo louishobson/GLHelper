@@ -258,7 +258,7 @@ public:
     light ()
         : light { math::vec3 { 0.0 }, math::vec3 { 0.0 }
                 , 0.0, 0.0, 1.0, 0.0, 0.0
-                , math::vec3 { 0.0 }, math::vec3 { 0.0 }, math::vec3 { 0.0 } }
+                , math::vec3 { 0.0 }, math::vec3 { 0.0 }, math::vec3 {}}
     {}
 
     /* copy constructor

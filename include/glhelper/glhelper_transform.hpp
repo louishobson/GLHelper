@@ -260,9 +260,9 @@ namespace glh
          * return: the new transformation matrix/vector
          */
         template<class T> matrix<3, 3, T> reflect3d ( const matrix<3, 3, T>& trans, const vec3& norm );
-        template<class T> vector<3, T> reflect3d ( const vector<3, T>& vec, const vec3& norm, const vec3& pos = vec3 { 0 } );
-        template<class T> matrix<4, 4, T> reflect3d ( const matrix<4, 4, T>& trans, const vec3& norm, const vec3& pos = vec3 { 0 } );
-        template<class T> vector<4, T> reflect3d ( const vector<4, T>& vec, const vec3& norm, const vec3& pos = vec3 { 0 } );
+        template<class T> vector<3, T> reflect3d ( const vector<3, T>& vec, const vec3& norm, const vec3& pos = vec3 {});
+        template<class T> matrix<4, 4, T> reflect3d ( const matrix<4, 4, T>& trans, const vec3& norm, const vec3& pos = vec3 {});
+        template<class T> vector<4, T> reflect3d ( const vector<4, T>& vec, const vec3& norm, const vec3& pos = vec3 {});
 
 
 
