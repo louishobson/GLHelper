@@ -193,9 +193,9 @@ void glh::lighting::light_system::apply () const
     if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to apply light_system to uniform with out a complete uniform cache" };
 
     /* apply each light collection in turn */
-    dircoll.apply ();
-    pointcoll.apply ();
-    spotcoll.apply ();
+    dirlights.apply ();
+    pointlights.apply ();
+    spotlights.apply ();
 }
 
 /* cache_uniforms
@@ -211,17 +211,14 @@ void glh::lighting::light_system::cache_uniforms ( core::struct_uniform& light_s
     {
         cached_uniforms.reset ( new cached_uniforms_struct
         {
-            light_system_uni,
-            light_system_uni.get_struct_uniform ( "dircoll" ),
-            light_system_uni.get_struct_uniform ( "pointcoll" ),
-            light_system_uni.get_struct_uniform ( "spotcoll" )
+            light_system_uni
         } );
     }
 
     /* get light collections to cache their uniforms */
-    dircoll.cache_uniforms ( cached_uniforms->dircoll_uni );
-    pointcoll.cache_uniforms ( cached_uniforms->pointcoll_uni );
-    spotcoll.cache_uniforms ( cached_uniforms->spotcoll_uni );
+    dirlights.cache_uniforms ( cached_uniforms->light_system_uni.get_uniform ( "dirlights_size" ), cached_uniforms->light_system_uni.get_struct_array_uniform ( "dirlights" ) );
+    pointlights.cache_uniforms ( cached_uniforms->light_system_uni.get_uniform ( "pointlights_size" ), cached_uniforms->light_system_uni.get_struct_array_uniform ( "pointlights" ) );
+    spotlights.cache_uniforms ( cached_uniforms->light_system_uni.get_uniform ( "spotlights_size" ), cached_uniforms->light_system_uni.get_struct_array_uniform ( "spotlights" ) );
 }
 
 /* reload_uniforms

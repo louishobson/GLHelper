@@ -68,37 +68,16 @@
  * CLASS GLH::LIGHTING::LIGHT_COLLECTION
  * 
  * template class to store a dynamically-allocated array of lights
- * the template parameter must be a type of light, but it defaults to glh::lighting::light
+ * the template parameter must be a type of light
  * there are using declarations to abstract the template (e.g. dirlight_collection)
- * the only reason this class exists is so that applying all of the lights to uniforms is made easier
- * the collection can be applied to a light_collection_struct struct uniform:
- * 
- * 
- * 
- * GLSL STRUCT LIGHT_COLLECTION_STRUCT
- * 
- * struct light_collection_struct
- * {
- *     int size;
- *     light_struct lights [];
- * };
- * 
- * this structure holds an array of lights
- * this is the structure the glh::lighting::light_collection class expects to be supplied with to write to
- * the size of the array must be large enough to store as many lights as required
- * the idea is that the lights in the array are all of the same type, however they can be any type you wish
- * one could have more than one light collection for different types of light, for example
- * 
- * size: the number of lights being held
- * lights: array of lights
+ * this class exists so that applying all of the lights to uniforms insize the glsl LIGHT_SYSTEM_STRUCT is made easier
  * 
  * 
  * 
  * CLASS GLH::LIGHTING::LIGHT_SYSTEM
  * 
- * class to store three collections: one dirlight, one pointlight and one spotlight collection
- * similar to the theory behind the light_collection class, this simplifies applying the light collections to a uniform
- * the collection can be applied to a light_system_struct struct uniform:
+ * class to store arrays of directional lights, point lights and spotlights
+ * the structure can be applied to a light_system_struct struct uniform:
  * 
  * 
  * 
@@ -106,17 +85,22 @@
  * 
  * struct light_system_struct
  * {
- *     light_collection_struct dircoll;
- *     light_collection_struct pointcoll;
- *     light_collection_struct spotcoll;
+ *     int dirlights_size;
+ *     light_struct dirlights [ MAX_NUM_LIGHTS ];
+ *
+ *     int pointlights_size;
+ *     light_struct pointlights [ MAX_NUM_LIGHTS ];
+ *
+ *     int spotlights_size;
+ *     light_struct spotlights_size [ MAX_NUM_LIGHTS ];
  * };
  * 
- * this structure holds multiple types of collections of lights
+ * this structure holds multiple arrays of lights
  * this is the structure the glh::lighting::light_system class expects to be supplied with to write to
  * 
- * dircoll: collection of dirrectional lights
- * pointcoll: collection of point lights
- * spotcoll: collection of spotlights
+ * dirlights(_size): array of directional lights and its size
+ * pointlights(_size): array of collection of point lights and its size
+ * spotlights(_size): collection of spotlights and its size
  * 
  */
 
@@ -183,6 +167,8 @@ namespace glh
          */
         class spotlight;
 
+
+
         /* class light_collection
          *
          * class to store multiple lights of the same type
@@ -196,6 +182,16 @@ namespace glh
         using dirlight_collection = light_collection<dirlight>;
         using pointlight_collection = light_collection<pointlight>;
         using spotlight_collection = light_collection<spotlight>;
+
+
+
+        /* class planar_shadow_map
+         *
+         * stores the objects necessary for a 2d shadow map
+         */
+        class planar_shadow_map;
+
+
 
         /* class light_system
          *
@@ -657,18 +653,18 @@ public:
      *
      * apply the lighting to uniforms
      * 
-     * light_collection_uni: the uniform to apply the lights to
+     * size_uni/lights_uni: the uniform to apply the lights to
      */
-    void apply ( core::struct_uniform& light_collection_uni );
+    void apply ( core::uniform& size_uni, core::struct_array_uniform& lights_uni );
     void apply () const;
 
     /* cache_uniforms
      *
      * cache uniforms for later use
      * 
-     * light_collection_uni: the uniform to cache
+     * size_uni/lights_uni: the uniforms to cache
      */
-    void cache_uniforms ( core::struct_uniform& light_collection_uni );
+    void cache_uniforms ( core::uniform& size_uni, core::struct_array_uniform& lights_uni );
 
     /* reload_uniforms
      *
@@ -686,7 +682,6 @@ private:
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
-        core::struct_uniform& light_collection_uni;
         core::uniform& size_uni;
         core::struct_array_uniform& lights_uni;
     };
@@ -715,9 +710,9 @@ public:
      * not default as cannot copy uniform cache
      */
     light_system ( const light_system& other )
-        : dircoll { other.dircoll }
-        , pointcoll { other.pointcoll }
-        , spotcoll { other.spotcoll }
+        : dirlights { other.dirlights }
+        , pointlights { other.pointlights }
+        , spotlights { other.spotlights }
     {}
 
     /* default move constructor */
@@ -728,7 +723,7 @@ public:
      * not default for same reason as copy constructor
      */
     light_system& operator= ( const light_system& other )
-    { dircoll = other.dircoll; pointcoll = other.pointcoll; spotcoll = other.spotcoll; return * this; }
+    { dirlights = other.dirlights; pointlights = other.pointlights; spotlights = other.spotlights; return * this; }
 
     /* default move assignment operator */
     light_system& operator= ( light_system&& other ) = default;
@@ -739,9 +734,9 @@ public:
 
 
     /* light collections */
-    dirlight_collection dircoll;
-    pointlight_collection pointcoll;
-    spotlight_collection spotcoll;
+    dirlight_collection dirlights;
+    pointlight_collection pointlights;
+    spotlight_collection spotlights;
 
 
 
@@ -749,12 +744,12 @@ public:
      *
      * adds a light to a collection based on its type
      */
-    void add_light ( const dirlight& _light ) { dircoll.add_light ( _light ); }
-    void add_light ( dirlight&& _light ) { dircoll.add_light ( _light ); }
-    void add_light ( const pointlight& _light ) { pointcoll.add_light ( _light ); }
-    void add_light ( pointlight&& _light ) { pointcoll.add_light ( _light ); }  
-    void add_light ( const spotlight& _light ) { spotcoll.add_light ( _light ); }
-    void add_light ( spotlight&& _light ) { spotcoll.add_light ( _light ); }      
+    void add_light ( const dirlight& _light ) { dirlights.add_light ( _light ); }
+    void add_light ( dirlight&& _light ) { dirlights.add_light ( _light ); }
+    void add_light ( const pointlight& _light ) { pointlights.add_light ( _light ); }
+    void add_light ( pointlight&& _light ) { pointlights.add_light ( _light ); }  
+    void add_light ( const spotlight& _light ) { spotlights.add_light ( _light ); }
+    void add_light ( spotlight&& _light ) { spotlights.add_light ( _light ); }      
 
 
 
@@ -789,9 +784,6 @@ private:
     struct cached_uniforms_struct
     {
         core::struct_uniform& light_system_uni;
-        core::struct_uniform& dircoll_uni;
-        core::struct_uniform& pointcoll_uni;
-        core::struct_uniform& spotcoll_uni;
     };
 
     /* cached uniforms */
@@ -807,13 +799,13 @@ private:
  *
  * apply the lighting to uniforms
  * 
- * light_collection_uni: the uniform to apply the lights to
+ * size_uni/lights_uni: the uniforms to apply the lights to
  */
 template<class T>
-inline void glh::lighting::light_collection<T>::apply ( core::struct_uniform& light_collection_uni )
+inline void glh::lighting::light_collection<T>::apply ( core::uniform& size_uni, core::struct_array_uniform& lights_uni )
 {
     /* cache uniform */
-    cache_uniforms ( light_collection_uni );
+    cache_uniforms ( size_uni, lights_uni );
 
     /* apply */
     apply ();
@@ -833,19 +825,18 @@ inline void glh::lighting::light_collection<T>::apply () const
  *
  * cache uniforms for later use
  * 
- * light_collection_uni: the uniform to cache
+ * size_uni/lights_uni: the uniforms to cache
  */
 template<class T>
-inline void glh::lighting::light_collection<T>::cache_uniforms ( core::struct_uniform& light_collection_uni )
+inline void glh::lighting::light_collection<T>::cache_uniforms ( core::uniform& size_uni, core::struct_array_uniform& lights_uni )
 {
     /* if uniforms are not already cached, cache the new ones */
-    if ( !cached_uniforms || cached_uniforms->light_collection_uni != light_collection_uni )
+    if ( !cached_uniforms || cached_uniforms->size_uni != size_uni || cached_uniforms->lights_uni != lights_uni )
     {
         cached_uniforms.reset ( new cached_uniforms_struct
         {
-            light_collection_uni,
-            light_collection_uni.get_uniform ( "size" ),
-            light_collection_uni.get_struct_array_uniform ( "lights" )
+            size_uni,
+            lights_uni
         } );
     }
 
