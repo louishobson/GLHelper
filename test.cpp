@@ -83,7 +83,12 @@ int main ()
     /* IMPORT MODEL */
 
     /* import the model */
-    glh::model::model island { "assets/island", "scene.gltf", glh::model::import_flags::GLH_CONFIGURE_REGIONS | glh::model::import_flags::GLH_ACCURATE_REGIONS };
+    glh::model::model island { "assets/island", "scene.gltf", 
+        glh::model::import_flags::GLH_CONFIGURE_REGIONS_FAST |
+        glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCEPTABLE |
+        glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
+        glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION
+    };
     const glh::math::mat4 island_matrix =
     glh::math::enlarge3d
     (
@@ -93,6 +98,8 @@ int main ()
     
     /* cache uniforms */
     island.cache_uniforms ( material_uni, trans_uni.get_uniform ( "model" ) );
+
+    std::cout << island.model_region ( island_matrix ).centre << std::endl << island.model_region ( island_matrix ).radius << std::endl;
 
 
 
@@ -166,7 +173,7 @@ int main ()
         /* apply camera and light system */
         camera.apply ();
         light_system.apply ();
-        //light_system.dircoll.at ( 0 ).shadow_camera ( island.model_region ( island_matrix ) ).apply ( trans_uni.get_uniform ( "view" ), trans_uni.get_uniform ( "proj" ) );
+        light_system.dircoll.at ( 0 ).shadow_camera ( island.model_region ( island_matrix ) ).apply ( trans_uni.get_uniform ( "view" ), trans_uni.get_uniform ( "proj" ) );
 
         /* clear screen */
         glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
