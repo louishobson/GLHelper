@@ -164,6 +164,7 @@
 #include <array>
 #include <iostream>
 #include <memory>
+#include <utility>
 #include <vector>
 
 /* include assimp headers */
@@ -320,7 +321,7 @@ struct glh::model::texture_stack_level
     int blend_operation;
 
     /* blend strength */
-    double blend_strength;
+    float blend_strength;
 
     /* wrapping modes */
     int wrapping_u;
@@ -381,11 +382,11 @@ struct glh::model::material
     int blending_mode;
 
     /* shininess values */
-    double shininess;
-    double shininess_strength;
+    float shininess;
+    float shininess_strength;
 
     /* opacity */
-    double opacity;
+    float opacity;
 
     /* two sided
      * 
@@ -548,16 +549,30 @@ struct glh::model::import_flags
      */
     static const unsigned GLH_VERTEX_SRGBA = 0x0040;
 
-    /* configure regions
-     * if set, mesh regions will be configured
-     */
-    static const unsigned GLH_CONFIGURE_REGIONS = 0x0080;
 
-    /* make regions more accurate
-     * for a time penalty, one can make the regions more accurate
-     * only takes effect is GLH_CONFIGURE_REGIONS is set
+
+    /* configure regions fast
+     * if set, mesh regions will be configured as fast as possible
+     * will likely be significant over estimation
      */
-    static const unsigned GLH_ACCURATE_REGIONS = 0x0100;
+    static const unsigned GLH_CONFIGURE_REGIONS_FAST = 0x0080;
+
+    /* configure regions with acceptable overestimation
+     * this will override fast region configuration
+     */
+    static const unsigned GLH_CONFIGURE_REGIONS_ACCEPTABLE = 0x0100;
+
+    /* configure regions accurately
+     * this will override fast and acceptable region configuration
+     * this may take considerably longer
+     */
+    static const unsigned GLH_CONFIGURE_REGIONS_ACCURATE = 0x0200;
+
+    /* configure only root node region
+     * this only applies when accurate regions are being used
+     * no mesh or lower level nodes will have their regions calculated, just the root node
+     */
+    static const unsigned GLH_CONFIGURE_ONLY_ROOT_NODE_REGION = 0x0400;
 
 
 
@@ -622,10 +637,10 @@ public:
      * 
      * _directory: directory in which the model resides
      * _entry: the entry file to the model
-     * _import_flags: import flags for the model (or default recommended)
+     * _model_import_flags: import flags for the model (or default recommended)
      * _pps: post processing steps (or default recommended)
      */
-    model ( const std::string& _directory, const std::string& _entry, const unsigned _import_flags = import_flags::GLH_NONE, const unsigned _pps = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone | aiProcess_OptimizeGraph );
+    model ( const std::string& _directory, const std::string& _entry, const unsigned _model_import_flags = import_flags::GLH_NONE, const unsigned _pps = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone | aiProcess_OptimizeGraph );
 
     /* deleted zero parameter constructor */
     model () = delete;
@@ -687,10 +702,13 @@ private:
     const std::string entry;
 
     /* import flags */
-    const unsigned import_flags;
+    const unsigned model_import_flags;
 
     /* the post processing steps used to import the model */
     const unsigned pps;
+
+    /* the rendering flags currently being used */
+    mutable unsigned model_render_flags;
 
 
 
@@ -730,11 +748,6 @@ private:
 
     /* cached uniforms */
     std::unique_ptr<cached_uniforms_struct> cached_uniforms;
-
-    
-
-    /* the rendering flags currently being used */
-    mutable unsigned render_flags;
 
 
 
@@ -846,22 +859,6 @@ private:
      */
     face& add_face ( face& _face, mesh& _mesh, const aiFace& aiface );
 
-    /* configure_buffers
-     *
-     * configure the buffers of a mesh
-     * 
-     * _mesh: the mesh to configure
-     */
-    void configure_buffers ( mesh& _mesh );
-
-    /* configure_mesh_region
-     *
-     * configure the region of a mesh
-     * 
-     * _mesh: the mesh to configure
-     */
-    void configure_mesh_region ( mesh& _mesh );
-
     /* add_node
      *
      * recursively add nodes to the node tree
@@ -872,6 +869,55 @@ private:
      * return: the node just added
      */
     node& add_node ( node& _node, const aiNode& ainode );
+
+
+
+    /* configure_buffers
+     *
+     * configure the buffers of a mesh
+     * 
+     * _mesh: the mesh to configure
+     */
+    void configure_buffers ( mesh& _mesh );
+
+
+
+    /* mesh_max_min_components
+     * node_max_min_components
+     *
+     * find the maximum and minimum xyz components of all of the vertices of the mesh/node
+     * 
+     * _mesh/_node: the mesh/node to find the max/min components for 
+     * transform: transformation applied to all of the vertices
+     * 
+     * return: a pair of vec3s: the first if the max components, the second is the min components
+     */
+    std::pair<math::fvec3, math::fvec3> mesh_max_min_components ( const mesh& _mesh, const math::fmat4& transform = math::identity<4> () ) const;
+    std::pair<math::fvec3, math::fvec3> node_max_min_components ( const node& _node, const math::fmat4& transform = math::identity<4> () ) const;
+
+    /* mesh_furthest_distance
+     * node_furthest_distance
+     *
+     * find the furthest distance from a point in a mesh/node
+     * 
+     * _mesh/_node: the mesh/node to find the furthest distance in
+     * point: the point to find the furthest distance from
+     * transform: the transformation to apply to all of the vertices (assumed to be applied to point)
+     * 
+     * return: the furthest distance from that point and a vertex
+     */
+    float mesh_furthest_distance ( const mesh& _mesh, const math::fvec3& point, const math::fmat4& transform = math::identity<4> () ) const;
+    float node_furthest_distance ( const node& _node, const math::fvec3& point, const math::fmat4& transform = math::identity<4> () ) const;
+
+
+
+    /* configure_mesh_region
+     *
+     * configure the region of a mesh
+     * 
+     * _mesh: the mesh to configure
+     */
+    void configure_mesh_region ( mesh& _mesh );
 
     /* configure_node_region
      *

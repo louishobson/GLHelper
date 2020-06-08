@@ -27,13 +27,13 @@
  * 
  * _directory: directory in which the model resides
  * _entry: the entry file to the model
- * _import_flags: import flags for the model (or default recommended)
+ * _model_import_flags: import flags for the model (or default recommended)
  * _pps: post processing steps (or default recommended)
  */
-glh::model::model::model ( const std::string& _directory, const std::string& _entry, const unsigned _import_flags, const unsigned _pps )
+glh::model::model::model ( const std::string& _directory, const std::string& _entry, const unsigned _model_import_flags, const unsigned _pps )
     : directory { _directory }
     , entry { _entry }
-    , import_flags { _import_flags }
+    , model_import_flags { _model_import_flags }
     , pps { _pps | aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_TransformUVCoords }
 {
     /* create the importer */
@@ -75,7 +75,7 @@ void glh::model::model::render ( const core::program& prog, const math::mat4& tr
     if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to render model without a complete uniform cache" };
 
     /* cache the render flags */
-    render_flags = flags;
+    model_render_flags = flags;
 
     /* render the root node */
     render_node ( root_node, prog, transform );
@@ -175,16 +175,16 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
     _material.specular_stack.base_color = cast_vector ( temp_color ); else _material.specular_stack.base_color = math::fvec3 { 0.0 };
 
     /* apply sRGBA transformations to base colors */
-    if ( import_flags & import_flags::GLH_AMBIENT_BASE_COLOR_SRGBA ) _material.ambient_stack.base_color = math::pow ( _material.ambient_stack.base_color, math::fvec3 { 2.2 } );
-    if ( import_flags & import_flags::GLH_DIFFUSE_BASE_COLOR_SRGBA ) _material.diffuse_stack.base_color = math::pow ( _material.diffuse_stack.base_color, math::fvec3 { 2.2 } );
-    if ( import_flags & import_flags::GLH_SPECULAR_BASE_COLOR_SRGBA ) _material.specular_stack.base_color = math::pow ( _material.specular_stack.base_color, math::fvec3 { 2.2 } );
+    if ( model_import_flags & import_flags::GLH_AMBIENT_BASE_COLOR_SRGBA ) _material.ambient_stack.base_color = math::pow ( _material.ambient_stack.base_color, math::fvec3 { 2.2 } );
+    if ( model_import_flags & import_flags::GLH_DIFFUSE_BASE_COLOR_SRGBA ) _material.diffuse_stack.base_color = math::pow ( _material.diffuse_stack.base_color, math::fvec3 { 2.2 } );
+    if ( model_import_flags & import_flags::GLH_SPECULAR_BASE_COLOR_SRGBA ) _material.specular_stack.base_color = math::pow ( _material.specular_stack.base_color, math::fvec3 { 2.2 } );
 
     /* set up the ambient texture stack textures  */
     _material.ambient_stack.stack_size = aimaterial.GetTextureCount ( aiTextureType_AMBIENT );
     _material.ambient_stack.levels.resize ( _material.ambient_stack.stack_size );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_AMBIENT ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
-        add_texture ( _material.ambient_stack, aimaterial, i, aiTextureType_AMBIENT, import_flags & import_flags::GLH_AMBIENT_TEXTURE_SRGBA );  
+        add_texture ( _material.ambient_stack, aimaterial, i, aiTextureType_AMBIENT, model_import_flags & import_flags::GLH_AMBIENT_TEXTURE_SRGBA );  
     }
 
     /* set up the diffuse texture stack textures */
@@ -192,7 +192,7 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
     _material.diffuse_stack.levels.resize ( _material.diffuse_stack.stack_size );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
-        add_texture ( _material.diffuse_stack, aimaterial, i, aiTextureType_DIFFUSE, import_flags & import_flags::GLH_DIFFUSE_TEXTURE_SRGBA );  
+        add_texture ( _material.diffuse_stack, aimaterial, i, aiTextureType_DIFFUSE, model_import_flags & import_flags::GLH_DIFFUSE_TEXTURE_SRGBA );  
     }
 
     /* set up the specular texture stack textures */
@@ -200,7 +200,7 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
     _material.specular_stack.levels.resize ( _material.specular_stack.stack_size );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_SPECULAR ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
     {
-        add_texture ( _material.specular_stack, aimaterial, i, aiTextureType_SPECULAR, import_flags & import_flags::GLH_SPECULAR_TEXTURE_SRGBA );  
+        add_texture ( _material.specular_stack, aimaterial, i, aiTextureType_SPECULAR, model_import_flags & import_flags::GLH_SPECULAR_TEXTURE_SRGBA );  
     }
 
     /* get the blend mode */
@@ -261,7 +261,7 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack&
     /* set the blend attributes */
     if ( aimaterial.Get ( AI_MATKEY_TEXOP ( aitexturetype, index ), temp_int ) == aiReturn_SUCCESS )
     _texture_stack.levels.at ( index ).blend_operation = temp_int; else
-    _texture_stack.levels.at ( index ).blend_operation = ( _texture_stack.base_color == math::fvec3 { 0.0 } && index == 0 ? 1 : 0 );
+    _texture_stack.levels.at ( index ).blend_operation = ( _texture_stack.base_color == math::fvec3 {}&& index == 0 ? 1 : 0 );
     if ( aimaterial.Get ( AI_MATKEY_TEXBLEND ( aitexturetype, index ), temp_float ) == aiReturn_SUCCESS ) 
     _texture_stack.levels.at ( index ).blend_strength = temp_float; else _texture_stack.levels.at ( index ).blend_strength = 1.0;
 
@@ -365,7 +365,7 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
             _mesh.vertices.at ( i ).colorsets.at ( j ) = cast_vector ( aimesh.mColors [ j ][ i ] );
 
         /* apply gamma correction */
-        if ( import_flags & import_flags::GLH_VERTEX_SRGBA ) for ( unsigned j = 0; j < _mesh.num_color_sets; ++j )
+        if ( model_import_flags & import_flags::GLH_VERTEX_SRGBA ) for ( unsigned j = 0; j < _mesh.num_color_sets; ++j )
             _mesh.vertices.at ( i ).colorsets.at ( j ) = 
             math::fvec4 { math::pow ( math::fvec3 { _mesh.vertices.at ( i ).colorsets.at ( j ) }, math::fvec3 { 2.2 } ), _mesh.vertices.at ( i ).colorsets.at ( j ).at ( 3 ) };
 
@@ -385,8 +385,12 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
     /* configure the buffers */
     configure_buffers ( _mesh );
 
-    /* configure mesh region */
-    if ( import_flags & import_flags::GLH_CONFIGURE_REGIONS ) configure_mesh_region ( _mesh );
+    /* if GLH_CONFIGURE_REGIONS_ACCURATE and GLH_CONFIGURE_ONLY_ROOT_NODE_REGION is set, don't configure meshes
+     * else if any mesh configuration flag is set, configure meshes
+     */
+    if ( !( model_import_flags & import_flags::GLH_CONFIGURE_REGIONS_ACCURATE && model_import_flags & import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION ) )
+        if ( model_import_flags & ( import_flags::GLH_CONFIGURE_REGIONS_FAST | import_flags::GLH_CONFIGURE_REGIONS_ACCEPTABLE | import_flags::GLH_CONFIGURE_REGIONS_ACCURATE ) ) 
+            configure_mesh_region ( _mesh );
 
     /* return the mesh */
     return _mesh;
@@ -414,72 +418,6 @@ glh::model::face& glh::model::model::add_face ( face& _face, mesh& _mesh, const 
 
     /* return face */
     return _face;
-}
-
-/* configure_buffers
- *
- * configure the buffers of a mesh
- * 
- * _mesh: the mesh to configure
- */
-void glh::model::model::configure_buffers ( mesh& _mesh )
-{
-    /* buffer vertex data */
-    _mesh.vertex_data.buffer_data ( _mesh.vertices.begin (), _mesh.vertices.end () );
-
-    /* buffer index data */
-    _mesh.index_data.buffer_data ( _mesh.faces.begin (), _mesh.faces.end () );
-
-    /* configure the vao */
-    _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 0 );
-    _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 3 * sizeof ( GLfloat ) );
-    for ( unsigned i = 0; i < _mesh.num_color_sets; ++i )
-        _mesh.array_object.set_vertex_attrib ( 2 + i, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 6 + ( i * 4 ) ) * sizeof ( GLfloat ) );
-    for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
-        _mesh.array_object.set_vertex_attrib ( 2 + GLH_MODEL_MAX_COLOR_SETS + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 6 + ( GLH_MODEL_MAX_COLOR_SETS * 4 ) + ( i * 3 ) ) * sizeof ( GLfloat ) );
-    _mesh.array_object.bind_ebo ( _mesh.index_data );
-}
-
-/* configure_mesh_region
- *
- * configure the region of a mesh
- * 
- * _mesh: the mesh to configure
- */
-void glh::model::model::configure_mesh_region ( mesh& _mesh )
-{
-    /* two vectors to store max/min coordinate components of vertices */
-    math::vec3 max_components;
-    math::vec3 min_components;
-
-    /* loop through vectices to fill max_min_components */
-    for ( unsigned i = 0; i < _mesh.vertices.size (); ++i )
-    {
-        if ( _mesh.vertices.at ( i ).position.at ( 0 ) > max_components.at ( 0 ) || i == 0 ) max_components.at ( 0 ) = _mesh.vertices.at ( i ).position.at ( 0 );
-        if ( _mesh.vertices.at ( i ).position.at ( 0 ) < min_components.at ( 0 ) || i == 0 ) min_components.at ( 0 ) = _mesh.vertices.at ( i ).position.at ( 0 );
-        if ( _mesh.vertices.at ( i ).position.at ( 1 ) > max_components.at ( 1 ) || i == 0 ) max_components.at ( 1 ) = _mesh.vertices.at ( i ).position.at ( 1 );
-        if ( _mesh.vertices.at ( i ).position.at ( 1 ) < min_components.at ( 1 ) || i == 0 ) min_components.at ( 1 ) = _mesh.vertices.at ( i ).position.at ( 1 );
-        if ( _mesh.vertices.at ( i ).position.at ( 2 ) > max_components.at ( 2 ) || i == 0 ) max_components.at ( 2 ) = _mesh.vertices.at ( i ).position.at ( 2 );
-        if ( _mesh.vertices.at ( i ).position.at ( 2 ) < min_components.at ( 2 ) || i == 0 ) min_components.at ( 2 ) = _mesh.vertices.at ( i ).position.at ( 2 );
-    }
-
-    /* find central vertex */
-    _mesh.mesh_region.centre = ( max_components + min_components ) / 2.0;
-
-    /* if accurate regions is set, find the furthest vertex and set the radius to that */
-    if ( import_flags & import_flags::GLH_ACCURATE_REGIONS )
-    {
-        _mesh.mesh_region.radius = 0;
-        for ( unsigned i = 0; i < _mesh.vertices.size (); ++i )
-        {
-            const double distance = math::modulus ( _mesh.vertices.at ( i ).position - _mesh.mesh_region.centre );
-            if ( distance > _mesh.mesh_region.radius ) _mesh.mesh_region.radius = distance;
-        }
-    } else
-    /* if accurate regions is not set, set radius to maximum possible and set region */
-    {
-        _mesh.mesh_region.radius = math::modulus ( max_components );
-    }
 }
 
 /* add_node
@@ -515,10 +453,201 @@ glh::model::node& glh::model::model::add_node ( node& _node, const aiNode& ainod
     _node.transform = cast_matrix ( ainode.mTransformation );
 
     /* configure region */
-    if ( import_flags & import_flags::GLH_CONFIGURE_REGIONS ) configure_node_region ( _node );
+    if ( model_import_flags & ( import_flags::GLH_CONFIGURE_REGIONS_FAST | import_flags::GLH_CONFIGURE_REGIONS_ACCEPTABLE | import_flags::GLH_CONFIGURE_REGIONS_ACCURATE ) )
+        configure_node_region ( _node );
 
     /* return node */
     return _node;
+}
+
+
+
+/* configure_buffers
+ *
+ * configure the buffers of a mesh
+ * 
+ * _mesh: the mesh to configure
+ */
+void glh::model::model::configure_buffers ( mesh& _mesh )
+{
+    /* buffer vertex data */
+    _mesh.vertex_data.buffer_data ( _mesh.vertices.begin (), _mesh.vertices.end () );
+
+    /* buffer index data */
+    _mesh.index_data.buffer_data ( _mesh.faces.begin (), _mesh.faces.end () );
+
+    /* configure the vao */
+    _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 0 );
+    _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 3 * sizeof ( GLfloat ) );
+    for ( unsigned i = 0; i < _mesh.num_color_sets; ++i )
+        _mesh.array_object.set_vertex_attrib ( 2 + i, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 6 + ( i * 4 ) ) * sizeof ( GLfloat ) );
+    for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
+        _mesh.array_object.set_vertex_attrib ( 2 + GLH_MODEL_MAX_COLOR_SETS + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 6 + ( GLH_MODEL_MAX_COLOR_SETS * 4 ) + ( i * 3 ) ) * sizeof ( GLfloat ) );
+    _mesh.array_object.bind_ebo ( _mesh.index_data );
+}
+
+
+
+/* mesh_max_min_components
+ * node_max_min_components
+ *
+ * find the maximum and minimum xyz components of all of the vertices of the mesh/node
+ * 
+ * transform: transformation applied to all of the vertices
+ * 
+ * return: a pair of vec3s: the first if the max components, the second is the min components
+ */
+std::pair<glh::math::fvec3, glh::math::fvec3> glh::model::model::mesh_max_min_components ( const mesh& _mesh, const math::fmat4& transform ) const
+{
+    /* two vectors to store max/min coordinate components of vertices */
+    math::fvec3 max_components, min_components;
+
+    /* loop through vectices to fill max_min_components */
+    for ( unsigned i = 0; i < _mesh.vertices.size (); ++i )
+    {
+        /* transform the vertex */
+        const math::fvec3 tvertex { transform * math::fvec4 { _mesh.vertices.at ( i ).position, 1.0 } };
+
+        /* compare against max/min positions */
+        if ( tvertex.at ( 0 ) > max_components.at ( 0 ) || i == 0 ) max_components.at ( 0 ) = tvertex.at ( 0 );
+        if ( tvertex.at ( 0 ) < min_components.at ( 0 ) || i == 0 ) min_components.at ( 0 ) = tvertex.at ( 0 );
+        if ( tvertex.at ( 1 ) > max_components.at ( 1 ) || i == 0 ) max_components.at ( 1 ) = tvertex.at ( 1 );
+        if ( tvertex.at ( 1 ) < min_components.at ( 1 ) || i == 0 ) min_components.at ( 1 ) = tvertex.at ( 1 );
+        if ( tvertex.at ( 2 ) > max_components.at ( 2 ) || i == 0 ) max_components.at ( 2 ) = tvertex.at ( 2 );
+        if ( tvertex.at ( 2 ) < min_components.at ( 2 ) || i == 0 ) min_components.at ( 2 ) = tvertex.at ( 2 );
+    }
+
+    /* return the components as a pair */
+    return std::pair<math::fvec3, math::fvec3> { max_components, min_components };
+}
+std::pair<glh::math::fvec3, glh::math::fvec3> glh::model::model::node_max_min_components ( const node& _node, const math::fmat4& transform ) const
+{
+    /* transform the matrix */
+    const math::fmat4 new_transform = transform * _node.transform;
+
+    /* two vectors to store max/min coordinate components of vertices */
+    math::fvec3 max_components, min_components;
+
+    /* loop through child nodes to update max/min components */
+    for ( unsigned i = 0; i < _node.children.size (); ++i )
+    {
+        /* get the node components */
+        math::fvec3 node_max_components, node_min_components;
+        std::tie ( node_max_components, node_min_components ) = node_max_min_components ( _node.children.at ( i ), new_transform );
+        
+        /* compare against max/min components */
+        if ( node_max_components.at ( 0 ) > max_components.at ( 0 ) || i == 0 ) max_components.at ( 0 ) = node_max_components.at ( 0 );
+        if ( node_min_components.at ( 0 ) < min_components.at ( 0 ) || i == 0 ) min_components.at ( 0 ) = node_min_components.at ( 0 );
+        if ( node_max_components.at ( 1 ) > max_components.at ( 1 ) || i == 0 ) max_components.at ( 1 ) = node_max_components.at ( 1 );
+        if ( node_min_components.at ( 1 ) < min_components.at ( 1 ) || i == 0 ) min_components.at ( 1 ) = node_min_components.at ( 1 );
+        if ( node_max_components.at ( 2 ) > max_components.at ( 2 ) || i == 0 ) max_components.at ( 2 ) = node_max_components.at ( 2 );
+        if ( node_min_components.at ( 2 ) < min_components.at ( 2 ) || i == 0 ) min_components.at ( 2 ) = node_min_components.at ( 2 );
+    }
+
+    /* loop through child meshes to update max/min components */
+    for ( unsigned i = 0; i < _node.meshes.size (); ++i )
+    {
+        /* get the mesh components */
+        math::fvec3 mesh_max_components, mesh_min_components;
+        std::tie ( mesh_max_components, mesh_min_components ) = mesh_max_min_components ( * _node.meshes.at ( i ), new_transform );
+        
+        /* compare against max/min components */
+        if ( mesh_max_components.at ( 0 ) > max_components.at ( 0 ) || ( _node.children.size () == 0 && i == 0 ) ) max_components.at ( 0 ) = mesh_max_components.at ( 0 );
+        if ( mesh_min_components.at ( 0 ) < min_components.at ( 0 ) || ( _node.children.size () == 0 && i == 0 ) ) min_components.at ( 0 ) = mesh_min_components.at ( 0 );
+        if ( mesh_max_components.at ( 1 ) > max_components.at ( 1 ) || ( _node.children.size () == 0 && i == 0 ) ) max_components.at ( 1 ) = mesh_max_components.at ( 1 );
+        if ( mesh_min_components.at ( 1 ) < min_components.at ( 1 ) || ( _node.children.size () == 0 && i == 0 ) ) min_components.at ( 1 ) = mesh_min_components.at ( 1 );
+        if ( mesh_max_components.at ( 2 ) > max_components.at ( 2 ) || ( _node.children.size () == 0 && i == 0 ) ) max_components.at ( 2 ) = mesh_max_components.at ( 2 );
+        if ( mesh_min_components.at ( 2 ) < min_components.at ( 2 ) || ( _node.children.size () == 0 && i == 0 ) ) min_components.at ( 2 ) = mesh_min_components.at ( 2 );
+    }
+
+    /* return the components as a pair */
+    return std::pair<math::fvec3, math::fvec3> { max_components, min_components };
+}
+
+/* mesh_furthest_distance
+ * node_furthest_distance
+ *
+ * find the furthest distance from a point in a mesh/node
+ * 
+ * point: the point to find the furthest distance from
+ * transform: the transformation to apply to all of the vertices (assumed to be applied to point)
+ * 
+ * return: the furthest distance from that point and a vertex
+ */
+float glh::model::model::mesh_furthest_distance ( const mesh& _mesh, const math::fvec3& point, const math::fmat4& transform ) const
+{
+    /* float to store max distance */
+    float furthest_distance = 0.0;
+
+    /* loop through vectices to find firthest distance */
+    for ( const vertex& _vertex: _mesh.vertices )
+    {
+        /* transform the vertex and find the modulus from the point */
+        const float distance = modulus ( point - math::vec3 { transform * math::fvec4 { _vertex.position, 1.0 } } );
+
+        /* compare against furthest distance */
+        if ( distance > furthest_distance ) furthest_distance = distance;
+    }
+
+    /* return the furthest distance */
+    return furthest_distance;
+}
+float glh::model::model::node_furthest_distance ( const node& _node, const math::fvec3& point, const math::fmat4& transform ) const
+{
+    /* transform the matrix */
+    const math::fmat4 new_transform = transform * _node.transform;
+
+    /* float to store max distance */
+    float furthest_distance = 0.0;
+
+    /* loop through child nodes to find furthest distance */
+    for ( const node& child: _node.children )
+    {
+        /* get distance */
+        const float distance = node_furthest_distance ( child, point, new_transform );
+
+        /* change furthest distance if necessary */
+        if ( distance > furthest_distance ) furthest_distance = distance;
+    }
+
+    /* loop through meshes to find firthest distance */
+    for ( const mesh * _mesh: _node.meshes )
+    {
+        /* get distance */
+        const float distance = mesh_furthest_distance ( * _mesh, point, new_transform );
+
+        /* change furthest distance if necessary */
+        if ( distance > furthest_distance ) furthest_distance = distance;
+    }
+
+    /* return the furthest distance */
+    return furthest_distance;
+}
+
+
+
+/* configure_mesh_region
+ *
+ * configure the region of a mesh
+ * 
+ * _mesh: the mesh to configure
+ */
+void glh::model::model::configure_mesh_region ( mesh& _mesh )
+{
+    /* get the maximum and minimum components of the mesh */
+    math::fvec3 max_components, min_components;
+    std::tie ( max_components, min_components ) = mesh_max_min_components ( _mesh );
+
+    /* find central vertex */
+    _mesh.mesh_region.centre = ( max_components + min_components ) / 2.0;
+
+    /* if GLH_CONFIGURE_REGIONS_ACCEPTABLE or GLH_CONFIGURE_REGIONS_ACCEPTABLE is set, 
+     * find the furthest vertex and set the radius to that
+     * else find the maximum radius via the modulus of max_components
+     */
+    if ( model_import_flags & ( import_flags::GLH_CONFIGURE_REGIONS_ACCEPTABLE | import_flags::GLH_CONFIGURE_REGIONS_ACCURATE ) )
+        _mesh.mesh_region.radius = mesh_furthest_distance ( _mesh, _mesh.mesh_region.centre );
+    else _mesh.mesh_region.radius = math::modulus ( max_components );
 }
 
 /* configure_node_region
@@ -530,17 +659,39 @@ glh::model::node& glh::model::model::add_node ( node& _node, const aiNode& ainod
  */
 void glh::model::model::configure_node_region ( node& _node )
 {
-    /* set region to first node or first mesh */
-    if ( _node.children.size () > 0 ) _node.node_region = _node.children.at ( 0 ).node_region;
-    else _node.node_region = _node.meshes.at ( 0 )->mesh_region;
+    /* if not GLH_CONFIGURE_ONLY_ROOT_NODE_REGION and GLH_CONFIGURE_REGIONS_ACCURATE set, configure child nodes' regions */
+    if ( !( model_import_flags & import_flags::GLH_CONFIGURE_REGIONS_ACCURATE && model_import_flags & import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION ) )
+        for ( node& child: _node.children ) configure_node_region ( child );
 
-    /* loop through the child nodes and meshes and combind the regions */
-    for ( unsigned i = 0; i < _node.children.size (); ++i ) _node.node_region = region::combine ( _node.node_region, _node.children.at ( i ).node_region );
-    for ( unsigned i = 0; i < _node.meshes.size (); ++i ) _node.node_region = region::combine ( _node.node_region, _node.meshes.at ( i )->mesh_region );
+    /* if GLH_CONFIGURE_REGIONS_ACCEPTABLE is set, use max/min components of node */
+    if ( model_import_flags & import_flags::GLH_CONFIGURE_REGIONS_ACCURATE )
+    {
+        /* get the maximum and minimum components of the node */
+        math::fvec3 max_components, min_components;
+        std::tie ( max_components, min_components ) = node_max_min_components ( _node );
 
-    /* apply the transformation matrix */
-    _node.node_region = _node.transform * _node.node_region;
+        /* find central vertex */
+        _node.node_region.centre = ( max_components + min_components ) / 2.0;
+
+        /* set radius to the furthest distance */
+        _node.node_region.radius = node_furthest_distance ( _node, _node.node_region.centre );
+    } else
+    /* else calculate region based on the child nodes and meshes regions */
+    {
+        /* set region to first node or first mesh */
+        if ( _node.children.size () > 0 ) _node.node_region = _node.children.at ( 0 ).node_region;
+        else _node.node_region = _node.meshes.at ( 0 )->mesh_region;
+
+        /* loop through the child nodes and meshes and combind the regions */
+        for ( const node& child: _node.children ) _node.node_region = region::combine ( _node.node_region, child.node_region );
+        for ( const mesh * _mesh: _node.meshes ) _node.node_region = region::combine ( _node.node_region, _mesh->mesh_region );
+
+        /* apply the transformation matrix */
+        _node.node_region = _node.transform * _node.node_region;
+    }
 }
+
+
 
 /* render_node
  *
@@ -575,14 +726,14 @@ void glh::model::model::render_node ( const node& _node, const core::program& pr
 void glh::model::model::render_mesh ( const mesh& _mesh, const core::program& prog ) const
 {
     /* don't draw if transparent mode and mesh is definitely opaque */
-    if ( ( render_flags & render_flags::GLH_TRANSPARENT_MODE ) && _mesh.definitely_opaque ) return;
+    if ( ( model_render_flags & render_flags::GLH_TRANSPARENT_MODE ) && _mesh.definitely_opaque ) return;
 
     /* if face culling is on and material is two sided, disable face culling */
     const bool culling_active = core::renderer::face_culling_enabled ();
     if ( culling_active && _mesh.properties->two_sided ) core::renderer::disable_face_culling ();
 
     /* apply the material, if not disabled in flags */
-    if ( !( render_flags & render_flags::GLH_NO_MATERIAL ) ) apply_material ( * _mesh.properties );
+    if ( !( model_render_flags & render_flags::GLH_NO_MATERIAL ) ) apply_material ( * _mesh.properties );
 
     /* draw elements */
     core::renderer::draw_elements ( prog, _mesh.array_object, GL_TRIANGLES, _mesh.faces.size () * 3, GL_UNSIGNED_INT, 0 );
