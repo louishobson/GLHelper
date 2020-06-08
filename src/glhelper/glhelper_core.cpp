@@ -295,6 +295,26 @@ bool glh::core::object::is_bound ( const object_bind_target& target ) const
 
 
 
+/* force_unbind
+ *
+ * force the unbinding of any object bound to a bind point
+ *
+ * returns true if an object was unbound
+ */
+bool glh::core::object::force_unbind ( const object_bind_target& target )
+{
+    /* get bound object */
+    const auto bound_object = get_bound_object_pointer ( target );
+
+    /* if is not invalid, unbind it */
+    if ( bound_object ) bound_object->unbind ();
+
+    /* return truth of bound_object */
+    return bound_object;
+}
+
+
+
 /* create_object_pointers
  *
  * create object pointers array 

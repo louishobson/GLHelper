@@ -423,6 +423,16 @@ public:
 
 
 
+    /* force_unbind
+     *
+     * force the unbinding of any object bound to a bind point
+     *
+     * returns true if an object was unbound
+     */
+    static bool force_unbind ( const object_bind_target& target );
+
+
+
     /* virtual is_object_valid
      *
      * determines if the object is valid (id > 0)
@@ -586,7 +596,7 @@ public:
 
     /* pointer constructor */
     object_pointer ( T * obj )
-        : id ( obj ? obj->internal_id (): 0 )
+        : id ( obj ? obj->internal_id () : 0 )
         , unique_id { obj ? obj->internal_unique_id () : 0 }
         , minor_type { obj ? obj->get_minor_object_type () : minor_object_type::GLH_UNKNOWN_TYPE }
         , major_type { obj ? obj->get_major_object_type () : major_object_type::GLH_UNKNOWN_TYPE }
@@ -631,6 +641,12 @@ public:
      * returns true if the pointer is valid
      */
     bool is_pointer_valid () const;
+
+    /* operator bool
+     *
+     * returns true if the pointer is valid
+     */
+    operator bool () const { return is_pointer_valid (); }
 
     /* operator!
      *
