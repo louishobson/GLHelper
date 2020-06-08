@@ -84,8 +84,8 @@ int main ()
 
     /* import the model */
     glh::model::model island { "assets/island", "scene.gltf", 
-        glh::model::import_flags::GLH_CONFIGURE_REGIONS_FAST |
-        glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCEPTABLE |
+        //glh::model::import_flags::GLH_CONFIGURE_REGIONS_FAST |
+        //glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCEPTABLE |
         glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
         glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION
     };
