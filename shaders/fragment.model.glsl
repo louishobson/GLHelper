@@ -392,6 +392,4 @@ void main ()
 
     /* apply gamma correction */
     //fragcolor.rgb = pow ( fragcolor.rgb, vec3 ( 1.0 / 2.2 ) );
-
-    //fragcolor = texture ( skybox, S );
 }
