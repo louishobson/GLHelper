@@ -292,6 +292,14 @@ public:
 
     /* OPENGL WINDOW MANAGEMENT */
 
+    /* bind_framebuffer 
+     *
+     * bind the window's framebuffer
+     * 
+     * returns true if a change in binding occured
+     */
+    bool bind_framebuffer () const { return core::object::force_unbind ( core::object_bind_target::GLH_DRAW_FBO_TARGET ); }
+
     /* make_current
      *
      * makes the window current
