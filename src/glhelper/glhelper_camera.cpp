@@ -107,16 +107,37 @@ const glh::math::mat4& glh::camera::camera_base::get_trans () const
     return trans;
 }
 
+/* update_trans
+ *
+ * update view, proj then trans if changes to parameters have occured
+ * 
+ * return: bool for if any changes were applied
+ */
+bool glh::camera::camera_base::update_trans () const
+{
+    /* if any change occured in updating view and proj, update trans */
+    bool view_update = update_view ();
+    bool proj_update = update_proj ();
+    if ( view_update || proj_update ) 
+    {
+        trans = view * proj;
+        return true;
+    }
+    
+    /* else return false */
+    return false;
+}
 
 
 
-/* CAMERA IMPLEMENTATION */
+
+/* CAMERA_MOVEMENT IMPLEMENTATION */
 
 /* full constructor
  *
- * give parameters for look_at and perspective_fov
+ * give parameters for look towards to create view matrix
  */
-glh::camera::camera::camera ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far )
+glh::camera::camera_movement::camera_movement ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y )
     : position { _position }
     , x { 0. }
     , y { 0. }
@@ -125,12 +146,6 @@ glh::camera::camera::camera ( const math::vec3& _position, const math::vec3& _di
     , restrict_y { 0. }
     , restrict_z { 0. }
     , restrictive_mode { false }
-    , fov { _fov }
-    , aspect { _aspect }
-    , near { _near }
-    , far { _far }
-    , view_change { true }
-    , proj_change { true }
 {
     /* set x, y, z, restrict_x, restrict_y and restrict_z */
     z = math::normalise ( - _direction );
@@ -140,8 +155,8 @@ glh::camera::camera::camera ( const math::vec3& _position, const math::vec3& _di
     restrict_y = y;
     restrict_z = z;
 
-    /* update trans */
-    update_trans ();
+    /* update view */
+    update_view ();
 }
 
 
@@ -153,7 +168,7 @@ glh::camera::camera::camera ( const math::vec3& _position, const math::vec3& _di
  * when restricted, roll is disabled, and movement occures irrespective of pitch
  * pitch is limited to 90 degrees up and down
  */
-void glh::camera::camera::enable_restrictive_mode ()
+void glh::camera::camera_movement::enable_restrictive_mode ()
 {
     /* set to true */
     restrictive_mode = true;
@@ -163,7 +178,7 @@ void glh::camera::camera::enable_restrictive_mode ()
     restrict_y = y;
     restrict_z = z;
 }
-void glh::camera::camera::disable_restrictive_mode () 
+void glh::camera::camera_movement::disable_restrictive_mode () 
 {
     /* purely set to false */ 
     restrictive_mode = false;
@@ -179,7 +194,7 @@ void glh::camera::camera::disable_restrictive_mode ()
  *
  * return: new position vector
  */
-const glh::math::vec3& glh::camera::camera::move ( const math::vec3& vec )
+const glh::math::vec3& glh::camera::camera_movement::move ( const math::vec3& vec )
 {
     
     /* move position
@@ -213,7 +228,7 @@ const glh::math::vec3& glh::camera::camera::move ( const math::vec3& vec )
  * 
  * return: new position vector
  */
-const glh::math::vec3& glh::camera::camera::move_global ( const math::vec3& vec )
+const glh::math::vec3& glh::camera::camera_movement::move_global ( const math::vec3& vec )
 {
     /* set view as changed */
     view_change = true;
@@ -231,7 +246,7 @@ const glh::math::vec3& glh::camera::camera::move_global ( const math::vec3& vec 
  * 
  * return: the position vector
  */
-const glh::math::vec3& glh::camera::camera::pitch ( const double arg )
+const glh::math::vec3& glh::camera::camera_movement::pitch ( const double arg )
 {
     /* if non-restrictive, rotate y and z around x axis */
     if ( !restrictive_mode )
@@ -263,7 +278,7 @@ const glh::math::vec3& glh::camera::camera::pitch ( const double arg )
     view_change = true;
     return position;
 }
-const glh::math::vec3& glh::camera::camera::yaw ( const double arg )
+const glh::math::vec3& glh::camera::camera_movement::yaw ( const double arg )
 {
     /* if non-restrictive, rotate x and z around the y axis */
     if ( !restrictive_mode )
@@ -284,7 +299,7 @@ const glh::math::vec3& glh::camera::camera::yaw ( const double arg )
     view_change = true;
     return position;
 }
-const glh::math::vec3& glh::camera::camera::roll ( const double arg )
+const glh::math::vec3& glh::camera::camera_movement::roll ( const double arg )
 {
     /* if non-restrictive, rotate x and y around the z axis */
     if ( !restrictive_mode )
@@ -304,7 +319,7 @@ const glh::math::vec3& glh::camera::camera::roll ( const double arg )
  *
  * update the view matrix
  */
-bool glh::camera::camera::update_view () const
+bool glh::camera::camera_movement::update_view () const
 {
     /* if view has been changed, update */
     if ( view_change )
@@ -318,16 +333,34 @@ bool glh::camera::camera::update_view () const
     return false;
 }
 
+
+
+/* CAMERA_PERSPECTIVE IMPLEMENTATION */
+
+/* full constructor
+ *
+ * give parameters for perspective_fov
+ */
+glh::camera::camera_perspective::camera_perspective ( const double _fov, const double _aspect, const double _near, const double _far )
+    : fov { _fov }
+    , aspect { _aspect }
+    , near { _near }
+    , far { _far }
+{
+    /* update proj */
+    update_proj ();
+}
+
 /* update_proj
  *
  * update the projection matrix
  */
-bool glh::camera::camera::update_proj () const
+bool glh::camera::camera_perspective::update_proj () const
 {
     /* if proj has been changed, update */
     if ( proj_change )
     {
-        proj = math::perspective_fov<double> ( fov, aspect, near, far );
+        proj = math::perspective_fov ( fov, aspect, near, far );
         proj_change = false;
         return true;
     }
@@ -337,25 +370,39 @@ bool glh::camera::camera::update_proj () const
 
 }
 
-/* update_trans
+
+
+/* CAMERA_ORTHOGRAPHIC IMPLEMENTATION */
+
+/* full constructor
  *
- * update view, proj then trans if changes to parameters have occured
- * 
- * return: bool for if any changes were applied
+ * give parameters for orthographic matrix production
  */
-bool glh::camera::camera::update_trans () const
+glh::camera::camera_orthographic::camera_orthographic ( const math::vec3& _lbn, const math::vec3& _rtf )
+    : lbn { _lbn }
+    , rtf { _rtf }
 {
-    /* if any change occured in updating view and proj, update trans */
-    bool view_update = update_view ();
-    bool proj_update = update_proj ();
-    if ( view_update || proj_update ) 
+    /* update proj */
+    update_proj ();
+}
+
+/* update_proj
+ *
+ * update the projection matrix
+ */
+bool glh::camera::camera_orthographic::update_proj () const
+{
+    /* if proj has been changed, update */
+    if ( proj_change )
     {
-        trans = view * proj;
+        proj = math::orthographic ( lbn.at ( 0 ), rtf.at ( 0 ), lbn.at ( 1 ), rtf.at ( 1 ), lbn.at ( 2 ), rtf.at ( 2 ) );
+        proj_change = false;
         return true;
     }
-    
+
     /* else return false */
     return false;
+
 }
 
 
@@ -399,25 +446,8 @@ bool glh::camera::mirror_camera::update_proj () const
      * notice the sign of the half_widths vs the half_heights
      * we reflect the texture in the x-axis
      */
-    proj = math::perspective<double> ( mirror_pos.at ( 0 ) + half_width, mirror_pos.at ( 0 ) - half_width, mirror_pos.at ( 1 ) - half_height, mirror_pos.at ( 1 ) + half_height, -mirror_pos.at ( 2 ), cam.get_far () );
+    proj = math::perspective ( mirror_pos.at ( 0 ) + half_width, mirror_pos.at ( 0 ) - half_width, mirror_pos.at ( 1 ) - half_height, mirror_pos.at ( 1 ) + half_height, -mirror_pos.at ( 2 ), cam.get_far () );
     /* return true */
     return true;
 
-}
-
-/* update_trans
- *
- * update view, proj then trans if changes to parameters have occured
- * 
- * return: bool for if any changes were applied
- */
-bool glh::camera::mirror_camera::update_trans () const
-{
-    /* update view and proj and calculate trans */
-    update_view ();
-    update_proj ();
-    trans = proj * view;
-    
-    /* return true */
-    return true;
 }

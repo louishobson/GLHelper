@@ -10,7 +10,7 @@
 #define MAX_COLOR_SETS 1
 
 /* maximum number of UV channels */
-#define MAX_UV_CHANNELS 2
+#define MAX_UV_CHANNELS 4
 
 /* transformations structure */
 struct trans_struct
@@ -28,10 +28,13 @@ layout ( location = 2 ) in vec4 in_vcolor [ MAX_COLOR_SETS ];
 layout ( location = 3 ) in vec3 in_texcoords [ MAX_UV_CHANNELS ];
 
 /* texture coords, normal, vcolor */
-out vec3 fragpos;
-out vec3 normal;
-out vec4 vcolor [ MAX_COLOR_SETS ];
-out vec3 texcoords [ MAX_UV_CHANNELS ];
+out VS_OUT
+{
+    vec3 fragpos;
+    vec3 normal;
+    vec4 vcolor [ MAX_COLOR_SETS ];
+    vec3 texcoords [ MAX_UV_CHANNELS ];
+} vs_out;
 
 /* transformation matrices */
 uniform trans_struct trans;
@@ -42,11 +45,11 @@ void main ()
     /* set the position to be the same as the attribute, with an alpha of 1.0 */
     gl_Position = trans.proj * trans.view * trans.model * vec4 ( pos, 1.0 );
     /* set texcoords to in_texcoords */
-    texcoords = in_texcoords;
+    vs_out.texcoords = in_texcoords;
     /* set normal to normal matrix * in_normal */
-    normal = normalize ( transpose ( inverse ( mat3 ( trans.model ) ) ) * in_normal );
+    vs_out.normal = normalize ( transpose ( inverse ( mat3 ( trans.model ) ) ) * in_normal );
     /* set fragpos */
-    fragpos = vec3 ( trans.model * vec4 ( pos, 1.0 ) );
+    vs_out.fragpos = vec3 ( trans.model * vec4 ( pos, 1.0 ) );
     /* set vcolor */
-    vcolor = in_vcolor;
+    vs_out.vcolor = in_vcolor;
 }

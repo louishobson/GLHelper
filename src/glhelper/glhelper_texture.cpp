@@ -29,17 +29,19 @@
  *
  * only supply the texture target
  * 
+ * _width/height: width/height of the texture
  * _minor_type: the minor type of the texture
  * _internal_format: the internal format of the data (e.g. specific bit arrangements)
  * _format: the format of the data (e.g. what the data will be used for)
- * _width/height: width/height of the texture (defaults to 0)
+ * _type: the type of the data stored in the texture
  */
-glh::core::texture_base::texture_base ( const minor_object_type _minor_type, const GLenum _internal_format, const GLenum _format, const int _width, const int _height )
+glh::core::texture_base::texture_base ( const minor_object_type _minor_type, const int _width, const int _height, const GLenum _internal_format, const GLenum _format, const GLenum _type )
     : object { _minor_type }
-    , internal_format ( _internal_format )
-    , format ( _format )
     , width { _width }
     , height { _height }
+    , internal_format { _internal_format }
+    , format { _format }
+    , type { _type }
 {
     /* assert major type is a texture */ 
     if ( major_type != major_object_type::GLH_TEXTURE_TYPE ) throw exception::texture_exception { "attempted to construct texture_base with non-texture type" }; 
@@ -69,6 +71,39 @@ bool glh::core::texture_base::unbind_all () const
 
     /* return binding change */
     return binding_change;
+}
+
+
+
+/* bind_loop
+ *
+ * this will keep looping around texture units, disincluding 0, and making subsequent binds to the next unit
+ * this avoids binding a texture to a unit already in use
+ * 
+ * returns the unit just bound to
+ */
+unsigned glh::core::texture_base::bind_loop () const
+{ 
+    /* bind and get the unit bound to */
+    bind ( bind_loop_index ); 
+    const unsigned temp_unit = bind_loop_index++;
+
+    /* loop if necesary */
+    if ( bind_loop_index == 32 ) bind_loop_index = 1;
+
+    /* return unit just bound to */
+    return temp_unit;
+}
+
+/* bind_loop_previous
+ *
+ * return the previous binding of the loop
+ */
+unsigned glh::core::texture_base::bind_loop_previous () const
+{
+    /* if is 1, return 31, else return next index - 1 */
+    if ( bind_loop_index == 1 ) return 31;
+    else return bind_loop_index - 1;
 }
 
 
@@ -121,6 +156,17 @@ void glh::core::texture_base::set_wrap ( const GLenum opt )
     glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_R, opt );
 }
 
+/* set_border_color
+ *
+ * set the color of the boarder, such that the texture can be clamped to the edge with a specific color
+ */
+void glh::core::texture_base::set_border_color ( const math::fvec3& color )
+{
+    /* bind, set paramater */
+    bind (); 
+    glTexParameterfv ( opengl_bind_target, GL_TEXTURE_BORDER_COLOR, color.internal_ptr () );
+}
+
 /* generate_mipmap
  *
  * generate texture mipmap
@@ -133,6 +179,10 @@ void glh::core::texture_base::generate_mipmap ()
 }
 
 
+/* bind_loop_next defaults to 1 */
+unsigned glh::core::texture_base::bind_loop_index = 1;
+
+
 
 /* TEXTURE2D IMPLEMENTATION */
 
@@ -142,9 +192,10 @@ void glh::core::texture_base::generate_mipmap ()
  * default settings are applied
  * 
  * _path: path to the image for the texture
+ * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
  */
-glh::core::texture2d::texture2d ( const std::string& _path )
-    : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE, GL_RGBA, GL_RGBA }
+glh::core::texture2d::texture2d ( const std::string& _path, const bool is_srgb )
+    : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE, 0, 0, static_cast<GLenum> ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA, GL_UNSIGNED_BYTE }
     , path { _path }
 {
     /* load the image */
@@ -160,7 +211,7 @@ glh::core::texture2d::texture2d ( const std::string& _path )
      * although the original image may not have 4 channels, by putting the last parameter as 4 in stbi_load,
      * the image is forced to have 4 channels
      */
-    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
+    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, type, image_data );
     
     /* generate mipmap */
     generate_mipmap ();
@@ -187,7 +238,7 @@ glh::core::texture2d::texture2d ( const std::string& _path )
  * data: the data to put in the texture (defaults to NULL)
  */
 glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data )
-    : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE, _internal_format, _format, ( int ) _width, ( int ) _height }
+    : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE, static_cast<int> ( _width ), static_cast<int> ( _height ), _internal_format, _format, _type }
     , path {}
     , channels { 4 }
 {
@@ -195,7 +246,7 @@ glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height,
     bind ();
 
     /* set texture data */
-    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, _type, NULL );
+    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, type, NULL );
 
     /* set default wrapping options */
     set_wrap ( GL_REPEAT );
@@ -203,22 +254,6 @@ glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height,
     /* set mag/min options */
     set_mag_filter ( GL_LINEAR );
     set_min_filter ( GL_LINEAR );
-}
-
-
-
-/* get_bound_object_pointer
- *
- * produce a pointer to the texture2d currently bound
- * NULL is returned if no object is bound to the bind point
- *
- * target: the bind target to get the object from
- * unit: the texture unit to get the object bound to
- */
-glh::core::texture2d * glh::core::texture2d::get_bound_object_pointer ( const unsigned unit )
-{
-    /* return the casted object */
-    return dynamic_cast<texture2d *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_TEXTURE_TYPE ) ).at ( object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_0_TARGET ) + unit ) ) );    
 }
 
 
@@ -231,9 +266,10 @@ glh::core::texture2d * glh::core::texture2d::get_bound_object_pointer ( const un
  * the order of the paths is the same as the order of cubemap layers
  * 
  * paths: array of 6 paths to the images for the cubemap faces
+ * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
  */
-glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths )
-    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, GL_RGBA, GL_RGBA }
+glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths, const bool is_srgb )
+    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, 0, 0, static_cast<GLenum> ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA, GL_UNSIGNED_BYTE }
 {
     /* bind cubemap object */
     bind ();
@@ -267,7 +303,7 @@ glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths )
          * although the original image may not have 4 channels, by putting the last parameter as 4 in stbi_load,
          * the image is forced to have 4 channels
          */
-        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
+        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, format, type, image_data );
 
         /* free image data */
         stbi_image_free ( image_data );
@@ -289,9 +325,10 @@ glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths )
  * construct the cubemap width one image for all six sides
  *
  * path: path to the image 
+ * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
  */
-glh::core::cubemap::cubemap ( const std::string& path )
-    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, GL_RGBA, GL_RGBA }
+glh::core::cubemap::cubemap ( const std::string& path, const bool is_srgb )
+    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, 0, 0, static_cast<GLenum> ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA, GL_UNSIGNED_BYTE }
 {
     /* bind cubemap object */
     bind ();
@@ -316,7 +353,7 @@ glh::core::cubemap::cubemap ( const std::string& path )
          * although the original image may not have 4 channels, by putting the last parameter as 4 in stbi_load,
          * the image is forced to have 4 channels
          */
-        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, image_data );
+        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, format, type, image_data );
     }
 
     /* free image data */
@@ -333,20 +370,34 @@ glh::core::cubemap::cubemap ( const std::string& path )
     set_min_filter ( GL_LINEAR_MIPMAP_LINEAR );
 }
 
-
-
-/* get_bound_object_pointer
+/* empty cubemap constructor
  *
- * produce a pointer to the cubemap currently bound
- * NULL is returned if no object is bound to the bind point
- *
- * unit: the texture unit to get the object bound to
+ * all of the sizes are initialised to the same parameters
+ * 
+ * _width/_height: the width and height of the texture
+ * _internal_format: the internal format of the data (e.g. specific bit arrangements)
+ * _format: the format of the data (e.g. what the data will be used for)
+ * _type: the type of the pixel data (specific type macro with bit arrangements)
+ * data: the data to put in the texture (defaults to NULL)
  */
-glh::core::cubemap * glh::core::cubemap::get_bound_object_pointer ( const unsigned unit )
+glh::core::cubemap::cubemap ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data )
+    : texture_base { minor_object_type::GLH_CUBEMAP_TYPE, static_cast<int> ( _width ), static_cast<int> ( _height ), _internal_format, _format, _type }
 {
-    /* return the casted object */
-    return dynamic_cast<cubemap *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_TEXTURE_TYPE ) ).at ( object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET ) + unit ) ) );    
+    /* bind cubemap object */
+    bind ();
+
+    /* loop for each face of the cube and configure that face */
+    for ( unsigned i = 0; i < 6; ++i )
+        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, format, type, data );
+
+    /* set default wrapping options */
+    set_wrap ( GL_REPEAT );
+
+    /* set mag/min options */
+    set_mag_filter ( GL_LINEAR );
+    set_min_filter ( GL_LINEAR_MIPMAP_LINEAR );
 }
+
 
 
 
@@ -362,7 +413,7 @@ glh::core::cubemap * glh::core::cubemap::get_bound_object_pointer ( const unsign
  * _fixed_sample_locations: defaults to true - I don't know what this setting does tbh
  */
 glh::core::texture2d_multisample::texture2d_multisample ( const int _width, const int _height, const GLenum _internal_format, const unsigned _samples, const bool _fixed_sample_locations )
-    : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE, _internal_format, GL_NONE, _width, _height }
+    : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE, _width, _height, _internal_format, GL_NONE, GL_NONE }
     , samples { _samples }
     , fixed_sample_locations { _fixed_sample_locations }
 {
@@ -378,19 +429,4 @@ glh::core::texture2d_multisample::texture2d_multisample ( const int _width, cons
     /* set mag/min options */
     set_mag_filter ( GL_LINEAR );
     set_min_filter ( GL_LINEAR );
-}
-
-
-
-/* get_bound_object_pointer
- *
- * produce a pointer to the texture2d_multisample currently bound
- * NULL is returned if no object is bound to the bind point
- *
- * unit: the texture unit to get the object bound to
- */
-glh::core::texture2d_multisample * glh::core::texture2d_multisample::get_bound_object_pointer ( const unsigned unit )
-{
-    /* return the casted object */
-    return dynamic_cast<texture2d_multisample *> ( object_pointers.at ( static_cast<unsigned> ( major_object_type::GLH_TEXTURE_TYPE ) ).at ( object_bindings.at ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET ) + unit ) ) );    
 }

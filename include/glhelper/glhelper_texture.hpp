@@ -59,6 +59,9 @@
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
+/* include math */
+#include <glhelper/glhelper_math.hpp>
+
 /* indlude stb_image.h without implementation */
 #include <stb/stb_image.h>
 
@@ -123,12 +126,16 @@ public:
      *
      * only supply the texture target
      * 
+     * _width/height: width/height of the texture
      * _minor_type: the minor type of the texture
      * _internal_format: the internal format of the data (e.g. specific bit arrangements)
      * _format: the format of the data (e.g. what the data will be used for)
-     * _width/height: width/height of the texture (defaults to 0)
+     * _type: the type of the data in the texture
      */
-    texture_base ( const minor_object_type _minor_type, const GLenum _internal_format, const GLenum _format, const int _width = 0, const int _height = 0 );
+    texture_base ( const minor_object_type _minor_type, const int _width, const int _height, const GLenum _internal_format, const GLenum _format, const GLenum _type );
+
+    /* deleted zero-parameter constructor */
+    texture_base () = delete;
     
     /* deleted copy constructor */
     texture_base ( const texture_base& other ) = delete;
@@ -159,6 +166,12 @@ public:
     void set_t_wrap ( const GLenum opt );
     void set_r_wrap ( const GLenum opt );
     void set_wrap ( const GLenum opt );
+
+    /* set_border_color
+     *
+     * set the color of the boarder, such that the texture can be clamped to the edge with a specific color
+     */
+    void set_border_color ( const math::fvec3& color );
 
     /* generate_mipmap
      *
@@ -206,6 +219,29 @@ public:
 
 
 
+    /* bind_loop
+     *
+     * this will keep looping around texture units, disincluding 0, and making subsequent binds to the next unit
+     * this avoids binding a texture to a unit already in use
+     * 
+     * returns the unit just bound to
+     */
+    unsigned bind_loop () const;
+
+    /* bind_loop_next
+     *
+     * return the next index of the bind loop without binding
+     */
+    unsigned bind_loop_next () const { return bind_loop_index; }
+
+    /* bind_loop_previous
+     *
+     * return the previous binding of the loop
+     */
+    unsigned bind_loop_previous () const;
+
+
+
     /* get_width/height
      *
      * get the width and height of the texture
@@ -215,6 +251,10 @@ public:
 
 protected:
 
+    /* width/height of each face of the cube map */
+    int width;
+    int height;
+
     /* (internal_)format
      *
      * the (internal) format of the texture (e.g. GL_RGB)
@@ -222,9 +262,19 @@ protected:
     const GLenum internal_format;
     const GLenum format;
 
-    /* width/height of each face of the cube map */
-    int width;
-    int height;
+    /* type
+     *
+     * the type of the data in the texture
+     */
+    const GLenum type;
+
+
+
+    /* bind_loop_index
+     *
+     * the next unit to bind the texture to in the bind loop
+     */
+    static unsigned bind_loop_index;
 
 };
 
@@ -247,15 +297,16 @@ public:
      * default settings are applied
      * 
      * _path: path to the image for the texture
+     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
      */
-    explicit texture2d ( const std::string& _path );
+    explicit texture2d ( const std::string& _path, const bool is_srgb = false );
 
     /* empty texture constructor
      *
      * create an texture of a given size with supplied data
      * 
      * _width/_height: the width and height of the texture
-     * __internal_format: the internal format of the data (e.g. specific bit arrangements)
+     * _internal_format: the internal format of the data (e.g. specific bit arrangements)
      * _format: the format of the data (e.g. what the data will be used for)
      * _type: the type of the pixel data (specific type macro with bit arrangements)
      * data: the data to put in the texture (defaults to NULL)
@@ -284,12 +335,11 @@ public:
 
     /* get_bound_object_pointer
      *
-     * produce a pointer to the texture2d currently bound
-     * NULL is returned if no object is bound to the bind point
-     * unit: the texture unit to get the object bound to
+     * produce a pointer to the texture2d currently bound to a unit
      */
     using object::get_bound_object_pointer;
-    static texture2d * get_bound_object_pointer ( const unsigned unit = 0 );
+    static object_pointer<texture2d> get_bound_object_pointer ( const unsigned unit = 0 )
+    { return get_bound_object_pointer<texture2d> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_0_TARGET ) + unit ) ); }
 
 
 
@@ -305,13 +355,11 @@ public:
      */
     const int& get_channels () const { return channels; }
 
-
-
 private:
 
     /* path
      *
-     * path to the shader
+     * path to the texture
      */
     const std::string path;
 
@@ -341,16 +389,30 @@ public:
      * the order of the paths is the same as the order of cubemap layers
      * 
      * paths: array of 6 paths to the images for the cubemap faces
+     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
      */
-    explicit cubemap ( const std::array<std::string, 6>& paths );
+    explicit cubemap ( const std::array<std::string, 6>& paths, const bool is_srgb = false );
 
     /* 1-image constructor
      *
      * construct the cubemap width one image for all six sides
      *
      * path: path to the image 
+     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
      */
-    explicit cubemap ( const std::string& path );
+    explicit cubemap ( const std::string& path, const bool is_srgb = false );
+
+    /* empty cubemap constructor
+     *
+     * all of the sizes are initialised to the same parameters
+     * 
+     * _width/_height: the width and height of the texture
+     * _internal_format: the internal format of the data (e.g. specific bit arrangements)
+     * _format: the format of the data (e.g. what the data will be used for)
+     * _type: the type of the pixel data (specific type macro with bit arrangements)
+     * data: the data to put in the texture (defaults to NULL)
+     */
+    cubemap ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL );
 
     /* deleted zero-parameter constructor */
     cubemap () = delete;
@@ -368,12 +430,12 @@ public:
 
     /* get_bound_object_pointer
      *
-     * produce a pointer to the cubemap currently bound
-     * NULL is returned if no object is bound to the bind point
-     * unit: the texture unit to get the object bound to
+     * produce a pointer to the cubemap currently bound to a unit
      */
     using object::get_bound_object_pointer;
-    static cubemap * get_bound_object_pointer ( const unsigned unit = 0 );
+    static object_pointer<cubemap> get_bound_object_pointer ( const unsigned unit = 0 )
+    { return get_bound_object_pointer<cubemap> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET ) + unit ) ); }
+
 
 
 
@@ -445,12 +507,12 @@ public:
 
     /* get_bound_object_pointer
      *
-     * produce a pointer to the texture2d_multisample currently bound
-     * NULL is returned if no object is bound to the bind point
-     * unit: the texture unit to get the object bound to
+     * produce a pointer to the texture2d_multisample currently bound to a unit
      */
     using object::get_bound_object_pointer;
-    static texture2d_multisample * get_bound_object_pointer ( const unsigned unit = 0 );
+    static object_pointer<texture2d_multisample> get_bound_object_pointer ( const unsigned unit = 0 )
+    { return get_bound_object_pointer<texture2d_multisample> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET ) + unit ) ); }
+
 
 
 

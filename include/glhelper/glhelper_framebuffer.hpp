@@ -38,6 +38,7 @@
 
 /* include core headers */
 #include <algorithm>
+#include <array>
 #include <iostream>
 #include <string>
 
@@ -111,10 +112,9 @@ public:
     /* get_bound_object_pointer
      *
      * produce a pointer to the rbo currently bound
-     * NULL is returned if no object is bound to the bind point
      */
     using object::get_bound_object_pointer;
-    static rbo * get_bound_object_pointer () { return dynamic_cast<rbo *> ( get_bound_object_pointer ( object_bind_target::GLH_RBO_TARGET ) ); }
+    static object_pointer<rbo> get_bound_object_pointer () { return get_bound_object_pointer<rbo> ( object_bind_target::GLH_RBO_TARGET ); }
 
 
 
@@ -179,13 +179,13 @@ public:
 
 
 
-    /* get_bound_object_pointer
+        /* get_bound_object_pointer
      *
      * produce a pointer to the fbo currently bound
-     * NULL is returned if no object is bound to the bind point
      */
     using object::get_bound_object_pointer;
-    static fbo * get_bound_object_pointer () { return dynamic_cast<fbo *> ( get_bound_object_pointer ( object_bind_target::GLH_FBO_TARGET ) ); }
+    static object_pointer<fbo> get_bound_object_pointer () { return get_bound_object_pointer<fbo> ( object_bind_target::GLH_FBO_TARGET ); }
+
 
 
 
@@ -232,8 +232,18 @@ public:
      * attachment: which attachment the texture should be used as
      * mipmap: the mipmap level to attach (defaults to 0)
      */
-    void attach_texture2d ( const texture2d& texture, const GLenum attachment, GLint mipmap = 0 );
-    void attach_texture2d ( const texture2d_multisample& texture, const GLenum attachment, GLint mipmap = 0 );
+    void attach_texture2d ( const texture2d& texture, const GLenum attachment, const GLint mipmap = 0 );
+    void attach_texture2d ( const texture2d_multisample& texture, const GLenum attachment, const GLint mipmap = 0 );
+
+    /* attach_cubemap
+     *
+     * add a cubemap attachment
+     * 
+     * _cubemap: the cubemap to attach
+     * attachment: which attachment the cubemap should be used as
+     * mipmap: the mipmap level to attach (defaults to 0)
+     */
+    void attach_cubemap ( const cubemap& _cubemap, const GLenum attachment, const GLuint mipmap = 0 );
 
     /* attach_rbo
      *
@@ -244,11 +254,32 @@ public:
      */
     void attach_rbo ( const rbo& _rbo, const GLenum attachment );
 
+    
+
     /* is_complete
      *
      * return true if the framebuffer is complete
      */
     bool is_complete () const;
+
+
+
+    /* draw/read_buffer
+     *
+     * sets which buffer to use as the draw/read buffer
+     * 
+     * buff: GLenum for what buffer to use
+     */
+    void draw_buffer ( const GLenum buff );
+    void read_buffer ( const GLenum buff );
+
+    /* draw_buffers
+     *
+     * sets multiple buffers to be used as the read/draw buffer
+     * 
+     * buffs...: a list of GLenums for which buffers to use
+     */
+    template<class ...Ts> void draw_buffers ( const Ts... buffs ); 
 
 
 
@@ -266,6 +297,27 @@ public:
                      const unsigned dstx0, const unsigned dsty0, const unsigned dstx1, const unsigned dsty1, const GLbitfield copy_mask, const GLenum filter );
 
 };
+
+
+
+/* FBO TEMPLATE METHOD IMPLEMENTATIONS */
+
+/* draw_buffers
+ *
+ * sets multiple buffers to be used as the read/draw buffer
+ * 
+ * buffs...: a list of GLenums for which buffers to use
+ */
+template<class ...Ts> void glh::core::fbo::draw_buffers ( const Ts... buffs )
+{
+    /* create array of buffs */
+    std::array<const GLenum, sizeof...( Ts )> buff_array { buffs... };
+
+    /* bind, set options, unbind */
+    const bool binding_change = bind_draw ();
+    glDrawBuffers ( sizeof...( Ts ), buff_array.data () );
+    if ( binding_change ) unbind_draw ();
+}
 
 
 

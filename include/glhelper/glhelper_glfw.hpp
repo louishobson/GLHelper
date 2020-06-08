@@ -104,7 +104,7 @@ public:
      * width/height: the width and height of the window
      * msaa_samples: the number of MSAA samples (defaults to 1)
      */
-    window ( const std::string& title, const unsigned width, const unsigned height, const unsigned msaa_samples = 1 );
+    window ( const std::string& title, const unsigned width = 600, const unsigned height  = 400, const unsigned msaa_samples = 1 );
 
     /* zero-parameter constructor
      *
@@ -291,6 +291,14 @@ public:
 
 
     /* OPENGL WINDOW MANAGEMENT */
+
+    /* bind_framebuffer 
+     *
+     * bind the window's framebuffer
+     * 
+     * returns true if a change in binding occured
+     */
+    bool bind_framebuffer () const { return core::object::force_unbind ( core::object_bind_target::GLH_DRAW_FBO_TARGET ); }
 
     /* make_current
      *

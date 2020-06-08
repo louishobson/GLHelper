@@ -62,3 +62,6 @@
 
 /* include glhelper_vertices.hpp */
 #include <glhelper/glhelper_vertices.hpp>
+
+/* include glhelper_region.hpp */
+#include <glhelper/glhelper_region.hpp>

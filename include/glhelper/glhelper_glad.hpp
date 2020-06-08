@@ -112,14 +112,6 @@ public:
      */
     static bool is_loaded () { return active_window; }
 
-    /* assert_is_loaded
-     *
-     * throws if glad has not been loaded
-     * 
-     * operation: description of the operation
-     */
-    static void assert_is_loaded ( const std::string& operation = "" );
-
     /* is_window_loaded
      *
      * checks whether window is currently loaded to glad

@@ -20,8 +20,7 @@
 #include <thread>
 
 #define GLH_MODEL_MAX_COLOR_SETS 1
-#define GLH_MODEL_MAX_UV_CHANNELS 2
-#define GLH_MODEL_MAX_TEXTURE_STACK_SIZE 2
+#define GLH_MODEL_MAX_UV_CHANNELS 4
 
 /* include glhelper.hpp */
 #include <glhelper/glhelper.hpp>
@@ -31,333 +30,174 @@
 int main ()
 {
 
-    {
-     
+    /* CREATE WINDOW */
+
+    /* create a window with 4xMSAA */
     glh::glfw::window window { "Test Window", 600, 400, 4 };
+
+    /* disable mouse */
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
-    glh::core::renderer::enable_multisample ();
-
-    glh::core::vshader basic_vshader { "shaders/vertex.basic.glsl" };
-    glh::core::fshader basic_fshader { "shaders/fragment.basic.glsl" };
-    glh::core::vshader model_vshader { "shaders/vertex.model.glsl" };
-    glh::core::fshader model_fshader { "shaders/fragment.model.glsl" };
-    glh::core::fshader mirror_fshader { "shaders/fragment.mirror.glsl" };
-    glh::core::vshader cubemap_vshader { "shaders/vertex.cubemap.glsl" };
-    glh::core::fshader cubemap_fshader { "shaders/fragment.cubemap.glsl" };
-    glh::core::program basic_program { basic_vshader, basic_fshader };
-    glh::core::program model_program { model_vshader, model_fshader };
-    glh::core::program mirror_program { basic_vshader, mirror_fshader };
-    glh::core::program cubemap_program { cubemap_vshader, cubemap_fshader };
-
-    auto& basic_trans_uni = basic_program.get_struct_uniform ( "trans" );
-    auto& model_trans_uni = model_program.get_struct_uniform ( "trans" );
-    auto& mirror_trans_uni = mirror_program.get_struct_uniform ( "trans" );
-    auto& cubemap_trans_uni = cubemap_program.get_struct_uniform ( "trans" );
-    auto& model_transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
-
-
-    
-    glh::camera::camera camera { glh::math::rad ( 90 ), 16.0 / 9.0, 0.1, 1000.0 };
-    camera.cache_uniforms ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
-    camera.enable_restrictive_mode ();
-    camera.set_position ( glh::math::vec3 { -6.80822, 26.2452, -3.12343 } );
 
 
 
-    glh::lighting::light_system light_system;
-    light_system.dircoll.lights.emplace_back ( glh::math::vec3 { 0.0, -1.0, 0.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
-    //light_system.pointcoll.lights.emplace_back ( glh::math::vec3 {}, 1.0, 0.045, 0.0075, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 }, glh::math::vec3 { 1.0 } );
-    light_system.cache_uniforms ( model_program.get_struct_uniform ( "light_system" ) );
+    /* SET UP PROGRAM */
+
+    /* create shader program */
+    glh::core::vshader vshader { "shaders/vertex.model.glsl" };
+    glh::core::fshader fshader { "shaders/fragment.model.glsl" };
+    glh::core::program program { vshader, fshader };
+
+    /* extract uniforms out of program */
+    auto& trans_uni = program.get_struct_uniform ( "trans" );
+    auto& light_system_uni = program.get_struct_uniform ( "light_system" );
+    auto& material_uni = program.get_struct_uniform ( "material" );
+    auto& transparent_mode_uni = program.get_uniform ( "transparent_mode" );
 
 
 
-    glh::core::vbo mirror_vbo { glh::vertices::square_vertex_normal_texcoord_data.size () * sizeof ( GLfloat ), glh::vertices::square_vertex_normal_texcoord_data.data () };
-    glh::core::ebo mirror_ebo { glh::vertices::square_element_data.size () * sizeof ( GLuint ), glh::vertices::square_element_data.data () };
-    glh::core::vao mirror_vao;
-    mirror_vao.set_vertex_attrib ( 0, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 9 * sizeof ( GLfloat ), 0 * sizeof ( GLfloat ) );
-    mirror_vao.set_vertex_attrib ( 1, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 9 * sizeof ( GLfloat ), 3 * sizeof ( GLfloat ) );
-    mirror_vao.set_vertex_attrib ( 2, mirror_vbo, 3, GL_FLOAT, GL_FALSE, 9 * sizeof ( GLfloat ), 6 * sizeof ( GLfloat ) );
-    mirror_vao.bind_ebo ( mirror_ebo );
+    /* SET UP CAMERA */
 
-    glh::core::texture2d mirror_tex { 1000, 1000, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE };
-    glh::core::rbo mirror_rbo { 1000, 1000, GL_DEPTH24_STENCIL8 };
-    glh::core::texture2d_multisample mirror_tex_ms { 1000, 1000, GL_RGBA8, 4 };
-    glh::core::rbo mirror_rbo_ms { 1000, 1000, GL_DEPTH24_STENCIL8, 4 };
-    glh::core::fbo mirror_fbo;
-    glh::core::fbo mirror_fbo_ms;
-    mirror_fbo.attach_texture2d ( mirror_tex, GL_COLOR_ATTACHMENT0 );
-    mirror_fbo.attach_rbo ( mirror_rbo, GL_DEPTH_STENCIL_ATTACHMENT );
-    mirror_fbo_ms.attach_texture2d ( mirror_tex_ms, GL_COLOR_ATTACHMENT0 );
-    mirror_fbo_ms.attach_rbo ( mirror_rbo_ms, GL_DEPTH_STENCIL_ATTACHMENT );
-
-    glh::math::mat4 mirror_matrix = 
-    glh::math::translate3d 
-    ( 
-        glh::math::rotate3d
-        (
-            glh::math::enlarge3d 
-            ( 
-                glh::math::identity<4> (),
-                30.0
-            ), 
-            glh::math::rad ( 0.0 ), 
-            glh::math::vec3 { 1.0, 0.0, 0.0 }
-        ), 
-        glh::math::vec3 { 0.0, 50.0, -75.0 }
-    );
-
-    glh::camera::mirror_camera mirror_camera 
+    /* create camera */
+    glh::camera::camera_perspective_movement camera 
     { 
-        camera, 
-        glh::math::vec3 { 0.0, 50.0, -75.0 }, 
-        glh::math::normalise ( glh::math::vec3 { 0.0, 0.0, 1.0 } ), 
-        glh::math::normalise ( glh::math::vec3 { 0.0, 1.0, 0.0 } ),
-        30.0, 30.0 
+        glh::math::vec3 { 0.0, 25.0, 25.0 }, glh::math::vec3 { 0.0, 0.0, -1.0 }, glh::math::vec3 { 0.0, 1.0, 0.0 },
+        glh::math::rad ( 90.0 ), 16.0 / 9.0, 0.5, 200.0 
     };
 
+    /* restrict movement */
+    camera.enable_restrictive_mode ();
+
+    /* cache uniforms */
+    camera.cache_uniforms ( trans_uni.get_uniform ( "view" ), trans_uni.get_uniform ( "proj" ) );
+
+    /* movement per second of button hold
+     * angle of rotation per side to side of window movement of mouse
+     * the angle to change the fov per second of button hold
+     */
+    const double movement_sensitivity = 10.0;
+    const double mouse_sensitivity = glh::math::rad ( 120.0 );
+    const double fov_sensitivity = glh::math::rad ( 15.0 );
 
 
-    glh::core::vbo skybox_vbo { glh::vertices::cube_reverse_vertex_normal_data.size () * sizeof ( GLfloat ), glh::vertices::cube_reverse_vertex_normal_data.data () };
-    glh::core::ebo skybox_ebo { glh::vertices::cube_element_data.size () * sizeof ( GLuint ), glh::vertices::cube_element_data.data () };
-    glh::core::vao skybox_vao;
-    skybox_vao.set_vertex_attrib ( 0, skybox_vbo, 3, GL_FLOAT, GL_FALSE, 6 * sizeof ( GLfloat ), 0 * sizeof ( GLfloat ) );
-    skybox_vao.set_vertex_attrib ( 1, skybox_vbo, 3, GL_FLOAT, GL_FALSE, 6 * sizeof ( GLfloat ), 3 * sizeof ( GLfloat ) );
-    skybox_vao.bind_ebo ( skybox_ebo );
 
-    glh::core::cubemap skybox_cubemap
-    { {
-        "assets/skybox/bluecloud_rt.jpg",
-        "assets/skybox/bluecloud_lf.jpg",
-        "assets/skybox/bluecloud_up.jpg",
-        "assets/skybox/bluecloud_dn.jpg",
-        "assets/skybox/bluecloud_bk.jpg",
-        "assets/skybox/bluecloud_ft.jpg"
-    } };
-    skybox_cubemap.set_wrap ( GL_CLAMP_TO_EDGE );
+    /* IMPORT MODEL */
 
-    glh::math::mat4 skybox_matrix =
+    /* import the model */
+    glh::model::model island { "assets/island", "scene.gltf", 
+        //glh::model::import_flags::GLH_CONFIGURE_REGIONS_FAST |
+        //glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCEPTABLE |
+        glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
+        glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION
+    };
+    const glh::math::mat4 island_matrix =
     glh::math::enlarge3d
     (
-        glh::math::identity<4> (),
-        900.0
-    );
-    
-
-
-    glh::model::model island { "./assets/island", "scene.gltf" };
-    island.cache_uniforms ( model_program.get_struct_uniform ( "material" ), model_trans_uni.get_uniform ( "model" ) );
-    glh::math::mat4 island_matrix = 
-    glh::math::enlarge3d 
-    ( 
-        glh::math::identity<4> (),
-        0.2
-    );
-
-
-
-    glh::model::model chappie { "./assets/chappie", "scene.gltf" };
-    chappie.cache_uniforms ( model_program.get_struct_uniform ( "material" ), model_trans_uni.get_uniform ( "model" ) );
-    glh::math::mat4 chappie_matrix = 
-    glh::math::translate3d 
-    ( 
-        glh::math::rotate3d 
-        ( 
-            glh::math::enlarge3d 
-            ( 
-                glh::math::identity<4> (),
-                0.005
-            ), 
-            glh::math::rad ( 180.0 ), 
-            glh::math::vec3 { 0.0, 1.0, 0.0 } 
-        ), 
-        glh::math::vec3 { 0.0, 0.0, 2.0 } 
-    );
-
-
-
-    glh::model::model xeno { "./assets/xenomorphe", "scene.gltf" };
-    xeno.cache_uniforms ( model_program.get_struct_uniform ( "material" ), model_trans_uni.get_uniform ( "model" ) );
-    glh::math::mat4 xeno_matrix = 
-    glh::math::enlarge3d 
-    ( 
-        glh::math::identity<4> (),
+        glh::math::identity<4, GLdouble> (),
         0.1
     );
+    
+    /* cache uniforms */
+    island.cache_uniforms ( material_uni, trans_uni.get_uniform ( "model" ) );
+
+    /* output info about the model region */
+    std::cout << island.model_region ( island_matrix ).centre << std::endl << island.model_region ( island_matrix ).radius << std::endl;
 
 
 
-    glh::core::renderer::set_clear_color ( glh::math::vec4 { 0.5, 1.0, 1.0, 1.0 } );
+    /* SET UP LIGHT SYSTEM */
+
+    /* create light system */
+    glh::lighting::light_system light_system;
+
+    /* add directional light */
+    light_system.add_light ( glh::lighting::dirlight
+    {
+        glh::math::vec3 { 1.0, -1.0, 0.0 },
+        glh::math::vec3 { 1.0 },
+        glh::math::vec3 { 1.0 }, 
+        glh::math::vec3 { 1.0 }
+    } );
+
+    /* cache uniforms */
+    light_system.cache_uniforms ( light_system_uni );
+
+
+
+    /* SET UP RENDERER */
+
+    glh::core::renderer::set_clear_color ( glh::math::vec4 { 0.0, 0.5, 1.0, 1.0 } );
     glh::core::renderer::enable_depth_test ();
+    glh::core::renderer::enable_face_culling ();
+    glh::core::renderer::enable_multisample ();
+    glh::core::renderer::enable_blend ();
     glh::core::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
-    window.get_timeinfo ();
-    window.get_dimensions ();
-    window.get_mouseinfo ();
 
-    double total_time = 0.0;
-    int frames = -1;
 
-    while ( !window.should_close () ) 
+    /* RENDERING LOOP */
+
+    for ( unsigned frame = 0; !window.should_close (); ++frame )
     {
-        auto timeinfo = window.get_timeinfo ();
+        /* get window properties */
         auto dimensions = window.get_dimensions ();
+        auto timeinfo = window.get_timeinfo ();
         auto mouseinfo = window.get_mouseinfo ();
 
-        frames += 1;
-        total_time += timeinfo.delta;
-
-        if ( frames % 5 == 0 ) std::cout << "\rfps: " << 1.0 / timeinfo.delta << std::flush;
-
-        if ( dimensions.deltawidth != 0.0 || dimensions.deltaheight != 0.0 || frames % 60 == 0 ) 
+        /* print framerate every 10th frame */
+        if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
+        
+        /* apply any viewport size changes */
+        if ( dimensions.deltaheight || dimensions.deltawidth || frame % 15 == 0 )
         {
             camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
+            glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
         }
 
-        if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0.0, 0.0, -15.0 } );
-        if ( window.get_key ( GLFW_KEY_A ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { -15.0, 0.0, 0.0 } );
-        if ( window.get_key ( GLFW_KEY_S ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0.0, 0.0, 15.0 } );
-        if ( window.get_key ( GLFW_KEY_D ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 15.0, 0.0, 0.0 } );
+        /* get movement keys and apply changes to camera */
+        if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { 0.0, 0.0, -movement_sensitivity * timeinfo.delta } );
+        if ( window.get_key ( GLFW_KEY_A ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { -movement_sensitivity * timeinfo.delta, 0.0, 0.0 } );
+        if ( window.get_key ( GLFW_KEY_S ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { 0.0, 0.0, movement_sensitivity * timeinfo.delta } );
+        if ( window.get_key ( GLFW_KEY_D ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { movement_sensitivity * timeinfo.delta, 0.0, 0.0 } );
+        if ( window.get_key ( GLFW_KEY_SPACE ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { 0.0, movement_sensitivity * timeinfo.delta, 0.0 } );
+        if ( window.get_key ( GLFW_KEY_LEFT_SHIFT ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { 0.0, -movement_sensitivity * timeinfo.delta, 0.0 } );
 
-        if ( window.get_key ( GLFW_KEY_SPACE ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0.0, 15.0, 0.0 } );
-        if ( window.get_key ( GLFW_KEY_LEFT_SHIFT ).action == GLFW_PRESS ) camera.move ( timeinfo.delta * glh::math::vec3 { 0.0, -15.0, 0.0 } );
+        /* get mouse movement and apply changes to camera */
+        camera.yaw ( mouse_sensitivity * -mouseinfo.deltaxfrac );
+        camera.pitch ( mouse_sensitivity * -mouseinfo.deltayfrac );
 
-        if ( window.get_key ( GLFW_KEY_Z ).action == GLFW_PRESS ) camera.roll ( timeinfo.delta * glh::math::rad ( 80.0 ) );
-        if ( window.get_key ( GLFW_KEY_X ).action == GLFW_PRESS ) camera.roll ( timeinfo.delta * glh::math::rad ( -80.0 ) ); 
-
-        camera.pitch ( mouseinfo.deltayfrac * glh::math::rad ( -80 ) );
-        camera.yaw ( mouseinfo.deltaxfrac * glh::math::rad ( -80 ) );
-
-
-
-        double mirror_angle = glh::math::rad ( 10 ) * timeinfo.delta;
-        mirror_camera.set_normal ( glh::math::rotate3d ( mirror_camera.get_normal (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
-        mirror_camera.set_position ( glh::math::rotate3d ( mirror_camera.get_position (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) ); 
-        mirror_camera.set_ytan ( glh::math::rotate3d ( mirror_camera.get_ytan (), mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
-        mirror_matrix = glh::math::rotate3d ( mirror_matrix, mirror_angle, glh::math::vec3 { 0.0, 1.0, 0.0 } );
-        //light_system.pointcoll.lights.at ( 0 ).set_position ( camera.get_position () );
-        
-
-
-        /*
-
-        cubemap_program.use ();
-        cubemap_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
-        camera.apply ( cubemap_trans_uni.get_uniform ( "view" ), cubemap_trans_uni.get_uniform ( "proj" ) );
-        cubemap_trans_uni.get_uniform ( "model" ).set_matrix ( skybox_matrix );
-
-        glh::core::renderer::disable_face_culling ();
-        glh::core::renderer::disable_blend ();
-        glh::core::renderer::set_depth_mask ( GL_TRUE );
-        glh::core::renderer::set_front_face ( GL_CCW );
-        glh::core::renderer::clear ();
-        glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
-        skybox_cubemap.bind ();
-
-        glh::core::renderer::draw_elements ( skybox_vao, GL_TRIANGLES, glh::vertices::cube_reverse_vertex_normal_data.size (), GL_UNSIGNED_INT, 0 );
+        /* zoom keys */
+        if ( window.get_key ( GLFW_KEY_Q ).action == GLFW_PRESS ) camera.set_fov ( camera.get_fov () + ( fov_sensitivity * timeinfo.delta ) );
+        if ( window.get_key ( GLFW_KEY_E ).action == GLFW_PRESS ) camera.set_fov ( camera.get_fov () - ( fov_sensitivity * timeinfo.delta ) );
 
 
 
-        model_program.use ();
-        model_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
-        camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
-        model_transparent_mode_uni.set_int ( 0 );
-        model_program.get_uniform ( "skybox" ).set_int ( 1 );
-
-        glh::core::renderer::enable_face_culling ();
-        skybox_cubemap.bind ( 1 );
-
-        //chappie.render ( chappie_matrix, false );
-        xeno.render ( xeno_matrix, false );
-
-
-
-        model_transparent_mode_uni.set_int ( 1 );
-
-        glh::core::renderer::enable_blend ();
-        glh::core::renderer::set_depth_mask ( GL_FALSE );
-        skybox_cubemap.bind ( 1 );
-
-        //chappie.render ( chappie_matrix, true );
-        xeno.render ( xeno_matrix, true );
-
-
-        */
-
-
-
-        model_program.use ();
-        model_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
+        /* apply camera and light system */
+        camera.apply ();
         light_system.apply ();
-        model_transparent_mode_uni.set_int ( 0 );
+        //light_system.dirlights.at ( 0 ).shadow_camera ( island.model_region ( island_matrix ) ).apply ( trans_uni.get_uniform ( "view" ), trans_uni.get_uniform ( "proj" ) );
 
-        glh::core::renderer::enable_face_culling ();
+        /* clear screen */
+        glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
+
+        /* render opaque */
+        transparent_mode_uni.set_int ( false );
         glh::core::renderer::disable_blend ();
-        glh::core::renderer::set_depth_mask ( GL_TRUE );
-                
-        mirror_fbo_ms.unbind ();
-        glh::core::renderer::set_front_face ( GL_CCW );
-        glh::core::renderer::clear ();
-        glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
-        camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
-        island.render ( island_matrix, false );
-        chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, false );
+        island.render ( program, island_matrix );
 
-        mirror_fbo_ms.bind ();
-        glh::core::renderer::set_front_face ( GL_CW );
-        glh::core::renderer::clear ();
-        glh::core::renderer::viewport ( 0, 0, 1000, 1000 );
-        mirror_camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
-        island.render ( island_matrix, false );
-        chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, false );
-
-
-
+        /* render transparent */
+        transparent_mode_uni.set_int ( true );
         glh::core::renderer::enable_blend ();
-        glh::core::renderer::set_depth_mask ( GL_FALSE );
-        model_transparent_mode_uni.set_int ( 1 );
+        island.render ( program, island_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
 
 
 
-        mirror_fbo_ms.unbind ();
-        glh::core::renderer::set_front_face ( GL_CCW );
-        glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
-        camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
-        island.render ( island_matrix, true );
-        chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, true );
-
-        mirror_fbo_ms.bind ();
-        glh::core::renderer::set_front_face ( GL_CW );
-        glh::core::renderer::viewport ( 0, 0, 1000, 1000 );
-        mirror_camera.apply ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
-        island.render ( island_matrix, true );
-        chappie.render ( glh::math::inverse ( camera.get_view () ) * chappie_matrix, true );
-
-
-
-        mirror_program.use ();
-        mirror_trans_uni.get_uniform ( "model" ).set_matrix ( mirror_matrix );
-        camera.apply ( mirror_trans_uni.get_uniform ( "view" ), mirror_trans_uni.get_uniform ( "proj" ) );
-        mirror_trans_uni.get_uniform ( "viewpos" ).set_vector ( camera.get_position () );
-
-        glh::core::renderer::disable_face_culling ();
-        glh::core::renderer::set_depth_mask ( GL_TRUE );
-        glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
-
-        mirror_fbo_ms.unbind ();
-        mirror_fbo.blit_copy ( mirror_fbo_ms, 0, 0, 1000, 1000, 0, 0, 1000, 1000, GL_COLOR_BUFFER_BIT, GL_LINEAR );
-        mirror_tex.bind ( 0 );
-        glh::core::renderer::draw_elements ( mirror_vao, GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0 );
-
-
-
+        /* swap buffers */
         window.swap_buffers ();
+
+        /* poll events */
         window.poll_events ();
 
     }
-
-    std::cout << std::endl << "average fps: " << frames / total_time << std::endl;
-
-    }  
 
     return 0;
 }

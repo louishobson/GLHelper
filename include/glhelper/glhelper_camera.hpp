@@ -15,15 +15,41 @@
  * 
  * abstract base class for all further camera classes
  * functionality such as uniform and matrix caching and applying uniforms is common to all cameras
- * the pure virtual methods are the update_view/proj/trans as the creation of these matrices will differ for each camera
+ * the pure virtual methods are the update_view/proj as the creation of these matrices will differ for each camera
  * 
  * 
  * 
- * CLASS GLH::CAMERA::CAMERA
+ * CLASS GLH::CAMERA::CAMERA_MOVEMENT
  * 
- * the default viewer camera
- * has methods to assist world-traversal with respect to angle of viewing
+ * this derivation of camera_base defines how to create a view matrix based on a view position
+ * methods for control of movement and direction of viewing are supplied for convenience
  * NOTE: restrictive mode is disabled by default, however often it is the desired camera mode
+ * 
+ * 
+ * 
+ * CLASS GLH::CAMERA::CAMERA_PERSPECTIVE
+ * 
+ * this derivation of camera_base defines how to create a perspective prpjection matrix
+ * 
+ * 
+ * 
+ * CLASS GLH::CAMERA::CAMERA_ORTHOGRAPHIC
+ * 
+ * this derivation of camera_base defines how to create an orthographic projection matrix
+ * 
+ * 
+ * 
+ * CLASS GLH::CAMERA::CAMERA_PERSPECTIVE_MOVEMENT
+ * 
+ * this is a final derivation of camera_base, through the classes camera_movement and camera_perspective
+ * this camera uses the functionality from both of these direct base classes
+ * 
+ * 
+ * 
+ * CLASS GLH::CAMERA::CAMERA_ORTHOGRAPHIC_MOVEMENT
+ * 
+ * this is a final derivation of camera_base, through the classes camera_movement and camera_orthographic
+ * this camera uses the functionality from both of these base classes
  * 
  * 
  * 
@@ -73,12 +99,42 @@ namespace glh
          */
         class camera_base;
 
-        /* class camera : camera_base
+
+
+        /* class camera_movement : camera_base
          *
-         * handles both the view and projection matrix
-         * abstracts movement and rotation
+         * derivation of camera_base to add movement functionality
+         * still intended to be a base class
          */
-        class camera;
+        class camera_movement;
+
+        /* class camera_perspective : camera_base
+         *
+         * camera using a perspective projection matrix
+         */
+        class camera_perspective;
+
+        /* class camera_orthographic : camera_base
+         *
+         * camera using a orthographic projection matrix
+         */
+        class camera_orthographic;
+
+
+
+        /* class camera_perspective_movement : camera_movement, camera_perspective
+         *
+         * camera with movement functionality and a perspective projection matrix 
+         */
+        class camera_perspective_movement;
+
+        /* class camera_orthographic_movement : camera_movement, camera_orthographic
+         * 
+         * camera with movement functionality and an orthographic projection matrix
+         */
+        class camera_orthographic_movement;
+
+
 
         /* class mirror_camera : camera_base
          *
@@ -100,14 +156,20 @@ class glh::camera::camera_base
 {
 public:
 
-    /* default zero-parameter constructor */
-    camera_base () = default;
+    /* zero-parameter constructor */
+    camera_base ()
+        : view_change { true }
+        , proj_change { true }
+    {}
 
     /* copy constructor
      *
      * non-default as cannot copy cached uniforms
      */
-    camera_base ( const camera_base& other ) {}
+    camera_base ( const camera_base& other )
+        : view_change { true }
+        , proj_change { true }
+    {}
 
     /* default move constructor */
     camera_base ( camera_base&& other ) = default;
@@ -117,7 +179,7 @@ public:
      * non-default for same reason as copy constructor
      */
     camera_base& operator= ( const camera_base& other ) 
-    { return * this; }
+    { view_change = true; proj_change = true; return * this; }
 
     /* default move assignment operator */
     camera_base& operator= ( camera_base&& other ) = default;
@@ -189,11 +251,17 @@ protected:
      */
     mutable math::mat4 view;
 
+    /* changes to the matrices in the camera */
+    mutable bool proj_change;
+
     /* proj
      *
      * the current projection matrix
      */
     mutable math::mat4 proj;
+
+    /* change in the view matrix */
+    mutable bool view_change;
 
     /* trans
      *
@@ -221,51 +289,45 @@ protected:
      * 
      * return: bool for if any changes were applied
      */
-    virtual bool update_trans () const = 0;
+    bool update_trans () const;
 
 };
 
 
 
+/* CAMERA_MOVEMENT DEFINITION */
 
-/* CAMERA DEFINITION */
-
-/* class camera
+/* class camera_movement : camera_base
  *
- * handles both the view and projection matrix
- * abstracts movement and rotation
+ * derivation of camera_base to add movement functionality
+ * still intended to be a base class
  */
-class glh::camera::camera : public camera_base
+class glh::camera::camera_movement : public virtual camera_base
 {
 public:
 
     /* full constructor
      *
-     * give parameters for look_towards and perspective_fov
+     * give parameters for look towards to create view matrix
      */
-    camera ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far );
+    camera_movement ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y );
 
-    /* minimal constructor
+    /* zero-parameter constuctor
      *
-     * create a default view matrix and give parameters for perspective_fov
+     * create view matrix from default parameters
      */
-    camera ( const double _fov, const double _aspect, const double _near, const double _far )
-        : camera { math::vec3 { 0.0, 0.0, 0.0 }, math::vec3 { 0.0, 0.0, -1.0 }, math::vec3 { 0.0, 1.0, 0.0 }, _fov, _aspect, _near, _far } {}
-        
-    /* zero parameter constructor
-     *
-     * produce a default view and projection matrix
-     */
-    camera () : camera { math::rad ( 60.0 ), 16.0 / 9.0, 0.1, 200.0 } {}
+    camera_movement ()
+        : camera_movement { math::vec3 { 0.0, 0.0, 0.0 }, math::vec3 { 0.0, 0.0, -1.0 }, math::vec3 { 0.0, 1.0, 0.0 } }
+    {}
 
     /* default copy constructor */
-    camera ( const camera& other ) = default;
+    camera_movement ( const camera_movement& other ) = default;
 
-    /* default assignment operator */
-    camera& operator= ( const camera& other ) = default;
+    /* default copy assignment operator */
+    camera_movement& operator= ( const camera_movement& other ) = default;
 
-    /* default destructor */
-    ~camera () = default;
+    /* default virtual destructor */
+    virtual ~camera_movement () = default;
 
 
 
@@ -316,6 +378,83 @@ public:
 
 
 
+    /* get/set_position
+     *
+     * get/set the current viewing position
+     */
+    const math::vec3& get_position () const { return position; }
+    void set_position ( const math::vec3& _position ) { position = _position; view_change = true; }
+
+    /* get_x/y/z
+     *
+     * get the current coordinate axis of the camera
+     */
+    const math::vec3& get_x () const { return x; }
+    const math::vec3& get_y () const { return y; }
+    const math::vec3& get_z () const { return z; }
+
+
+
+
+protected:
+
+    /* view matrix parameters */
+    math::vec3 position;
+    math::vec3 x;
+    math::vec3 y;
+    math::vec3 z;
+    math::vec3 restrict_x;
+    math::vec3 restrict_y;
+    math::vec3 restrict_z;
+
+    /* movement restriction */
+    bool restrictive_mode;
+
+
+
+    /* update_view
+     *
+     * update the view matrix
+     */
+    bool update_view () const final;
+
+};
+
+
+
+/* CAMERA_PERSPECTIVE DEFINITION */
+
+/* class camera_perspective : camera_base
+ *
+ * camera using a perspective projection matrix
+ */
+class glh::camera::camera_perspective : public virtual camera_base
+{
+public:
+
+    /* full constructor
+     *
+     * give parameters for perspective_fov
+     */
+    camera_perspective ( const double _fov, const double _aspect, const double _near, const double _far );
+        
+    /* zero parameter constructor
+     *
+     * produce a default projection matrix
+     */
+    camera_perspective () : camera_perspective { math::rad ( 60.0 ), 16.0 / 9.0, 0.1, 200.0 } {}
+
+    /* default copy constructor */
+    camera_perspective ( const camera_perspective& other ) = default;
+
+    /* default assignment operator */
+    camera_perspective& operator= ( const camera_perspective& other ) = default;
+
+    /* default virtual destructor */
+    virtual ~camera_perspective () = default;
+
+
+
     /* get/set_fov
      *
      * get/set the field of view
@@ -344,37 +483,10 @@ public:
     const double& get_far () const { return far; }
     void set_far ( const double _far ) { far = _far; proj_change = true; }
 
-    /* get/set_position
-     *
-     * get/set the current viewing position
-     */
-    const math::vec3& get_position () const { return position; }
-    void set_position ( const math::vec3& _position ) { position = _position; view_change = true; }
-
-    /* get_x/y/z
-     *
-     * get the current coordinate axis of the camera
-     */
-    const math::vec3& get_x () const { return x; }
-    const math::vec3& get_y () const { return y; }
-    const math::vec3& get_z () const { return z; }
 
 
 
-
-private:
-
-    /* view matrix parameters */
-    math::vec3 position;
-    math::vec3 x;
-    math::vec3 y;
-    math::vec3 z;
-    math::vec3 restrict_x;
-    math::vec3 restrict_y;
-    math::vec3 restrict_z;
-
-    /* movement restriction */
-    bool restrictive_mode;
+protected:
 
     /* perspective projection matrix parameters */
     double fov;
@@ -382,33 +494,156 @@ private:
     double near;
     double far;
 
-    /* changes to the matrices in the camera */
-    mutable bool view_change;
-    mutable bool proj_change;
-
     
-
-    /* update_view
-     *
-     * update the view matrix
-     */
-    bool update_view () const;
 
     /* update_proj
      *
      * update the projection matrix
      */
-    bool update_proj () const;
-
-    /* update_trans
-     *
-     * update view, proj then trans if changes to parameters have occured
-     * 
-     * return: bool for if any changes were applied
-     */
-    bool update_trans () const;
+    bool update_proj () const final;
 
 };
+
+
+
+
+/* CAMERA_ORTHOGRAPHIC DEFINITION */
+
+/* class camera_orthographic : camera_base
+ *
+ * camera using a orthographic projection matrix
+ */
+class glh::camera::camera_orthographic : public virtual camera_base
+{
+public:
+
+    /* full constructor
+     *
+     * give parameters for orthographic matrix production
+     */
+    camera_orthographic ( const math::vec3& _lbn, const math::vec3& _rtf );
+        
+    /* zero parameter constructor
+     *
+     * produce a default orthographic matrix
+     */
+    camera_orthographic () : camera_orthographic { math::vec3 { -50.0, -50.0, 0.0 }, math::vec3 { 50, 50, 200 } } {}
+
+    /* default copy constructor */
+    camera_orthographic ( const camera_orthographic& other ) = default;
+
+    /* default assignment operator */
+    camera_orthographic& operator= ( const camera_orthographic& other ) = default;
+
+    /* default virtual destructor */
+    virtual ~camera_orthographic () = default;
+
+
+
+    /* get/set_lbn
+     *
+     * get/set the lbn point of the cuboid
+     */
+    const math::vec3& get_lbn () const { return lbn; }
+    void set_lbn ( const math::vec3& _lbn ) { lbn = _lbn; proj_change = true; }
+
+    /* get/set_rtf
+     *
+     * get/set the rtf point of the cuboid
+     */
+    const math::vec3& get_rtf () const { return rtf; }
+    void set_rtf ( const math::vec3& _rtf ) { rtf = _rtf; proj_change = true; }
+
+
+
+
+protected:
+
+    /* orthographic projection matrix parameters */
+    math::vec3 lbn;
+    math::vec3 rtf;
+
+
+
+    /* update_proj
+     *
+     * update the projection matrix
+     */
+    bool update_proj () const final;
+
+};
+
+
+
+
+/* CAMERA_PERSPECTIVE_MOVEMENT DEFINITION */
+
+/* class camera_perspective_movement : camera_movement, camera_perspective
+ *
+ * camera with movement functionality and a perspective projection matrix 
+ */
+class glh::camera::camera_perspective_movement : public camera_movement, public camera_perspective
+{
+public:
+
+    /* full constructor
+     *
+     * construct based on parameters of movement and perspective cameras
+     */
+    camera_perspective_movement ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y, const double _fov, const double _aspect, const double _near, const double _far )
+        : camera_movement { _position, _direction, _world_y }
+        , camera_perspective { _fov, _aspect, _near, _far }
+    {}
+
+    /* default zero-parameter constructor */
+    camera_perspective_movement () = default;
+
+    /* default copy constructor */
+    camera_perspective_movement ( const camera_perspective_movement& other ) = default;
+
+    /* default copy assignment operator */
+    camera_perspective_movement& operator= ( const camera_perspective_movement& other ) = default;
+
+    /* default destructor */
+    ~camera_perspective_movement () = default;
+
+};
+
+
+
+/* CAMERA_ORTHOGRAPHIC_MOVEMENT DEFINITION */
+
+/* class camera_orthographic_movement : camera_movement, camera_orthographic
+ * 
+ * camera with movement functionality and an orthographic projection matrix
+ */
+class glh::camera::camera_orthographic_movement : public camera_movement, public camera_orthographic
+{
+public:
+
+    /* full constructor
+     *
+     * construct based on parameters of movement and perspective cameras
+     */
+    camera_orthographic_movement ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y, const math::vec3& _lbn, const math::vec3& _rtf )
+        : camera_movement { _position, _direction, _world_y }
+        , camera_orthographic { _lbn, _rtf, }
+    {}
+
+    /* default zero-parameter constructor */
+    camera_orthographic_movement () = default;
+
+    /* default copy constructor */
+    camera_orthographic_movement ( const camera_orthographic_movement& other ) = default;
+
+    /* default copy assignment operator */
+    camera_orthographic_movement& operator= ( const camera_orthographic_movement& other ) = default;
+
+    /* default destructor */
+    ~camera_orthographic_movement () = default;
+
+};
+
 
 
 
@@ -436,9 +671,24 @@ public:
      * _width: the width of the mirror
      * _height: the height of the mirror
      */
-    mirror_camera ( const camera& _cam, const math::vec3& _position, const math::vec3& _normal, const math::vec3& _ytan, const double _width, const double _height )
+    mirror_camera ( const camera_perspective_movement& _cam, const math::vec3& _position, const math::vec3& _normal, const math::vec3& _ytan, const double _width, const double _height )
         : cam { _cam }, position { _position }, normal { math::normalise ( _normal ) }, ytan { math::normalise ( _ytan ) }, half_width { _width / 2.0 }, half_height { _height / 2.0 }
     {}
+
+    /* deleted zero-parameter constructor */
+    mirror_camera () = delete;
+
+    /* default copy constructor */
+    mirror_camera ( const mirror_camera& other ) = default;
+
+    /* deleted copy assignment operator
+     *
+     * it is too unclear what should be copied from one to another
+     */
+    mirror_camera& operator= ( const mirror_camera& other ) = delete;
+
+    /* default destructor */
+    ~mirror_camera () = default;
 
 
 
@@ -474,10 +724,10 @@ public:
 
 
 
-private:
+protected:
 
     /* the camera the user is looking through */
-    const camera& cam;
+    const camera_perspective_movement& cam;
 
     /* parameters form the mirror */
     math::vec3 position;
@@ -499,14 +749,6 @@ private:
      * update the projection matrix
      */
     bool update_proj () const;
-
-    /* update_trans
-     *
-     * update view, proj then trans if changes to parameters have occured
-     * 
-     * return: bool for if any changes were applied
-     */
-    bool update_trans () const;
 
 };
 

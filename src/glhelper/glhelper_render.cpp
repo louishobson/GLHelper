@@ -26,19 +26,23 @@
  * draw vertices straight from a vbo (via a vao)
  * all ebo data is ignored
  * 
+ * prog: the program to use for drawing
  * _vao: the vao to draw from
  * mode: the primative to render
  * start_index: the start index of the buffered data
  * count: number of vertices to draw
  * instances: number of instances to draw (defaults to 1)
  */
-void glh::core::renderer::draw_arrays ( const vao& _vao, const GLenum mode, const GLint start_index, const GLsizei count, const unsigned instances )
+void glh::core::renderer::draw_arrays ( const program& prog, const vao& _vao, const GLenum mode, const GLint start_index, const GLsizei count, const unsigned instances )
 {
     /* prepare the vao */
     _vao.prepare_arrays ();
 
     /* bind vao */
     _vao.bind ();
+
+    /* bind program */
+    prog.bind ();
 
     /* draw arrays */
     if ( instances == 1 ) glDrawArrays ( mode, start_index, count );
@@ -52,6 +56,7 @@ void glh::core::renderer::draw_arrays ( const vao& _vao, const GLenum mode, cons
  *
  * draw vertices from an ebo (via a vao)
  * 
+ * prog: the program to use for drawing
  * _vao: the vao to draw from
  * mode: the primative to render
  * count: number of vertices to draw
@@ -59,13 +64,16 @@ void glh::core::renderer::draw_arrays ( const vao& _vao, const GLenum mode, cons
  * start_index: the start index of the elements
  * instances: number of instances to draw (defaults to 1)
  */
-void glh::core::renderer::draw_elements ( const vao& _vao, const GLenum mode, const GLint count, const GLenum type, const GLsizeiptr start_index, const unsigned instances )
+void glh::core::renderer::draw_elements ( const program& prog, const vao& _vao, const GLenum mode, const GLint count, const GLenum type, const GLsizeiptr start_index, const unsigned instances )
 {
     /* prepare the vao */
     _vao.prepare_elements ();
 
     /* bind vao */
     _vao.bind ();
+
+    /* bind program */
+    prog.bind ();
 
     /* draw elements */
     if ( instances == 1 ) glDrawElements ( mode, count, type, reinterpret_cast<GLvoid *> ( start_index ) );
@@ -79,9 +87,9 @@ void glh::core::renderer::draw_elements ( const vao& _vao, const GLenum mode, co
  *
  * get.set the clear color
  * 
- * color: vec4 containing rgba components of clear color
+ * color: fvec4 containing rgba components of clear color
  */
-void glh::core::renderer::set_clear_color ( const math::vec4& color )
+void glh::core::renderer::set_clear_color ( const math::fvec4& color )
 { 
     /* if is a new clear color run the function */
     if ( color != clear_color )
@@ -271,10 +279,35 @@ void glh::core::renderer::disable_multisample ()
 
 
 
+/* enable/disable_framebuffer_srgb
+ *
+ * enable/disable implicit conversion to srgb in framebuffer color buffer attachments
+ */
+void glh::core::renderer::enable_framebuffer_srgb ()
+{
+    /* if is disabled, enable */
+    if ( !framebuffer_srgb_state )
+    {
+        glEnable ( GL_FRAMEBUFFER_SRGB );
+        framebuffer_srgb_state = true;
+    }
+}
+void glh::core::renderer::disable_framebuffer_srgb ()
+{
+    /* if is enabled, disable */
+    if ( framebuffer_srgb_state )
+    {
+        glDisable ( GL_FRAMEBUFFER_SRGB );
+        framebuffer_srgb_state = false;
+    }
+}
+
+
+
 /* RENDERER STATIC MEMBERS DEFINITIONS */
 
 /* clear color is black by default */
-glh::math::vec4 glh::core::renderer::clear_color { 0.0, 0.0, 0.0, 1.0 };
+glh::math::fvec4 glh::core::renderer::clear_color { 0.0, 0.0, 0.0, 1.0 };
 
 /* depth testing disabled by default */
 bool glh::core::renderer::depth_test_state { false };
@@ -302,3 +335,6 @@ GLenum glh::core::renderer::front_face ( GL_CCW );
 
 /* multisampling is disabled by default */
 bool glh::core::renderer::multisample_state { false };
+
+/* framebuffer srgb is disabled by default */
+bool glh::core::renderer::framebuffer_srgb_state { false };

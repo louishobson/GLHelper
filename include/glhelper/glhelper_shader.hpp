@@ -204,9 +204,9 @@ namespace glh
 
         /* default uniform_aligned_vector types */
         template<unsigned M, class T> using ua_vector = uniform_aligned_vector<M, T>;
-        template<unsigned M> using ua_fvector = ua_vector<M, GLfloat>;
-        template<unsigned M> using ua_dvector = ua_vector<M, GLdouble>;
-        template<unsigned M> using ua_ivector = ua_vector<M, GLint>;
+        template<unsigned M> using ua_fvector = ua_vector<M, float>;
+        template<unsigned M> using ua_dvector = ua_vector<M, double>;
+        template<unsigned M> using ua_ivector = ua_vector<M, int>;
         using ua_fvec2 = ua_fvector<2>;
         using ua_fvec3 = ua_fvector<3>;
         using ua_fvec4 = ua_fvector<4>;
@@ -777,14 +777,6 @@ public:
      */
     bool is_program_in_use () const;
 
-    /* assert_is_program_in_use
-     *
-     * will throw if the associated program is not in use
-     * 
-     * operation: description of the operation being performed
-     */
-    void assert_is_program_in_use ( const std::string& operation = "" ) const;
-
 
 
     /* is_set_valid
@@ -792,14 +784,6 @@ public:
      * returnd true if it is safe to set values
      */
     bool is_set_valid () const;
-
-    /* assert_is_set_valid
-     *
-     * throws if the uniform is not set valid
-     * 
-     * operation: description of the operation
-     */
-    void assert_is_set_valid ( const std::string& operation = "" ) const;
 
 
 
@@ -1097,10 +1081,10 @@ public:
     /* get_bound_object_pointer
      *
      * produce a pointer to the program currently bound
-     * NULL is returned if no object is bound to the bind point
      */
     using object::get_bound_object_pointer;
-    static program * get_bound_object_pointer () { return dynamic_cast<program *> ( get_bound_object_pointer ( object_bind_target::GLH_PROGRAM_TARGET ) ); }
+    static object_pointer<program> get_bound_object_pointer () { return get_bound_object_pointer<program> ( object_bind_target::GLH_PROGRAM_TARGET ); }
+
 
 
 

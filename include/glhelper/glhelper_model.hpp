@@ -16,6 +16,20 @@
  * 
  * 
  * 
+ * STRUCT GLH::MODEL::IMPORT_FLAGS
+ * 
+ * struct of static integers for import flags
+ * best way to have scoped enum-style interface, while allowing int conversion
+ * 
+ * 
+ * 
+ * STRUCT GLH::MODEL::RENDER_FLAGS
+ * 
+ * struct of static integers for rendering flags 
+ * best way to have scoped enum-style interface, while allowing int conversion
+ * 
+ * 
+ * 
  * CLASS GLH::MODEL::MODEL
  * 
  * stores a model in a renderable format
@@ -135,19 +149,10 @@
 /* GLH_MODEL_MAX_UV_CHANNELS
  *
  * the maximum number of uv channels a model can contain
- * defaults to 2
+ * defaults to 4
  */
 #ifndef GLH_MODEL_MAX_UV_CHANNELS
-    #define GLH_MODEL_MAX_UV_CHANNELS 2
-#endif
-
-/* GLH_MODEL_MAX_TEXTURE_STACK_SIZE
- *
- * the maximum levels to a texture stack of a matrial
- * defaults to 2
- */
-#ifndef GLH_MODEL_MAX_TEXTURE_STACK_SIZE
-    #define GLH_MODEL_MAX_TEXTURE_STACK_SIZE 2
+    #define GLH_MODEL_MAX_UV_CHANNELS 4
 #endif
 
 
@@ -159,12 +164,14 @@
 #include <array>
 #include <iostream>
 #include <memory>
+#include <utility>
 #include <vector>
 
 /* include assimp headers */
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <assimp/pbrmaterial.h>
 
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
@@ -183,6 +190,9 @@
 
 /* include glhelper_math.hpp */
 #include <glhelper/glhelper_math.hpp>
+
+/* include glhelper_region.hpp */
+#include <glhelper/glhelper_region.hpp>
 
 
 
@@ -236,6 +246,26 @@ namespace glh
          * stores relationships between meshes
          */
         struct node;
+
+
+
+        /* FLAGS */
+
+        /* struct import_flags
+         *
+         * model import flags
+         */
+        struct import_flags;
+
+        /* struct render_flags
+         *
+         * model rendering flags
+         */
+        struct render_flags;
+
+
+
+        /* MODEL CLASS */
 
         /* class model
          *
@@ -291,7 +321,7 @@ struct glh::model::texture_stack_level
     int blend_operation;
 
     /* blend strength */
-    double blend_strength;
+    float blend_strength;
 
     /* wrapping modes */
     int wrapping_u;
@@ -305,6 +335,9 @@ struct glh::model::texture_stack_level
 
     /* texture reference */
     core::texture2d * texture;
+
+    /* true if is the same texture as the previous level */
+    bool same_as_previous;
 };
 
 
@@ -324,7 +357,7 @@ struct glh::model::texture_stack_level
     unsigned stack_size;
 
     /* array of texture references */
-    std::array<texture_stack_level, GLH_MODEL_MAX_TEXTURE_STACK_SIZE> levels;
+    std::vector<texture_stack_level> levels;
  };
 
 
@@ -349,11 +382,11 @@ struct glh::model::material
     int blending_mode;
 
     /* shininess values */
-    double shininess;
-    double shininess_strength;
+    float shininess;
+    float shininess_strength;
 
     /* opacity */
-    double opacity;
+    float opacity;
 
     /* two sided
      * 
@@ -439,6 +472,10 @@ struct glh::model::mesh
     /* the vao controlling the vbo and the ebo */
     core::vao array_object;
 
+
+
+    /* a spherical region encompassing the mesh */
+    region::spherical_region<> mesh_region;
 };
 
 
@@ -458,14 +495,128 @@ struct glh::model::node
     /* parent node */
     node * parent;
 
+
+
     /* mesh indices */
     std::vector<unsigned> mesh_indices;
 
     /* meshes */
     std::vector<mesh *> meshes;
 
+
+
     /* transformation relative to parent's node */
     math::fmat4 transform;
+
+
+
+    /* a spherical region encompassing the node, including the transformation matrix */
+    region::spherical_region<> node_region;
+};
+
+
+
+/* IMPORT_FLAGS DEFINITION */
+
+/* struct import_flags
+ *
+ * model import flags
+ */
+struct glh::model::import_flags
+{
+    /* CORE VALUES */
+
+    /* dummy value */
+    static const unsigned GLH_NONE = 0x00;
+
+    /* use sRGBA textures
+     * texture will have the internal format GL_SRGB_ALPHA
+     * this means that gamma correction will be applied on import
+     */
+    static const unsigned GLH_AMBIENT_TEXTURE_SRGBA = 0x0001;
+    static const unsigned GLH_DIFFUSE_TEXTURE_SRGBA = 0x0002;
+    static const unsigned GLH_SPECULAR_TEXTURE_SRGBA = 0x0004;
+
+    /* use sRGBA base colors
+     * texture stack base colors will be risen to the power of 2.2
+     */
+    static const unsigned GLH_AMBIENT_BASE_COLOR_SRGBA = 0x0008;
+    static const unsigned GLH_DIFFUSE_BASE_COLOR_SRGBA = 0x0010;
+    static const unsigned GLH_SPECULAR_BASE_COLOR_SRGBA = 0x0020;
+
+    /* use sRGBA vertex colors
+     * vertex colors will be risen to the power of 2.2
+     */
+    static const unsigned GLH_VERTEX_SRGBA = 0x0040;
+
+
+
+    /* configure regions fast
+     * if set, mesh regions will be configured as fast as possible
+     * will likely be significant over estimation
+     */
+    static const unsigned GLH_CONFIGURE_REGIONS_FAST = 0x0080;
+
+    /* configure regions with acceptable overestimation
+     * this will override fast region configuration
+     */
+    static const unsigned GLH_CONFIGURE_REGIONS_ACCEPTABLE = 0x0100;
+
+    /* configure regions accurately
+     * this will override fast and acceptable region configuration
+     * this may take considerably longer
+     */
+    static const unsigned GLH_CONFIGURE_REGIONS_ACCURATE = 0x0200;
+
+    /* configure only root node region
+     * this only applies when accurate regions are being used
+     * no mesh or lower level nodes will have their regions calculated, just the root node
+     */
+    static const unsigned GLH_CONFIGURE_ONLY_ROOT_NODE_REGION = 0x0400;
+
+
+
+    /* PRESET VALUES */
+
+    /* preset for sRGBA textures and base colors */
+    static const unsigned GLH_AMBIENT_SRGBA = GLH_AMBIENT_TEXTURE_SRGBA | GLH_AMBIENT_BASE_COLOR_SRGBA;
+    static const unsigned GLH_DIFFUSE_SRGBA = GLH_DIFFUSE_TEXTURE_SRGBA | GLH_DIFFUSE_BASE_COLOR_SRGBA;
+    static const unsigned GLH_SPECULAR_SRGBA = GLH_SPECULAR_TEXTURE_SRGBA | GLH_SPECULAR_BASE_COLOR_SRGBA;
+    
+    /* preset for sRGBA visual texture stacks and vertex colors
+     * these are the texture stacks that are likely to be used for coloring
+     */
+    static const unsigned GLH_VISUAL_SRGBA = GLH_AMBIENT_SRGBA | GLH_DIFFUSE_SRGBA | GLH_VERTEX_SRGBA;
+
+};
+
+
+
+/* RENDER_FLAGS DEFINITION */
+
+/* struct render_flags
+ *
+ * model rendering flags
+ */
+struct glh::model::render_flags
+{
+    /* CORE VALUES */
+
+    /* dummy value */
+    static const unsigned GLH_NONE = 0x00;
+
+    /* transparent mode 
+     * meshes which are flagged as definitely opaque will not be drawn
+     * this is useful for doing a separate opaque and transparent rendering calls
+     */
+    static const unsigned GLH_TRANSPARENT_MODE = 0x01;
+
+    /* no matierials
+     * no material-associated uniforms are set
+     * this is useful for shadow mapping and such, where material is not important
+     */
+    static const unsigned GLH_NO_MATERIAL = 0x02;
+
 };
 
 
@@ -486,11 +637,10 @@ public:
      * 
      * _directory: directory in which the model resides
      * _entry: the entry file to the model
+     * _model_import_flags: import flags for the model (or default recommended)
      * _pps: post processing steps (or default recommended)
      */
-    model ( const std::string& _directory, const std::string& _entry, const unsigned _pps = 
-    aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenUVCoords | aiProcess_TransformUVCoords | aiProcess_GenNormals | 
-    aiProcess_JoinIdenticalVertices | aiProcess_RemoveRedundantMaterials | aiProcess_OptimizeMeshes | aiProcess_Debone | aiProcess_OptimizeGraph );
+    model ( const std::string& _directory, const std::string& _entry, const unsigned _model_import_flags = import_flags::GLH_NONE, const unsigned _pps = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone | aiProcess_OptimizeGraph );
 
     /* deleted zero parameter constructor */
     model () = delete;
@@ -513,13 +663,14 @@ public:
      *
      * render the model
      * 
+     * prog: the program to use for rendering
      * material_uni: material uniform to cache and set the material properties to
      * model_uni: a 4x4 matrix uniform to cache and apply set the model transformations to
      * transform: the overall model transformation to apply (identity by default)
-     * transparent_only: only render meshes with possible transparent elements (false by default)
+     * flags: rendering flags (none by default)
      */
-    void render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform = math::identity<4> (), const bool transparent_only = false );
-    void render ( const math::mat4& transform = math::identity<4> (), const bool transparent_only = false ) const;
+    void render ( const core::program& prog, core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE );
+    void render ( const core::program& prog, const math::mat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE ) const;
 
 
 
@@ -534,6 +685,14 @@ public:
 
 
 
+    /* model_region
+     *
+     * get the region of the model based on a model matrix
+     */
+    region::spherical_region<> model_region ( const math::mat4& trans = math::identity<4> () ) { return trans * root_node.node_region; }
+
+
+
 private:
 
     /* the directory the model is contained within */
@@ -542,8 +701,14 @@ private:
     /* the entry file for the model */
     const std::string entry;
 
+    /* import flags */
+    const unsigned model_import_flags;
+
     /* the post processing steps used to import the model */
     const unsigned pps;
+
+    /* the rendering flags currently being used */
+    mutable unsigned model_render_flags;
 
 
 
@@ -584,9 +749,6 @@ private:
     /* cached uniforms */
     std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 
-    /* transparent_only flag */
-    mutable bool draw_transparent_only;
-
 
 
     /* cast_vector
@@ -610,9 +772,9 @@ private:
      * 
      * return: a glh matrix
      */
-    template<typename T> math::mat4 cast_matrix ( const aiMatrix4x4t<T>& mat )
+    template<typename T> math::fmat4 cast_matrix ( const aiMatrix4x4t<T>& mat )
     {
-        math::mat4 result;
+        math::fmat4 result;
         for ( unsigned i = 0; i < 4; ++i ) for ( unsigned j = 0; j < 4; ++j ) result.at ( i, j ) = mat [ i ][ j ];
         return result;
     }
@@ -653,14 +815,15 @@ private:
      *
      * add a texture to a texture stack
      * 
-     * _texture_stack_level: the location of the level in the texture stack
+     * _texture_stack: the texture stack to configure
      * aimaterial: the material the texture is being added from
      * index: the index of the texture
      * aitexturetype: the type of the stack
+     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
      * 
      * return: the texture stack level just added
      */
-    texture_stack_level& add_texture ( texture_stack_level& _texture_stack_level, const aiMaterial& aimaterial, const unsigned index, const aiTextureType aitexturetype );
+    texture_stack_level& add_texture ( texture_stack& _texture_stack, const aiMaterial& aimaterial, const unsigned index, const aiTextureType aitexturetype, const bool is_srgb = false );
 
     /* is_definitely_opaque
      *
@@ -696,14 +859,6 @@ private:
      */
     face& add_face ( face& _face, mesh& _mesh, const aiFace& aiface );
 
-    /* configure_buffers
-     *
-     * configure the buffers of a mesh
-     * 
-     * _mesh: the mesh to configure
-     */
-    void configure_buffers ( mesh& _mesh );
-
     /* add_node
      *
      * recursively add nodes to the node tree
@@ -715,24 +870,101 @@ private:
      */
     node& add_node ( node& _node, const aiNode& ainode );
 
+
+
+    /* configure_buffers
+     *
+     * configure the buffers of a mesh
+     * 
+     * _mesh: the mesh to configure
+     */
+    void configure_buffers ( mesh& _mesh );
+
+
+
+    /* mesh_max_min_components
+     * node_max_min_components
+     *
+     * find the maximum and minimum xyz components of all of the vertices of the mesh/node
+     * 
+     * _mesh/_node: the mesh/node to find the max/min components for 
+     * transform: transformation applied to all of the vertices
+     * 
+     * return: a pair of vec3s: the first if the max components, the second is the min components
+     */
+    std::pair<math::fvec3, math::fvec3> mesh_max_min_components ( const mesh& _mesh, const math::fmat4& transform = math::identity<4> () ) const;
+    std::pair<math::fvec3, math::fvec3> node_max_min_components ( const node& _node, const math::fmat4& transform = math::identity<4> () ) const;
+
+    /* mesh_furthest_distance
+     * node_furthest_distance
+     *
+     * find the furthest distance from a point in a mesh/node
+     * 
+     * _mesh/_node: the mesh/node to find the furthest distance in
+     * point: the point to find the furthest distance from
+     * transform: the transformation to apply to all of the vertices (assumed to be applied to point)
+     * 
+     * return: the furthest distance from that point and a vertex
+     */
+    float mesh_furthest_distance ( const mesh& _mesh, const math::fvec3& point, const math::fmat4& transform = math::identity<4> () ) const;
+    float node_furthest_distance ( const node& _node, const math::fvec3& point, const math::fmat4& transform = math::identity<4> () ) const;
+
+
+
+    /* configure_mesh_region
+     *
+     * configure the region of a mesh
+     * 
+     * _mesh: the mesh to configure
+     */
+    void configure_mesh_region ( mesh& _mesh );
+
+    /* configure_node_region
+     *
+     * configure the region of a node
+     * child nodes must have already been processed
+     *
+     * _node: the node to configure
+     */
+    void configure_node_region ( node& _node );
+
+
+
     /* render_node
      *
      * render a node and all of its children
      * 
      * _node: the node to render
+     * prog: the program to use for rendering
      * transform: the current model transformation from all the previous nodes
-     * transparent_only: only render meshes with possible transparent elements (false by default)
      */
-    void render_node ( const node& _node, const math::fmat4& transform ) const;
+    void render_node ( const node& _node, const core::program& prog, const math::fmat4& transform ) const;
 
     /* render_mesh
      *
      * render a mesh
      * 
      * _mesh: the mesh to render
-     * transparent_only: only render meshes with possible transparent elements (false by default)
+     * prog: the program to use for rendering
      */
-    void render_mesh ( const mesh& _mesh ) const;
+    void render_mesh ( const mesh& _mesh, const core::program& prog ) const;
+
+    /* apply_material
+     *
+     * apply material uniforms during mesh rendering
+     * 
+     * _material: the material to apply
+     */
+    void apply_material ( const material& _material ) const;
+
+    /* apply_texture_stack
+     *
+     * apply a texture stack during mesh rendering
+     * 
+     * _texture_stack: the texture stack to apply
+     * stack_size_uni/stack_base_color_uni/stack_levels_uni: cached stack uniforms
+     */
+    void apply_texture_stack ( const texture_stack& _texture_stack, core::uniform& stack_size_uni, core::uniform& stack_base_color_uni, core::struct_array_uniform& stack_levels_uni ) const;
 
 };
 

@@ -29,6 +29,7 @@
  */
 glh::core::object::object ( const minor_object_type type )
     : id { 0 }
+    , unique_id { next_unique_id++ }
     , minor_type { type }
     , major_type { to_major_object_type ( type ) }
     , bind_target { to_object_bind_target ( type ) }
@@ -69,6 +70,7 @@ glh::core::object::object ( const minor_object_type type )
 /* move constructor */
 glh::core::object::object ( object&& other )
     : id { other.id }
+    , unique_id { other.unique_id }
     , minor_type { other.minor_type }
     , major_type { other.major_type }
     , bind_target { other.bind_target }
@@ -129,21 +131,6 @@ glh::core::object::~object ()
 
 
 
-/* get_bound_object_pointer
- *
- * produce a pointer to the object bound to a given bind point
- * NULL is returned if no object is bound to the bind point
- *
- * target: the bind target to get the object from
- */
-glh::core::object * glh::core::object::get_bound_object_pointer ( const object_bind_target target )
-{
-    /* cast target to unsigned and return the object bound to that bind point */
-    return object_pointers.at ( static_cast<unsigned> ( to_major_object_type ( target ) ) ).at ( object_bindings.at ( static_cast<unsigned> ( target ) ) );
-}
-
-
-
 
 /* bind/unbind to a target
  *
@@ -155,7 +142,7 @@ glh::core::object * glh::core::object::get_bound_object_pointer ( const object_b
 bool glh::core::object::bind ( const object_bind_target& target ) const
 {
     /* if invalid, throw */
-    assert_is_object_valid ( "bind" );
+    if ( !is_object_valid () ) throw exception::object_exception { "attempted to bind invalid object" };
 
     /* get index of target */
     const unsigned target_index = static_cast<unsigned> ( target );
@@ -216,7 +203,7 @@ bool glh::core::object::bind ( const object_bind_target& target ) const
 bool glh::core::object::unbind ( const object_bind_target& target ) const
 {
     /* if invalid, throw */
-    assert_is_object_valid ( "unbind" );
+    if ( !is_object_valid () ) throw exception::object_exception { "attempted to unbind invalid object" };
 
     /* get index of target */
     const unsigned target_index = static_cast<unsigned> ( target );
@@ -308,20 +295,22 @@ bool glh::core::object::is_bound ( const object_bind_target& target ) const
 
 
 
-/* assert_is_object_valid
+/* force_unbind
  *
- * throws if the object is not valid
- * 
- * operation: description of the operation
+ * force the unbinding of any object bound to a bind point
+ *
+ * returns true if an object was unbound
  */
-void glh::core::object::assert_is_object_valid ( const std::string& operation ) const
-{ 
-    /* throw if invalid */
-    if ( !is_object_valid () ) 
-    {
-        if ( operation.size () > 0 ) throw exception::object_exception { "attempted to perform " + operation + " operation on invalid object" }; 
-        else throw exception::object_exception { "attempted to perform operation on invalid object" }; 
-    }
+bool glh::core::object::force_unbind ( const object_bind_target& target )
+{
+    /* get bound object */
+    const auto bound_object = get_bound_object_pointer ( target );
+
+    /* if is not invalid, unbind it */
+    if ( bound_object ) bound_object->unbind ();
+
+    /* return truth of bound_object */
+    return bound_object;
 }
 
 
@@ -495,6 +484,9 @@ bool glh::core::object::is_texture2d_multisample_bind_target ( const object_bind
 
 
 /* STATIC MEMBERS OF OBJECT DEFINITIONS */
+
+/* next_unique_id is zero at start */
+GLuint glh::core::object::next_unique_id { 0 };
 
 /* number of existing object ids per major type */
 std::array<std::vector<glh::core::object *>, static_cast<unsigned> ( glh::core::major_object_type::__COUNT__ )> glh::core::object::object_pointers
