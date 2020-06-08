@@ -99,6 +99,7 @@ int main ()
     /* cache uniforms */
     island.cache_uniforms ( material_uni, trans_uni.get_uniform ( "model" ) );
 
+    /* output info about the model region */
     std::cout << island.model_region ( island_matrix ).centre << std::endl << island.model_region ( island_matrix ).radius << std::endl;
 
 
