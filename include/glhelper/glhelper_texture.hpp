@@ -126,16 +126,23 @@ public:
      *
      * only supply the texture target
      * 
-     * _width/height: width/height of the texture
      * _minor_type: the minor type of the texture
+     * _width/height: width/height of the texture
      * _internal_format: the internal format of the data (e.g. specific bit arrangements)
      * _format: the format of the data (e.g. what the data will be used for)
      * _type: the type of the data in the texture
      */
-    texture_base ( const minor_object_type _minor_type, const int _width, const int _height, const GLenum _internal_format, const GLenum _format, const GLenum _type );
+    texture_base ( const minor_object_type _minor_type, const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type );
 
-    /* deleted zero-parameter constructor */
-    texture_base () = delete;
+    /* zero-parameter constructor
+     *
+     * set everything to defaults
+     * 
+     * _width/height: width/height of the texture
+     */
+    texture_base ( const minor_object_type _minor_type )
+        : texture_base { _minor_type, 0, 0, GL_NONE, GL_NONE, GL_NONE }
+    {}
     
     /* deleted copy constructor */
     texture_base ( const texture_base& other ) = delete;
@@ -246,27 +253,38 @@ public:
      *
      * get the width and height of the texture
      */
-    const int& get_width () const { return width; }
-    const int& get_height () const { return height; }
+    const unsigned& get_width () const { return width; }
+    const unsigned& get_height () const { return height; }
 
 protected:
 
     /* width/height of each face of the cube map */
-    int width;
-    int height;
+    unsigned width;
+    unsigned height;
 
     /* (internal_)format
      *
      * the (internal) format of the texture (e.g. GL_RGB)
      */
-    const GLenum internal_format;
-    const GLenum format;
+    GLenum internal_format;
+    GLenum format;
 
     /* type
      *
      * the type of the data in the texture
      */
-    const GLenum type;
+    GLenum type;
+
+
+
+    /* set_texture_parameters 
+     *
+     * _width/height: width/height of the texture
+     * _internal_format: the internal format of the data (e.g. specific bit arrangements)
+     * _format: the format of the data (e.g. what the data will be used for)
+     * _type: the type of the data in the texture
+     */
+    void set_texture_parameters  ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type );
 
 
 
@@ -292,7 +310,7 @@ class glh::core::texture2d : public texture_base
 public:
 
     /* image constructor
-     *
+     *texture_base ();
      * load a 2D texture from an image file
      * default settings are applied
      * 
@@ -310,14 +328,14 @@ public:
      * _format: the format of the data (e.g. what the data will be used for)
      * _type: the type of the pixel data (specific type macro with bit arrangements)
      * data: the data to put in the texture (defaults to NULL)
+     * _channels: the number of channels the texture has
      */
-    texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL );
+    texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL, const unsigned _channels = 4 );
 
-    /* deleted zero-parameter constructor
-     *
-     * a texture must be loaded to an image
-     */
-    texture2d () = delete;
+    /* zero-parameter constructor */
+    texture2d ()
+        : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE }
+    {}
 
     /* deleted copy constructor */
     texture2d ( const texture2d& other ) = delete;
@@ -343,31 +361,64 @@ public:
 
 
 
+    /* import_texture
+     *
+     * import a texture from a path
+     * 
+     * _path: path to the image for the texture
+     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
+     */
+    void import_texture ( const std::string& _path, const bool is_srgb = false );
+
+    /* set_texture
+     *
+     * set the texture to binary data
+     * 
+     * _width/_height: the width and height of the texture
+     * _internal_format: the internal format of the data (e.g. specific bit arrangements)
+     * _format: the format of the data (e.g. what the data will be used for)
+     * _type: the type of the pixel data (specific type macro with bit arrangements)
+     * data: the data to put in the texture (defaults to NULL)
+     * _channels: the number of channels the texture has
+     */
+    void set_texture ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL, const unsigned _channels = 0 );
+
+
+
     /* get_path
      *
-     * get the path the texture was originally imported from
+     * get the path the texture was imported from
      */
     const std::string& get_path () const { return path; }
 
     /* get_channels
      *
-     * get the number of channels the texture orginally had
+     * get the number of channels of the texture
      */
-    const int& get_channels () const { return channels; }
+    const unsigned& get_channels () const { return channels; }
+
+    /* has_alpha
+     *
+     * returns true if channels is 4 or 2
+     */
+    bool has_alpha () const { return ( channels == 4 || channels == 2 ); }
+
+    
 
 private:
 
     /* path
      *
-     * path to the texture
+     * the path the texture was imported from, or "" for not imported from a path
      */
-    const std::string path;
+    std::string path;
 
-    /* channels
-     *
-     * stores number of channels of the texture
+    /* channels 
+     * 
+     * if the image was loaded from a file, this value will be the number of channels of the picture
+     * else will default to 0
      */
-    int channels;
+    unsigned channels;
 
 };
 
@@ -414,8 +465,10 @@ public:
      */
     cubemap ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL );
 
-    /* deleted zero-parameter constructor */
-    cubemap () = delete;
+    /* default zero-parameter constructor */
+    cubemap ()
+        : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
+    {}
 
     /* deleted copy constructor */
     cubemap ( const cubemap& other ) = delete;
@@ -438,32 +491,26 @@ public:
 
 
 
-
-    /* get_path
+    /* import_texture
      *
-     * get the path the face at layer i was originally imported from
+     * import from either a single, or 6 images
+     * 
+     * path/paths: the path(s) to the texture file(s)
+     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
      */
-    const std::string& get_path ( const unsigned i ) const { return face_textures.at ( i ).path; }
+    void import_texture ( const std::array<std::string, 6>& paths, const bool is_srgb = false );
+    void import_texture ( const std::string& path, const bool is_srgb = false );
 
-    /* get_channels
+    /* set_texture
      *
-     * get the number of channels the face at layer i orginally had
+     * _width/_height: the width and height of the texture
+     * _internal_format: the internal format of the data (e.g. specific bit arrangements)
+     * _format: the format of the data (e.g. what the data will be used for)
+     * _type: the type of the pixel data (specific type macro with bit arrangements)
+     * data: the data to put in the texture (defaults to NULL)
+     * _channels: the number of channels the texture has
      */
-    const int& get_channels ( const unsigned i ) const { return face_textures.at ( i ).channels; }
-
-
-
-private:
-
-    /* struct to represent a texture face of the cube */
-    struct face_texture
-    {
-        std::string path;
-        int channels;
-    };
-
-    /* array of face_texture structs to store info on each face texture */
-    std::array<face_texture, 6> face_textures;
+    void set_texture ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL );
 
 };
 
@@ -489,10 +536,14 @@ public:
      * _samples: the number of sampes the texture should contain
      * _fixed_sample_locations: defaults to true - I don't know what this setting does tbh
      */
-    texture2d_multisample ( const int _width, const int _height, const GLenum _internal_format, const unsigned _samples, const bool _fixed_sample_locations = GL_TRUE );
+    texture2d_multisample ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned _samples, const bool _fixed_sample_locations = GL_TRUE );
     
-    /* deleted zero-parameter constructor */
-    texture2d_multisample () = delete;
+    /* zero-parameter constructor */
+    texture2d_multisample ()
+        : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE }
+        , samples { 0 }
+        , fixed_sample_locations { GL_TRUE }
+    {}
 
     /* deleted copy comstructor */
     texture2d_multisample ( const texture2d_multisample& other ) = delete;
@@ -515,6 +566,16 @@ public:
 
 
 
+    /* set_texture
+     *
+     * _width/_height: the width and height of the texture
+     * _internal_format: the internal format of the texture (e.g. specific bit arrangements)
+     * _samples: the number of sampes the texture should contain
+     * _fixed_sample_locations: defaults to true - I don't know what this setting does tbh
+     */
+    void set_texture ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned _samples, const bool _fixed_sample_locations = GL_TRUE );
+
+
 
     /* get_samples
      * 
@@ -525,10 +586,10 @@ public:
 private:
 
     /* number of samples of the texture */
-    const unsigned samples;
+    unsigned samples;
 
     /* whether fixed sample locations are being used */
-    const bool fixed_sample_locations;
+    bool fixed_sample_locations;
 
 };
 
