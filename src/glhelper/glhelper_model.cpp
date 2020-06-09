@@ -289,7 +289,7 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack&
     }
 
     /* not already imported, so import and set the index */
-    textures.push_back ( core::texture2d { directory + "/" + texpath, is_srgb } );
+    textures.emplace_back ( directory + "/" + texpath, is_srgb );
     _texture_stack.levels.at ( index ).index = textures.size () - 1;
 
     /* check if is the same texture as the previous level in the stack */
@@ -315,9 +315,12 @@ bool glh::model::model::is_definitely_opaque ( const material& _material )
     /* loop through all textures and return false if any have 4 channels
      * use index rather than texture pointer in stack level as they have not yet been assigned
      */
-    for ( unsigned i = 0; i < _material.ambient_stack.stack_size; ++i ) if ( textures.at ( _material.ambient_stack.levels.at ( i ).index ).get_channels () >= 4 ) return false;
-    for ( unsigned i = 0; i < _material.diffuse_stack.stack_size; ++i ) if ( textures.at ( _material.diffuse_stack.levels.at ( i ).index ).get_channels () >= 4 ) return false;
-    for ( unsigned i = 0; i < _material.specular_stack.stack_size; ++i ) if ( textures.at ( _material.specular_stack.levels.at ( i ).index ).get_channels () >= 4 ) return false;
+    for ( unsigned i = 0; i < _material.ambient_stack.stack_size; ++i ) 
+        if ( textures.at ( _material.ambient_stack.levels.at ( i ).index ).has_alpha () ) return false;
+    for ( unsigned i = 0; i < _material.diffuse_stack.stack_size; ++i ) 
+        if ( textures.at ( _material.diffuse_stack.levels.at ( i ).index ).has_alpha () ) return false;
+    for ( unsigned i = 0; i < _material.specular_stack.stack_size; ++i ) 
+        if ( textures.at ( _material.specular_stack.levels.at ( i ).index ).has_alpha () ) return false;
 
     /* otherwise the material is definitely opaque */
     return true;
