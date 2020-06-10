@@ -80,9 +80,9 @@ int main ()
 
 
 
-    /* IMPORT MODEL */
+    /* IMPORT MODELS */
 
-    /* import the model */
+    /* import island model */
     glh::model::model island { "assets/island", "scene.gltf", 
         //glh::model::import_flags::GLH_CONFIGURE_REGIONS_FAST |
         //glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCEPTABLE |
@@ -95,12 +95,26 @@ int main ()
         glh::math::identity<4, GLdouble> (),
         0.1
     );
+
+    /* import backpack model */
+    glh::model::model backpack { "assets/backpack", "backpack.obj", 
+        //glh::model::import_flags::GLH_CONFIGURE_REGIONS_FAST |
+        //glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCEPTABLE |
+        glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
+        glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
+        glh::model::import_flags::GLH_FLIP_V_TEXTURES
+    };
+    const glh::math::mat4 backpack_matrix =
+    glh::math::enlarge3d
+    (
+        glh::math::identity<4, GLdouble> (),
+        5.0
+    );
     
     /* cache uniforms */
     island.cache_uniforms ( material_uni, trans_uni.get_uniform ( "model" ) );
+    backpack.cache_uniforms ( material_uni, trans_uni.get_uniform ( "model" ) );
 
-    /* output info about the model region */
-    std::cout << island.model_region ( island_matrix ).centre << std::endl << island.model_region ( island_matrix ).radius << std::endl;
 
 
 
@@ -112,7 +126,7 @@ int main ()
     /* add directional light */
     light_system.add_light ( glh::lighting::dirlight
     {
-        glh::math::vec3 { 1.0, -1.0, 0.0 },
+        glh::math::vec3 { -1.0, 0.0, 0.0 },
         glh::math::vec3 { 1.0 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 }
@@ -177,17 +191,19 @@ int main ()
         //light_system.dirlights.at ( 0 ).shadow_camera ( island.model_region ( island_matrix ) ).apply ( trans_uni.get_uniform ( "view" ), trans_uni.get_uniform ( "proj" ) );
 
         /* clear screen */
-        glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
+        glh::core::renderer::clear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         /* render opaque */
         transparent_mode_uni.set_int ( false );
         glh::core::renderer::disable_blend ();
-        island.render ( program, island_matrix );
+        //island.render ( program, island_matrix );
+        backpack.render ( program, backpack_matrix );
 
         /* render transparent */
         transparent_mode_uni.set_int ( true );
         glh::core::renderer::enable_blend ();
-        island.render ( program, island_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
+        //island.render ( program, island_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
+        backpack.render ( program, backpack_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
 
 
 
