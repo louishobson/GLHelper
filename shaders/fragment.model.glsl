@@ -16,7 +16,7 @@
 #define MAX_TEX_STACK_SIZE 4
 
 /* maximum number of lights */
-#define MAX_NUM_LIGHTS 8
+#define MAX_NUM_LIGHTS 2
 
 /* structure for a texture */
 struct texture_stack_level_struct
@@ -67,6 +67,10 @@ struct light_struct
     vec3 specular_color;
 
     bool enabled;
+
+    bool has_shadow_map;
+    sampler2DShadow shadow_map_2d;
+    //samplerCubeShadow shadow_map_cube;
 };
 
 /* structure for storing multiple collections of lights */
