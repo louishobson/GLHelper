@@ -869,7 +869,6 @@ public:
     array_uniform ( const std::string& _name, program& _prog )
         : name { _name }
         , prog { _prog }
-        , uniforms { _name, _prog }
     {}
 
     /* deleted zero-parameter constructor */
@@ -895,15 +894,15 @@ public:
      *
      * return the uniform at an index
      */
-    T& at ( const unsigned i ) { return uniforms.get ( "[" + std::to_string ( i ) + "]" ); }
-    const T& at ( const unsigned i ) const { return uniforms.get ( "[" + std::to_string ( i ) + "]" ); }
+    T& at ( const unsigned index ) { return __at ( index ); }
+    const T& at ( const unsigned index ) const { return __at ( index ); }
 
     /* operator[]
      *
      * return value using at method
      */
-    T& operator[] ( const unsigned i ) { return at ( i ); }
-    const T& operator[] ( const unsigned i ) const { return at ( i ); }
+    T& operator[] ( const unsigned index ) { return __at ( index ); }
+    const T& operator[] ( const unsigned index ) const { return __at ( index ); }
 
 
 
@@ -930,8 +929,16 @@ protected:
     /* the program the uniform is associated with */
     program& prog;
 
-    /* storage of uniforms in the array */
-    uniform_storage<T> uniforms;
+    /* storage of uniforms in the array
+     * uniform_storage is not used, since it will be less efficient to look the uniforms up via a string than an index
+     */
+    mutable std::vector<T> uniforms;
+
+    /* __at
+     *
+     * get the uniform at an index, adding it to the array if it is not large enough
+     */
+    T& __at ( const unsigned index ) const;
 
 };
 
@@ -1324,20 +1331,20 @@ template<class T> inline bool operator!= ( const glh::core::array_uniform<T>& lh
  * construct from a (uniform aligned) vector of the same size but different type
  */
 template<unsigned M, class T>
-template<class _T> glh::math::uniform_aligned_vector<M, T>::uniform_aligned_vector ( const uniform_aligned_vector<M, _T>& other )
+template<class _T> inline glh::math::uniform_aligned_vector<M, T>::uniform_aligned_vector ( const uniform_aligned_vector<M, _T>& other )
 {
     /* copy each value from other to this */
     for ( unsigned i = 0; i < M; ++i ) data.at ( i ) = static_cast<T> ( other.data.at ( i ) );
 }
 template<unsigned M, class T>
-template<class _T> glh::math::uniform_aligned_vector<M, T>::uniform_aligned_vector ( const vector<M, _T>& other )
+template<class _T> inline glh::math::uniform_aligned_vector<M, T>::uniform_aligned_vector ( const vector<M, _T>& other )
 {
     /* copy each value from other to this */
     for ( unsigned i = 0; i < M; ++i ) data.at ( i ) = static_cast<T> ( other.at ( i ) );
 }
 
 /* implicitly casts to vector of the same type and size */
-template<unsigned M, class T> glh::math::uniform_aligned_vector<M, T>::operator vector<M, T> () const
+template<unsigned M, class T> inline glh::math::uniform_aligned_vector<M, T>::operator vector<M, T> () const
 {
     /* copy values into vector and return it */
     vector<M, T> other;
@@ -1354,20 +1361,20 @@ template<unsigned M, class T> glh::math::uniform_aligned_vector<M, T>::operator 
  * construct from a (uniform aligned) vector of the same size but different type
  */
 template<unsigned M, unsigned N, class T>
-template<class _T> glh::math::uniform_aligned_matrix<M, N, T>::uniform_aligned_matrix ( const uniform_aligned_matrix<M, N, _T>& other )
+template<class _T> inline glh::math::uniform_aligned_matrix<M, N, T>::uniform_aligned_matrix ( const uniform_aligned_matrix<M, N, _T>& other )
 {
     /* iterate over collumns and set the values in them */
     for ( unsigned i = 0; i < N; ++i ) for ( unsigned j = 0; j < M; ++j ) data.at ( ( i * 4 ) + j ) = static_cast<T> ( other.data.at ( ( i * 4 ) + j ) );
 }
 template<unsigned M, unsigned N, class T>
-template<class _T> glh::math::uniform_aligned_matrix<M, N, T>::uniform_aligned_matrix ( const matrix<M, N, _T>& other )
+template<class _T> inline glh::math::uniform_aligned_matrix<M, N, T>::uniform_aligned_matrix ( const matrix<M, N, _T>& other )
 {
     /* iterate over collumns and set the values in them */
     for ( unsigned i = 0; i < N; ++i ) for ( unsigned j = 0; j < M; ++j ) data.at ( ( i * 4 ) + j ) = static_cast<T> ( other.at ( j, i ) );
 }
 
 /* implicitly casts to matrix of the same type and size */
-template<unsigned M, unsigned N, class T> glh::math::uniform_aligned_matrix<M, N, T>::operator matrix<M, N, T> () const
+template<unsigned M, unsigned N, class T> inline glh::math::uniform_aligned_matrix<M, N, T>::operator matrix<M, N, T> () const
 {
     /* copy values into matrix and return it */
     matrix<M, N, T> other;
@@ -1398,6 +1405,29 @@ template<class T> inline T& glh::core::uniform_storage<T>::__get ( const std::st
         return uniforms.at ( postfix );
     }
 }
+
+
+
+/* ARRAY_UNIFORM IMPLEMENTATION */
+
+/* __at
+ *
+ * get the uniform at an index, adding it to the array if it is not large enough
+ */
+template<class T> inline T& glh::core::array_uniform<T>::__at ( const unsigned index ) const
+{
+    /* if i < size of the array, return the element at that index */
+    if ( index < uniforms.size () ) return uniforms.at ( index );
+
+    /* else add the uniforms up to that point */
+    for ( unsigned i = uniforms.size (); i <= index; ++i )
+        uniforms.emplace_back ( name + "[" + std::to_string ( i ) + "]", prog );
+
+    /* return the uniform at that index */
+    return uniforms.at ( index );
+}
+
+
 
 
 
