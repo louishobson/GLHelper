@@ -576,6 +576,14 @@ struct glh::model::import_flags
 
 
 
+    /* flip textures vertically
+     *
+     * if set, all imported textures will be flipped vertically
+     */
+    static const unsigned GLH_FLIP_V_TEXTURES = 0x0800;
+
+
+
     /* PRESET VALUES */
 
     /* preset for sRGBA textures and base colors */

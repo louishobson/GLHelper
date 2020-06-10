@@ -183,25 +183,19 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
     _material.ambient_stack.stack_size = aimaterial.GetTextureCount ( aiTextureType_AMBIENT );
     _material.ambient_stack.levels.resize ( _material.ambient_stack.stack_size );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_AMBIENT ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
-    {
         add_texture ( _material.ambient_stack, aimaterial, i, aiTextureType_AMBIENT, model_import_flags & import_flags::GLH_AMBIENT_TEXTURE_SRGBA );  
-    }
 
     /* set up the diffuse texture stack textures */
     _material.diffuse_stack.stack_size = aimaterial.GetTextureCount ( aiTextureType_DIFFUSE );
     _material.diffuse_stack.levels.resize ( _material.diffuse_stack.stack_size );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_DIFFUSE ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
-    {
         add_texture ( _material.diffuse_stack, aimaterial, i, aiTextureType_DIFFUSE, model_import_flags & import_flags::GLH_DIFFUSE_TEXTURE_SRGBA );  
-    }
 
     /* set up the specular texture stack textures */
     _material.specular_stack.stack_size = aimaterial.GetTextureCount ( aiTextureType_SPECULAR );
     _material.specular_stack.levels.resize ( _material.specular_stack.stack_size );
     for ( unsigned i = 0; i < aimaterial.GetTextureCount ( aiTextureType_SPECULAR ) && i < GLH_MODEL_MAX_UV_CHANNELS; ++i )
-    {
         add_texture ( _material.specular_stack, aimaterial, i, aiTextureType_SPECULAR, model_import_flags & import_flags::GLH_SPECULAR_TEXTURE_SRGBA );  
-    }
 
     /* get the blend mode */
     if ( aimaterial.Get ( AI_MATKEY_BLEND_FUNC, temp_int ) == aiReturn_SUCCESS )
@@ -261,7 +255,7 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack&
     /* set the blend attributes */
     if ( aimaterial.Get ( AI_MATKEY_TEXOP ( aitexturetype, index ), temp_int ) == aiReturn_SUCCESS )
     _texture_stack.levels.at ( index ).blend_operation = temp_int; else
-    _texture_stack.levels.at ( index ).blend_operation = ( _texture_stack.base_color == math::fvec3 {}&& index == 0 ? 1 : 0 );
+    _texture_stack.levels.at ( index ).blend_operation = ( _texture_stack.base_color == math::fvec3 {} && index == 0 ? 1 : 0 );
     if ( aimaterial.Get ( AI_MATKEY_TEXBLEND ( aitexturetype, index ), temp_float ) == aiReturn_SUCCESS ) 
     _texture_stack.levels.at ( index ).blend_strength = temp_float; else _texture_stack.levels.at ( index ).blend_strength = 1.0;
 
@@ -289,7 +283,7 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack&
     }
 
     /* not already imported, so import and set the index */
-    textures.emplace_back ( directory + "/" + texpath, is_srgb );
+    textures.emplace_back ( directory + "/" + texpath, is_srgb, model_import_flags & import_flags::GLH_FLIP_V_TEXTURES );
     _texture_stack.levels.at ( index ).index = textures.size () - 1;
 
     /* check if is the same texture as the previous level in the stack */
