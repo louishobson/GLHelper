@@ -210,12 +210,13 @@ unsigned glh::core::texture_base::bind_loop_index = 1;
  * 
  * _path: path to the image for the texture
  * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
+ * flip_v: true if the texture should be vertically flipped
  */
-glh::core::texture2d::texture2d ( const std::string& _path, const bool is_srgb )
+glh::core::texture2d::texture2d ( const std::string& _path, const bool is_srgb, const bool flip_v )
     : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE }
 {
     /* set the texture */
-    import_texture ( _path, is_srgb );
+    import_texture ( _path, is_srgb, flip_v );
 
     /* set mag/min options */
     set_mag_filter ( GL_LINEAR );
@@ -252,8 +253,9 @@ glh::core::texture2d::texture2d ( const unsigned _width, const unsigned _height,
  * 
  * _path: path to the image for the texture
  * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
+ * flip_v: true if the texture should be vertically flipped
  */
-void glh::core::texture2d::import_texture ( const std::string& _path, const bool is_srgb )
+void glh::core::texture2d::import_texture ( const std::string& _path, const bool is_srgb, const bool flip_v )
 {
     /* set the path */
     path = _path;
@@ -264,6 +266,9 @@ void glh::core::texture2d::import_texture ( const std::string& _path, const bool
 
     /* check for error */
     if ( !image_data ) throw exception::texture_exception { "failed to load texture2d texture from file at path " + path };
+
+    /* flip if flagged */
+    if ( flip_v ) stbi__vertical_flip ( image_data, _width, _height, 4 );
 
     /* set the parameters */
     set_texture_parameters ( _width, _height, ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA, GL_UNSIGNED_BYTE );
@@ -321,12 +326,13 @@ void glh::core::texture2d::set_texture ( const unsigned _width, const unsigned _
  * 
  * paths: array of 6 paths to the images for the cubemap faces
  * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
+ * flip_v: true if the texture should be vertically flipped
  */
-glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths, const bool is_srgb )
+glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths, const bool is_srgb, const bool flip_v )
     : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
 {
     /* import the cubemap */
-    import_texture ( paths, is_srgb );
+    import_texture ( paths, is_srgb, flip_v );
 
     /* set default wrapping options */
     set_wrap ( GL_REPEAT );
@@ -342,12 +348,13 @@ glh::core::cubemap::cubemap ( const std::array<std::string, 6>& paths, const boo
  *
  * path: path to the image 
  * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
+ * flip_v: true if the texture should be vertically flipped
  */
-glh::core::cubemap::cubemap ( const std::string& path, const bool is_srgb )
+glh::core::cubemap::cubemap ( const std::string& path, const bool is_srgb, const bool flip_v )
     : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
 {
     /* import the cubemap */
-    import_texture ( path, is_srgb );
+    import_texture ( path, is_srgb, flip_v );
 
     /* set default wrapping options */
     set_wrap ( GL_REPEAT );
@@ -389,8 +396,9 @@ glh::core::cubemap::cubemap ( const unsigned _width, const unsigned _height, con
  * 
  * path/paths: the path(s) to the texture file(s)
  * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
+ * flip_v: true if the texture should be vertically flipped
  */
-void glh::core::cubemap::import_texture ( const std::array<std::string, 6>& paths, const bool is_srgb )
+void glh::core::cubemap::import_texture ( const std::array<std::string, 6>& paths, const bool is_srgb, const bool flip_v )
 {
     /* bind cubemap object */
     bind ();
@@ -406,6 +414,9 @@ void glh::core::cubemap::import_texture ( const std::array<std::string, 6>& path
 
         /* check for error in image loading */
         if ( !image_data ) throw exception::texture_exception { "failed to load cubemap texture from file at path " + paths.at ( i ) };
+
+        /* flip if flagged */
+        if ( flip_v ) stbi__vertical_flip ( image_data, _width, _height, 4 );
 
         /* if first iteration, set cubemap parameters
          * else check that the width and height of this texture is the same as previous textures
@@ -431,7 +442,7 @@ void glh::core::cubemap::import_texture ( const std::array<std::string, 6>& path
     /* generate mipmap */
     generate_mipmap ();
 }
-void glh::core::cubemap::import_texture ( const std::string& path, const bool is_srgb )
+void glh::core::cubemap::import_texture ( const std::string& path, const bool is_srgb, const bool flip_v )
 {
     /* bind cubemap object */
     bind ();
@@ -442,6 +453,9 @@ void glh::core::cubemap::import_texture ( const std::string& path, const bool is
 
     /* check for error in image loading */
     if ( !image_data ) throw exception::texture_exception { "failed to load cubemap texture from file at path " + path };
+
+    /* flip if flagged */
+    if ( flip_v ) stbi__vertical_flip ( image_data, _width, _height, 4 );
 
     /* set the texture */
     set_texture_parameters ( _width, _height, ( is_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA, GL_UNSIGNED_BYTE );

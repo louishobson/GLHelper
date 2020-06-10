@@ -316,8 +316,9 @@ public:
      * 
      * _path: path to the image for the texture
      * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
+     * flip_v: true if the texture should be vertically flipped
      */
-    explicit texture2d ( const std::string& _path, const bool is_srgb = false );
+    explicit texture2d ( const std::string& _path, const bool is_srgb = false, const bool flip_v = false );
 
     /* empty texture constructor
      *
@@ -367,8 +368,9 @@ public:
      * 
      * _path: path to the image for the texture
      * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
+     * flip_v: true if the texture should be vertically flipped
      */
-    void import_texture ( const std::string& _path, const bool is_srgb = false );
+    void import_texture ( const std::string& _path, const bool is_srgb = false, const bool flip_v = false );
 
     /* set_texture
      *
@@ -441,8 +443,9 @@ public:
      * 
      * paths: array of 6 paths to the images for the cubemap faces
      * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
+     * flip_v: true if the texture should be vertically flipped
      */
-    explicit cubemap ( const std::array<std::string, 6>& paths, const bool is_srgb = false );
+    explicit cubemap ( const std::array<std::string, 6>& paths, const bool is_srgb = false, const bool flip_v = false );
 
     /* 1-image constructor
      *
@@ -450,8 +453,9 @@ public:
      *
      * path: path to the image 
      * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
+     * flip_v: true if the texture should be vertically flipped
      */
-    explicit cubemap ( const std::string& path, const bool is_srgb = false );
+    explicit cubemap ( const std::string& path, const bool is_srgb = false, const bool flip_v = false );
 
     /* empty cubemap constructor
      *
@@ -497,9 +501,10 @@ public:
      * 
      * path/paths: the path(s) to the texture file(s)
      * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
+     * flip_v: true if the texture should be vertically flipped
      */
-    void import_texture ( const std::array<std::string, 6>& paths, const bool is_srgb = false );
-    void import_texture ( const std::string& path, const bool is_srgb = false );
+    void import_texture ( const std::array<std::string, 6>& paths, const bool is_srgb = false, const bool flip_v = false );
+    void import_texture ( const std::string& path, const bool is_srgb = false, const bool flip_v = false );
 
     /* set_texture
      *
