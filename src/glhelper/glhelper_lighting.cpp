@@ -21,23 +21,6 @@
 
 /* LIGHT IMPLEMENTATION */
 
-/* copy assignment operator
- *
- * non-default for the same reason as copy constructor
- */
-glh::lighting::light& glh::lighting::light::operator= ( const light& other )
-{
-    /* set all values, ignoring cached uniform */
-    position = other.position; direction = other.direction;
-    inner_cone = other.inner_cone; outer_cone = other.outer_cone;
-    att_const = other.att_const; att_linear = other.att_linear; att_quad = other.att_quad;
-    ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color;
-    enabled = other.enabled;
-
-    /* return object */
-    return * this;
-}
-
 /* apply
  *
  * apply the lighting to a uniform
@@ -70,6 +53,7 @@ void glh::lighting::light::apply () const
     cached_uniforms->diffuse_color_uni.set_vector ( diffuse_color );
     cached_uniforms->specular_color_uni.set_vector ( specular_color );
     cached_uniforms->enabled_uni.set_int ( enabled );
+    cached_uniforms->has_shadow_map_uni.set_int ( shadow_mapping_enabled );
 }
 
 /* cache_uniforms
@@ -96,7 +80,10 @@ void glh::lighting::light::cache_uniforms ( core::struct_uniform& light_uni )
             light_uni.get_uniform ( "ambient_color" ),
             light_uni.get_uniform ( "diffuse_color" ),
             light_uni.get_uniform ( "specular_color" ),
-            light_uni.get_uniform ( "enabled" )
+            light_uni.get_uniform ( "enabled" ),
+            light_uni.get_uniform ( "has_shadow_map" ),
+            light_uni.get_uniform ( "shadow_map_2d" ),
+            light_uni.get_uniform ( "shadow_map_2d" )
         } );
     }
 }
@@ -120,6 +107,16 @@ glh::camera::camera_orthographic_movement glh::lighting::dirlight::shadow_camera
         capture_region.centre, direction, math::any_perpandicular ( direction ),
         math::vec3 { -capture_region.radius }, math::vec3 { capture_region.radius }
     };
+}
+
+/* apply_shadow_map
+ *
+ * applies the shadow map
+ */
+void glh::lighting::dirlight::apply_shadow_map () const
+{
+    /* apply to correct uniform */
+    cached_uniforms->shadow_map_2d_uni.set_int ( shadow_map.bind_map_loop () );
 }
 
 
@@ -146,6 +143,17 @@ glh::camera::camera_perspective_movement glh::lighting::pointlight::shadow_camer
     };
 }
 
+/* apply_shadow_map
+ *
+ * applies the shadow map
+ */
+void glh::lighting::pointlight::apply_shadow_map () const
+{
+    /* apply to correct uniform */
+    cached_uniforms->shadow_map_cube_uni.set_int ( shadow_map.bind_map_loop () );
+}
+
+
 
 
 /* SPOTLIGHT IMPLEMENTATION */
@@ -169,6 +177,16 @@ glh::camera::camera_perspective_movement glh::lighting::spotlight::shadow_camera
     };    
 }
 
+/* apply_shadow_map
+ *
+ * applies the shadow map
+ */
+void glh::lighting::spotlight::apply_shadow_map () const
+{
+    /* apply to correct uniform */
+    cached_uniforms->shadow_map_2d_uni.set_int ( shadow_map.bind_map_loop () );
+}
+
 
 
 /* SHADOW_MAP_2D IMPLEMENTATION */
@@ -188,6 +206,18 @@ glh::lighting::shadow_map_2d::shadow_map_2d ( const unsigned width )
     shadow_fbo.read_buffer ( GL_NONE );
 }
 
+/* resize_map
+ *
+ * resize the texture used for the shadow map
+ * 
+ * width: the width/height to set the texture to
+ */
+void glh::lighting::shadow_map_2d::resize_map ( const unsigned width )
+{
+    /* resize the texture */
+    depth_texture.set_texture ( width, width, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT );
+}
+
 
 
 /* SHADOW_MAP_CUBE IMPLEMENTATION */
@@ -205,6 +235,18 @@ glh::lighting::shadow_map_cube::shadow_map_cube ( const unsigned width )
     shadow_fbo.attach_cubemap ( depth_texture, GL_DEPTH_ATTACHMENT );
     shadow_fbo.draw_buffer ( GL_NONE );
     shadow_fbo.read_buffer ( GL_NONE );
+}
+
+/* resize_map
+ *
+ * resize the texture used for the shadow map
+ * 
+ * width: the width/height to set the texture to
+ */
+void glh::lighting::shadow_map_cube::resize_map ( const unsigned width )
+{
+    /* resize the texture */
+    depth_texture.set_texture ( width, width, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT );
 }
 
 

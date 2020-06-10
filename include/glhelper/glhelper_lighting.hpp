@@ -41,6 +41,10 @@
  *     vec3 specular_color;
  * 
  *     bool enabled;
+ * 
+ *     bool has_shadow_map;
+ *     sampler2DShadow shadow_map_2d;
+ *     samplerCubeShadow shadow_map_cube;
  * };
  * 
  * this GLSL structure contains a single light source of any type (directional/point/spotlight)
@@ -53,6 +57,9 @@
  * att_const/linear/quad: attenuation attributes for the light (only for point and spot lights)
  * ambient/diffuse/specular_color: the colors of the different components of light produced (all types)
  * enabled: whether the light is 'turned on' (all types)
+ * has_shadow_map: flag for if the light has a shadow map associated with it
+ * shadow_map_2d: sampler for a 2d shadow map
+ * shadow_map_cube: sampler for a cube shadow map
  * 
  * 
  * 
@@ -155,6 +162,22 @@ namespace glh
          */
         class light;
 
+
+
+        /* class shadow_map_2d
+         *
+         * stores the objects necessary for a 2d shadow map
+         */
+        class shadow_map_2d;
+
+        /* class shadow_map_cube
+         *
+         * stores the objects necessary for a cubemap shadow map
+         */
+        class shadow_map_cube;
+
+
+
         /* class dirlight : light
          *
          * directional light class
@@ -188,20 +211,6 @@ namespace glh
         using dirlight_collection = light_collection<dirlight>;
         using pointlight_collection = light_collection<pointlight>;
         using spotlight_collection = light_collection<spotlight>;
-
-
-
-        /* class shadow_map_2d
-         *
-         * stores the objects necessary for a 2d shadow map
-         */
-        class shadow_map_2d;
-
-        /* class shadow_map_cube
-         *
-         * stores the objects necessary for a cubemap shadow map
-         */
-        class shadow_map_cube;
 
 
 
@@ -252,11 +261,11 @@ public:
     light ( const math::vec3& _position, const math::vec3& _direction
           , const double _inner_cone, const double _outer_cone, const double _att_const, const double _att_linear, const double _att_quad
           , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-          , const bool _enabled = true )
+          , const bool _enabled = true, const bool _shadow_mapping_enabled = true )
         : position { _position }, direction { _direction }
         , inner_cone { _inner_cone }, outer_cone { _outer_cone }, att_const { _att_const }, att_linear { _att_linear }, att_quad { _att_quad }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
-        , enabled { _enabled }
+        , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }
     {}
 
     /* zero-parameter constructor
@@ -264,33 +273,19 @@ public:
      * a black light at the origin with no direction and no attenuation
      */
     light ()
-        : light { math::vec3 { 0.0 }, math::vec3 { 0.0 }
+        : light { math::vec3 {}, math::vec3 {}
                 , 0.0, 0.0, 1.0, 0.0, 0.0
-                , math::vec3 { 0.0 }, math::vec3 { 0.0 }, math::vec3 {}}
+                , math::vec3 {}, math::vec3 {}, math::vec3 {} }
     {}
 
-    /* copy constructor
-     *
-     * not default as cannot copy cached uniforms
-     */
-    light ( const light& other )
-        : position { other.position }, direction { other.direction }
-        , inner_cone { other.inner_cone }, outer_cone { other.outer_cone }, att_const { other.att_const }, att_linear { other.att_linear }, att_quad { other.att_quad }
-        , ambient_color { other.ambient_color }, diffuse_color { other.diffuse_color }, specular_color { other.specular_color }
-        , enabled { other.enabled }
-    {}
+    /* deleted copy constructor */
+    light ( const light& other ) = delete;
 
     /* default move constructor */
     light ( light&& other ) = default;
 
-    /* copy assignment operator
-     *
-     * non-default for the same reason as copy constructor
-     */
-    light& operator= ( const light& other );
-
-    /* default move assignment operator */
-    light& operator= ( light&& other ) = default;
+    /* deleted copy assignment operator */
+    light& operator= ( const light& other ) = delete;
 
     /* default pure virtual destructor */
     virtual ~light () = 0;
@@ -347,12 +342,24 @@ public:
     void disable () { enabled = false; }
     bool is_enabled () const { return enabled; }
 
+    /* enable/disable_shadow_mapping
+     * is_shadow_mapping_enabled
+     * 
+     * enable/disable shadow mapping or get whether it is already enabled
+     */
+    void enable_shadow_mapping () { shadow_mapping_enabled = true; }
+    void disable_shadow_mapping () { shadow_mapping_enabled = false; }
+    bool is_shadow_mapping_enabled () const { return shadow_mapping_enabled; }
 
 
-private:
 
-    /* whether the light is enables */
+protected:
+
+    /* whether the light is enabled */
     bool enabled;
+
+    /* whether the light has shadow mapping enabled */
+    bool shadow_mapping_enabled;
 
     /* struct for cached uniforms */
     struct cached_uniforms_struct
@@ -369,15 +376,190 @@ private:
         core::uniform& diffuse_color_uni;
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
+        core::uniform& has_shadow_map_uni;
+        core::uniform& shadow_map_2d_uni;
+        core::uniform& shadow_map_cube_uni;
     };
 
     /* cached uniforms */
     std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 
+
+
+    /* pure virtual apply_shadow_map
+     *
+     * implemented by derived class in order to apply the shadow map
+     */
+    virtual void apply_shadow_map () const = 0;
+
 };
 
 /* make destructor default */
 glh::lighting::light::~light () = default;
+
+
+
+/* SHADOW_MAP_2D DEFINITION */
+
+/* class shadow_map_2d
+ *
+ * stores the objects necessary for a 2d shadow map
+ */
+class glh::lighting::shadow_map_2d
+{
+public:
+
+    /* full constructor
+     *
+     * initialise the texture to a given size and attach it to the fbo
+     * 
+     * width: the width and height to set the texture to
+     */
+    shadow_map_2d ( const unsigned width );
+
+    /* zero-paramater constructor
+     *
+     * the depthmap texture will have no dimensions
+     */
+    shadow_map_2d ()
+        : shadow_map_2d { 0 }
+    {}
+
+    /* deleted copy constructor */
+    shadow_map_2d ( const shadow_map_2d& other ) = delete;
+
+    /* default move constructor */
+    shadow_map_2d ( shadow_map_2d&& other ) = default;
+
+    /* deleted copy assignment operator */
+    shadow_map_2d& operator= ( const shadow_map_2d& other ) = delete;
+
+    /* default destructor */
+    ~shadow_map_2d () = default;
+
+
+
+    /* resize_map
+     *
+     * resize the texture used for the shadow map
+     * 
+     * width: the width/height to set the texture to
+     */
+    void resize_map ( const unsigned width );
+
+
+
+    /* bind_map
+     *
+     * bind the depth texture to a unit
+     */
+    bool bind_map ( const unsigned unit = 0 ) const { return depth_texture.bind ( unit ); }
+
+    /* bind_map_loop
+     *
+     * bind the depth texture via the bind loop
+     */
+    unsigned bind_map_loop () const { return depth_texture.bind_loop (); }
+
+    /* bind_fbo
+     *
+     * binds the fbo of the texture map
+     */
+    bool bind_fbo () const { return shadow_fbo.bind (); }
+
+
+
+private:
+
+    /* the texture2d that will be used for the depth map */
+    core::texture2d depth_texture;
+
+    /* the fbo that will be used for generating the depth map */
+    core::fbo shadow_fbo;
+
+};
+
+
+
+/* SHADOW_MAP_CUBE DEFINITION */
+
+/* class shadow_map_cube
+ *
+ * stores the objects necessary for a cubemap shadow map
+ */
+class glh::lighting::shadow_map_cube
+{
+public:
+
+    /* full constructor
+     *
+     * initialise the cubemap to a given size and attach it to the fbo
+     * 
+     * width: the width and height to set the cubemap to
+     */
+    shadow_map_cube ( const unsigned width );
+
+    /* zero-parameter constructor
+     *
+     * the depthmap texture will have no dimensions
+     */
+    shadow_map_cube ()
+        : shadow_map_cube { 0 }
+    {}
+
+    /* deleted copy constructor */
+    shadow_map_cube ( const shadow_map_cube& other ) = delete;
+
+    /* default move constructor */
+    shadow_map_cube ( shadow_map_cube&& other ) = default;
+
+    /* deleted copy assignment operator */
+    shadow_map_cube& operator= ( const shadow_map_cube& other ) = delete;
+
+    /* default destructor */
+    ~shadow_map_cube () = default;
+
+
+
+    /* resize_map
+     *
+     * resize the texture used for the shadow map
+     * 
+     * width: the width/height to set the texture to
+     */
+    void resize_map ( const unsigned width );
+
+
+
+    /* bind_map
+     *
+     * bind the depth texture to a unit
+     */
+    bool bind_map ( const unsigned unit = 0 ) const { return depth_texture.bind ( unit ); }
+
+    /* bind_map_loop
+     *
+     * bind the depth texture via the bind loop
+     */
+    unsigned bind_map_loop () const { return depth_texture.bind_loop (); }
+
+    /* bind_fbo
+     *
+     * binds the fbo of the texture map
+     */
+    bool bind_fbo () const { return shadow_fbo.bind (); }
+
+
+
+private:
+
+    /* the cubemap that will be used for the depth map */
+    core::cubemap depth_texture;
+
+    /* the fbo that will be used for generating the depth map */
+    core::fbo shadow_fbo;
+
+};
 
 
 
@@ -397,48 +579,37 @@ public:
      */
     dirlight ( const math::vec3& _direction
              , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-             , const bool _enabled = true )
-        : light { math::vec3 { 0.0 }, _direction, 0.0, 0.0, 1.0, 0.0, 0.0, _ambient_color, _diffuse_color, _specular_color, _enabled }
+             , const bool _enabled = true, const unsigned shadow_map_width = 0 )
+        : light { math::vec3 { 0.0 }, _direction, 0.0, 0.0, 1.0, 0.0, 0.0, _ambient_color, _diffuse_color, _specular_color, _enabled, static_cast<bool> ( shadow_map_width ) }
+        , shadow_map { shadow_map_width }
     {}
 
     /* default zero-parameter constructor */
     dirlight () = default;
 
     /* default copy constructor */
-    dirlight ( const dirlight& other ) = default;
+    dirlight ( const dirlight& other ) = delete;
 
-    /* default move constructor
-     *
-     * this will use the more efficient move constructor on base class
-     */
+    /* deleted move constructor */
     dirlight ( dirlight&& other ) = default;
 
-    /* default copy assignment operator */
-    dirlight& operator= ( const dirlight& other ) = default;
-
-    /* default move assignment operator
-     *
-     * this will use the more efficient move assignment operator on base class
-     */
-    dirlight& operator= ( dirlight&& other ) = default;
+    /* deleted copy assignment operator */
+    dirlight& operator= ( const dirlight& other ) = delete;
 
     /* default destructor */
     ~dirlight () = default;
 
 
 
-    /* shadow_camera
-     *
-     * produce a camera for shadow mapping based on a region of space to capture
-     * returns an orthographic movement camera capturing the whole scene
-     * 
-     * capture_region: a spherical region of what to capture in the shadow map
-     */
-    camera::camera_orthographic_movement shadow_camera ( const region::spherical_region<>& capture_region ) const;    
-
-
-
 private:
+
+    /* shadow_map
+     *
+     * the shadow map of the light
+     */
+    shadow_map_2d shadow_map;
+
+
 
     /* make position private */
     using light::position;
@@ -451,6 +622,23 @@ private:
     /* make inner/outer_cone private */
     using light::inner_cone;
     using light::outer_cone;
+
+
+
+    /* shadow_camera
+     *
+     * produce a camera for shadow mapping based on a region of space to capture
+     * returns an orthographic movement camera capturing the whole scene
+     * 
+     * capture_region: a spherical region of what to capture in the shadow map
+     */
+    camera::camera_orthographic_movement shadow_camera ( const region::spherical_region<>& capture_region ) const;
+
+    /* apply_shadow_map
+     *
+     * applies the shadow map
+     */
+    void apply_shadow_map () const;
 
 };
 
@@ -473,33 +661,44 @@ public:
     pointlight ( const math::vec3& _position
                , const double _att_const, const double _att_linear, const double _att_quad
                , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-               , const bool _enabled = true )
-        : light { _position, math::vec3 { 0.0 }, 0.0, 0.0, _att_const, _att_linear, _att_quad, _ambient_color, _diffuse_color, _specular_color, _enabled }
+               , const bool _enabled = true, const unsigned shadow_map_width = 0 )
+        : light { _position, math::vec3 { 0.0 }, 0.0, 0.0, _att_const, _att_linear, _att_quad, _ambient_color, _diffuse_color, _specular_color, _enabled, static_cast<bool> ( shadow_map_width ) }
+        , shadow_map { shadow_map_width }
     {}
 
     /* default zero-parameter constructor */
     pointlight () = default;
 
-    /* default copy constructor */
-    pointlight ( const pointlight& other ) = default;
+    /* deleted copy constructor */
+    pointlight ( const pointlight& other ) = delete;
 
-    /* default move constructor
-     *
-     * this will use the more efficient move constructor on base class
-     */
+    /* default move constructor */
     pointlight ( pointlight&& other ) = default;
 
-    /* default copy assignment operator */
-    pointlight& operator= ( const pointlight& other ) = default;
-
-    /* default move assignment operator
-     *
-     * this will use the more efficient move assignment operator on base class
-     */
-    pointlight& operator= ( pointlight&& other ) = default;
+    /* deleted copy assignment operator */
+    pointlight& operator= ( const pointlight& other ) = delete;
 
     /* default destructor */
     ~pointlight () = default;
+
+
+
+private:
+
+    /* shadow_map
+     *
+     * the shadow map of the light
+     */
+    shadow_map_cube shadow_map;
+
+
+
+    /* make direction private */
+    using light::direction;
+
+    /* make inner/outer_cone private */
+    using light::inner_cone;
+    using light::outer_cone;
 
 
 
@@ -513,16 +712,11 @@ public:
      */
     camera::camera_perspective_movement shadow_camera ( const region::spherical_region<>& capture_region ) const;
 
-
-
-private:
-
-    /* make direction private */
-    using light::direction;
-
-    /* make inner/outer_cone private */
-    using light::inner_cone;
-    using light::outer_cone;
+    /* apply_shadow_map
+     *
+     * applies the shadow map
+     */
+    void apply_shadow_map () const;
 
 };
 
@@ -545,33 +739,35 @@ public:
     spotlight ( const math::vec3& _position, const math::vec3& _direction
               , const double _inner_cone, const double _outer_cone,const double _att_const, const double _att_linear, const double _att_quad
               , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-              , const bool _enabled = true )
-        : light { _position, _direction, _inner_cone, _outer_cone, _att_const, _att_linear, _att_quad, _ambient_color, _diffuse_color, _specular_color, _enabled }
+              , const bool _enabled = true, const unsigned shadow_map_width = 0 )
+        : light { _position, _direction, _inner_cone, _outer_cone, _att_const, _att_linear, _att_quad, _ambient_color, _diffuse_color, _specular_color, _enabled, static_cast<bool> ( shadow_map_width ) }
+        , shadow_map { shadow_map_width }
     {}
 
     /* default zero-parameter constructor */
     spotlight () = default;
 
-    /* default copy constructor */
-    spotlight ( const spotlight& other ) = default;
+    /* deleted copy constructor */
+    spotlight ( const spotlight& other ) = delete;
 
-    /* default move constructor
-     *
-     * this will use the more efficient move constructor on base class
-     */
+    /* default move constructor */
     spotlight ( spotlight&& other ) = default;
 
-    /* default copy assignment operator */
-    spotlight& operator= ( const spotlight& other ) = default;
-
-    /* default move assignment operator
-     *
-     * this will use the more efficient move assignment operator on base class
-     */
-    spotlight& operator= ( spotlight&& other ) = default;
+    /* deleted copy assignment operator */
+    spotlight& operator= ( const spotlight& other ) = delete;
 
     /* default destructor */
     ~spotlight () = default;
+
+
+
+private:
+
+    /* shadow_map
+     *
+     * the shadow map of the light
+     */
+    shadow_map_2d shadow_map;
 
 
 
@@ -582,7 +778,13 @@ public:
      * 
      * capture_region: a spherical region of what to capture in the shadow map
      */
-    camera::camera_perspective_movement shadow_camera ( const region::spherical_region<>& capture_region ) const;    
+    camera::camera_perspective_movement shadow_camera ( const region::spherical_region<>& capture_region ) const; 
+
+    /* apply_shadow_map
+     *
+     * applies the shadow map
+     */
+    void apply_shadow_map () const;
 
 };
 
@@ -605,26 +807,14 @@ public:
     /* default constructor */
     light_collection () = default;
 
-    /* copy constructor
-     *
-     * not default as cannot copy uniform cache
-     */
-    light_collection ( const light_collection& other )
-        : lights { other.lights }
-    {}
+    /* deleted copy constructor */
+    light_collection ( const light_collection& other ) = delete;
 
     /* default move constructor */
     light_collection ( light_collection&& other ) = default;
 
-    /* copy assignment operator
-     *
-     * not default for same reason as copy constructor
-     */
-    light_collection& operator= ( const light_collection& other )
-    { lights = other.lights; return * this; }
-
-    /* default move assignment operator */
-    light_collection& operator= ( light_collection&& other ) = default;
+    /* deleted copy assignment operator */
+    light_collection& operator= ( const light_collection& other ) = delete;
 
     /* default destructor */
     ~light_collection () = default;
@@ -653,8 +843,7 @@ public:
      *
      * add a light to the collection
      */
-    void add_light ( const T& _light ) { lights.push_back ( _light ); }
-    void add_light ( T&& _light ) { lights.push_back ( _light ); }
+    void add_light ( T&& _light ) { lights.push_back ( std::forward<T> ( _light ) ); }
 
     /* remove_light
      *
@@ -707,100 +896,6 @@ private:
 
 
 
-/* SHADOW_MAP_2D DEFINITION */
-
-/* class shadow_map_2d
- *
- * stores the objects necessary for a 2d shadow map
- */
-class glh::lighting::shadow_map_2d
-{
-public:
-
-    /* full constructor
-     *
-     * initialise the texture to a given size and attach it to the fbo
-     * 
-     * width: the width and height to set the texture to
-     */
-    shadow_map_2d ( const unsigned width );
-
-    /* deleted zero-paramater constructor */
-    shadow_map_2d () = delete;
-
-    /* deleted copy constructor */
-    shadow_map_2d ( const shadow_map_2d& other ) = delete;
-
-    /* default move constructor */
-    shadow_map_2d ( shadow_map_2d&& other ) = default;
-
-    /* deleted copy assignment operator */
-    shadow_map_2d& operator= ( const shadow_map_2d& other ) = delete;
-
-    /* default destructor */
-    ~shadow_map_2d () = default;
-
-
-
-private:
-
-    /* the texture2d that will be used for the depth map */
-    core::texture2d depth_texture;
-
-    /* the fbo that will be used for generating the depth map */
-    core::fbo shadow_fbo;
-
-};
-
-
-
-/* SHADOW_MAP_CUBE DEFINITION */
-
-/* class shadow_map_cube
- *
- * stores the objects necessary for a cubemap shadow map
- */
-class glh::lighting::shadow_map_cube
-{
-public:
-
-    /* full constructor
-     *
-     * initialise the cubemap to a given size and attach it to the fbo
-     * 
-     * width: the width and height to set the cubemap to
-     */
-    shadow_map_cube ( const unsigned width );
-
-    /* deleted zero-parameter constructor */
-    shadow_map_cube () = delete;
-
-    /* deleted copy constructor */
-    shadow_map_cube ( const shadow_map_cube& other ) = delete;
-
-    /* default move constructor */
-    shadow_map_cube ( shadow_map_cube&& other ) = default;
-
-    /* deleted copy assignment operator */
-    shadow_map_cube& operator= ( const shadow_map_cube& other ) = delete;
-
-    /* default destructor */
-    ~shadow_map_cube () = default;
-
-
-
-private:
-
-    /* the cubemap that will be used for the depth map */
-    core::cubemap depth_texture;
-
-    /* the fbo that will be used for generating the depth map */
-    core::fbo shadow_fbo;
-
-};
-
-
-
 /* LIGHT_SYSTEM DEFINITION */
 
 /* class light_system
@@ -814,28 +909,14 @@ public:
     /* default constructor */
     light_system () = default;
 
-    /* copy constructor
-     *
-     * not default as cannot copy uniform cache
-     */
-    light_system ( const light_system& other )
-        : dirlights { other.dirlights }
-        , pointlights { other.pointlights }
-        , spotlights { other.spotlights }
-    {}
+    /* deleted copy constructor */
+    light_system ( const light_system& other ) = delete;
 
     /* default move constructor */
     light_system ( light_system&& other ) = default;
 
-    /* copy assignment operator 
-     *
-     * not default for same reason as copy constructor
-     */
-    light_system& operator= ( const light_system& other )
-    { dirlights = other.dirlights; pointlights = other.pointlights; spotlights = other.spotlights; return * this; }
-
-    /* default move assignment operator */
-    light_system& operator= ( light_system&& other ) = default;
+    /* deleted copy assignment operator */
+    light_system& operator= ( const light_system& other ) = delete;
 
     /* default destructor */
     ~light_system () = default;
@@ -853,12 +934,9 @@ public:
      *
      * adds a light to a collection based on its type
      */
-    void add_light ( const dirlight& _light ) { dirlights.add_light ( _light ); }
-    void add_light ( dirlight&& _light ) { dirlights.add_light ( _light ); }
-    void add_light ( const pointlight& _light ) { pointlights.add_light ( _light ); }
-    void add_light ( pointlight&& _light ) { pointlights.add_light ( _light ); }  
-    void add_light ( const spotlight& _light ) { spotlights.add_light ( _light ); }
-    void add_light ( spotlight&& _light ) { spotlights.add_light ( _light ); }      
+    void add_light ( dirlight&& _light ) { dirlights.add_light ( std::forward<dirlight> ( _light ) ); }
+    void add_light ( pointlight&& _light ) { pointlights.add_light ( std::forward<pointlight> ( _light ) ); }  
+    void add_light ( spotlight&& _light ) { spotlights.add_light ( std::forward<spotlight> ( _light ) ); }      
 
 
 
