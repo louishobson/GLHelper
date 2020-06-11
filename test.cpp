@@ -77,7 +77,7 @@ int main ()
     const double movement_sensitivity = 10.0;
     const double mouse_sensitivity = glh::math::rad ( 120.0 );
     const double fov_sensitivity = glh::math::rad ( 15.0 );
-
+    
 
 
     /* IMPORT MODELS */
@@ -110,7 +110,6 @@ int main ()
     /* cache uniforms */
     island.cache_uniforms ( material_uni, trans_uni.get_uniform ( "model" ) );
     backpack.cache_uniforms ( material_uni, trans_uni.get_uniform ( "model" ) );
-
 
 
 
@@ -162,6 +161,8 @@ int main ()
             camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
             glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
         }
+
+
 
         /* get movement keys and apply changes to camera */
         if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { 0.0, 0.0, -movement_sensitivity * timeinfo.delta } );
