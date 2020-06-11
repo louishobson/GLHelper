@@ -84,8 +84,6 @@ int main ()
 
     /* import island model */
     glh::model::model island { "assets/island", "scene.gltf", 
-        //glh::model::import_flags::GLH_CONFIGURE_REGIONS_FAST |
-        //glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCEPTABLE |
         glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
         glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION
     };
@@ -98,8 +96,6 @@ int main ()
 
     /* import backpack model */
     glh::model::model backpack { "assets/backpack", "backpack.obj", 
-        //glh::model::import_flags::GLH_CONFIGURE_REGIONS_FAST |
-        //glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCEPTABLE |
         glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
         glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
         glh::model::import_flags::GLH_FLIP_V_TEXTURES
@@ -126,7 +122,7 @@ int main ()
     /* add directional light */
     light_system.add_light ( glh::lighting::dirlight
     {
-        glh::math::vec3 { -1.0, 0.0, 0.0 },
+        glh::math::vec3 { 1.0, -1.0, 0.0 },
         glh::math::vec3 { 1.0 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 }
@@ -196,14 +192,14 @@ int main ()
         /* render opaque */
         transparent_mode_uni.set_int ( false );
         glh::core::renderer::disable_blend ();
-        //island.render ( program, island_matrix );
-        backpack.render ( program, backpack_matrix );
+        island.render ( program, island_matrix );
+        //backpack.render ( program, backpack_matrix );
 
         /* render transparent */
         transparent_mode_uni.set_int ( true );
         glh::core::renderer::enable_blend ();
-        //island.render ( program, island_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
-        backpack.render ( program, backpack_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
+        island.render ( program, island_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
+        //backpack.render ( program, backpack_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
 
 
 
