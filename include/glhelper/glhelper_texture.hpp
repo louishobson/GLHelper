@@ -15,6 +15,13 @@
  * 
  * 
  * 
+ * CLASS GLH::CORE::IMAGE
+ * 
+ * imports a 2d image from an external file
+ * the format will always be 4 channel RGBA, each component an unsigned byte
+ * 
+ * 
+ * 
  * CLASS GLH::CORE::TEXTURE_BASE
  * 
  * base class for all textures
@@ -24,15 +31,28 @@
  * 
  * CLASS GLH::CORE::TEXTURE2D
  * 
- * dreivation of texture_base to represent a 2d texture
+ * derivation of texture_base to represent a 2d texture
  * the texture can be loaded from a file, or be initialised blank
  * blank textures are useful for using as color buffers for framebuffer objects
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::TEXTURE2D_ARRAY
+ * 
+ * derivation of texture_base to represent a 2d texture array
  * 
  * 
  * 
  * CLASS GLH::CORE::CUBEMAP
  * 
  * derivation of texture_base to represent a cubemap
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::TEXTURE2D_MULTISAMPLE
+ * 
+ * derivation of texture_base to represent a 2d multisampled texture
+ * this cannot be initialised to an image, since it is purely used for rendering to using an fbo
  * 
  * 
  * 
@@ -53,7 +73,11 @@
 /* INCLUDES */
 
 /* include core headers */
+#include <cstdlib>
+#include <cstring>
+#include <functional>
 #include <iostream>
+#include <memory>
 #include <string>
 
 /* include glhelper_core.hpp */
@@ -73,6 +97,14 @@ namespace glh
 {
     namespace core
     {
+        /* class image
+         *
+         * importer for external images
+         */
+        class image;
+
+
+
         /* class texture_base : object
          *
          * base class for all textures
@@ -112,6 +144,104 @@ namespace glh
 
 
 
+/* IMAGE DEFINITION */
+
+/* class image
+ *
+ * importer for external images
+ */
+class glh::core::image
+{
+public:
+
+    /* full constructor
+     *
+     * construct from path to import
+     * 
+     * _path: the path to the image
+     * _v_flip: flag as to whether the image should be vertically flipped
+     */
+    explicit image ( const std::string& _path, const bool _v_flip = false );
+
+    /* zero-parameter constructor */
+    image ();
+
+    /* copy constructor */
+    image ( const image& other );
+
+    /* default (more efficient) move constructor */
+    image ( image&& other ) = default;
+
+    /* copy assignment operator */
+    image& operator= ( const image& other );
+
+    /* default (more efficient) move assignment operator */
+    image& operator= ( image&& other ) = default;
+
+    /* default destructor */
+    ~image () = default;
+
+
+
+    /* vertical_flip
+     *
+     * flips the texture vertically
+     */
+    void vertical_flip ();
+
+
+
+    /* get_ptr
+     *
+     * get a pointer to the image data
+     */
+    void * get_ptr () { return image_data.get (); }
+    const void * get_ptr () const { return image_data.get (); }
+
+
+
+    /* get_path
+     * 
+     * get the path of the texture
+     */
+    const std::string& get_path () const { return path; }
+
+    /* get_width/height/channels
+     *
+     * get the width/height/no. of channels of the texture
+     */
+    unsigned get_width () const { return width; }
+    unsigned get_height () const { return height; }
+    unsigned get_channels () const { return channels; }
+
+    /* is_vertically_flipped
+     *
+     * returns true if the texture is vertically flipped
+     */
+    bool is_vertically_flipped () const { return v_flip; }
+
+
+
+private:
+
+    /* path to the image */
+    std::string path;
+
+    /* width, height and original number of channels of the image */
+    int width;
+    int height;
+    int channels;
+
+    /* whether the image has been vertically flipped */
+    bool v_flip;
+
+    /* shared pointer to the data of the image */
+    std::unique_ptr<void, std::function<void ( void * )>> image_data;
+    
+};
+
+
+
 /* TEXTURE_BASE DEFINITION */
 
 /* class texture_base : object
@@ -124,24 +254,12 @@ public:
 
     /* full constructor
      *
-     * only supply the texture target
-     * 
-     * _minor_type: the minor type of the texture
-     * _width/height: width/height of the texture
-     * _internal_format: the internal format of the data (e.g. specific bit arrangements)
-     * _format: the format of the data (e.g. what the data will be used for)
-     * _type: the type of the data in the texture
-     */
-    texture_base ( const minor_object_type _minor_type, const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type );
-
-    /* zero-parameter constructor
-     *
      * set everything to defaults
      * 
-     * _width/height: width/height of the texture
+     * _minor_type: the type of the texture
      */
     texture_base ( const minor_object_type _minor_type )
-        : texture_base { _minor_type, 0, 0, GL_NONE, GL_NONE, GL_NONE }
+        : object { _minor_type }
     {}
     
     /* deleted copy constructor */
@@ -249,42 +367,7 @@ public:
 
 
 
-    /* get_width/height
-     *
-     * get the width and height of the texture
-     */
-    const unsigned& get_width () const { return width; }
-    const unsigned& get_height () const { return height; }
-
 protected:
-
-    /* width/height of each face of the cube map */
-    unsigned width;
-    unsigned height;
-
-    /* (internal_)format
-     *
-     * the (internal) format of the texture (e.g. GL_RGB)
-     */
-    GLenum internal_format;
-    GLenum format;
-
-    /* type
-     *
-     * the type of the data in the texture
-     */
-    GLenum type;
-
-
-
-    /* set_texture_parameters 
-     *
-     * _width/height: width/height of the texture
-     * _internal_format: the internal format of the data (e.g. specific bit arrangements)
-     * _format: the format of the data (e.g. what the data will be used for)
-     * _type: the type of the data in the texture
-     */
-    void set_texture_parameters  ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type );
 
 
 
@@ -309,33 +392,24 @@ class glh::core::texture2d : public texture_base
 {
 public:
 
-    /* image constructor
-     *texture_base ();
-     * load a 2D texture from an image file
-     * default settings are applied
-     * 
-     * _path: path to the image for the texture
-     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
-     * flip_v: true if the texture should be vertically flipped
-     */
-    explicit texture2d ( const std::string& _path, const bool is_srgb = false, const bool flip_v = false );
-
-    /* empty texture constructor
+    /* tex_image_2d constructor
      *
-     * create an texture of a given size with supplied data
-     * 
-     * _width/_height: the width and height of the texture
-     * _internal_format: the internal format of the data (e.g. specific bit arrangements)
-     * _format: the format of the data (e.g. what the data will be used for)
-     * _type: the type of the pixel data (specific type macro with bit arrangements)
-     * data: the data to put in the texture (defaults to NULL)
-     * _channels: the number of channels the texture has
+     * see tex_image for details
      */
-    texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL, const unsigned _channels = 4 );
+    texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_NONE, const GLenum type = GL_NONE, const void * data = NULL )
+        : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE }
+        { tex_image ( _width, _height, _internal_format, format, type, data ); }
+    texture2d ( const image& _image, const bool use_srgb = false )
+        : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE }
+        { tex_image ( _image, use_srgb ); }
+
 
     /* zero-parameter constructor */
     texture2d ()
         : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE }
+        , width { 0 }, height { 0 }
+        , internal_format { GL_NONE }
+        , has_alpha_component { false }
     {}
 
     /* deleted copy constructor */
@@ -362,65 +436,90 @@ public:
 
 
 
-    /* import_texture
+    /* tex_image
      *
-     * import a texture from a path
+     * set up the texture based on provided parameters
      * 
-     * _path: path to the image for the texture
-     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
-     * flip_v: true if the texture should be vertically flipped
-     */
-    void import_texture ( const std::string& _path, const bool is_srgb = false, const bool flip_v = false );
-
-    /* set_texture
-     *
-     * set the texture to binary data
+     * EITHER:
      * 
      * _width/_height: the width and height of the texture
-     * _internal_format: the internal format of the data (e.g. specific bit arrangements)
-     * _format: the format of the data (e.g. what the data will be used for)
-     * _type: the type of the pixel data (specific type macro with bit arrangements)
-     * data: the data to put in the texture (defaults to NULL)
-     * _channels: the number of channels the texture has
+     * _internal_format: the internal format of the texture
+     * format/type: the format and component type of the input data for the texture (defaults to GL_NONE)
+     * data: the actual data to put into the texture (defaults to NULL)
+     * 
+     * OR:
+     * 
+     * _image: the image to load the texture to
+     * use_srgb: true if srgb texture should be used
      */
-    void set_texture ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL, const unsigned _channels = 0 );
+    void tex_image ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_NONE, const GLenum type = GL_NONE, const void * data = NULL );
+    void tex_image ( const image& _image, const bool use_srgb = false );
 
-
-
-    /* get_path
+    /* tex_sub_image
      *
-     * get the path the texture was imported from
+     * substitiute data into the texture
+     * changes are made to mipmap level 0, so remember to regenerate mipmaps if necessary
+     * 
+     * EITHER:
+     * 
+     * x/y_offset: the x and y offsets to begin substitution
+     * _width/_height: the width and height of the area to substitute
+     * format/type: the format and component type of the input data
+     * data: the data to substitute
+     * 
+     * OR:
+     * 
+     * x/y_offset: the x and y offsets to begin substitution
+     * _image: the image to substitute into the texture
      */
-    const std::string& get_path () const { return path; }
+    void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned _width, const unsigned _height, const GLenum format, const GLenum type, const void * data );
+    void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const image& _image );
 
-    /* get_channels
+
+
+    /* get_width/height
      *
-     * get the number of channels of the texture
+     * get the width and height of the texture
      */
-    const unsigned& get_channels () const { return channels; }
+    const unsigned& get_width () const { return width; }
+    const unsigned& get_height () const { return height; }
+
+    /* get_internal_format
+     *
+     * get the internal format of the texture
+     */
+    const GLenum& get_internal_format () const { return internal_format; }
 
     /* has_alpha
      *
-     * returns true if channels is 4 or 2
+     * returns has_alpha_component
      */
-    bool has_alpha () const { return ( channels == 4 || channels == 2 ); }
+    bool has_alpha () const { return has_alpha_component; }
 
-    
+
 
 private:
 
-    /* path
+    /* width/height
      *
-     * the path the texture was imported from, or "" for not imported from a path
+     * the width and height of the texture
      */
-    std::string path;
+    unsigned width;
+    unsigned height;
 
-    /* channels 
+    /* internal_format
      * 
-     * if the image was loaded from a file, this value will be the number of channels of the picture
-     * else will default to 0
+     * respectively:
+     * 
+     * the format of the data stored in the texture
      */
-    unsigned channels;
+    GLenum internal_format;
+
+    /* has_alpha_component
+     *
+     * is true if imported from image, which had an alpha component
+     */
+    bool has_alpha_component;
 
 };
 
@@ -436,42 +535,25 @@ class glh::core::cubemap : public texture_base
 {
 public:
 
-    /* 6-image constructor
+    /* tex_image constructor
      *
-     * construct the cubemap from six separate images for each layer
-     * the order of the paths is the same as the order of cubemap layers
-     * 
-     * paths: array of 6 paths to the images for the cubemap faces
-     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
-     * flip_v: true if the texture should be vertically flipped
+     * see tex_image for details
      */
-    explicit cubemap ( const std::array<std::string, 6>& paths, const bool is_srgb = false, const bool flip_v = false );
+    cubemap ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_NONE, const GLenum type = GL_NONE, const void * data = NULL )
+        : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
+        { tex_image ( _width, _height, _internal_format, format, type, data ); }
+    cubemap ( const image& _image, const bool use_srgb = false )
+        : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
+        { tex_image ( _image, use_srgb ); }
+    cubemap ( const image& _image_0, const image& _image_1, const image& _image_2, const image& _image_3, const image& _image_4, const image& _image_5, const bool use_srgb = false )
+        : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
+        { tex_image ( _image_0, _image_1, _image_2, _image_3, _image_4, _image_5, use_srgb ); }
 
-    /* 1-image constructor
-     *
-     * construct the cubemap width one image for all six sides
-     *
-     * path: path to the image 
-     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
-     * flip_v: true if the texture should be vertically flipped
-     */
-    explicit cubemap ( const std::string& path, const bool is_srgb = false, const bool flip_v = false );
-
-    /* empty cubemap constructor
-     *
-     * all of the sizes are initialised to the same parameters
-     * 
-     * _width/_height: the width and height of the texture
-     * _internal_format: the internal format of the data (e.g. specific bit arrangements)
-     * _format: the format of the data (e.g. what the data will be used for)
-     * _type: the type of the pixel data (specific type macro with bit arrangements)
-     * data: the data to put in the texture (defaults to NULL)
-     */
-    cubemap ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL );
-
-    /* default zero-parameter constructor */
+    /* zero-parameter constructor */
     cubemap ()
         : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
+        , width { 0 }, height { 0 }
+        , internal_format { GL_NONE }
     {}
 
     /* deleted copy constructor */
@@ -495,27 +577,104 @@ public:
 
 
 
-    /* import_texture
+    /* tex_image
      *
-     * import from either a single, or 6 images
+     * set up the cubemap based on provided parameters
      * 
-     * path/paths: the path(s) to the texture file(s)
-     * is_srgb: true if the texture should be corrected to linear color space (defaults to false)
-     * flip_v: true if the texture should be vertically flipped
+     * EITHER:
+     * 
+     * _width/_height: the width and height of all of the faces of the cubemap
+     * _internal_format: the internal format of the cubemap
+     * format/type: the format and component type of the input data for the cubemap (defaults to GL_NONE)
+     * data: the data to apply to each face of the cubemap (defaults to NULL)
+     * 
+     * OR:
+     * 
+     * _image: the image to load each face of the cubemap to
+     * use_srgb: true if srgb texture should be used
+     * 
+     * OR:
+     * 
+     * _image_0...5: six images for each face of the cubemap in the same order as usual
+     * use_srgb: true if srgb texture should be used
      */
-    void import_texture ( const std::array<std::string, 6>& paths, const bool is_srgb = false, const bool flip_v = false );
-    void import_texture ( const std::string& path, const bool is_srgb = false, const bool flip_v = false );
+    void tex_image ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_NONE, const GLenum type = GL_NONE, const void * data = NULL );
+    void tex_image ( const image& _image, const bool use_srgb = false );
+    void tex_image ( const image& _image_0, const image& _image_1, const image& _image_2, const image& _image_3, const image& _image_4, const image& _image_5, const bool use_srgb = false );
 
-    /* set_texture
+    /* tex_sub_image
      *
-     * _width/_height: the width and height of the texture
-     * _internal_format: the internal format of the data (e.g. specific bit arrangements)
-     * _format: the format of the data (e.g. what the data will be used for)
-     * _type: the type of the pixel data (specific type macro with bit arrangements)
-     * data: the data to put in the texture (defaults to NULL)
-     * _channels: the number of channels the texture has
+     * substitiute data into the cubemap
+     * changes are made to mipmap level 0, so remember to regenerate mipmaps if necessary
+     * 
+     * EITHER: applied to every face
+     * 
+     * x/y_offset: the x and y offsets to begin substitution
+     * _width/_height: the width and height of the area to substitute
+     * format/type: the format and component type of the input data
+     * data: the data to substitute
+     * 
+     * OR: applied to the face supplied
+     * 
+     * face: the face to substitute data into
+     * x/y_offset: the x and y offsets to begin substitution
+     * _width/_height: the width and height of the area to substitute
+     * format/type: the format and component type of the input data
+     * data: the data to substitute
+     * 
+     * OR: applied to every face
+     * 
+     * x/y_offset: the x and y offsets to begin substitution
+     * _image: the image to substitute into the texture
+     * 
+     * OR: applied to the face supplied
+     * 
+     * face: the face to substitute data into
+     * x/y_offset: the x and y offsets to begin substitution
+     * _image: the image to substitute into the texture
+     * 
+     * OR: applied to every face with different textures
+     * 
+     * x/y_offset: the x and y offsets to begin substitution
+     * _image_0...5: six images for each face of the cubemap in the same order as usual
      */
-    void set_texture ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum _format, const GLenum _type, const GLvoid * data = NULL );
+    void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned _width, const unsigned _height, const GLenum format, const GLenum type, const void * data );
+    void tex_sub_image ( const unsigned face, const unsigned x_offset, const unsigned y_offset, const unsigned _width, const unsigned _height, const GLenum format, const GLenum type, const void * data );
+    void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const image& _image );
+    void tex_sub_image ( const unsigned face, const unsigned x_offset, const unsigned y_offset, const image& _image );
+    void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const image& _image_0, const image& _image_1, const image& _image_2, const image& _image_3, const image& _image_4, const image& _image_5 );
+
+
+
+    /* get_width/height
+     *
+     * get the width and height of the texture
+     */
+    const unsigned& get_width () const { return width; }
+    const unsigned& get_height () const { return height; }
+
+    /* get_internal_format
+     *
+     * get the internal format of the texture
+     */
+    const GLenum& get_internal_format () const { return internal_format; }
+
+private:
+
+    /* width/height
+     *
+     * the width and height of the texture
+     */
+    unsigned width;
+    unsigned height;
+
+    /* internal_format
+     * 
+     * respectively:
+     * 
+     * the format of the data stored in the texture
+     */
+    GLenum internal_format;
 
 };
 
@@ -532,25 +691,24 @@ class glh::core::texture2d_multisample : public texture_base
 {
 public:
 
-    /* empty texture constructor
-     * 
-     * constructs a multisample texture with a given size and number of samples 
-     * 
-     * _width/_height: the width and height of the texture
-     * _internal_format: the internal format of the texture (e.g. specific bit arrangements)
-     * _samples: the number of sampes the texture should contain
-     * _fixed_sample_locations: defaults to true - I don't know what this setting does tbh
+    /* tex_image constructor
+     *
+     * see tex_image for details
      */
-    texture2d_multisample ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned _samples, const bool _fixed_sample_locations = GL_TRUE );
-    
+    texture2d_multisample ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations = GL_TRUE )
+        : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE }
+    { tex_image ( _width, _height, _samples, _internal_format, _fixed_sample_locations ); }
+
     /* zero-parameter constructor */
     texture2d_multisample ()
         : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE }
+        , width { 0 }, height { 0 }
         , samples { 0 }
+        , internal_format { GL_NONE }
         , fixed_sample_locations { GL_TRUE }
     {}
 
-    /* deleted copy comstructor */
+    /* deleted copy constructor */
     texture2d_multisample ( const texture2d_multisample& other ) = delete;
 
     /* default move constructor */
@@ -571,16 +729,18 @@ public:
 
 
 
-    /* set_texture
+    /* tex_image
      *
+     * set up the 2d multisample texture
+     * 
      * _width/_height: the width and height of the texture
-     * _internal_format: the internal format of the texture (e.g. specific bit arrangements)
-     * _samples: the number of sampes the texture should contain
-     * _fixed_sample_locations: defaults to true - I don't know what this setting does tbh
+     * _samples: the number of samples
+     * _internal_format: the internal texture format
+     * _fixed_sample_locations: whether to use fixed sample locations (defaults to true)
      */
-    void set_texture ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned _samples, const bool _fixed_sample_locations = GL_TRUE );
+    void tex_image ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations = GL_TRUE );
 
-
+    
 
     /* get_samples
      * 
@@ -590,8 +750,23 @@ public:
 
 private:
 
+    /* width/height
+     *
+     * the width and height of the texture
+     */
+    unsigned width;
+    unsigned height;
+
     /* number of samples of the texture */
     unsigned samples;
+
+    /* internal_format
+     * 
+     * respectively:
+     * 
+     * the format of the data stored in the texture
+     */
+    GLenum internal_format;
 
     /* whether fixed sample locations are being used */
     bool fixed_sample_locations;
