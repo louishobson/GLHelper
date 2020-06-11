@@ -43,16 +43,16 @@
  * 
  * 
  * 
- * CLASS GLH::CORE::CUBEMAP
- * 
- * derivation of texture_base to represent a cubemap
- * 
- * 
- * 
  * CLASS GLH::CORE::TEXTURE2D_MULTISAMPLE
  * 
  * derivation of texture_base to represent a 2d multisampled texture
  * this cannot be initialised to an image, since it is purely used for rendering to using an fbo
+ * 
+ * 
+ * 
+ * CLASS GLH::CORE::CUBEMAP
+ * 
+ * derivation of texture_base to represent a cubemap
  * 
  * 
  * 
@@ -114,22 +114,27 @@ namespace glh
         /* class texture2d : texture_base
          *
          * represents a 2D texture
-         * automatically loads the texture given a path, and creates a mipmap
          */
         class texture2d;
 
-        /* class cubemap : texture_base
+        /*  class texture2d_array : texture_base
          *
-         * represents a cubemap
+         * represents an array of 2d textures
          */
-        class cubemap;
+        class texture2d_array;
 
         /* class texture2d_multisample : texture_base
          *
-         * multisample2d texture
-         * no image will be loaded into this texture, as it will be used as a buffer rather than to store images
+         * represents a multisample 2d texture
          */
         class texture2d_multisample;
+
+        /* class cubemap : texture_base
+         *
+         * represents a cubemap texture
+         */
+        class cubemap;
+
     }
 
     namespace exception
@@ -386,7 +391,6 @@ protected:
 /* class texture2d : texture_base
  *
  * represents a 2D texture
- * automatically loads the texture given a path, and creates a mipmap
  */
 class glh::core::texture2d : public texture_base
 {
@@ -525,11 +529,118 @@ private:
 
 
 
+/* TEXTURE2D_ARRAY DEFINITION */
+
+/*  class texture2d_array : texture_base
+ *
+ * represents an array of 2d textures
+ */
+class glh::core::texture2d_array : texture_base
+{
+
+};
+
+
+
+/* TEXTURE2D_MULTISAMPLE DEFINITION */
+
+/* class texture2d_multisample : texture_base
+ *
+ * representsb a multisample 2D texture
+ */
+class glh::core::texture2d_multisample : public texture_base
+{
+public:
+
+    /* tex_image constructor
+     *
+     * see tex_image for details
+     */
+    texture2d_multisample ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations = GL_TRUE )
+        : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE }
+    { tex_image ( _width, _height, _samples, _internal_format, _fixed_sample_locations ); }
+
+    /* zero-parameter constructor */
+    texture2d_multisample ()
+        : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE }
+        , width { 0 }, height { 0 }
+        , samples { 0 }
+        , internal_format { GL_NONE }
+        , fixed_sample_locations { GL_TRUE }
+    {}
+
+    /* deleted copy constructor */
+    texture2d_multisample ( const texture2d_multisample& other ) = delete;
+
+    /* default move constructor */
+    texture2d_multisample ( texture2d_multisample&& other ) = default;
+
+    /* default destructor */
+    ~texture2d_multisample () = default;
+
+
+
+    /* get_bound_object_pointer
+     *
+     * produce a pointer to the texture2d_multisample currently bound to a unit
+     */
+    using object::get_bound_object_pointer;
+    static object_pointer<texture2d_multisample> get_bound_object_pointer ( const unsigned unit = 0 )
+    { return get_bound_object_pointer<texture2d_multisample> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET ) + unit ) ); }
+
+
+
+    /* tex_image
+     *
+     * set up the 2d multisample texture
+     * 
+     * _width/_height: the width and height of the texture
+     * _samples: the number of samples
+     * _internal_format: the internal texture format
+     * _fixed_sample_locations: whether to use fixed sample locations (defaults to true)
+     */
+    void tex_image ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations = GL_TRUE );
+
+    
+
+    /* get_samples
+     * 
+     * get the number of samples the texture has
+     */
+    const unsigned& get_samples () const { return samples; }
+
+private:
+
+    /* width/height
+     *
+     * the width and height of the texture
+     */
+    unsigned width;
+    unsigned height;
+
+    /* number of samples of the texture */
+    unsigned samples;
+
+    /* internal_format
+     * 
+     * respectively:
+     * 
+     * the format of the data stored in the texture
+     */
+    GLenum internal_format;
+
+    /* whether fixed sample locations are being used */
+    bool fixed_sample_locations;
+
+};
+
+
+
 /* CUBEMAP DEFINITION */
 
 /* class cubemap : texture_base
  *
- * represents a cubemap
+ * represents a cubemap texture
  */
 class glh::core::cubemap : public texture_base
 {
@@ -675,101 +786,6 @@ private:
      * the format of the data stored in the texture
      */
     GLenum internal_format;
-
-};
-
-
-
-/* TEXTURE2D_MULTISAMPLE DEFINITION */
-
-/* class texture2d_multisample : texture_base
- *
- * multisample2d texture
- * no image will be loaded into this texture, as it will be used as a buffer rather than to store images
- */
-class glh::core::texture2d_multisample : public texture_base
-{
-public:
-
-    /* tex_image constructor
-     *
-     * see tex_image for details
-     */
-    texture2d_multisample ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations = GL_TRUE )
-        : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE }
-    { tex_image ( _width, _height, _samples, _internal_format, _fixed_sample_locations ); }
-
-    /* zero-parameter constructor */
-    texture2d_multisample ()
-        : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE }
-        , width { 0 }, height { 0 }
-        , samples { 0 }
-        , internal_format { GL_NONE }
-        , fixed_sample_locations { GL_TRUE }
-    {}
-
-    /* deleted copy constructor */
-    texture2d_multisample ( const texture2d_multisample& other ) = delete;
-
-    /* default move constructor */
-    texture2d_multisample ( texture2d_multisample&& other ) = default;
-
-    /* default destructor */
-    ~texture2d_multisample () = default;
-
-
-
-    /* get_bound_object_pointer
-     *
-     * produce a pointer to the texture2d_multisample currently bound to a unit
-     */
-    using object::get_bound_object_pointer;
-    static object_pointer<texture2d_multisample> get_bound_object_pointer ( const unsigned unit = 0 )
-    { return get_bound_object_pointer<texture2d_multisample> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET ) + unit ) ); }
-
-
-
-    /* tex_image
-     *
-     * set up the 2d multisample texture
-     * 
-     * _width/_height: the width and height of the texture
-     * _samples: the number of samples
-     * _internal_format: the internal texture format
-     * _fixed_sample_locations: whether to use fixed sample locations (defaults to true)
-     */
-    void tex_image ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations = GL_TRUE );
-
-    
-
-    /* get_samples
-     * 
-     * get the number of samples the texture has
-     */
-    const unsigned& get_samples () const { return samples; }
-
-private:
-
-    /* width/height
-     *
-     * the width and height of the texture
-     */
-    unsigned width;
-    unsigned height;
-
-    /* number of samples of the texture */
-    unsigned samples;
-
-    /* internal_format
-     * 
-     * respectively:
-     * 
-     * the format of the data stored in the texture
-     */
-    GLenum internal_format;
-
-    /* whether fixed sample locations are being used */
-    bool fixed_sample_locations;
 
 };
 

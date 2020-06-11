@@ -330,6 +330,31 @@ void glh::core::texture2d::tex_sub_image ( const unsigned x_offset, const unsign
 
 
 
+/* TEXTURE2D_MULTISAMPLE IMPLEMENTATION */
+
+/* tex_image
+ * 
+ * set up the 2d multisample texture
+ * 
+ * _width/_height: the width and height of the texture
+ * _samples: the number of samples
+ * _internal_format: the internal texture format
+ * _fixed_sample_locations: whether to use fixed sample locations (defaults to true)
+ */
+void glh::core::texture2d_multisample::tex_image ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations )
+{
+    /* set the parameters */
+    width = _width; height = _height;
+    samples = _samples;
+    internal_format = _internal_format;
+    fixed_sample_locations = _fixed_sample_locations;
+
+    /* set up the texture */
+    bind ();
+    glTexImage2DMultisample ( opengl_bind_target, samples, internal_format, width, height, fixed_sample_locations );
+}
+
+
 
 /* CUBEMAP IMPLEMENTATION */
 
@@ -492,33 +517,6 @@ void glh::core::cubemap::tex_sub_image ( const unsigned x_offset, const unsigned
     glTexSubImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + 4, 0, x_offset, y_offset, _image_4.get_width (), _image_4.get_height (), GL_RGBA, GL_UNSIGNED_BYTE, _image_4.get_ptr () );
     glTexSubImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + 5, 0, x_offset, y_offset, _image_5.get_width (), _image_5.get_height (), GL_RGBA, GL_UNSIGNED_BYTE, _image_5.get_ptr () );
 }
-
-
-
-/* TEXTURE2D_MULTISAMPLE IMPLEMENTATION */
-
-/* tex_image
- * 
- * set up the 2d multisample texture
- * 
- * _width/_height: the width and height of the texture
- * _samples: the number of samples
- * _internal_format: the internal texture format
- * _fixed_sample_locations: whether to use fixed sample locations (defaults to true)
- */
-void glh::core::texture2d_multisample::tex_image ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations )
-{
-    /* set the parameters */
-    width = _width; height = _height;
-    samples = _samples;
-    internal_format = _internal_format;
-    fixed_sample_locations = _fixed_sample_locations;
-
-    /* set up the texture */
-    bind ();
-    glTexImage2DMultisample ( opengl_bind_target, samples, internal_format, width, height, fixed_sample_locations );
-}
-
 
 
 

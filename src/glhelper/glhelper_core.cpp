@@ -52,8 +52,9 @@ glh::core::object::object ( const minor_object_type type )
     case minor_object_type::GLH_PROGRAM_TYPE: id = glCreateProgram (); break;
 
     case minor_object_type::GLH_TEXTURE2D_TYPE: glGenTextures ( 1, &id ); break;
-    case minor_object_type::GLH_CUBEMAP_TYPE: glGenTextures ( 1, &id ); break;
+    case minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE: glDeleteTextures ( 1, &id ); break;
     case minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE: glGenTextures ( 1, &id ); break;
+    case minor_object_type::GLH_CUBEMAP_TYPE: glGenTextures ( 1, &id ); break;
 
     default: throw exception::object_exception { "attempted to perform generation operation on unknown object type" };
     }
@@ -113,8 +114,9 @@ glh::core::object::~object ()
     case minor_object_type::GLH_PROGRAM_TYPE: glDeleteProgram ( id ); break;
 
     case minor_object_type::GLH_TEXTURE2D_TYPE: glDeleteTextures ( 1, &id ); break;
-    case minor_object_type::GLH_CUBEMAP_TYPE: glDeleteTextures ( 1, &id ); break;
+    case minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE: glDeleteTextures ( 1, &id ); break;
     case minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE: glDeleteTextures ( 1, &id ); break;
+    case minor_object_type::GLH_CUBEMAP_TYPE: glDeleteTextures ( 1, &id ); break;
 
     default: break;
         /* throw exception::object_exception { "attempted to perform destroy operation on unknown object type" };
@@ -179,15 +181,21 @@ bool glh::core::object::bind ( const object_bind_target& target ) const
             glActiveTexture ( GL_TEXTURE0 + unit );
             glBindTexture ( opengl_target, id );
         } else
-        if ( is_cubemap_bind_target ( target ) )
+        if ( is_texture2d_array_bind_target ( target ) ) 
         {
-            const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET );
+            const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_ARRAY_0_TARGET );
             glActiveTexture ( GL_TEXTURE0 + unit );
             glBindTexture ( opengl_target, id );
         } else
         if ( is_texture2d_multisample_bind_target ( target ) )
         {
             const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET );
+            glActiveTexture ( GL_TEXTURE0 + unit );
+            glBindTexture ( opengl_target, id );
+        } else
+        if ( is_cubemap_bind_target ( target ) )
+        {
+            const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET );
             glActiveTexture ( GL_TEXTURE0 + unit );
             glBindTexture ( opengl_target, id );
         } else throw exception::object_exception { "attempted to bind unknown bind target" };
@@ -240,15 +248,21 @@ bool glh::core::object::unbind ( const object_bind_target& target ) const
             glActiveTexture ( GL_TEXTURE0 + unit );
             glBindTexture ( opengl_target, 0 );
         } else
-        if ( is_cubemap_bind_target ( target ) )
+        if ( is_texture2d_array_bind_target ( target ) ) 
         {
-            const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET );
+            const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_ARRAY_0_TARGET );
             glActiveTexture ( GL_TEXTURE0 + unit );
             glBindTexture ( opengl_target, 0 );
         } else
         if ( is_texture2d_multisample_bind_target ( target ) )
         {
             const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET );
+            glActiveTexture ( GL_TEXTURE0 + unit );
+            glBindTexture ( opengl_target, 0 );
+        } else
+        if ( is_cubemap_bind_target ( target ) )
+        {
+            const unsigned unit = target_index - static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET );
             glActiveTexture ( GL_TEXTURE0 + unit );
             glBindTexture ( opengl_target, 0 );
         } else throw exception::object_exception { "attempted to unbind unknown bind target" };
@@ -366,8 +380,9 @@ glh::core::major_object_type glh::core::object::to_major_object_type ( const min
     case minor_object_type::GLH_PROGRAM_TYPE: return major_object_type::GLH_PROGRAM_TYPE;
 
     case minor_object_type::GLH_TEXTURE2D_TYPE: return major_object_type::GLH_TEXTURE_TYPE;
-    case minor_object_type::GLH_CUBEMAP_TYPE: return major_object_type::GLH_TEXTURE_TYPE;
+    case minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE: return major_object_type::GLH_TEXTURE_TYPE;
     case minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE: return major_object_type::GLH_TEXTURE_TYPE;
+    case minor_object_type::GLH_CUBEMAP_TYPE: return major_object_type::GLH_TEXTURE_TYPE;
 
     case minor_object_type::GLH_UNKNOWN_TYPE: return major_object_type::GLH_UNKNOWN_TYPE;
     
@@ -393,8 +408,9 @@ glh::core::object_bind_target glh::core::object::to_object_bind_target ( const m
     case minor_object_type::GLH_PROGRAM_TYPE: return object_bind_target::GLH_PROGRAM_TARGET;
 
     case minor_object_type::GLH_TEXTURE2D_TYPE: return object_bind_target::GLH_TEXTURE2D_0_TARGET;
-    case minor_object_type::GLH_CUBEMAP_TYPE: return object_bind_target::GLH_CUBEMAP_0_TARGET;
+    case minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE: return object_bind_target::GLH_TEXTURE2D_ARRAY_0_TARGET;
     case minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE: return object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET;
+    case minor_object_type::GLH_CUBEMAP_TYPE: return object_bind_target::GLH_CUBEMAP_0_TARGET;
 
     case minor_object_type::GLH_UNKNOWN_TYPE: return object_bind_target::GLH_UNKNOWN_TARGET;
     
@@ -424,8 +440,9 @@ GLenum glh::core::object::to_opengl_bind_target ( const object_bind_target targe
 
     default:
         if ( is_texture2d_bind_target ( target ) ) return GL_TEXTURE_2D; else
-        if ( is_cubemap_bind_target ( target ) ) return GL_TEXTURE_CUBE_MAP; else
+        if ( is_texture2d_array_bind_target ( target ) ) return GL_TEXTURE_2D_ARRAY; else
         if ( is_texture2d_multisample_bind_target ( target ) ) return GL_TEXTURE_2D_MULTISAMPLE; else
+        if ( is_cubemap_bind_target ( target ) ) return GL_TEXTURE_CUBE_MAP; else
         throw exception::object_exception { "attempted to perform glh to opengl bind target conversion on unknown target" };
     }
 }
@@ -452,8 +469,9 @@ glh::core::major_object_type glh::core::object::to_major_object_type ( const obj
 
     default:
         if ( is_texture2d_bind_target ( target ) ) return major_object_type::GLH_TEXTURE_TYPE; else
-        if ( is_cubemap_bind_target ( target ) ) return major_object_type::GLH_TEXTURE_TYPE; else
+        if ( is_texture2d_array_bind_target ( target ) ) return major_object_type::GLH_TEXTURE_TYPE; else
         if ( is_texture2d_multisample_bind_target ( target ) ) return major_object_type::GLH_TEXTURE_TYPE; else
+        if ( is_cubemap_bind_target ( target ) ) return major_object_type::GLH_TEXTURE_TYPE; else
         throw exception::object_exception { "attempted to perform glh to major object type conversion on unknown target" };
     }
 }
@@ -461,6 +479,8 @@ glh::core::major_object_type glh::core::object::to_major_object_type ( const obj
 
 
 /* is_texture2d_bind_target
+ * is_texture2d_array_bind_target
+ *  is_texture2d_multisample_bind_target
  * is_cubemap_bind_target
  * 
  * returns true if the target supplied is one of the above bind targets
@@ -470,15 +490,20 @@ bool glh::core::object::is_texture2d_bind_target ( const object_bind_target targ
     /* if the target is between __TEXTURE2D_START__ and __TEXTURE2D_END__ return true, else false */
     return ( target > object_bind_target::__TEXTURE2D_START__ && target < object_bind_target::__TEXTURE2D_END__ );
 }
-bool glh::core::object::is_cubemap_bind_target ( const object_bind_target target )
+bool glh::core::object::is_texture2d_array_bind_target ( const object_bind_target target )
 {
-    /* if the target is between __CUBEMAP_START__ and __CUBEMAP_END__ return true, else false */
-    return ( target >= object_bind_target::__CUBEMAP_START__ && target <= object_bind_target::__CUBEMAP_END__ );
+    /* if the target is between __TEXTURE2D_ARRAY_START__ and __TEXTURE2D_ARRAY_END__ return true, else false */
+    return ( target > object_bind_target::__TEXTURE2D_ARRAY_START__ && target < object_bind_target::__TEXTURE2D_ARRAY_END__ );
 }
 bool glh::core::object::is_texture2d_multisample_bind_target ( const object_bind_target target )
 {
     /* if the target is between __TEXTURE2D_MULTISAMPLE_START__ and __TEXTURE2D_MULTISAMPLE_END__ return true, else false */
     return ( target >= object_bind_target::__TEXTURE2D_MULTISAMPLE_START__ && target <= object_bind_target::__TEXTURE2D_MULTISAMPLE_END__ );
+}
+bool glh::core::object::is_cubemap_bind_target ( const object_bind_target target )
+{
+    /* if the target is between __CUBEMAP_START__ and __CUBEMAP_END__ return true, else false */
+    return ( target >= object_bind_target::__CUBEMAP_START__ && target <= object_bind_target::__CUBEMAP_END__ );
 }
 
 
