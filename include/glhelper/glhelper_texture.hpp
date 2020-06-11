@@ -76,6 +76,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <initializer_list>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -224,6 +225,12 @@ public:
      * returns true if the texture is vertically flipped
      */
     bool is_vertically_flipped () const { return v_flip; }
+
+    /* has_alpha
+     *
+     * true if channels == 2 or 4
+     */
+    bool has_alpha () const { return ( channels == 2 || channels == 4 ); }
 
 
 
@@ -400,7 +407,7 @@ public:
      *
      * see tex_image for details
      */
-    texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_NONE, const GLenum type = GL_NONE, const void * data = NULL )
+    texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL )
         : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE }
         { tex_image ( _width, _height, _internal_format, format, type, data ); }
     texture2d ( const image& _image, const bool use_srgb = false )
@@ -448,7 +455,7 @@ public:
      * 
      * _width/_height: the width and height of the texture
      * _internal_format: the internal format of the texture
-     * format/type: the format and component type of the input data for the texture (defaults to GL_NONE)
+     * format/type: the format and component type of the input data for the texture (defaults to GL_RGBA and GL_UNSIGNED_BYTE)
      * data: the actual data to put into the texture (defaults to NULL)
      * 
      * OR:
@@ -456,7 +463,7 @@ public:
      * _image: the image to load the texture to
      * use_srgb: true if srgb texture should be used
      */
-    void tex_image ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_NONE, const GLenum type = GL_NONE, const void * data = NULL );
+    void tex_image ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL );
     void tex_image ( const image& _image, const bool use_srgb = false );
 
     /* tex_sub_image
@@ -513,15 +520,13 @@ private:
 
     /* internal_format
      * 
-     * respectively:
-     * 
      * the format of the data stored in the texture
      */
     GLenum internal_format;
 
     /* has_alpha_component
      *
-     * is true if imported from image, which had an alpha component
+     * always true, unless created from an imported image without alpha components
      */
     bool has_alpha_component;
 
@@ -535,9 +540,111 @@ private:
  *
  * represents an array of 2d textures
  */
-class glh::core::texture2d_array : texture_base
+class glh::core::texture2d_array : public texture_base
 {
+public:
 
+    /* tex_image constructor
+     *
+     * see tex_image for details
+     */
+    texture2d_array ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL )
+        : texture_base { minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE }
+        { tex_image ( _width, _height, _depth, _internal_format, format, type, data ); }
+    texture2d_array ( std::initializer_list<std::reference_wrapper<const image>> images, const bool use_srgb = false )
+        : texture_base { minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE }
+        { tex_image ( images, use_srgb ); }
+
+    /* zero=parameter constructor */
+    texture2d_array ()
+        : texture_base { minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE }
+        , width { 0 }, height { 0 }, depth { 0 }
+        , internal_format { GL_NONE }
+    {}
+
+    /* deleted copy constructor */
+    texture2d_array ( const texture2d_array& other ) = delete;
+
+    /* default move constructor */
+    texture2d_array ( texture2d_array&& other ) = default;
+
+    /* deleted copy assignment operator */
+    texture2d_array& operator= ( const texture2d_array& other ) = delete;
+
+    /* default destructor */
+    ~texture2d_array () = default;
+
+
+
+    /* get_bound_object_pointer
+     *
+     * produce a pointer to the texture2d_array currently bound to a unit
+     */
+    using object::get_bound_object_pointer;
+    static object_pointer<texture2d_array> get_bound_object_pointer ( const unsigned unit = 0 )
+    { return get_bound_object_pointer<texture2d_array> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_ARRAY_0_TARGET ) + unit ) ); }
+
+
+
+    /* tex_image
+     *
+     * set up the texture based on provided parameters
+     * 
+     * EITHER:
+     * 
+     * _width/_height/_depth: the width, height and number of textures in the array
+     * _internal_format: the internal format of the textures
+     * format/type: the format and type of the input data (defaults to GL_RGBA and GL_UNSIGNED_BYTE)
+     * data: the data to put into the textures (defaults to NULL)
+     *
+     * OR:
+     * 
+     * images: an initialiser list of images to form the array from
+     * use_srgb: true if the textures should be srgb
+     */
+    void tex_image ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL );
+    void tex_image ( std::initializer_list<std::reference_wrapper<const image>> images, const bool use_srgb = false );
+
+
+
+    /* tex_sub_image
+     *
+     * substitiute data into the texture
+     * changes are made to mipmap level 0, so remember to regenerate mipmaps if necessary
+     * 
+     * EITHER:
+     * 
+     * x/y/z_offset: x, y and z-offsets for substituting image data
+     * _width/_height/_depth: the width height and depth of the data to substitute
+     * format/type: the format and type of the image data to substitute (defaults to GL_RGBA and GL_UNSIGNED_BYTE)
+     * data: the data to substitute (defaults to GL_RGBA and GL_UNSIGNED_BYTE)
+     * 
+     * OR:
+     * 
+     * x/y/z_offset: x, y and z-offsets for substituting image data
+     * images: an initialiser list of images to substitute into the array
+     */
+    void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum format, const GLenum type, const void * data );
+    void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, std::initializer_list<std::reference_wrapper<const image>> images );
+
+
+
+private:
+
+    /* width, height, depth
+     *
+     * the width height of each texture and the number of textures
+     */
+    unsigned width;
+    unsigned height;
+    unsigned depth;
+
+    /* internal_format
+     * 
+     * the format of the data stored in the texture
+     */
+    GLenum internal_format;
+    
 };
 
 
@@ -623,8 +730,6 @@ private:
 
     /* internal_format
      * 
-     * respectively:
-     * 
      * the format of the data stored in the texture
      */
     GLenum internal_format;
@@ -650,15 +755,15 @@ public:
      *
      * see tex_image for details
      */
-    cubemap ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_NONE, const GLenum type = GL_NONE, const void * data = NULL )
+    cubemap ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL )
         : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
         { tex_image ( _width, _height, _internal_format, format, type, data ); }
-    cubemap ( const image& _image, const bool use_srgb = false )
+    explicit cubemap ( const image& _image, const bool use_srgb = false )
         : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
         { tex_image ( _image, use_srgb ); }
-    cubemap ( const image& _image_0, const image& _image_1, const image& _image_2, const image& _image_3, const image& _image_4, const image& _image_5, const bool use_srgb = false )
+    explicit cubemap ( std::initializer_list<std::reference_wrapper<const image>> images, const bool use_srgb = false )
         : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
-        { tex_image ( _image_0, _image_1, _image_2, _image_3, _image_4, _image_5, use_srgb ); }
+        { tex_image ( images, use_srgb ); }
 
     /* zero-parameter constructor */
     cubemap ()
@@ -696,7 +801,7 @@ public:
      * 
      * _width/_height: the width and height of all of the faces of the cubemap
      * _internal_format: the internal format of the cubemap
-     * format/type: the format and component type of the input data for the cubemap (defaults to GL_NONE)
+     * format/type: the format and component type of the input data for the cubemap (defaults to GL_RGBA and GL_UNSIGNED_BYTE)
      * data: the data to apply to each face of the cubemap (defaults to NULL)
      * 
      * OR:
@@ -706,12 +811,12 @@ public:
      * 
      * OR:
      * 
-     * _image_0...5: six images for each face of the cubemap in the same order as usual
+     * images: initialiser list of images that must be six elements large
      * use_srgb: true if srgb texture should be used
      */
-    void tex_image ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_NONE, const GLenum type = GL_NONE, const void * data = NULL );
+    void tex_image ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL );
     void tex_image ( const image& _image, const bool use_srgb = false );
-    void tex_image ( const image& _image_0, const image& _image_1, const image& _image_2, const image& _image_3, const image& _image_4, const image& _image_5, const bool use_srgb = false );
+    void tex_image ( std::initializer_list<std::reference_wrapper<const image>> images, const bool use_srgb = false );
 
     /* tex_sub_image
      *
@@ -747,13 +852,13 @@ public:
      * OR: applied to every face with different textures
      * 
      * x/y_offset: the x and y offsets to begin substitution
-     * _image_0...5: six images for each face of the cubemap in the same order as usual
+     * images: initialiser list of images that must be six elements large
      */
     void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned _width, const unsigned _height, const GLenum format, const GLenum type, const void * data );
     void tex_sub_image ( const unsigned face, const unsigned x_offset, const unsigned y_offset, const unsigned _width, const unsigned _height, const GLenum format, const GLenum type, const void * data );
     void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const image& _image );
     void tex_sub_image ( const unsigned face, const unsigned x_offset, const unsigned y_offset, const image& _image );
-    void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const image& _image_0, const image& _image_1, const image& _image_2, const image& _image_3, const image& _image_4, const image& _image_5 );
+    void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, std::initializer_list<std::reference_wrapper<const image>> images );
 
 
 
@@ -780,8 +885,6 @@ private:
     unsigned height;
 
     /* internal_format
-     * 
-     * respectively:
      * 
      * the format of the data stored in the texture
      */
