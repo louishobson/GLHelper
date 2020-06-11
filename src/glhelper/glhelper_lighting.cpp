@@ -215,7 +215,7 @@ glh::lighting::shadow_map_2d::shadow_map_2d ( const unsigned width )
 void glh::lighting::shadow_map_2d::resize_map ( const unsigned width )
 {
     /* resize the texture */
-    depth_texture.set_texture ( width, width, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT );
+    depth_texture.tex_image ( width, width, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT );
 }
 
 
@@ -246,7 +246,7 @@ glh::lighting::shadow_map_cube::shadow_map_cube ( const unsigned width )
 void glh::lighting::shadow_map_cube::resize_map ( const unsigned width )
 {
     /* resize the texture */
-    depth_texture.set_texture ( width, width, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT );
+    depth_texture.tex_image ( width, width, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT );
 }
 
 
