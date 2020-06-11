@@ -273,7 +273,7 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack&
     if ( _texture_stack.levels.at ( index ).uvwsrc >= GLH_MODEL_MAX_UV_CHANNELS ) throw exception::model_exception { "level of texture stack requires UV channel greater than the maximum allowed channels" };
 
     /* check if already imported */
-    for ( unsigned i = 0; i < textures.size (); ++i ) if ( textures.at ( i ).get_path () == texpath )
+    for ( unsigned i = 0; i < textures.size (); ++i ) if ( false ) //if ( textures.at ( i ).get_path () == texpath )
     {
         /* already imported, so purely set the index */
         _texture_stack.levels.at ( index ).index = i;
@@ -283,7 +283,10 @@ glh::model::texture_stack_level& glh::model::model::add_texture ( texture_stack&
     }
 
     /* not already imported, so import and set the index */
-    textures.emplace_back ( directory + "/" + texpath, is_srgb, model_import_flags & import_flags::GLH_FLIP_V_TEXTURES );
+    textures.emplace_back ( core::image { directory + "/" + texpath, static_cast<bool> ( model_import_flags & import_flags::GLH_FLIP_V_TEXTURES ) }, is_srgb );
+    textures.back ().generate_mipmap ();
+    textures.back ().set_mag_filter ( GL_LINEAR );
+    textures.back ().set_min_filter ( GL_LINEAR_MIPMAP_LINEAR );
     _texture_stack.levels.at ( index ).index = textures.size () - 1;
 
     /* check if is the same texture as the previous level in the stack */
