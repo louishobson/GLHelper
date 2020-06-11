@@ -24,8 +24,6 @@
 /* load_to_window
  *
  * win: window to load OpenGL to
- * 
- * return: true for success, false for failure
  */
 void glh::core::glad_loader::load ()
 {
@@ -35,7 +33,7 @@ void glh::core::glad_loader::load ()
     /* produce error if no context set */
     if ( !win ) throw exception::glad_exception { "attempted to load GLAD with no context set" };
 
-    /* if window is already loaded, return true without reloading glad */
+    /* if window is already loaded, return without reloading glad */
     if ( win == active_window ) return;
 
     /* activate glad to current context */
