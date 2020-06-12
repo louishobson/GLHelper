@@ -358,7 +358,7 @@ void glh::core::texture2d_array::tex_image ( const unsigned _width, const unsign
     bind ();
     glTexImage3D ( opengl_bind_target, 0, internal_format, width, height, depth, 0, format, type, data );
 }
-void glh::core::texture2d_array::tex_image ( std::initializer_list<std::reference_wrapper<const image>> images, const bool use_srgb )
+void glh::core::texture2d_array::tex_image ( std::initializer_list<image> images, const bool use_srgb )
 {
     /* if images has size of 0, set width and height to 0 and create empty texture */
     if ( images.size () == 0 )
@@ -368,8 +368,8 @@ void glh::core::texture2d_array::tex_image ( std::initializer_list<std::referenc
     /* otherwise process the images */
     {
         /* set width and height to the first image's width and height, and the depth to the number of images supplied */
-        width = images.begin ()->get ().get_width ();
-        height = images.begin ()->get ().get_height ();
+        width = images.begin ()->get_width ();
+        height = images.begin ()->get_height ();
         depth = images.size ();
 
         /* assert that all of the images are the same size */
@@ -385,7 +385,7 @@ void glh::core::texture2d_array::tex_image ( std::initializer_list<std::referenc
     glTexImage3D ( opengl_bind_target, 0, internal_format, width, height, depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
     auto images_it = images.begin ();
     for ( unsigned i = 0; i < depth; ++i, ++images_it )
-        glTexSubImage3D ( opengl_bind_target, 0, 0, 0, i, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get ().get_ptr () );
+        glTexSubImage3D ( opengl_bind_target, 0, 0, 0, i, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
 }
 
 
@@ -417,7 +417,7 @@ void glh::core::texture2d_array::tex_sub_image ( const unsigned x_offset, const 
     bind ();
     glTexSubImage3D ( opengl_bind_target, 0, x_offset, y_offset, z_offset, _width, _height, _depth, format, type, data );
 }
-void glh::core::texture2d_array::tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, std::initializer_list<std::reference_wrapper<const image>> images )
+void glh::core::texture2d_array::tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, std::initializer_list<image> images )
 {
     /* check offsets and dimensions */
     if ( z_offset + images.size () > depth )
@@ -429,7 +429,7 @@ void glh::core::texture2d_array::tex_sub_image ( const unsigned x_offset, const 
     bind ();
     auto images_it = images.begin ();
     for ( unsigned i = 0; i < images.size (); ++i, ++images_it )
-        glTexSubImage3D ( opengl_bind_target, 0, x_offset, y_offset, z_offset + i, images_it->get ().get_width (), images_it->get ().get_width (), 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get ().get_ptr () );
+        glTexSubImage3D ( opengl_bind_target, 0, x_offset, y_offset, z_offset + i, images_it->get_width (), images_it->get_width (), 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
 }
 
 
@@ -505,14 +505,14 @@ void glh::core::cubemap::tex_image ( const image& _image, const bool use_srgb )
     for ( unsigned i = 0; i < 6; ++i )
         glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _image.get_ptr () );
 }
-void glh::core::cubemap::tex_image ( std::initializer_list<std::reference_wrapper<const image>> images, const bool use_srgb )
+void glh::core::cubemap::tex_image ( std::initializer_list<image> images, const bool use_srgb )
 {
     /* assert only six images */
     if ( images.size () != 6 ) throw exception::texture_exception { "attempted to call tex_image on cubemap with " + std::to_string ( images.size () ) + " images supplied" };
 
     /* set the width and height to that of the first image */
-    width = images.begin ()->get ().get_width ();
-    height = images.begin ()->get ().get_width ();
+    width = images.begin ()->get_width ();
+    height = images.begin ()->get_width ();
 
     /* assert that the sizes of the images are all the same */
     for ( const image& _image: images ) if ( _image.get_width () != width || _image.get_height () != height )
@@ -525,7 +525,7 @@ void glh::core::cubemap::tex_image ( std::initializer_list<std::reference_wrappe
     bind ();
     auto images_it = images.begin ();
     for ( unsigned i = 0; i < 6; ++i, ++images_it )
-        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get ().get_ptr () );
+        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
 }
 
 /* tex_sub_image
@@ -606,7 +606,7 @@ void glh::core::cubemap::tex_sub_image ( const unsigned face, const unsigned x_o
     bind ();
     glTexSubImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, x_offset, y_offset, _image.get_width (), _image.get_height (), GL_RGBA, GL_UNSIGNED_BYTE, _image.get_ptr () );
 }
-void glh::core::cubemap::tex_sub_image ( const unsigned x_offset, const unsigned y_offset, std::initializer_list<std::reference_wrapper<const image>> images )
+void glh::core::cubemap::tex_sub_image ( const unsigned x_offset, const unsigned y_offset, std::initializer_list<image> images )
 {
     /* assert only six images */
     if ( images.size () != 6 ) throw exception::texture_exception { "attempted to call tex_sub_image on cubemap with " + std::to_string ( images.size () ) + " images supplied" };
@@ -619,5 +619,5 @@ void glh::core::cubemap::tex_sub_image ( const unsigned x_offset, const unsigned
     bind ();
     auto images_it = images.begin ();
     for ( unsigned i = 0; i < 6; ++i, ++images_it )
-        glTexSubImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, x_offset, y_offset, images_it->get ().get_width (), images_it->get ().get_height (), GL_RGBA, GL_UNSIGNED_BYTE, images_it->get ().get_ptr () );
+        glTexSubImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, x_offset, y_offset, images_it->get_width (), images_it->get_height (), GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
 }

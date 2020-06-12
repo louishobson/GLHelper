@@ -551,7 +551,7 @@ public:
     texture2d_array ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL )
         : texture_base { minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE }
         { tex_image ( _width, _height, _depth, _internal_format, format, type, data ); }
-    texture2d_array ( std::initializer_list<std::reference_wrapper<const image>> images, const bool use_srgb = false )
+    texture2d_array ( std::initializer_list<image> images, const bool use_srgb = false )
         : texture_base { minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE }
         { tex_image ( images, use_srgb ); }
 
@@ -603,7 +603,7 @@ public:
      * use_srgb: true if the textures should be srgb
      */
     void tex_image ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL );
-    void tex_image ( std::initializer_list<std::reference_wrapper<const image>> images, const bool use_srgb = false );
+    void tex_image ( std::initializer_list<image> images, const bool use_srgb = false );
 
 
 
@@ -625,7 +625,7 @@ public:
      * images: an initialiser list of images to substitute into the array
      */
     void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum format, const GLenum type, const void * data );
-    void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, std::initializer_list<std::reference_wrapper<const image>> images );
+    void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, std::initializer_list<image> images );
 
 
 
@@ -761,7 +761,7 @@ public:
     explicit cubemap ( const image& _image, const bool use_srgb = false )
         : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
         { tex_image ( _image, use_srgb ); }
-    explicit cubemap ( std::initializer_list<std::reference_wrapper<const image>> images, const bool use_srgb = false )
+    explicit cubemap ( std::initializer_list<image> images, const bool use_srgb = false )
         : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
         { tex_image ( images, use_srgb ); }
 
@@ -816,7 +816,7 @@ public:
      */
     void tex_image ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL );
     void tex_image ( const image& _image, const bool use_srgb = false );
-    void tex_image ( std::initializer_list<std::reference_wrapper<const image>> images, const bool use_srgb = false );
+    void tex_image ( std::initializer_list<image> images, const bool use_srgb = false );
 
     /* tex_sub_image
      *
@@ -858,7 +858,7 @@ public:
     void tex_sub_image ( const unsigned face, const unsigned x_offset, const unsigned y_offset, const unsigned _width, const unsigned _height, const GLenum format, const GLenum type, const void * data );
     void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const image& _image );
     void tex_sub_image ( const unsigned face, const unsigned x_offset, const unsigned y_offset, const image& _image );
-    void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, std::initializer_list<std::reference_wrapper<const image>> images );
+    void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, std::initializer_list<image> images );
 
 
 
