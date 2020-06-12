@@ -265,12 +265,12 @@ glh::glfw::window::timeinfo_t glh::glfw::window::get_timeinfo () const
  */
 glh::glfw::window::gamepadinfo_t glh::glfw::window::get_gamepadinfo ( const int joystick ) const
 {
-    /* throw if gamepad not present */
-    if ( !glfwJoystickPresent ( joystick ) ) throw exception::glfw_exception { "could not find joystick number " + std::to_string ( joystick + 1 ) };
-    
     /* create empty struct */
     gamepadinfo_t gamepadinfo;
     std::memset ( &gamepadinfo, 0, sizeof ( gamepadinfo ) );
+
+    /* return if gamepad not present */
+    if ( !glfwJoystickPresent ( joystick ) ) return gamepadinfo;
 
     /* if can be mapped to a gamepad, use that */
     if ( glfwJoystickIsGamepad ( joystick ) )
