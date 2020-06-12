@@ -73,10 +73,13 @@ int main ()
     /* movement per second of button hold
      * angle of rotation per side to side of window movement of mouse
      * the angle to change the fov per second of button hold
+     * cutoff sensitivity for gamepads
      */
     const double movement_sensitivity = 10.0;
     const double mouse_sensitivity = glh::math::rad ( 120.0 );
     const double fov_sensitivity = glh::math::rad ( 15.0 );
+    const double gamepad_cutoff_sensitivity = 0.2;
+    const double gamepad_look_sensitivity = glh::math::rad ( 120.0 );
     
 
 
@@ -151,6 +154,7 @@ int main ()
         auto dimensions = window.get_dimensions ();
         auto timeinfo = window.get_timeinfo ();
         auto mouseinfo = window.get_mouseinfo ();
+        auto gamepadinfo = window.get_gamepadinfo ( GLFW_JOYSTICK_1 );
 
         /* print framerate every 10th frame */
         if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
@@ -169,17 +173,27 @@ int main ()
         if ( window.get_key ( GLFW_KEY_A ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { -movement_sensitivity * timeinfo.delta, 0.0, 0.0 } );
         if ( window.get_key ( GLFW_KEY_S ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { 0.0, 0.0, movement_sensitivity * timeinfo.delta } );
         if ( window.get_key ( GLFW_KEY_D ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { movement_sensitivity * timeinfo.delta, 0.0, 0.0 } );
-        if ( window.get_key ( GLFW_KEY_SPACE ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { 0.0, movement_sensitivity * timeinfo.delta, 0.0 } );
-        if ( window.get_key ( GLFW_KEY_LEFT_SHIFT ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { 0.0, -movement_sensitivity * timeinfo.delta, 0.0 } );
+        if ( window.get_key ( GLFW_KEY_SPACE ).action == GLFW_PRESS || gamepadinfo.button_a == GLFW_PRESS ) camera.move ( glh::math::vec3 { 0.0, movement_sensitivity * timeinfo.delta, 0.0 } );
+        if ( window.get_key ( GLFW_KEY_LEFT_SHIFT ).action == GLFW_PRESS ||gamepadinfo.button_b == GLFW_PRESS ) camera.move ( glh::math::vec3 { 0.0, -movement_sensitivity * timeinfo.delta, 0.0 } );
+
+        /* apply joystick movement */
+        if ( std::abs ( gamepadinfo.axis_lh_y ) > gamepad_cutoff_sensitivity ) 
+            camera.move ( glh::math::vec3 { 0.0, 0.0, movement_sensitivity * gamepadinfo.axis_lh_y * timeinfo.delta } );
+        if ( std::abs ( gamepadinfo.axis_lh_x ) > gamepad_cutoff_sensitivity ) 
+            camera.move ( glh::math::vec3 { movement_sensitivity * gamepadinfo.axis_lh_x * timeinfo.delta, 0.0, 0.0 } );
+        if ( std::abs ( gamepadinfo.axis_rh_x ) > gamepad_cutoff_sensitivity )
+            camera.yaw ( -gamepad_look_sensitivity * gamepadinfo.axis_rh_x * timeinfo.delta );
+        if ( std::abs ( gamepadinfo.axis_rh_y ) > gamepad_cutoff_sensitivity ) 
+            camera.pitch ( -gamepad_look_sensitivity * gamepadinfo.axis_rh_y * timeinfo.delta );
 
         /* get mouse movement and apply changes to camera */
-        camera.yaw ( mouse_sensitivity * -mouseinfo.deltaxfrac );
-        camera.pitch ( mouse_sensitivity * -mouseinfo.deltayfrac );
+        camera.yaw ( -mouse_sensitivity * mouseinfo.deltaxfrac );
+        camera.pitch ( -mouse_sensitivity * mouseinfo.deltayfrac );
 
         /* zoom keys */
         if ( window.get_key ( GLFW_KEY_Q ).action == GLFW_PRESS ) camera.set_fov ( camera.get_fov () + ( fov_sensitivity * timeinfo.delta ) );
         if ( window.get_key ( GLFW_KEY_E ).action == GLFW_PRESS ) camera.set_fov ( camera.get_fov () - ( fov_sensitivity * timeinfo.delta ) );
-
+        
 
 
         /* apply camera and light system */

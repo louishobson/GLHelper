@@ -40,6 +40,7 @@
 /* INCLUDES */
 
 /* include core headers */
+#include <cstring>
 #include <functional>
 #include <iostream>
 #include <string>
@@ -154,12 +155,19 @@ public:
      */
     struct dimensions_t
     {
+        /* x and y pos of the screen */
         int xpos;
         int ypos;
+
+        /* the width and height of the screen */
         int width;
         int height;
+
+        /* the change in x and y pos */
         int deltaxpos;
         int deltaypos;
+
+        /* the change in width and height */
         int deltawidth;
         int deltaheight;
     };
@@ -170,9 +178,16 @@ public:
      */
     struct keyinfo_t
     {
+        /* the key in question */
         int key;
+
+        /* its scancode */
         int scancode;
+
+        /* the action applied */
         int action;
+
+        /* modifier bits during the action */
         int mods;
     };
 
@@ -182,12 +197,19 @@ public:
      */
     struct mouseinfo_t
     {
+        /* the x and y pos of the mouse */
         double xpos;
         double ypos;
+
+        /* the x and y pos as fractions of the screen dimensions */
         double xfrac;
         double yfrac;
+
+        /* the change in x and y pos */
         double deltaxpos;
         double deltaypos;
+
+        /* the change in x and y as a fraction of the screen dimensions */
         double deltaxfrac;
         double deltayfrac;
     };
@@ -198,9 +220,58 @@ public:
      */
     struct timeinfo_t
     {
+        /* the current time */
         double now;
+
+        /* the time when the timeinfo was last generated */
         double last;
+
+        /* the change in time */
         double delta;
+    };
+
+    /* gamepadinfo_t
+     *
+     * information about a gamepad
+     */
+    struct gamepadinfo_t
+    {
+        /* the id of the joystick (1-16) */
+        int joystick_id;
+
+        /* the right-hand buttons */
+        int button_a;
+        int button_b;
+        int button_x;
+        int button_y;
+
+        /* back bumpers */
+        int button_lh_bumper;
+        int button_rh_bumper;
+
+        /* back and start buttons */
+        int button_back;
+        int button_start;
+
+        /* left and right thumbs */
+        int button_lh_thumb;
+        int button_rh_thumb;
+
+        /* dpad buttons */
+        int button_dpad_up;
+        int button_dpad_right;
+        int button_dpad_down;
+        int button_dpad_left;
+
+        /* left and right axis */
+        double axis_lh_x;
+        double axis_lh_y;
+        double axis_rh_x;
+        double axis_rh_y;
+
+        /* left and right triggers */
+        double axis_lh_trigger;
+        double axis_rh_trigger;
     };
 
 
@@ -274,6 +345,16 @@ public:
      * return: timeinfo_t containing info about poll times
      */
     timeinfo_t get_timeinfo () const;
+
+    /* get_gamepadinfo
+     *
+     * get info about a gamepad
+     * 
+     * joystick: the joystick to get info on
+     * 
+     * return gamepadinfo_t containing info about the gamepad
+     */
+    gamepadinfo_t get_gamepadinfo ( const int joystick ) const;
 
 
 
