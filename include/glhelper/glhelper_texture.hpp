@@ -191,9 +191,21 @@ public:
 
     /* vertical_flip
      *
-     * flips the texture vertically
+     * flips the image vertically
      */
     void vertical_flip ();
+
+
+
+    /* resize
+     *
+     * resize the image using linear interpolation
+     * 
+     * new_width/height: the new width and height of the image
+     * 
+     * return: the new interpolated image
+     */
+    void resize ( const unsigned new_width, const unsigned new_height );
 
 
 
@@ -204,17 +216,15 @@ public:
     void * get_ptr () { return image_data.get (); }
     const void * get_ptr () const { return image_data.get (); }
 
-
-
     /* get_path
      * 
-     * get the path of the texture
+     * get the path of the image
      */
     const std::string& get_path () const { return path; }
 
     /* get_width/height/channels
      *
-     * get the width/height/no. of channels of the texture
+     * get the width/height/no. of channels of the image
      */
     unsigned get_width () const { return width; }
     unsigned get_height () const { return height; }
@@ -222,7 +232,7 @@ public:
 
     /* is_vertically_flipped
      *
-     * returns true if the texture is vertically flipped
+     * returns true if the image is vertically flipped
      */
     bool is_vertically_flipped () const { return v_flip; }
 
@@ -231,6 +241,12 @@ public:
      * true if channels == 2 or 4
      */
     bool has_alpha () const { return ( channels == 2 || channels == 4 ); }
+
+    /* get_aspect
+     *
+     * get the aspect ratio of the image
+     */
+    double get_aspect () const { return static_cast<double> ( width ) / height; }
 
 
 
@@ -247,8 +263,11 @@ private:
     /* whether the image has been vertically flipped */
     bool v_flip;
 
+    /* the type of image_data */
+    using image_data_type = std::unique_ptr<void, std::function<void ( void * )>>;
+
     /* shared pointer to the data of the image */
-    std::unique_ptr<void, std::function<void ( void * )>> image_data;
+    image_data_type image_data;
     
 };
 

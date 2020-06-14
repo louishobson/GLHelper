@@ -81,7 +81,7 @@ glh::core::image& glh::core::image::operator= ( const image& other )
     v_flip = other.v_flip;
     
     /* allocate new memory for image_data, then transfer it */
-    image_data = std::unique_ptr<void, std::function<void ( void * )>> { std::malloc ( width * height * 4 ), [] ( void * ptr ) { if ( ptr ) std::free ( ptr ); } };
+    image_data = image_data_type { std::malloc ( width * height * 4 ), [] ( void * ptr ) { if ( ptr ) std::free ( ptr ); } };
     std::memcpy ( image_data.get (), other.image_data.get (), width * height * 4 );
 
     /* return * this */
@@ -92,7 +92,7 @@ glh::core::image& glh::core::image::operator= ( const image& other )
 
 /* vertical_flip
  *
- * flips the texture vertically
+ * flips the image vertically
  */
 void glh::core::image::vertical_flip ()
 {
@@ -101,6 +101,55 @@ void glh::core::image::vertical_flip ()
 
     /* flip image */
     stbi__vertical_flip ( image_data.get (), width, height, 4 );
+}
+
+
+
+/* resize
+ *
+ * resize the image using linear interpolation
+ * 
+ * new_width/height: the new width and height of the image
+ */
+void glh::core::image::resize ( const unsigned new_width, const unsigned new_height )
+{
+    /* allocate new memory for the image */
+    image_data_type new_image_data = image_data_type { std::malloc ( new_width * new_height * 4 ), [] ( void * ptr ) { if ( ptr ) std::free ( ptr ); } };
+
+    /* cast both data stores to pointers to unsigned bytes */
+    const unsigned char * image_data_byte = reinterpret_cast<unsigned char *> ( image_data.get () );
+    unsigned char * new_image_data_byte = reinterpret_cast<unsigned char *> ( new_image_data.get () );
+
+    /* iterate through new image */
+    for ( unsigned i = 0; i < new_width; ++i ) for ( unsigned j = 0; j < new_height; ++j )
+    {
+        /* get equivalent coordinate on original image */
+        const double orig_i = ( static_cast<double> ( i ) / new_width ) * width;
+        const double orig_j = ( static_cast<double> ( j ) / new_height ) * height;
+
+        /* get the floors and decimal parts of both of them */
+        double orig_i_floor_double;
+        const double orig_i_decimal = std::modf ( orig_i, &orig_i_floor_double );
+        double orig_j_floor_double;
+        const double orig_j_decimal = std::modf ( orig_j, &orig_j_floor_double );
+
+        /* cast the floored orig i and j to integers */
+        const unsigned orig_i_floor_int = orig_i_floor_double;
+        const unsigned orig_j_floor_int = orig_j_floor_double;
+
+        /* get the sum of the pixel colors in the old image */
+        for ( unsigned k = 0; k < 4; ++k )
+            new_image_data_byte [ ( i + ( j * new_width ) ) * 4 + k ] = static_cast<unsigned char>
+                ( ( image_data_byte [ ( orig_i_floor_int + ( orig_j_floor_int * width + 0 ) + 0 ) * 4 + k ] * ( 1 - orig_i_decimal ) * ( 1 - orig_j_decimal ) ) +
+                  ( image_data_byte [ ( orig_i_floor_int + ( orig_j_floor_int * width + 0 ) + 1 ) * 4 + k ] * ( 0 + orig_i_decimal ) * ( 1 - orig_j_decimal ) ) +
+                  ( image_data_byte [ ( orig_i_floor_int + ( orig_j_floor_int * width + 1 ) + 0 ) * 4 + k ] * ( 1 - orig_i_decimal ) * ( 0 + orig_j_decimal ) ) +
+                  ( image_data_byte [ ( orig_i_floor_int + ( orig_j_floor_int * width + 1 ) + 1 ) * 4 + k ] * ( 0 + orig_i_decimal ) * ( 0 + orig_j_decimal ) ) );
+    }
+
+    /* now copy the data over */
+    image_data = std::move ( new_image_data );
+    width = new_width;
+    height = new_height;
 }
 
 
