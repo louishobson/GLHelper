@@ -277,7 +277,7 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
 
         /* set the image index by importing the image */
         aimaterial.GetTexture ( aitexturetype, i, &temp_string );
-        _texture_stack.levels.at ( i ).image_index = add_image ( temp_string.C_Str () );
+        _texture_stack.levels.at ( i ).image_index = add_image ( directory + "/" + temp_string.C_Str () );
 
         /* if i == 0, set the width and height of the stack, else assert that dimensions are consistent */
         if ( i == 0 )
@@ -329,17 +329,15 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
 */
 unsigned glh::model::model::add_image ( const std::string& filepath )
 {
-    /* get full path */
-    std::string fullpath = directory + "/" + filepath;
 
     /* check if the image already exists */
-    for ( unsigned i = 0; i < images.size (); ++i ) if ( images.at ( i ).get_path () == fullpath ) return i;
+    for ( unsigned i = 0; i < images.size (); ++i ) if ( images.at ( i ).get_path () == filepath ) return i;
 
     /* otherwise add new image
      * GLH_FLIP_V_TEXTURES no longer actually flips the texture because that's slow
      * it purely forces the assimp post process flag to flip the uv coords */
-    //images.emplace_back ( fullpath, model_import_flags & import_flags::GLH_FLIP_V_TEXTURES );
-    images.emplace_back ( fullpath );
+    //images.emplace_back ( filepath, model_import_flags & import_flags::GLH_FLIP_V_TEXTURES );
+    images.emplace_back ( filepath );
 
     /* return the size of images - 1 */
     return images.size () - 1;
