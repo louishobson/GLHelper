@@ -52,7 +52,7 @@ glh::core::object::object ( const minor_object_type type )
     case minor_object_type::GLH_PROGRAM_TYPE: id = glCreateProgram (); break;
 
     case minor_object_type::GLH_TEXTURE2D_TYPE: glGenTextures ( 1, &id ); break;
-    case minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE: glDeleteTextures ( 1, &id ); break;
+    case minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE: glGenTextures ( 1, &id ); break;
     case minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE: glGenTextures ( 1, &id ); break;
     case minor_object_type::GLH_CUBEMAP_TYPE: glGenTextures ( 1, &id ); break;
 
