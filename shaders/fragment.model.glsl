@@ -24,15 +24,15 @@ struct texture_stack_level_struct
     int blend_operation;
     float blend_strength;
     int uvwsrc;
-    sampler2D texunit;
 };
 
 /* structure for a texture stack */
 struct texture_stack_struct
 {
-    int stack_size;
     vec3 base_color;
+    int stack_size;
     texture_stack_level_struct levels [ MAX_TEX_STACK_SIZE ];
+    sampler2DArray textures;
 };
 
 /* structure for a material */
@@ -137,7 +137,7 @@ vec4 evaluate_stack ( material_struct mat, texture_stack_struct stack )
     for ( int i = 0; i < stack.stack_size; ++i )
     {
         /* get the level color from the texture */
-        vec4 level_color = texture ( stack.levels [ i ].texunit, fs_in.texcoords [ stack.levels [ i ].uvwsrc ].xy );
+        vec4 level_color = texture ( stack.textures, vec3 ( fs_in.texcoords [ stack.levels [ i ].uvwsrc ].xy, i ) );
         /* multiply by blend strength */
         level_color *= stack.levels [ i ].blend_strength;
         /* add to the stack */
