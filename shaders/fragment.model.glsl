@@ -10,10 +10,10 @@
 #define MAX_COLOR_SETS 1
 
 /* maximum number of UV channels */
-#define MAX_UV_CHANNELS 4
+#define MAX_UV_CHANNELS 2
 
 /* maximum number of textures in texture stack */
-#define MAX_TEX_STACK_SIZE 4
+#define MAX_TEX_STACK_SIZE 2
 
 /* maximum number of lights */
 #define MAX_NUM_LIGHTS 2

@@ -20,7 +20,7 @@
 #include <thread>
 
 #define GLH_MODEL_MAX_COLOR_SETS 1
-#define GLH_MODEL_MAX_UV_CHANNELS 4
+#define GLH_MODEL_MAX_UV_CHANNELS 2
 
 /* include glhelper.hpp */
 #include <glhelper/glhelper.hpp>
