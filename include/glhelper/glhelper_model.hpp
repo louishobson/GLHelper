@@ -156,15 +156,6 @@
     #define GLH_MODEL_MAX_UV_CHANNELS 4
 #endif
 
-/* GLH_MODEL_MAX_TEXTURE_STACK_SIZE
- *
- * the maximum size of texture stacks a model can contain
- * defaults to 4
- */
-#ifndef GLH_MODEL_MAX_TEXTURE_STACK_SIZE
-    #define GLH_MODEL_MAX_TEXTURE_STACK_SIZE 4
-#endif
-
 
 
 /* INCLUDES */

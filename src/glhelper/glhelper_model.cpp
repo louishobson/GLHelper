@@ -244,10 +244,6 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
     _texture_stack.stack_width = 0; _texture_stack.stack_height = 0;
     _texture_stack.levels.resize ( _texture_stack.stack_size );
 
-    /* throw if stack size is larger than the max */
-    if ( _texture_stack.stack_size > GLH_MODEL_MAX_TEXTURE_STACK_SIZE )
-        throw exception::model_exception { "size of texture stack if greater than the maximum (which is " + std::to_string ( GLH_MODEL_MAX_TEXTURE_STACK_SIZE ) + ")" };
-
     /* set has_alpha to false */
     _texture_stack.stack_has_alpha = false;
 
