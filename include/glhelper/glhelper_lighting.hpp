@@ -15,14 +15,48 @@
  * 
  * 
  * 
- * CLASS GLH::LIGHTING::LIGHT
+ * CLASS GLH::LIGHTING::DIRLIGHT
+ * CLASS GLH::LIGHTING::POINTLIGHT
+ * CLASS GLH::LIGHTING::SPOTLIGHT
  * 
- * a class storing all of the possible attributes of any type of light
- * these attributes can be applied to a light_struct struct uniform:
+ * classes storing the attributes of a different types of light
+ * these attributes can be applied to a the respective uniforms struct uniform:
  * 
  * 
  * 
- * GLSL STRUCT LIGHT_STRUCT
+ * GLSL STRUCT DIRLIGHT_STRUCT, POINTLIGHT_STRUCT AND SPOTLIGHT_STRUCT
+ * 
+ * struct dirlight_struct
+ * {
+ *     vec3 direction;
+ * 
+ *     vec3 ambient_color;
+ *     vec3 diffuse_color;
+ *     vec3 specular_color;
+ * 
+ *     bool enabled;
+ * 
+ *     mat4 shadow_view;
+ *     mat4 shadow_proj;
+ * };
+ * 
+ * struct pointlight_struct
+ * {
+ *     vec3 position;
+ * 
+ *     float att_const;
+ *     float att_linear;
+ *     float att_quad;
+ * 
+ *     vec3 ambient_color;
+ *     vec3 diffuse_color;
+ *     vec3 specular_color;
+ * 
+ *     bool enabled;
+ * 
+ *     mat4 shadow_view;
+ *     mat4 shadow_proj;
+ * };
  * 
  * struct light_struct
  * {
@@ -42,13 +76,12 @@
  * 
  *     bool enabled;
  * 
- *     bool has_shadow_map;
- *     sampler2DShadow shadow_map_2d;
- *     samplerCubeShadow shadow_map_cube;
+ *     mat4 shadow_view;
+ *     mat4 shadow_proj;
  * };
  * 
- * this GLSL structure contains a single light source of any type (directional/point/spotlight)
- * this is the structure the glh::lighting::light class expects to be supplied with to write to
+ * these GLSL structures contain attributes for different light types
+ * the attributes have the following meanings
  * 
  * position: the position of the light (only for point or spot lights)
  * direction: the direction of the light (only for directional or spot lights)
@@ -57,19 +90,8 @@
  * att_const/linear/quad: attenuation attributes for the light (only for point and spot lights)
  * ambient/diffuse/specular_color: the colors of the different components of light produced (all types)
  * enabled: whether the light is 'turned on' (all types)
- * has_shadow_map: flag for if the light has a shadow map associated with it
- * shadow_map_2d: sampler for a 2d shadow map
- * shadow_map_cube: sampler for a cube shadow map
- * 
- * 
- * 
- * CLASS GLH::LIGHTING::DIRLIGHT and ::POINTLIGHT and ::SPOTLIGHT
- * 
- * these classes are derivations of glh::lighting::light
- * for each, the irrelevant light attributes to that type are made private
- * this is purely for ease of use and to omit confusion about the type of light being modified
- * the attributes made private are defaulted, but still written to the struct uniform by the base class's apply method
- * 
+ * shadow_view/proj: view and projection matrices for shadow mapping (all lights)
+ *
  * 
  * 
  * CLASS GLH::LIGHTING::LIGHT_COLLECTION
@@ -156,28 +178,6 @@ namespace glh
 {
     namespace lighting
     {
-        /* class light
-         *
-         * abstract base class for any type of light
-         */
-        class light;
-
-
-
-        /* class shadow_map_2d
-         *
-         * stores the objects necessary for a 2d shadow map
-         */
-        class shadow_map_2d;
-
-        /* class shadow_map_cube
-         *
-         * stores the objects necessary for a cubemap shadow map
-         */
-        class shadow_map_cube;
-
-
-
         /* class dirlight : light
          *
          * directional light class
@@ -227,7 +227,7 @@ namespace glh
          *
          * is_light::value is true, if the type is a light
          */
-        template<class T, class = void> struct is_light;
+        template<class T> struct is_light;
     }
 }
 
@@ -239,58 +239,418 @@ namespace glh
  *
  * is_light::value is true if the type is a light
  */
-template<class T, class> struct glh::meta::is_light : std::false_type {};
-template<class T> struct glh::meta::is_light<T, std::enable_if_t<std::is_base_of<glh::lighting::light, T>::value>> : std::true_type {};
+template<class T> struct glh::meta::is_light : std::false_type {};
+template<> struct glh::meta::is_light<glh::lighting::dirlight> : std::true_type {};
+template<> struct glh::meta::is_light<glh::lighting::pointlight> : std::true_type {};
+template<> struct glh::meta::is_light<glh::lighting::spotlight> : std::true_type {};
 
 
 
-/* LIGHT DEFINITION */
+/* DIRLIGHT DEFINITION */
 
-/* class light
+/* class dirlight : light
  *
- * abstract base class for any type of light
+ * directional light class
  */
-class glh::lighting::light
+class glh::lighting::dirlight
 {
 public:
 
     /* full constructor
      *
-     * set all of the values of the light
+     * set all of the values associated with directional light
      */
-    light ( const math::vec3& _position, const math::vec3& _direction
-          , const double _inner_cone, const double _outer_cone, const double _att_const, const double _att_linear, const double _att_quad
-          , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-          , const bool _enabled = true, const bool _shadow_mapping_enabled = true )
+    dirlight ( const math::vec3& _direction
+             , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
+             , const bool _enabled = true )
+        : direction { _direction }
+        , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
+        , enabled { _enabled }
+        , shadow_camera { math::vec3 { 0.0 }, _direction, math::any_perpandicular ( _direction ), math::vec3 { 0.0 }, math::vec3 { 0.0 } }
+        , shadow_region { math::vec3 { 0.0 }, 0.0 }
+        , shadow_camera_change { true }
+    {}
+
+    /* default zero-parameter constructor */
+    dirlight () = default;
+
+    /* default copy constructor */
+    dirlight ( const dirlight& other ) = delete;
+
+    /* deleted move constructor */
+    dirlight ( dirlight&& other ) = default;
+
+    /* deleted copy assignment operator */
+    dirlight& operator= ( const dirlight& other ) = delete;
+
+    /* default destructor */
+    ~dirlight () = default;
+
+
+
+    /* apply
+     *
+     * apply the lighting to a uniform
+     * the uniform should be of type dirlight_struct (see top)
+     * 
+     * light_uni: the uniform to apply the light to (which will be cached)
+     */
+    void apply ( core::struct_uniform& light_uni );
+    void apply () const;
+
+    /* cache_uniforms
+     *
+     * cache light uniforms for later use
+     * 
+     * light_uni: the uniform to cache
+     */
+    void cache_uniforms ( core::struct_uniform& light_uni );
+    
+
+
+    /* get/set_direction
+     * 
+     * get/set the direction of the light
+     */
+    const math::vec3& get_direction () const { return direction; }
+    void set_direction ( const math::vec3& _direction ) { direction = _direction; shadow_camera_change = true; }
+
+    /* set/get_ambient/diffuse/specular_color
+     *
+     * get/set the colors of the light
+     */
+    const math::vec3& get_ambient_color () const { return ambient_color; }
+    void set_ambient_color ( const math::vec3& _ambient_color ) { ambient_color = _ambient_color; }
+    const math::vec3& get_diffuse_color () const { return diffuse_color; }
+    void set_diffuse_color ( const math::vec3& _diffuse_color ) { diffuse_color = _diffuse_color; }
+    const math::vec3& get_specular_color () const { return ambient_color; }
+    void set_specular_color ( const math::vec3& _specular_color ) { specular_color = _specular_color; }
+    void set_color ( const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color )
+    { ambient_color = _ambient_color; diffuse_color = _diffuse_color; specular_color = _specular_color; }
+
+    /* enable/disable/is_enabled
+     *
+     * enable/disable the light or get whether is enabled
+     */
+    void enable () { enabled = true; }
+    void disable () { enabled = false; }
+    bool is_enabled () const { return enabled; }
+
+
+
+private:
+
+    /* direction of the light */
+    math::vec3 direction;
+
+    /* colors of light */
+    math::vec3 ambient_color;
+    math::vec3 diffuse_color;
+    math::vec3 specular_color;
+
+    /* whether the light is enabled */
+    bool enabled;
+
+    /* struct for cached uniforms */
+    struct cached_uniforms_struct
+    {
+        core::struct_uniform& light_uni;
+        core::uniform& direction_uni;
+        core::uniform& ambient_color_uni;
+        core::uniform& diffuse_color_uni;
+        core::uniform& specular_color_uni;
+        core::uniform& enabled_uni;
+    };
+
+    /* cached uniforms */
+    std::unique_ptr<cached_uniforms_struct> cached_uniforms;
+
+    /* the camera for the shadow map */
+    mutable camera::camera_orthographic_movement shadow_camera;
+
+    /* the last shadow region used */
+    region::spherical_region<> shadow_region;
+
+    /* true if the shadow camera must be updated */
+    mutable bool shadow_camera_change;
+
+};
+
+
+
+/* POINTLIGHT DEFINITION */
+
+/* class pointlight : light
+ *
+ * point light class
+ */
+class glh::lighting::pointlight
+{
+public:
+
+    /* full constructor
+     *
+     * set all of the values associated with directional light
+     */
+    pointlight ( const math::vec3& _position
+               , const double _att_const, const double _att_linear, const double _att_quad
+               , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
+               , const bool _enabled = true )
+        : position { _position }, att_const { _att_const }, att_linear { _att_linear }, att_quad { _att_quad }
+        , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
+        , enabled { _enabled }
+        , shadow_camera { _position, math::vec3 { 1.0, 0.0, 0.0 }, math::vec3 { 0.0, 1.0, 0.0 }, math::rad ( 90.0 ), 1.0, 0.1, 0.1 }
+        , shadow_region { math::vec3 { 0.0 }, 0.0 }
+    , shadow_camera_change { true }
+    {}
+
+    /* default zero-parameter constructor */
+    pointlight () = default;
+
+    /* deleted copy constructor */
+    pointlight ( const pointlight& other ) = delete;
+
+    /* default move constructor */
+    pointlight ( pointlight&& other ) = default;
+
+    /* deleted copy assignment operator */
+    pointlight& operator= ( const pointlight& other ) = delete;
+
+    /* default destructor */
+    ~pointlight () = default;
+
+
+
+    /* apply
+     *
+     * apply the lighting to a uniform
+     * the uniform should be of type pointlight_struct (see top)
+     * 
+     * light_uni: the uniform to apply the light to (which will be cached)
+     */
+    void apply ( core::struct_uniform& light_uni );
+    void apply () const;
+
+    /* cache_uniforms
+     *
+     * cache light uniforms for later use
+     * 
+     * light_uni: the uniform to cache
+     */
+    void cache_uniforms ( core::struct_uniform& light_uni );
+    
+
+
+    /* get/set_position
+     * 
+     * get/set the position of the light
+     */
+    const math::vec3& get_position () const { return position; }
+    void set_position ( const math::vec3& _position ) { position = _position; shadow_camera_change = true; }
+
+    /* get/set_att_const/linear/quad
+     *
+     * get/set the attenuation coefficients
+     */
+    const double& get_att_const () const { return att_const; }
+    void set_att_const ( const double _att_const ) { att_const = _att_const; }
+    const double& get_att_linear () const { return att_linear; }
+    void set_att_linear ( const double _att_linear ) { att_linear = _att_linear; } 
+    const double& get_att_quad () const { return att_quad; }
+    void set_att_quad ( const double _att_quad ) { att_quad = _att_quad; }
+    void set_att ( const double _att_const, const double _att_linear, const double _att_quad ) { att_const = _att_const; att_linear = _att_linear; att_quad = _att_quad; }
+
+    /* set/get_ambient/diffuse/specular_color
+     *
+     * get/set the colors of the light
+     */
+    const math::vec3& get_ambient_color () const { return ambient_color; }
+    void set_ambient_color ( const math::vec3& _ambient_color ) { ambient_color = _ambient_color; }
+    const math::vec3& get_diffuse_color () const { return diffuse_color; }
+    void set_diffuse_color ( const math::vec3& _diffuse_color ) { diffuse_color = _diffuse_color; }
+    const math::vec3& get_specular_color () const { return ambient_color; }
+    void set_specular_color ( const math::vec3& _specular_color ) { specular_color = _specular_color; }
+    void set_color ( const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color )
+    { ambient_color = _ambient_color; diffuse_color = _diffuse_color; specular_color = _specular_color; }
+
+    /* enable/disable/is_enabled
+     *
+     * enable/disable the light or get whether is enabled
+     */
+    void enable () { enabled = true; }
+    void disable () { enabled = false; }
+    bool is_enabled () const { return enabled; }
+
+
+
+private:
+
+    /* position of the light */
+    math::vec3 position;
+
+    /* attenuation parameters */
+    double att_const;
+    double att_linear;
+    double att_quad;
+
+    /* colors of light */
+    math::vec3 ambient_color;
+    math::vec3 diffuse_color;
+    math::vec3 specular_color;
+
+    /* whether the light is enabled */
+    bool enabled;
+
+    /* struct for cached uniforms */
+    struct cached_uniforms_struct
+    {
+        core::struct_uniform& light_uni;
+        core::uniform& position_uni;
+        core::uniform& att_const_uni;
+        core::uniform& att_linear_uni;
+        core::uniform& att_quad_uni;
+        core::uniform& ambient_color_uni;
+        core::uniform& diffuse_color_uni;
+        core::uniform& specular_color_uni;
+        core::uniform& enabled_uni;
+    };
+
+    /* cached uniforms */
+    std::unique_ptr<cached_uniforms_struct> cached_uniforms;
+
+    /* the camera for the shadow map */
+    mutable camera::camera_perspective_movement shadow_camera;
+
+    /* the last shadow region used */
+    region::spherical_region<> shadow_region;
+
+    /* true if the shadow camera must be updated */
+    mutable bool shadow_camera_change; 
+
+};
+
+
+
+/* SPOTLIGHT DEFINITION */
+
+/* class spotlight : light
+ *
+ * spotlight class
+ */
+class glh::lighting::spotlight
+{
+public:
+
+    /* full constructor
+     *
+     * set all of the values associated with directional light
+     */
+    spotlight ( const math::vec3& _position, const math::vec3& _direction
+              , const double _inner_cone, const double _outer_cone, const double _att_const, const double _att_linear, const double _att_quad
+              , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
+              , const bool _enabled = true )
         : position { _position }, direction { _direction }
         , inner_cone { _inner_cone }, outer_cone { _outer_cone }, att_const { _att_const }, att_linear { _att_linear }, att_quad { _att_quad }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
-        , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }
+        , enabled { _enabled }
+        , shadow_camera { _position, _direction, math::any_perpandicular ( _direction ), _outer_cone, 1.0, 0.1, 0.1 }
+        , shadow_region { math::vec3 { 0.0 }, 0.0 }
+        , shadow_camera_change { true }
     {}
 
-    /* zero-parameter constructor
-     *
-     * a black light at the origin with no direction and no attenuation
-     */
-    light ()
-        : light { math::vec3 {}, math::vec3 {}
-                , 0.0, 0.0, 1.0, 0.0, 0.0
-                , math::vec3 {}, math::vec3 {}, math::vec3 {} }
-    {}
+    /* default zero-parameter constructor */
+    spotlight () = default;
 
     /* deleted copy constructor */
-    light ( const light& other ) = delete;
+    spotlight ( const spotlight& other ) = delete;
 
     /* default move constructor */
-    light ( light&& other ) = default;
+    spotlight ( spotlight&& other ) = default;
 
     /* deleted copy assignment operator */
-    light& operator= ( const light& other ) = delete;
+    spotlight& operator= ( const spotlight& other ) = delete;
 
-    /* default pure virtual destructor */
-    virtual ~light () = 0;
+    /* default destructor */
+    ~spotlight () = default;
 
 
+
+    /* apply
+     *
+     * apply the lighting to a uniform
+     * the uniform should be of type spotlight_struct (see top)
+     * 
+     * light_uni: the uniform to apply the light to (which will be cached)
+     */
+    void apply ( core::struct_uniform& light_uni );
+    void apply () const;
+
+    /* cache_uniforms
+     *
+     * cache light uniforms for later use
+     * 
+     * light_uni: the uniform to cache
+     */
+    void cache_uniforms ( core::struct_uniform& light_uni );
+    
+
+
+    /* get/set_position
+     * get/set_direction
+     * 
+     * get/set the position and direction of the light
+     */
+    const math::vec3& get_position () const { return position; }
+    void set_position ( const math::vec3& _position ) { position = _position; shadow_camera_change = true; }
+    const math::vec3& get_direction () const { return direction; }
+    void set_direction ( const math::vec3& _direction ) { direction = _direction; shadow_camera_change = true; }
+
+    /* get/set_inner/outer_cone
+     *
+     * get/set the inner and outer cone of the spotlight
+     */
+    const double& get_inner_cone () const { return inner_cone; }
+    void set_inner_cone ( const double _inner_cone ) { inner_cone = _inner_cone; shadow_camera_change = true; }
+    const double& get_outer_cone () const { return outer_cone; }
+    void set_outer_cone ( const double _outer_cone ) { outer_cone = _outer_cone; shadow_camera_change = true; }
+    void set_cone ( const double _inner_cone, const double _outer_cone ) { inner_cone = _inner_cone; outer_cone = _outer_cone; shadow_camera_change = true; }
+
+    /* get/set_att_const/linear/quad
+     *
+     * get/set the attenuation coefficients
+     */
+    const double& get_att_const () const { return att_const; }
+    void set_att_const ( const double _att_const ) { att_const = _att_const; }
+    const double& get_att_linear () const { return att_linear; }
+    void set_att_linear ( const double _att_linear ) { att_linear = _att_linear; } 
+    const double& get_att_quad () const { return att_quad; }
+    void set_att_quad ( const double _att_quad ) { att_quad = _att_quad; }
+    void set_att ( const double _att_const, const double _att_linear, const double _att_quad ) { att_const = _att_const; att_linear = _att_linear; att_quad = _att_quad; }
+
+    /* set/get_ambient/diffuse/specular_color
+     *
+     * get/set the colors of the light
+     */
+    const math::vec3& get_ambient_color () const { return ambient_color; }
+    void set_ambient_color ( const math::vec3& _ambient_color ) { ambient_color = _ambient_color; }
+    const math::vec3& get_diffuse_color () const { return diffuse_color; }
+    void set_diffuse_color ( const math::vec3& _diffuse_color ) { diffuse_color = _diffuse_color; }
+    const math::vec3& get_specular_color () const { return ambient_color; }
+    void set_specular_color ( const math::vec3& _specular_color ) { specular_color = _specular_color; }
+    void set_color ( const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color )
+    { ambient_color = _ambient_color; diffuse_color = _diffuse_color; specular_color = _specular_color; }
+
+    /* enable/disable/is_enabled
+     *
+     * enable/disable the light or get whether is enabled
+     */
+    void enable () { enabled = true; }
+    void disable () { enabled = false; }
+    bool is_enabled () const { return enabled; }
+
+
+
+private:
 
     /* position of the light */
     math::vec3 position;
@@ -312,54 +672,8 @@ public:
     math::vec3 diffuse_color;
     math::vec3 specular_color;
 
-
-
-    /* apply
-     *
-     * apply the lighting to a uniform
-     * the uniform should be of type light_struct (see top)
-     * 
-     * light_uni: the uniform to apply the light to (which will be cached)
-     */
-    void apply ( core::struct_uniform& light_uni );
-    void apply () const;
-
-    /* cache_uniforms
-     *
-     * cache light uniforms for later use
-     * 
-     * light_uni: the uniform to cache
-     */
-    void cache_uniforms ( core::struct_uniform& light_uni );
-    
-
-
-    /* enable/disable/is_enabled
-     *
-     * enable/disable the light or get whether is enabled
-     */
-    void enable () { enabled = true; }
-    void disable () { enabled = false; }
-    bool is_enabled () const { return enabled; }
-
-    /* enable/disable_shadow_mapping
-     * is_shadow_mapping_enabled
-     * 
-     * enable/disable shadow mapping or get whether it is already enabled
-     */
-    void enable_shadow_mapping () { shadow_mapping_enabled = true; }
-    void disable_shadow_mapping () { shadow_mapping_enabled = false; }
-    bool is_shadow_mapping_enabled () const { return shadow_mapping_enabled; }
-
-
-
-protected:
-
     /* whether the light is enabled */
     bool enabled;
-
-    /* whether the light has shadow mapping enabled */
-    bool shadow_mapping_enabled;
 
     /* struct for cached uniforms */
     struct cached_uniforms_struct
@@ -376,415 +690,19 @@ protected:
         core::uniform& diffuse_color_uni;
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
-        core::uniform& has_shadow_map_uni;
-        core::uniform& shadow_map_2d_uni;
-        core::uniform& shadow_map_cube_uni;
     };
 
     /* cached uniforms */
     std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 
+    /* the camera for the shadow map */
+    mutable camera::camera_perspective_movement shadow_camera;
 
+    /* the last shadow region used */
+    region::spherical_region<> shadow_region;
 
-    /* pure virtual apply_shadow_map
-     *
-     * implemented by derived class in order to apply the shadow map
-     */
-    virtual void apply_shadow_map () const = 0;
-
-};
-
-/* make destructor default */
-glh::lighting::light::~light () = default;
-
-
-
-/* SHADOW_MAP_2D DEFINITION */
-
-/* class shadow_map_2d
- *
- * stores the objects necessary for a 2d shadow map
- */
-class glh::lighting::shadow_map_2d
-{
-public:
-
-    /* full constructor
-     *
-     * initialise the texture to a given size and attach it to the fbo
-     * 
-     * width: the width and height to set the texture to
-     */
-    shadow_map_2d ( const unsigned width );
-
-    /* zero-paramater constructor
-     *
-     * the depthmap texture will have no dimensions
-     */
-    shadow_map_2d ()
-        : shadow_map_2d { 0 }
-    {}
-
-    /* deleted copy constructor */
-    shadow_map_2d ( const shadow_map_2d& other ) = delete;
-
-    /* default move constructor */
-    shadow_map_2d ( shadow_map_2d&& other ) = default;
-
-    /* deleted copy assignment operator */
-    shadow_map_2d& operator= ( const shadow_map_2d& other ) = delete;
-
-    /* default destructor */
-    ~shadow_map_2d () = default;
-
-
-
-    /* resize_map
-     *
-     * resize the texture used for the shadow map
-     * 
-     * width: the width/height to set the texture to
-     */
-    void resize_map ( const unsigned width );
-
-
-
-    /* bind_map
-     *
-     * bind the depth texture to a unit
-     */
-    bool bind_map ( const unsigned unit = 0 ) const { return depth_texture.bind ( unit ); }
-
-    /* bind_map_loop
-     *
-     * bind the depth texture via the bind loop
-     */
-    unsigned bind_map_loop () const { return depth_texture.bind_loop (); }
-
-    /* bind_fbo
-     *
-     * binds the fbo of the texture map
-     */
-    bool bind_fbo () const { return shadow_fbo.bind (); }
-
-
-
-private:
-
-    /* the texture2d that will be used for the depth map */
-    core::texture2d depth_texture;
-
-    /* the fbo that will be used for generating the depth map */
-    core::fbo shadow_fbo;
-
-};
-
-
-
-/* SHADOW_MAP_CUBE DEFINITION */
-
-/* class shadow_map_cube
- *
- * stores the objects necessary for a cubemap shadow map
- */
-class glh::lighting::shadow_map_cube
-{
-public:
-
-    /* full constructor
-     *
-     * initialise the cubemap to a given size and attach it to the fbo
-     * 
-     * width: the width and height to set the cubemap to
-     */
-    shadow_map_cube ( const unsigned width );
-
-    /* zero-parameter constructor
-     *
-     * the depthmap texture will have no dimensions
-     */
-    shadow_map_cube ()
-        : shadow_map_cube { 0 }
-    {}
-
-    /* deleted copy constructor */
-    shadow_map_cube ( const shadow_map_cube& other ) = delete;
-
-    /* default move constructor */
-    shadow_map_cube ( shadow_map_cube&& other ) = default;
-
-    /* deleted copy assignment operator */
-    shadow_map_cube& operator= ( const shadow_map_cube& other ) = delete;
-
-    /* default destructor */
-    ~shadow_map_cube () = default;
-
-
-
-    /* resize_map
-     *
-     * resize the texture used for the shadow map
-     * 
-     * width: the width/height to set the texture to
-     */
-    void resize_map ( const unsigned width );
-
-
-
-    /* bind_map
-     *
-     * bind the depth texture to a unit
-     */
-    bool bind_map ( const unsigned unit = 0 ) const { return depth_texture.bind ( unit ); }
-
-    /* bind_map_loop
-     *
-     * bind the depth texture via the bind loop
-     */
-    unsigned bind_map_loop () const { return depth_texture.bind_loop (); }
-
-    /* bind_fbo
-     *
-     * binds the fbo of the texture map
-     */
-    bool bind_fbo () const { return shadow_fbo.bind (); }
-
-
-
-private:
-
-    /* the cubemap that will be used for the depth map */
-    core::cubemap depth_texture;
-
-    /* the fbo that will be used for generating the depth map */
-    core::fbo shadow_fbo;
-
-};
-
-
-
-/* DIRLIGHT DEFINITION */
-
-/* class dirlight : light
- *
- * directional light class
- */
-class glh::lighting::dirlight : public light
-{
-public:
-
-    /* full constructor
-     *
-     * set all of the values associated with directional light
-     */
-    dirlight ( const math::vec3& _direction
-             , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-             , const bool _enabled = true, const unsigned shadow_map_width = 0 )
-        : light { math::vec3 { 0.0 }, _direction, 0.0, 0.0, 1.0, 0.0, 0.0, _ambient_color, _diffuse_color, _specular_color, _enabled, static_cast<bool> ( shadow_map_width ) }
-        , shadow_map { shadow_map_width }
-    {}
-
-    /* default zero-parameter constructor */
-    dirlight () = default;
-
-    /* default copy constructor */
-    dirlight ( const dirlight& other ) = delete;
-
-    /* deleted move constructor */
-    dirlight ( dirlight&& other ) = default;
-
-    /* deleted copy assignment operator */
-    dirlight& operator= ( const dirlight& other ) = delete;
-
-    /* default destructor */
-    ~dirlight () = default;
-
-
-
-private:
-
-    /* shadow_map
-     *
-     * the shadow map of the light
-     */
-    shadow_map_2d shadow_map;
-
-
-
-    /* make position private */
-    using light::position;
-
-    /* make attenuation private */
-    using light::att_const;
-    using light::att_linear;
-    using light::att_quad;
-
-    /* make inner/outer_cone private */
-    using light::inner_cone;
-    using light::outer_cone;
-
-
-
-    /* shadow_camera
-     *
-     * produce a camera for shadow mapping based on a region of space to capture
-     * returns an orthographic movement camera capturing the whole scene
-     * 
-     * capture_region: a spherical region of what to capture in the shadow map
-     */
-    camera::camera_orthographic_movement shadow_camera ( const region::spherical_region<>& capture_region ) const;
-
-    /* apply_shadow_map
-     *
-     * applies the shadow map
-     */
-    void apply_shadow_map () const;
-
-};
-
-
-
-/* POINTLIGHT DEFINITION */
-
-/* class pointlight : light
- *
- * point light class
- */
-class glh::lighting::pointlight : public light
-{
-public:
-
-    /* full constructor
-     *
-     * set all of the values associated with directional light
-     */
-    pointlight ( const math::vec3& _position
-               , const double _att_const, const double _att_linear, const double _att_quad
-               , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-               , const bool _enabled = true, const unsigned shadow_map_width = 0 )
-        : light { _position, math::vec3 { 0.0 }, 0.0, 0.0, _att_const, _att_linear, _att_quad, _ambient_color, _diffuse_color, _specular_color, _enabled, static_cast<bool> ( shadow_map_width ) }
-        , shadow_map { shadow_map_width }
-    {}
-
-    /* default zero-parameter constructor */
-    pointlight () = default;
-
-    /* deleted copy constructor */
-    pointlight ( const pointlight& other ) = delete;
-
-    /* default move constructor */
-    pointlight ( pointlight&& other ) = default;
-
-    /* deleted copy assignment operator */
-    pointlight& operator= ( const pointlight& other ) = delete;
-
-    /* default destructor */
-    ~pointlight () = default;
-
-
-
-private:
-
-    /* shadow_map
-     *
-     * the shadow map of the light
-     */
-    shadow_map_cube shadow_map;
-
-
-
-    /* make direction private */
-    using light::direction;
-
-    /* make inner/outer_cone private */
-    using light::inner_cone;
-    using light::outer_cone;
-
-
-
-    /* shadow_camera
-     *
-     * produce a camera for shadow mapping based on a region of space to capture
-     * returns a perspective movement camera in the +ve-x direction
-     * 90 degree rotation can be applied to the view matrix to aquire different directions
-     * 
-     * capture_region: a spherical region of what to capture in the shadow map
-     */
-    camera::camera_perspective_movement shadow_camera ( const region::spherical_region<>& capture_region ) const;
-
-    /* apply_shadow_map
-     *
-     * applies the shadow map
-     */
-    void apply_shadow_map () const;
-
-};
-
-
-
-/* SPOTLIGHT DEFINITION */
-
-/* class spotlight : light
- *
- * spotlight class
- */
-class glh::lighting::spotlight : public light
-{
-public:
-
-    /* full constructor
-     *
-     * set all of the values associated with directional light
-     */
-    spotlight ( const math::vec3& _position, const math::vec3& _direction
-              , const double _inner_cone, const double _outer_cone,const double _att_const, const double _att_linear, const double _att_quad
-              , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-              , const bool _enabled = true, const unsigned shadow_map_width = 0 )
-        : light { _position, _direction, _inner_cone, _outer_cone, _att_const, _att_linear, _att_quad, _ambient_color, _diffuse_color, _specular_color, _enabled, static_cast<bool> ( shadow_map_width ) }
-        , shadow_map { shadow_map_width }
-    {}
-
-    /* default zero-parameter constructor */
-    spotlight () = default;
-
-    /* deleted copy constructor */
-    spotlight ( const spotlight& other ) = delete;
-
-    /* default move constructor */
-    spotlight ( spotlight&& other ) = default;
-
-    /* deleted copy assignment operator */
-    spotlight& operator= ( const spotlight& other ) = delete;
-
-    /* default destructor */
-    ~spotlight () = default;
-
-
-
-private:
-
-    /* shadow_map
-     *
-     * the shadow map of the light
-     */
-    shadow_map_2d shadow_map;
-
-
-
-    /* shadow_camera
-     *
-     * produce a camera for shadow mapping based on a region of space to capture
-     * returns a perspective movement camera, aspect ratio 1:1, capturing all up to the outer cone
-     * 
-     * capture_region: a spherical region of what to capture in the shadow map
-     */
-    camera::camera_perspective_movement shadow_camera ( const region::spherical_region<>& capture_region ) const; 
-
-    /* apply_shadow_map
-     *
-     * applies the shadow map
-     */
-    void apply_shadow_map () const;
+    /* true if the shadow camera must be updated */
+    mutable bool shadow_camera_change; 
 
 };
 
