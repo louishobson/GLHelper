@@ -68,9 +68,8 @@ struct light_struct
 
     bool enabled;
 
-    bool has_shadow_map;
-    sampler2DShadow shadow_map_2d;
-    //samplerCubeShadow shadow_map_cube;
+    mat4 shadow_view;
+    mat4 shadow_proj;
 };
 
 /* structure for storing multiple collections of lights */
