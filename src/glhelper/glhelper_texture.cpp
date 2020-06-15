@@ -294,6 +294,33 @@ unsigned glh::core::texture_base::bind_loop_index = 1;
 
 /* TEXTURE2D IMPLEMENTATION */
 
+/* tex_storage
+ *
+ * set up the texture using immutable storage
+ * 
+ * _width/_height: the width and height of the texture
+ * _internal_format: the internal format of the texture
+ * mipmap_levels: the number of mipmap levels to allocate
+ */
+void glh::core::texture2d::tex_storage ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned mipmap_levels )
+{
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable texture2d" };
+
+    /* assert that all size parameters are more than 0 */
+    if ( _width == 0 || _height == 0 || mipmap_levels == 0 )
+        throw exception::texture_exception { "cannot call tex_storage on texture2d with any size parameter as 0" };
+
+    /* set the parameters */
+    width = _width; height = _height;
+    internal_format = _internal_format;
+    is_immutable = true;
+
+    /* set the storage */
+    bind ();
+    glTexStorage2D ( opengl_bind_target, mipmap_levels, internal_format, width, height );
+}
+
 /* tex_image
  *
  * set up the texture based on provided parameters
@@ -312,7 +339,10 @@ unsigned glh::core::texture_base::bind_loop_index = 1;
  */
 void glh::core::texture2d::tex_image ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format, const GLenum type, const void * data )
 {
-    /* set the paraameters */
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable texture2d" };
+
+    /* set the parameters */
     width = _width; height = _height;
     internal_format = _internal_format;
     has_alpha_component = true;
@@ -323,6 +353,9 @@ void glh::core::texture2d::tex_image ( const unsigned _width, const unsigned _he
 }
 void glh::core::texture2d::tex_image ( const image& _image, const bool use_srgb )
 {
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable texture2d" };
+
     /* set the paraameters */
     width = _image.get_width (); height = _image.get_height ();
     internal_format = ( use_srgb ? GL_SRGB_ALPHA : GL_RGBA );
@@ -381,6 +414,33 @@ void glh::core::texture2d::tex_sub_image ( const unsigned x_offset, const unsign
 
 /* TEXTURE2D_ARRAY IMPLEMENTATION */
 
+/* tex_storage
+ *
+ * set up the texture using immutable storage
+ * 
+ * _width/_height/_depth: the width, height and number of textures in the array
+ * _internal_format: the internal format of the texture
+ * mipmap_levels: the number of mipmap levels to allocate
+ */
+void glh::core::texture2d_array::tex_storage ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const unsigned mipmap_levels )
+{
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable texture2d_array" };
+
+    /* assert that all size parameters are more than 0 */
+    if ( _width == 0 || _height == 0 || _depth == 0 || mipmap_levels == 0 )
+        throw exception::texture_exception { "cannot call tex_storage on texture2d_array with any size parameter as 0" };
+
+    /* set the parameters */
+    width = _width, height = _height, depth = _depth;
+    internal_format = _internal_format;
+    is_immutable = true;
+
+    /* set up the storage */
+    bind ();
+    glTexStorage3D ( opengl_bind_target, mipmap_levels, internal_format, width, height, depth );
+}
+
 /* tex_image
  *
  * set up the texture based on provided parameters
@@ -399,6 +459,9 @@ void glh::core::texture2d::tex_sub_image ( const unsigned x_offset, const unsign
  */
 void glh::core::texture2d_array::tex_image ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const GLenum format, const GLenum type, const void * data )
 {
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable texture2d_array" };
+
     /* set the parameters */
     width = _width, height = _height, depth = _depth;
     internal_format = _internal_format;
@@ -409,6 +472,9 @@ void glh::core::texture2d_array::tex_image ( const unsigned _width, const unsign
 }
 void glh::core::texture2d_array::tex_image ( std::initializer_list<image> images, const bool use_srgb )
 {
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable texture2d_array" };
+
     /* if images has size of 0, set width and height to 0 and create empty texture */
     if ( images.size () == 0 )
     {
@@ -485,6 +551,36 @@ void glh::core::texture2d_array::tex_sub_image ( const unsigned x_offset, const 
 
 /* TEXTURE2D_MULTISAMPLE IMPLEMENTATION */
 
+/* tex_storage
+ *
+ * set up the texture using immutable storage 
+ * 
+ * _width/_height: the width and height of the texture
+ * _samples: the number of samples
+ * _internal_format: the internal format of the texture
+ * _fixed_sample_locations: whether to use fixed sample locations (defaults to true)
+ */
+void glh::core::texture2d_multisample::tex_storage ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations )
+{
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable texture2d_multisample" };
+
+    /* assert that all size parameters are more than 0 */
+    if ( _width == 0 || _height == 0 )
+        throw exception::texture_exception { "cannot call tex_storage on texture2d_multisample with any size parameter as 0" };
+
+    /* set the parameters */
+    width = _width; height = _height;
+    samples = _samples;
+    internal_format = _internal_format;
+    fixed_sample_locations = _fixed_sample_locations;
+    is_immutable = true;
+
+    /* set up the texture */
+    bind ();
+    glTexStorage2DMultisample ( opengl_bind_target, samples, internal_format, width, height, fixed_sample_locations );
+}
+
 /* tex_image
  * 
  * set up the 2d multisample texture
@@ -496,6 +592,9 @@ void glh::core::texture2d_array::tex_sub_image ( const unsigned x_offset, const 
  */
 void glh::core::texture2d_multisample::tex_image ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations )
 {
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable texture2d_multisample" };
+
     /* set the parameters */
     width = _width; height = _height;
     samples = _samples;
@@ -510,6 +609,33 @@ void glh::core::texture2d_multisample::tex_image ( const unsigned _width, const 
 
 
 /* CUBEMAP IMPLEMENTATION */
+
+/* tex_storage
+ *
+ * set up the texture using immutable storage
+ * 
+ * _width/_height: the width and height of the texture
+ * _internal_format: the internal format of the texture
+ * mipmap_levels: the number of mipmap levels
+ */
+void glh::core::cubemap::tex_storage ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned mipmap_levels )
+{
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable cubemap" };
+
+    /* assert that all size parameters are more than 0 */
+    if ( _width == 0 || _height == 0 || mipmap_levels == 0 )
+        throw exception::texture_exception { "cannot call tex_storage on cubemap with any size parameter as 0" };
+
+    /* set the parameters */
+    width = _width; height = _height;
+    internal_format = _internal_format;
+    is_immutable = true;
+
+    /* set storage */
+    bind ();
+    glTexStorage2D ( opengl_bind_target, mipmap_levels, internal_format, width, height );
+}
 
 /* tex_image
  *
@@ -534,6 +660,9 @@ void glh::core::texture2d_multisample::tex_image ( const unsigned _width, const 
  */
 void glh::core::cubemap::tex_image ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format, const GLenum type, const void * data )
 {
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable cubemap" };
+
     /* set the parameters */
     width = _width; height = _height;
     internal_format = _internal_format;
@@ -545,6 +674,9 @@ void glh::core::cubemap::tex_image ( const unsigned _width, const unsigned _heig
 }
 void glh::core::cubemap::tex_image ( const image& _image, const bool use_srgb )
 {
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable cubemap" };
+
     /* set the paraameters */
     width = _image.get_width (); height = _image.get_height ();
     internal_format = ( use_srgb ? GL_SRGB_ALPHA : GL_RGBA );
@@ -556,6 +688,9 @@ void glh::core::cubemap::tex_image ( const image& _image, const bool use_srgb )
 }
 void glh::core::cubemap::tex_image ( std::initializer_list<image> images, const bool use_srgb )
 {
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable cubemap" };
+
     /* assert only six images */
     if ( images.size () != 6 ) throw exception::texture_exception { "attempted to call tex_image on cubemap with " + std::to_string ( images.size () ) + " images supplied" };
 

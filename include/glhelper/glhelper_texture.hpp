@@ -400,8 +400,6 @@ public:
 
 protected:
 
-
-
     /* bind_loop_index
      *
      * the next unit to bind the texture to in the bind loop
@@ -422,15 +420,17 @@ class glh::core::texture2d : public texture_base
 {
 public:
 
-    /* tex_image_2d constructor
+    /* tex_image constructor
      *
      * see tex_image for details
      */
     texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL )
         : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE }
+        , is_immutable { false }
         { tex_image ( _width, _height, _internal_format, format, type, data ); }
-    texture2d ( const image& _image, const bool use_srgb = false )
+    explicit texture2d ( const image& _image, const bool use_srgb = false )
         : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE }
+        , is_immutable { false }
         { tex_image ( _image, use_srgb ); }
 
 
@@ -440,6 +440,7 @@ public:
         , width { 0 }, height { 0 }
         , internal_format { GL_NONE }
         , has_alpha_component { false }
+        , is_immutable { false }
     {}
 
     /* deleted copy constructor */
@@ -465,6 +466,16 @@ public:
     { return get_bound_object_pointer<texture2d> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_0_TARGET ) + unit ) ); }
 
 
+
+    /* tex_storage
+     *
+     * set up the texture using immutable storage
+     * 
+     * _width/_height: the width and height of the texture
+     * _internal_format: the internal format of the texture
+     * mipmap_levels: the number of mipmap levels to allocate
+     */
+    void tex_storage ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned mipmap_levels );
 
     /* tex_image
      *
@@ -549,6 +560,12 @@ private:
      */
     bool has_alpha_component;
 
+    /* is_immutable
+     *
+     * true if the texture has been set by tex_storage, and is now immutable
+     */
+    bool is_immutable;
+
 };
 
 
@@ -569,9 +586,11 @@ public:
      */
     texture2d_array ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL )
         : texture_base { minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE }
+        , is_immutable { false }
         { tex_image ( _width, _height, _depth, _internal_format, format, type, data ); }
-    texture2d_array ( std::initializer_list<image> images, const bool use_srgb = false )
+    explicit texture2d_array ( std::initializer_list<image> images, const bool use_srgb = false )
         : texture_base { minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE }
+        , is_immutable { false }
         { tex_image ( images, use_srgb ); }
 
     /* zero=parameter constructor */
@@ -579,6 +598,7 @@ public:
         : texture_base { minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE }
         , width { 0 }, height { 0 }, depth { 0 }
         , internal_format { GL_NONE }
+        , is_immutable { false }
     {}
 
     /* deleted copy constructor */
@@ -604,6 +624,16 @@ public:
     { return get_bound_object_pointer<texture2d_array> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_ARRAY_0_TARGET ) + unit ) ); }
 
 
+
+    /* tex_storage
+     *
+     * set up the texture using immutable storage
+     * 
+     * _width/_height/_depth: the width, height and number of textures in the array
+     * _internal_format: the internal format of the texture
+     * mipmap_levels: the number of mipmap levels to allocate
+     */
+    void tex_storage ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const unsigned mipmap_levels );
 
     /* tex_image
      *
@@ -663,6 +693,12 @@ private:
      * the format of the data stored in the texture
      */
     GLenum internal_format;
+
+    /* is_immutable
+     *
+     * true if the texture has been set by tex_storage, and is now immutable
+     */
+    bool is_immutable;
     
 };
 
@@ -684,6 +720,7 @@ public:
      */
     texture2d_multisample ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations = GL_TRUE )
         : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE }
+        , is_immutable { false }
     { tex_image ( _width, _height, _samples, _internal_format, _fixed_sample_locations ); }
 
     /* zero-parameter constructor */
@@ -693,6 +730,7 @@ public:
         , samples { 0 }
         , internal_format { GL_NONE }
         , fixed_sample_locations { GL_TRUE }
+        , is_immutable { false }
     {}
 
     /* deleted copy constructor */
@@ -715,6 +753,17 @@ public:
     { return get_bound_object_pointer<texture2d_multisample> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET ) + unit ) ); }
 
 
+
+    /* tex_storage
+     *
+     * set up the texture using immutable storage
+     * 
+     * _width/_height: the width and height of the texture
+     * _samples: the number of samples
+     * _internal_format: the internal format of the texture
+     * _fixed_sample_locations: whether to use fixed sample locations (defaults to true)
+     */
+    void tex_storage ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations );
 
     /* tex_image
      *
@@ -756,6 +805,12 @@ private:
     /* whether fixed sample locations are being used */
     bool fixed_sample_locations;
 
+    /* is_immutable
+     *
+     * true if the texture has been set by tex_storage, and is now immutable
+     */
+    bool is_immutable;
+
 };
 
 
@@ -776,12 +831,15 @@ public:
      */
     cubemap ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL )
         : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
+        , is_immutable { false }
         { tex_image ( _width, _height, _internal_format, format, type, data ); }
     explicit cubemap ( const image& _image, const bool use_srgb = false )
         : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
+        , is_immutable { false }
         { tex_image ( _image, use_srgb ); }
     explicit cubemap ( std::initializer_list<image> images, const bool use_srgb = false )
         : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
+        , is_immutable { false }
         { tex_image ( images, use_srgb ); }
 
     /* zero-parameter constructor */
@@ -789,6 +847,7 @@ public:
         : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
         , width { 0 }, height { 0 }
         , internal_format { GL_NONE }
+        , is_immutable { false }
     {}
 
     /* deleted copy constructor */
@@ -811,6 +870,16 @@ public:
     { return get_bound_object_pointer<cubemap> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET ) + unit ) ); }
 
 
+
+    /* tex_storage
+     *
+     * set up the texture using immutable storage
+     * 
+     * _width/_height: the width and height of the texture
+     * _internal_format: the internal format of the texture
+     * mipmap_levels: the number of mipmap levels
+     */
+    void tex_storage ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned mipmap_levels );
 
     /* tex_image
      *
@@ -908,6 +977,12 @@ private:
      * the format of the data stored in the texture
      */
     GLenum internal_format;
+
+    /* is_immutable
+     *
+     * true if the texture has been set by tex_storage, and is now immutable
+     */
+    bool is_immutable;
 
 };
 
