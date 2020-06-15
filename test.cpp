@@ -29,7 +29,6 @@
 
 int main ()
 {
-
     /* CREATE WINDOW */
 
     /* create a window with 4xMSAA */

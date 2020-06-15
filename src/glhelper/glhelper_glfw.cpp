@@ -446,8 +446,8 @@ void glh::glfw::window::register_object ()
         /* init glfw */
         glfwInit ();
         /* set version to 3, and only use core OpenGL functionality */
-        glfwWindowHint ( GLFW_CONTEXT_VERSION_MAJOR, 3 );
-        glfwWindowHint ( GLFW_CONTEXT_VERSION_MINOR, 3 );
+        glfwWindowHint ( GLFW_CONTEXT_VERSION_MAJOR, 4 );
+        glfwWindowHint ( GLFW_CONTEXT_VERSION_MINOR, 4 );
         glfwWindowHint ( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
     }
 }
