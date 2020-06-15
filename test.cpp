@@ -36,7 +36,7 @@ int main ()
 
     /* disable mouse */
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
-
+    
 
 
     /* SET UP PROGRAM */
