@@ -247,6 +247,9 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
     /* set has_alpha to false */
     _texture_stack.stack_has_alpha = false;
 
+    /* if stack size is 0, return immediately */
+    if ( _texture_stack.stack_size == 0 ) return _texture_stack;
+
 
 
     /* process each level of the stack */
@@ -294,8 +297,8 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
 
 
     /* resize the texture array */
-    _texture_stack.textures.tex_image ( _texture_stack.stack_width, _texture_stack.stack_height, _texture_stack.stack_size, ( use_srgb ? GL_SRGB_ALPHA : GL_RGBA ), GL_RGBA, GL_UNSIGNED_BYTE );
-    
+    _texture_stack.textures.tex_storage ( _texture_stack.stack_width, _texture_stack.stack_height, _texture_stack.stack_size, ( use_srgb ? GL_SRGB8_ALPHA8 : GL_RGBA8 ), std::log2 ( std::max ( _texture_stack.stack_width, _texture_stack.stack_height ) ) + 1 );
+
     /* loop through images and substitute their data in */
     for ( unsigned i = 0; i < _texture_stack.stack_size; ++i )
         _texture_stack.textures.tex_sub_image ( 0, 0, i, _texture_stack.stack_width, _texture_stack.stack_height, 1, GL_RGBA, GL_UNSIGNED_BYTE, images.at ( _texture_stack.levels.at ( i ).image_index ).get_ptr () );

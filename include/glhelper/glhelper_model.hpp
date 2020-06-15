@@ -163,6 +163,7 @@
 /* include core headers */
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <utility>
