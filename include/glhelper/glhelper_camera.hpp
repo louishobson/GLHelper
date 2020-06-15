@@ -385,6 +385,13 @@ public:
     const math::vec3& get_position () const { return position; }
     void set_position ( const math::vec3& _position ) { position = _position; view_change = true; }
 
+    /* get/set_direction
+     *
+     * get/set the direction of the camera
+     */
+    math::vec3 get_direction () const { return -z; }
+    void set_direction ( const math::vec3& direction, const math::vec3& world_y );
+
     /* get_x/y/z
      *
      * get the current coordinate axis of the camera

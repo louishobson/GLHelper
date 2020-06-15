@@ -258,15 +258,15 @@ const glh::math::vec3& glh::camera::camera_movement::pitch ( const double arg )
     {
         /* if trying to pitch beyond vertical, reduce arg accordingly */
         double pitch_angle = math::angle ( restrict_y, z );
-        if ( pitch_angle + arg > math::rad ( 180 ) )
+        if ( pitch_angle + arg > math::rad ( 180.0 ) )
         {
-            y = math::rotate3d ( y, math::rad ( 180 ) - pitch_angle, restrict_x );
-            z = math::rotate3d ( z, math::rad ( 180 ) - pitch_angle, restrict_x );
+            y = math::rotate3d ( y, math::rad ( 180.0 ) - pitch_angle, restrict_x );
+            z = math::rotate3d ( z, math::rad ( 180.0 ) - pitch_angle, restrict_x );
         } else
-        if ( pitch_angle + arg < math::rad ( 0 ) )
+        if ( pitch_angle + arg < math::rad ( 0.0 ) )
         {
-            y = math::rotate3d ( y, math::rad ( 0 ) - pitch_angle, restrict_x );
-            z = math::rotate3d ( z, math::rad ( 0 ) - pitch_angle, restrict_x );
+            y = math::rotate3d ( y, math::rad ( 0.0 ) - pitch_angle, restrict_x );
+            z = math::rotate3d ( z, math::rad ( 0.0 ) - pitch_angle, restrict_x );
         } else
         {        
             y = math::rotate3d ( y, arg, restrict_x );
@@ -313,6 +313,25 @@ const glh::math::vec3& glh::camera::camera_movement::roll ( const double arg )
     /* set view as changed and return */
     view_change = true;
     return position;
+}
+
+/* get/set_direction
+ *
+ * get/set the direction of the camera
+ */
+void glh::camera::camera_movement::set_direction ( const math::vec3& direction, const math::vec3& world_y )
+{
+    /* set z */
+    z = math::normalise ( -direction );
+
+    /* find x from cross product */
+    x = math::cross ( math::normalise ( world_y ), x );
+
+    /* find y from cross product again */
+    y = math::cross ( z, x );
+
+    /* set view as changed */
+    view_change = true;
 }
 
 /* update_view
