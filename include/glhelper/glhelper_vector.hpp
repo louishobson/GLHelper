@@ -293,7 +293,7 @@ public:
      *
      * sets all values to the value provided, defaulting to 0
      */
-    explicit vector ( const T& val = 0 ) { data.fill ( val ); }
+    explicit vector ( const T& val = 0.0 ) { data.fill ( val ); }
 
     /* resize constructor
      *
@@ -663,9 +663,9 @@ template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::any_perp
      * 
      * then return the normalised vector
      */
-    if ( lhs.at ( 0 ) == 0 ) return vector<M, T> { 1 };
-    if ( lhs.at ( 1 ) == 0 ) return vector<M, T> { 0, 1 };
-    return normalise ( vector<M, T> { - ( lhs.at ( 1 ) / lhs.at ( 0 ) ), 1 } );
+    if ( lhs.at ( 0 ) == 0.0 ) return vector<M, T> { 1.0 };
+    if ( lhs.at ( 1 ) == 0.0 ) return vector<M, T> { 0.0, 1.0 };
+    return normalise ( vector<M, T> { - ( lhs.at ( 1 ) / lhs.at ( 0 ) ), 1.0 } );
 }
 
 

@@ -232,7 +232,7 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
 
     /* get the base color */
     if ( aimaterial.Get ( base_color, __bgtype, __bgidx, temp_color ) == aiReturn_SUCCESS )
-    _texture_stack.base_color = cast_vector ( temp_color ); else _texture_stack.base_color = math::fvec3 {};
+    _texture_stack.base_color = cast_vector ( temp_color ); else _texture_stack.base_color = math::fvec3 { 0.0 };
 
     /* apply sRGBA transformation to base color */
     if ( use_srgb ) _texture_stack.base_color = math::pow ( _texture_stack.base_color, math::fvec3 { 2.2 } );
@@ -255,7 +255,7 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
         /* set the blend attributes */
         if ( aimaterial.Get ( AI_MATKEY_TEXOP ( aitexturetype, i ), temp_int ) == aiReturn_SUCCESS )
         _texture_stack.levels.at ( i ).blend_operation = temp_int; else
-        _texture_stack.levels.at ( i ).blend_operation = ( _texture_stack.base_color == math::fvec3 {} && i == 0 ? 1 : 0 );
+        _texture_stack.levels.at ( i ).blend_operation = ( _texture_stack.base_color == math::fvec3 { 0.0 } && i == 0 ? 1 : 0 );
         if ( aimaterial.Get ( AI_MATKEY_TEXBLEND ( aitexturetype, i ), temp_float ) == aiReturn_SUCCESS ) 
         _texture_stack.levels.at ( i ).blend_strength = temp_float; else _texture_stack.levels.at ( i ).blend_strength = 1.0;
 

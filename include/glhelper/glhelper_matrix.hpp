@@ -289,7 +289,7 @@ public:
      *
      * sets all elements to the value provided
      */
-    explicit matrix ( const T& val = 0 ) { data.fill ( val ); }
+    explicit matrix ( const T& val = 0.0 ) { data.fill ( val ); }
 
     /* initialiser list constructor
      *
