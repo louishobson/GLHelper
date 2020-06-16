@@ -473,9 +473,9 @@ public:
      * 
      * _width/_height: the width and height of the texture
      * _internal_format: the internal format of the texture
-     * mipmap_levels: the number of mipmap levels to allocate
+     * mipmap_levels: the number of mipmap levels to allocate (defaults to 0, which will allocate the maximum)
      */
-    void tex_storage ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned mipmap_levels );
+    void tex_storage ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned mipmap_levels = 0 );
 
     /* tex_image
      *
@@ -631,9 +631,9 @@ public:
      * 
      * _width/_height/_depth: the width, height and number of textures in the array
      * _internal_format: the internal format of the texture
-     * mipmap_levels: the number of mipmap levels to allocate
+     * mipmap_levels: the number of mipmap levels to allocate (defaults to 0, which will allocate the maximum)
      */
-    void tex_storage ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const unsigned mipmap_levels );
+    void tex_storage ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const unsigned mipmap_levels = 0 );
 
     /* tex_image
      *
@@ -877,9 +877,9 @@ public:
      * 
      * _width/_height: the width and height of the texture
      * _internal_format: the internal format of the texture
-     * mipmap_levels: the number of mipmap levels
+     * mipmap_levels: the number of mipmap levels to allocate (defaults to 0, which will allocate the maximum)
      */
-    void tex_storage ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned mipmap_levels );
+    void tex_storage ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned mipmap_levels = 0 );
 
     /* tex_image
      *

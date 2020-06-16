@@ -300,7 +300,7 @@ unsigned glh::core::texture_base::bind_loop_index = 1;
  * 
  * _width/_height: the width and height of the texture
  * _internal_format: the internal format of the texture
- * mipmap_levels: the number of mipmap levels to allocate
+ * mipmap_levels: the number of mipmap levels to allocate (defaults to 0, which will allocate the maximum)
  */
 void glh::core::texture2d::tex_storage ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned mipmap_levels )
 {
@@ -308,7 +308,7 @@ void glh::core::texture2d::tex_storage ( const unsigned _width, const unsigned _
     if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable texture2d" };
 
     /* assert that all size parameters are more than 0 */
-    if ( _width == 0 || _height == 0 || mipmap_levels == 0 )
+    if ( _width == 0 || _height == 0 )
         throw exception::texture_exception { "cannot call tex_storage on texture2d with any size parameter as 0" };
 
     /* set the parameters */
@@ -318,7 +318,7 @@ void glh::core::texture2d::tex_storage ( const unsigned _width, const unsigned _
 
     /* set the storage */
     bind ();
-    glTexStorage2D ( opengl_bind_target, mipmap_levels, internal_format, width, height );
+    glTexStorage2D ( opengl_bind_target, ( mipmap_levels > 0 ? mipmap_levels : std::log2 ( std::max ( width, height ) ) + 1 ), internal_format, width, height );
 }
 
 /* tex_image
@@ -420,7 +420,7 @@ void glh::core::texture2d::tex_sub_image ( const unsigned x_offset, const unsign
  * 
  * _width/_height/_depth: the width, height and number of textures in the array
  * _internal_format: the internal format of the texture
- * mipmap_levels: the number of mipmap levels to allocate
+ * mipmap_levels: the number of mipmap levels to allocate (defaults to 0, which will allocate the maximum)
  */
 void glh::core::texture2d_array::tex_storage ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const unsigned mipmap_levels )
 {
@@ -428,7 +428,7 @@ void glh::core::texture2d_array::tex_storage ( const unsigned _width, const unsi
     if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable texture2d_array" };
 
     /* assert that all size parameters are more than 0 */
-    if ( _width == 0 || _height == 0 || _depth == 0 || mipmap_levels == 0 )
+    if ( _width == 0 || _height == 0 || _depth == 0 )
         throw exception::texture_exception { "cannot call tex_storage on texture2d_array with any size parameter as 0" };
 
     /* set the parameters */
@@ -438,8 +438,8 @@ void glh::core::texture2d_array::tex_storage ( const unsigned _width, const unsi
 
     /* set up the storage */
     bind ();
-    glTexStorage3D ( opengl_bind_target, mipmap_levels, internal_format, width, height, depth );
-}
+    glTexStorage3D ( opengl_bind_target, ( mipmap_levels > 0 ? mipmap_levels : std::log2 ( std::max ( width, height ) ) + 1 ), internal_format, width, height, depth );
+} 
 
 /* tex_image
  *
@@ -616,7 +616,7 @@ void glh::core::texture2d_multisample::tex_image ( const unsigned _width, const 
  * 
  * _width/_height: the width and height of the texture
  * _internal_format: the internal format of the texture
- * mipmap_levels: the number of mipmap levels
+ * mipmap_levels: the number of mipmap levels to allocate (defaults to 0, which will allocate the maximum)
  */
 void glh::core::cubemap::tex_storage ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const unsigned mipmap_levels )
 {
@@ -624,7 +624,7 @@ void glh::core::cubemap::tex_storage ( const unsigned _width, const unsigned _he
     if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable cubemap" };
 
     /* assert that all size parameters are more than 0 */
-    if ( _width == 0 || _height == 0 || mipmap_levels == 0 )
+    if ( _width == 0 || _height == 0 )
         throw exception::texture_exception { "cannot call tex_storage on cubemap with any size parameter as 0" };
 
     /* set the parameters */
@@ -634,7 +634,7 @@ void glh::core::cubemap::tex_storage ( const unsigned _width, const unsigned _he
 
     /* set storage */
     bind ();
-    glTexStorage2D ( opengl_bind_target, mipmap_levels, internal_format, width, height );
+    glTexStorage2D ( opengl_bind_target, ( mipmap_levels > 0 ? mipmap_levels : std::log2 ( std::max ( width, height ) ) + 1 ), internal_format, width, height );
 }
 
 /* tex_image
