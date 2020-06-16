@@ -297,7 +297,7 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
 
 
     /* resize the texture array */
-    _texture_stack.textures.tex_storage ( _texture_stack.stack_width, _texture_stack.stack_height, _texture_stack.stack_size, ( use_srgb ? GL_SRGB8_ALPHA8 : GL_RGBA8 ), std::log2 ( std::max ( _texture_stack.stack_width, _texture_stack.stack_height ) ) + 1 );
+    _texture_stack.textures.tex_storage ( _texture_stack.stack_width, _texture_stack.stack_height, _texture_stack.stack_size, ( use_srgb ? GL_SRGB8_ALPHA8 : GL_RGBA8 ) );
 
     /* loop through images and substitute their data in */
     for ( unsigned i = 0; i < _texture_stack.stack_size; ++i )
