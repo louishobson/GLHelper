@@ -95,23 +95,9 @@ int main ()
         glh::math::identity<4, GLdouble> (),
         0.1
     );
-
-    /* import backpack model */
-    glh::model::model backpack { "assets/backpack", "backpack.obj", 
-        glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
-        glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
-        glh::model::import_flags::GLH_FLIP_V_TEXTURES
-    };
-    const glh::math::mat4 backpack_matrix =
-    glh::math::enlarge3d
-    (
-        glh::math::identity<4, GLdouble> (),
-        5.0
-    );
     
     /* cache uniforms */
     island.cache_uniforms ( material_uni, trans_uni.get_uniform ( "model" ) );
-    backpack.cache_uniforms ( material_uni, trans_uni.get_uniform ( "model" ) );
 
 
 
