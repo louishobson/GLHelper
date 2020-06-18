@@ -67,6 +67,7 @@ struct light_struct
     vec3 specular_color;
 
     bool enabled;
+    bool shadow_mapping_enabled;
 
     mat4 shadow_view;
     mat4 shadow_proj;
