@@ -320,6 +320,13 @@ public:
     void set_color ( const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color )
     { ambient_color = _ambient_color; diffuse_color = _diffuse_color; specular_color = _specular_color; }
 
+    /* get/set_shadow_region
+     *
+     * get/set the region the light should cast shadows over
+     */
+    const region::spherical_region<>& get_shadow_region () const { return shadow_region; }
+    void set_shadow_region ( const region::spherical_region<>& _shadow_region ) { shadow_region = _shadow_region; shadow_camera_change = true; }
+
     /* enable/disable/is_enabled
      *
      * enable/disable the light or get whether is enabled
@@ -492,6 +499,13 @@ public:
     void set_specular_color ( const math::vec3& _specular_color ) { specular_color = _specular_color; }
     void set_color ( const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color )
     { ambient_color = _ambient_color; diffuse_color = _diffuse_color; specular_color = _specular_color; }
+
+    /* get/set_shadow_region
+     *
+     * get/set the region the light should cast shadows over
+     */
+    const region::spherical_region<>& get_shadow_region () const { return shadow_region; }
+    void set_shadow_region ( const region::spherical_region<>& _shadow_region ) { shadow_region = _shadow_region; shadow_camera_change = true; }
 
     /* enable/disable/is_enabled
      *
@@ -686,6 +700,13 @@ public:
     void set_specular_color ( const math::vec3& _specular_color ) { specular_color = _specular_color; }
     void set_color ( const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color )
     { ambient_color = _ambient_color; diffuse_color = _diffuse_color; specular_color = _specular_color; }
+
+    /* get/set_shadow_region
+     *
+     * get/set the region the light should cast shadows over
+     */
+    const region::spherical_region<>& get_shadow_region () const { return shadow_region; }
+    void set_shadow_region ( const region::spherical_region<>& _shadow_region ) { shadow_region = _shadow_region; shadow_camera_change = true; }
 
     /* enable/disable/is_enabled
      *
