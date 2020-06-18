@@ -672,14 +672,13 @@ public:
      *
      * render the model
      * 
-     * prog: the program to use for rendering
      * material_uni: material uniform to cache and set the material properties to
      * model_uni: a 4x4 matrix uniform to cache and apply set the model transformations to
      * transform: the overall model transformation to apply (identity by default)
      * flags: rendering flags (none by default)
      */
-    void render ( const core::program& prog, core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE );
-    void render ( const core::program& prog, const math::mat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE ) const;
+    void render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE );
+    void render ( const math::mat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE ) const;
 
 
 
@@ -947,19 +946,17 @@ private:
      * render a node and all of its children
      * 
      * _node: the node to render
-     * prog: the program to use for rendering
      * transform: the current model transformation from all the previous nodes
      */
-    void render_node ( const node& _node, const core::program& prog, const math::fmat4& transform ) const;
+    void render_node ( const node& _node, const math::fmat4& transform ) const;
 
     /* render_mesh
      *
      * render a mesh
      * 
      * _mesh: the mesh to render
-     * prog: the program to use for rendering
      */
-    void render_mesh ( const mesh& _mesh, const core::program& prog ) const;
+    void render_mesh ( const mesh& _mesh ) const;
 
     /* apply_material
      *

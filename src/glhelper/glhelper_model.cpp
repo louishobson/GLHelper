@@ -58,21 +58,20 @@ glh::model::model::model ( const std::string& _directory, const std::string& _en
  *
  * render the model
  * 
- * prog: the program to use for rendering
  * material_uni: material uniform to cache and set the material properties to
  * model_uni: a 4x4 matrix uniform to cache and apply set the model transformations to
  * transform: the overall model transformation to apply (identity by default)
  * flags: rendering flags (none by default)
  */
-void glh::model::model::render ( const core::program& prog, core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform, const unsigned flags )
+void glh::model::model::render (core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform, const unsigned flags )
 {
     /* reload the cache of uniforms  */
     cache_uniforms ( material_uni, model_uni );
 
     /* render */
-    render ( prog, transform, flags );
+    render ( transform, flags );
 }
-void glh::model::model::render ( const core::program& prog, const math::mat4& transform, const unsigned flags ) const
+void glh::model::model::render ( const math::mat4& transform, const unsigned flags ) const
 {
     /* throw if uniforms are not already cached */
     if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to render model without a complete uniform cache" };
@@ -81,7 +80,7 @@ void glh::model::model::render ( const core::program& prog, const math::mat4& tr
     model_render_flags = flags;
 
     /* render the root node */
-    render_node ( root_node, prog, transform );
+    render_node ( root_node, transform );
 }
 
 
@@ -751,22 +750,21 @@ void glh::model::model::configure_node_region ( node& _node )
  * render a node and all of its children
  * 
  * _node: the node to render
- * prog: the program to use for rendering
  * transform: the current model transformation from all the previous nodes
  */
-void glh::model::model::render_node ( const node& _node, const core::program& prog, const math::fmat4& transform ) const
+void glh::model::model::render_node ( const node& _node, const math::fmat4& transform ) const
 {
     /* create transformation matrix */
     math::fmat4 trans = transform * _node.transform;
 
     /* first render the child nodes */
-    for ( const node& child: _node.children ) render_node ( child, prog, trans );
+    for ( const node& child: _node.children ) render_node ( child, trans );
 
     /* set the model matrix */
     cached_uniforms->model_uni.set_matrix ( trans );
 
     /* render all of the meshes */
-    for ( const mesh * _mesh: _node.meshes ) render_mesh ( * _mesh, prog );
+    for ( const mesh * _mesh: _node.meshes ) render_mesh ( * _mesh );
 }
 
 /* render_mesh
@@ -774,9 +772,8 @@ void glh::model::model::render_node ( const node& _node, const core::program& pr
  * render a mesh
  * 
  * _mesh: the mesh to render
- * prog: the program to use for rendering
  */
-void glh::model::model::render_mesh ( const mesh& _mesh, const core::program& prog ) const
+void glh::model::model::render_mesh ( const mesh& _mesh ) const
 {
     /* don't draw if transparent mode and mesh is definitely opaque */
     if ( ( model_render_flags & render_flags::GLH_TRANSPARENT_MODE ) && _mesh.definitely_opaque ) return;
@@ -789,7 +786,7 @@ void glh::model::model::render_mesh ( const mesh& _mesh, const core::program& pr
     if ( !( model_render_flags & render_flags::GLH_NO_MATERIAL ) ) apply_material ( * _mesh.properties );
 
     /* draw elements */
-    core::renderer::draw_elements ( prog, _mesh.array_object, GL_TRIANGLES, _mesh.faces.size () * 3, GL_UNSIGNED_INT, 0 );
+    core::renderer::draw_elements ( _mesh.array_object, GL_TRIANGLES, _mesh.faces.size () * 3, GL_UNSIGNED_INT, 0 );
 
     /* re-enable face culling if was previously disabled */
     if ( culling_active ) core::renderer::enable_face_culling ();
