@@ -107,13 +107,14 @@ int main ()
     glh::lighting::light_system light_system;
 
     /* add directional light */
-    light_system.add_light ( glh::lighting::dirlight
-    {
+    light_system.add_dirlight
+    (
         glh::math::vec3 { 1.0, -1.0, 0.0 },
         glh::math::vec3 { 1.0 },
         glh::math::vec3 { 1.0 }, 
-        glh::math::vec3 { 1.0 }
-    } );
+        glh::math::vec3 { 1.0 },
+        island.model_region ( island_matrix )
+    );
 
     /* cache uniforms */
     light_system.cache_uniforms ( light_system_uni );
