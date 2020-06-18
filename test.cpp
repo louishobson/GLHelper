@@ -195,26 +195,26 @@ int main ()
         
 
 
+        /* use the program */
+        program.use ();
+
         /* apply camera and light system */
         camera.apply ();
         light_system.apply ();
-        //light_system.dirlights.at ( 0 ).shadow_camera ( island.model_region ( island_matrix ) ).apply ( trans_uni.get_uniform ( "view" ), trans_uni.get_uniform ( "proj" ) );
-
+        
         /* clear screen */
         glh::core::renderer::clear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         /* render opaque */
         transparent_mode_uni.set_int ( false );
         glh::core::renderer::disable_blend ();
-        island.render ( program, island_matrix );
-        //backpack.render ( program, backpack_matrix );
-
+        island.render ( island_matrix );
+       
         /* render transparent */
         transparent_mode_uni.set_int ( true );
         glh::core::renderer::enable_blend ();
-        island.render ( program, island_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
-        //backpack.render ( program, backpack_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
-
+        island.render ( island_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
+        
 
 
         /* swap buffers */
