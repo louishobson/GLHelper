@@ -57,6 +57,7 @@ void glh::lighting::dirlight::apply () const
     cached_uniforms->diffuse_color_uni.set_vector ( diffuse_color );
     cached_uniforms->specular_color_uni.set_vector ( specular_color );
     cached_uniforms->enabled_uni.set_int ( enabled );
+    cached_uniforms->shadow_mapping_enabled_uni.set_int ( shadow_mapping_enabled );
 
     /* apply the shadow camera */
     shadow_camera.apply ();
@@ -81,6 +82,7 @@ void glh::lighting::dirlight::cache_uniforms ( core::struct_uniform& light_uni )
             light_uni.get_uniform ( "diffuse_color" ),
             light_uni.get_uniform ( "specular_color" ),
             light_uni.get_uniform ( "enabled" ),
+            light_uni.get_uniform ( "shadow_mapping_enabled" )
         } );
         shadow_camera.cache_uniforms ( light_uni.get_uniform ( "shadow_view" ), light_uni.get_uniform ( "shadow_proj" ) );
     }
@@ -127,6 +129,7 @@ void glh::lighting::pointlight::apply () const
     cached_uniforms->diffuse_color_uni.set_vector ( diffuse_color );
     cached_uniforms->specular_color_uni.set_vector ( specular_color );
     cached_uniforms->enabled_uni.set_int ( enabled );
+    cached_uniforms->shadow_mapping_enabled_uni.set_int ( shadow_mapping_enabled );
 
     /* apply the shadow camera */
     shadow_camera.apply ();
@@ -154,6 +157,7 @@ void glh::lighting::pointlight::cache_uniforms ( core::struct_uniform& light_uni
             light_uni.get_uniform ( "diffuse_color" ),
             light_uni.get_uniform ( "specular_color" ),
             light_uni.get_uniform ( "enabled" ),
+            light_uni.get_uniform ( "shadow_mapping_enabled" )
         } );
         shadow_camera.cache_uniforms ( light_uni.get_uniform ( "shadow_view" ), light_uni.get_uniform ( "shadow_proj" ) );
     }
@@ -205,6 +209,7 @@ void glh::lighting::spotlight::apply () const
     cached_uniforms->diffuse_color_uni.set_vector ( diffuse_color );
     cached_uniforms->specular_color_uni.set_vector ( specular_color );
     cached_uniforms->enabled_uni.set_int ( enabled );
+    cached_uniforms->shadow_mapping_enabled_uni.set_int ( shadow_mapping_enabled );
 
     /* apply the shadow camera */
     shadow_camera.apply ();
@@ -235,6 +240,7 @@ void glh::lighting::spotlight::cache_uniforms ( core::struct_uniform& light_uni 
             light_uni.get_uniform ( "diffuse_color" ),
             light_uni.get_uniform ( "specular_color" ),
             light_uni.get_uniform ( "enabled" ),
+            light_uni.get_uniform ( "shadow_mapping_enabled" )
         } );
         shadow_camera.cache_uniforms ( light_uni.get_uniform ( "shadow_view" ), light_uni.get_uniform ( "shadow_proj" ) );
     }
@@ -263,10 +269,13 @@ void glh::lighting::light_system::apply () const
     /* throw if no uniform is cached */
     if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to apply light_system to uniform with out a complete uniform cache" };
 
-    /* apply each light collection in turn */
-    dirlights.apply ();
-    pointlights.apply ();
-    spotlights.apply ();
+    /* apply all lights */
+    cached_uniforms->dirlights_size_uni.set_int ( dirlights.size () );
+    for ( unsigned i = 0; i < dirlights.size (); ++i ) dirlights.at ( i ).apply ();
+    cached_uniforms->pointlights_size_uni.set_int ( pointlights.size () );
+    for ( unsigned i = 0; i < pointlights.size (); ++i ) pointlights.at ( i ).apply ();
+    cached_uniforms->spotlights_size_uni.set_int ( spotlights.size () );
+    for ( unsigned i = 0; i < spotlights.size (); ++i ) spotlights.at ( i ).apply ();
 }
 
 /* cache_uniforms
@@ -282,21 +291,27 @@ void glh::lighting::light_system::cache_uniforms ( core::struct_uniform& light_s
     {
         cached_uniforms.reset ( new cached_uniforms_struct
         {
-            light_system_uni
+            light_system_uni,
+            light_system_uni.get_uniform ( "dirlights_size" ),
+            light_system_uni.get_struct_array_uniform ( "dirlights" ),
+            light_system_uni.get_uniform ( "pointlights_size" ),
+            light_system_uni.get_struct_array_uniform ( "pointlights" ),
+            light_system_uni.get_uniform ( "spotlights_size" ),
+            light_system_uni.get_struct_array_uniform ( "pointlights" ),
         } );
     }
 
-    /* get light collections to cache their uniforms */
-    dirlights.cache_uniforms ( cached_uniforms->light_system_uni.get_uniform ( "dirlights_size" ), cached_uniforms->light_system_uni.get_struct_array_uniform ( "dirlights" ) );
-    pointlights.cache_uniforms ( cached_uniforms->light_system_uni.get_uniform ( "pointlights_size" ), cached_uniforms->light_system_uni.get_struct_array_uniform ( "pointlights" ) );
-    spotlights.cache_uniforms ( cached_uniforms->light_system_uni.get_uniform ( "spotlights_size" ), cached_uniforms->light_system_uni.get_struct_array_uniform ( "spotlights" ) );
+    /* loop through all lights and cache uniforms */
+    for ( unsigned i = 0; i < dirlights.size (); ++i ) dirlights.at ( i ).cache_uniforms ( cached_uniforms->dirlights_uni.at ( i ) );
+    for ( unsigned i = 0; i < pointlights.size (); ++i ) pointlights.at ( i ).cache_uniforms ( cached_uniforms->pointlights_uni.at ( i ) );
+    for ( unsigned i = 0; i < spotlights.size (); ++i ) spotlights.at ( i ).cache_uniforms ( cached_uniforms->spotlights_uni.at ( i ) );
 }
 
-/* reload_uniforms
+/* recache_uniforms
  *
- * reload the light collections based on the currently cached uniforms
+ * recache the light collections based on the currently cached uniforms
  */
-void glh::lighting::light_system::reload_uniforms ()
+void glh::lighting::light_system::recache_uniforms ()
 {
     /* recache uniforms */
     cache_uniforms ( cached_uniforms->light_system_uni );

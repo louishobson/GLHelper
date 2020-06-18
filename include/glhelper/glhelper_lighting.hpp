@@ -75,6 +75,7 @@
  *     vec3 specular_color;
  * 
  *     bool enabled;
+ *     bool shadow_mapping_enabled;
  * 
  *     mat4 shadow_view;
  *     mat4 shadow_proj;
@@ -90,16 +91,11 @@
  * att_const/linear/quad: attenuation attributes for the light (only for point and spot lights)
  * ambient/diffuse/specular_color: the colors of the different components of light produced (all types)
  * enabled: whether the light is 'turned on' (all types)
- * shadow_view/proj: view and projection matrices for shadow mapping (all lights)
- *
+ * shadow_mapping_enabled: whether the light should be shadow mapped (all types)
+ * shadow_view/proj: view and projection matrices for shadow mapping (all types)
  * 
- * 
- * CLASS GLH::LIGHTING::LIGHT_COLLECTION
- * 
- * template class to store a dynamically-allocated array of lights
- * the template parameter must be a type of light
- * there are using declarations to abstract the template (e.g. dirlight_collection)
- * this class exists so that applying all of the lights to uniforms insize the glsl LIGHT_SYSTEM_STRUCT is made easier
+ * the first two structures could potentially be completely ommited and just spotlight structs used, since the members of the other classes
+ * are subsets of the members of the spotlight class. In this case, unused members will just not be set
  * 
  * 
  * 
@@ -198,22 +194,6 @@ namespace glh
 
 
 
-        /* class light_collection
-         *
-         * class to store multiple lights of the same type
-         */
-        template<class T> class light_collection;
-
-        /* using declarations for light_collection
-         *
-         * simplifies template
-         */
-        using dirlight_collection = light_collection<dirlight>;
-        using pointlight_collection = light_collection<pointlight>;
-        using spotlight_collection = light_collection<spotlight>;
-
-
-
         /* class light_system
          *
          * several collection of lights for each type
@@ -262,26 +242,38 @@ public:
      */
     dirlight ( const math::vec3& _direction
              , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-             , const bool _enabled = true )
+             , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
+             , const bool _enabled = true, const bool _shadow_mapping_enabled = true )
         : direction { _direction }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
-        , enabled { _enabled }
+        , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }
         , shadow_camera { math::vec3 { 0.0 }, _direction, math::any_perpandicular ( _direction ), math::vec3 { 0.0 }, math::vec3 { 0.0 } }
-        , shadow_region { math::vec3 { 0.0 }, 0.0 }
+        , shadow_region { _shadow_region }
         , shadow_camera_change { true }
     {}
 
     /* default zero-parameter constructor */
     dirlight () = default;
 
-    /* default copy constructor */
-    dirlight ( const dirlight& other ) = delete;
+    /* copy constructor */
+    dirlight ( const dirlight& other )
+        : direction { other.direction }
+        , ambient_color { other.ambient_color }, diffuse_color { other.diffuse_color }, specular_color { other.specular_color }
+        , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }
+    {}
 
-    /* deleted move constructor */
+    /* default move constructor */
     dirlight ( dirlight&& other ) = default;
 
-    /* deleted copy assignment operator */
-    dirlight& operator= ( const dirlight& other ) = delete;
+    /* copy assignment operator */
+    dirlight& operator= ( const dirlight& other )
+        { direction = other.direction
+        ; ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color
+        ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled
+    ; return * this; }
+
+    /* default move assignment operator */
+    dirlight& operator= ( dirlight&& other ) = default;
 
     /* default destructor */
     ~dirlight () = default;
@@ -336,6 +328,16 @@ public:
     void disable () { enabled = false; }
     bool is_enabled () const { return enabled; }
 
+    /* enable/disable_shadow_mapping
+     * is_shadow_mapping_enabled
+     * 
+     * enable/disable shadow mapping or get whether shadow mapping is enabled
+     */
+    void enable_shadow_mapping () { shadow_mapping_enabled = true; }
+    void disable_shadow_mapping () { shadow_mapping_enabled = false; }
+    bool is_shadow_mapping_enabled () const { return shadow_mapping_enabled; }
+
+
 
 
 private:
@@ -351,6 +353,9 @@ private:
     /* whether the light is enabled */
     bool enabled;
 
+    /* whether the light should be shadow mapped */
+    bool shadow_mapping_enabled;
+
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
@@ -360,6 +365,7 @@ private:
         core::uniform& diffuse_color_uni;
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
+        core::uniform& shadow_mapping_enabled_uni;
     };
 
     /* cached uniforms */
@@ -395,26 +401,40 @@ public:
     pointlight ( const math::vec3& _position
                , const double _att_const, const double _att_linear, const double _att_quad
                , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-               , const bool _enabled = true )
+               , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
+               , const bool _enabled = true, const bool _shadow_mapping_enabled = true )
         : position { _position }, att_const { _att_const }, att_linear { _att_linear }, att_quad { _att_quad }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
-        , enabled { _enabled }
+        , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }
         , shadow_camera { _position, math::vec3 { 1.0, 0.0, 0.0 }, math::vec3 { 0.0, 1.0, 0.0 }, math::rad ( 90.0 ), 1.0, 0.1, 0.1 }
-        , shadow_region { math::vec3 { 0.0 }, 0.0 }
+        , shadow_region { _shadow_region }
     , shadow_camera_change { true }
     {}
 
     /* default zero-parameter constructor */
     pointlight () = default;
 
-    /* deleted copy constructor */
-    pointlight ( const pointlight& other ) = delete;
+    /* copy constructor */
+    pointlight ( const pointlight& other )
+        : position { other.position }
+        , att_const { other.att_const }, att_linear { other.att_linear }, att_quad { other.att_quad }
+        , ambient_color { other.ambient_color }, diffuse_color { other.diffuse_color }, specular_color { other.specular_color }
+        , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }
+    {}
 
     /* default move constructor */
     pointlight ( pointlight&& other ) = default;
 
-    /* deleted copy assignment operator */
-    pointlight& operator= ( const pointlight& other ) = delete;
+    /* copy assignment operator */
+    pointlight& operator= ( const pointlight& other ) 
+        { position = other.position;
+        ; att_const = other.att_const; att_linear = other.att_linear; att_quad = other.att_quad
+        ; ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color
+        ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled
+    ; return * this; }
+
+    /* default move assignment operator */
+    pointlight& operator= ( pointlight&& other ) = default;
 
     /* default destructor */
     ~pointlight () = default;
@@ -481,6 +501,15 @@ public:
     void disable () { enabled = false; }
     bool is_enabled () const { return enabled; }
 
+    /* enable/disable_shadow_mapping
+     * is_shadow_mapping_enabled
+     * 
+     * enable/disable shadow mapping or get whether shadow mapping is enabled
+     */
+    void enable_shadow_mapping () { shadow_mapping_enabled = true; }
+    void disable_shadow_mapping () { shadow_mapping_enabled = false; }
+    bool is_shadow_mapping_enabled () const { return shadow_mapping_enabled; }
+
 
 
 private:
@@ -501,6 +530,9 @@ private:
     /* whether the light is enabled */
     bool enabled;
 
+    /* whether the light should be shadow mapped */
+    bool shadow_mapping_enabled;
+
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
@@ -513,6 +545,7 @@ private:
         core::uniform& diffuse_color_uni;
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
+        core::uniform& shadow_mapping_enabled_uni;
     };
 
     /* cached uniforms */
@@ -548,27 +581,41 @@ public:
     spotlight ( const math::vec3& _position, const math::vec3& _direction
               , const double _inner_cone, const double _outer_cone, const double _att_const, const double _att_linear, const double _att_quad
               , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
-              , const bool _enabled = true )
+              , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
+              , const bool _enabled = true, const bool _shadow_mapping_enabled = true )
         : position { _position }, direction { _direction }
         , inner_cone { _inner_cone }, outer_cone { _outer_cone }, att_const { _att_const }, att_linear { _att_linear }, att_quad { _att_quad }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
-        , enabled { _enabled }
+        , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }
         , shadow_camera { _position, _direction, math::any_perpandicular ( _direction ), _outer_cone, 1.0, 0.1, 0.1 }
-        , shadow_region { math::vec3 { 0.0 }, 0.0 }
+        , shadow_region { _shadow_region }
         , shadow_camera_change { true }
     {}
 
     /* default zero-parameter constructor */
     spotlight () = default;
 
-    /* deleted copy constructor */
-    spotlight ( const spotlight& other ) = delete;
+    /* copy constructor */
+    spotlight ( const spotlight& other )
+        : position { other.position }, direction { other.direction }
+        , inner_cone { other.inner_cone }, outer_cone { other.outer_cone }, att_const { other.att_const }, att_linear { other.att_linear }, att_quad { other.att_quad }
+        , ambient_color { other.ambient_color }, diffuse_color { other.diffuse_color }, specular_color { other.specular_color }
+        , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }
+    {}
 
     /* default move constructor */
     spotlight ( spotlight&& other ) = default;
 
-    /* deleted copy assignment operator */
-    spotlight& operator= ( const spotlight& other ) = delete;
+    /* copy assignment operator */
+    spotlight& operator= ( const spotlight& other )
+        { position = other.position; direction = other.direction
+        ; inner_cone = other.inner_cone; outer_cone = other.outer_cone; att_const = other.att_const; att_linear = other.att_linear; att_quad = other.att_quad
+        ; ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color
+        ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled
+    ; return * this; }
+
+    /* default move assignment operator */
+    spotlight& operator= ( spotlight&& other ) = default;
 
     /* default destructor */
     ~spotlight () = default;
@@ -648,6 +695,15 @@ public:
     void disable () { enabled = false; }
     bool is_enabled () const { return enabled; }
 
+    /* enable/disable_shadow_mapping
+     * is_shadow_mapping_enabled
+     * 
+     * enable/disable shadow mapping or get whether shadow mapping is enabled
+     */
+    void enable_shadow_mapping () { shadow_mapping_enabled = true; }
+    void disable_shadow_mapping () { shadow_mapping_enabled = false; }
+    bool is_shadow_mapping_enabled () const { return shadow_mapping_enabled; }
+
 
 
 private:
@@ -675,6 +731,9 @@ private:
     /* whether the light is enabled */
     bool enabled;
 
+    /* whether the light should be shadow mapped */
+    bool shadow_mapping_enabled;
+
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
@@ -690,6 +749,7 @@ private:
         core::uniform& diffuse_color_uni;
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
+        core::uniform& shadow_mapping_enabled_uni;
     };
 
     /* cached uniforms */
@@ -704,112 +764,6 @@ private:
     /* true if the shadow camera must be updated */
     mutable bool shadow_camera_change; 
 
-};
-
-
-
-/* LIGHT_COLLECTION DEFINITION */
-
-/* class light_collection
- *
- * class to store multiple lights of the same type
- */
-template<class T> class glh::lighting::light_collection
-{
-
-    /* static assert that T is a light */
-    static_assert ( meta::is_light<T>::value, "class light_collection must have a template paramater of a light type" );
-
-public:
-
-    /* default constructor */
-    light_collection () = default;
-
-    /* deleted copy constructor */
-    light_collection ( const light_collection& other ) = delete;
-
-    /* default move constructor */
-    light_collection ( light_collection&& other ) = default;
-
-    /* deleted copy assignment operator */
-    light_collection& operator= ( const light_collection& other ) = delete;
-
-    /* default destructor */
-    ~light_collection () = default;
-
-
-
-    /* typedef of T */
-    typedef T type;
-
-
-
-    /* at
-     *
-     * get the light at an index
-     */
-    T& at ( const unsigned index ) { return lights.at ( index ); }
-    const T& at ( const unsigned index ) const { return lights.at ( index ); }
-
-    /* size
-     *
-     * get the number of lights in the light collection
-     */
-    unsigned size () const { return lights.size (); }
-
-    /* add_light
-     *
-     * add a light to the collection
-     */
-    void add_light ( T&& _light ) { lights.push_back ( std::forward<T> ( _light ) ); }
-
-    /* remove_light
-     *
-     * remove a light at an index
-     */
-    void remove_light ( const unsigned index ) { lights.erase ( lights.begin () + index ); }
-
-
-
-    /* apply
-     *
-     * apply the lighting to uniforms
-     * 
-     * size_uni/lights_uni: the uniform to apply the lights to
-     */
-    void apply ( core::uniform& size_uni, core::struct_array_uniform& lights_uni );
-    void apply () const;
-
-    /* cache_uniforms
-     *
-     * cache uniforms for later use
-     * 
-     * size_uni/lights_uni: the uniforms to cache
-     */
-    void cache_uniforms ( core::uniform& size_uni, core::struct_array_uniform& lights_uni );
-
-    /* reload_uniforms
-     *
-     * reload the lights uniform caches based on current uniform cache
-     */
-    void reload_uniforms ();
-
-
-
-private:
-
-    /* array of lights */
-    std::vector<T> lights;
-
-    /* struct for cached uniforms */
-    struct cached_uniforms_struct
-    {
-        core::uniform& size_uni;
-        core::struct_array_uniform& lights_uni;
-    };
-
-    /* cached uniforms */
-    std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 };
 
 
@@ -841,20 +795,60 @@ public:
 
 
 
-    /* light collections */
-    dirlight_collection dirlights;
-    pointlight_collection pointlights;
-    spotlight_collection spotlights;
-
-
-
-    /* add_light
+    /* add_...light
      *
-     * adds a light to a collection based on its type
+     * add a light to the system
      */
-    void add_light ( dirlight&& _light ) { dirlights.add_light ( std::forward<dirlight> ( _light ) ); }
-    void add_light ( pointlight&& _light ) { pointlights.add_light ( std::forward<pointlight> ( _light ) ); }  
-    void add_light ( spotlight&& _light ) { spotlights.add_light ( std::forward<spotlight> ( _light ) ); }      
+    void add_dirlight ( const math::vec3& direction
+                      , const math::vec3& ambient_color, const math::vec3& diffuse_color, const math::vec3& specular_color
+                      , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
+                      , const bool enabled = true, const bool shadow_mapping_enabled = true )
+        { dirlights.emplace_back ( direction, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled ); }
+    void add_pointlight ( const math::vec3& position
+                        , const double att_const, const double att_linear, const double att_quad
+                        , const math::vec3& ambient_color, const math::vec3& diffuse_color, const math::vec3& specular_color
+                        , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
+                        , const bool enabled = true, const bool shadow_mapping_enabled = true )
+        { pointlights.emplace_back ( position, att_const, att_linear, att_quad, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled ); }
+    void add_spotlight ( const math::vec3& position, const math::vec3& direction
+                       , const double inner_cone, const double outer_cone, const double att_const, const double att_linear, const double att_quad
+                       , const math::vec3& ambient_color, const math::vec3& diffuse_color, const math::vec3& specular_color
+                       , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
+                       , const bool enabled = true, const bool shadow_mapping_enabled = true )
+        { spotlights.emplace_back ( position, direction, inner_cone, outer_cone, att_const, att_linear, att_quad, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled ); }
+
+
+
+    /* ...light_at
+     *
+     * get a light at an index
+     */
+    dirlight& dirlight_at ( const unsigned index ) { return dirlights.at ( index ); }
+    const dirlight& dirlight_at ( const unsigned index ) const { return dirlights.at ( index ); }
+    pointlight& pointlight_at ( const unsigned index ) { return pointlights.at ( index ); }
+    const pointlight& pointlight_at ( const unsigned index ) const { return pointlights.at ( index ); }
+    spotlight& spotlight_at ( const unsigned index ) { return spotlights.at ( index ); }
+    const spotlight& spotlightt_at ( const unsigned index ) const { return spotlights.at ( index ); }
+
+
+
+    /* remove_...light
+     *
+     * remove a light at an index
+     */
+    void remove_dirlight ( const unsigned index ) { dirlights.erase ( dirlights.begin () + index ); }
+    void remove_pointlight ( const unsigned index ) { pointlights.erase ( pointlights.begin () + index ); }
+    void remove_spotlight ( const unsigned index ) { spotlights.erase ( spotlights.begin () + index ); }
+
+
+
+    /* ...light_count
+     *
+     * get the number of lights
+     */
+    unsigned dirlight_count () const { return dirlights.size (); }
+    unsigned pointlight_count () const { return pointlights.size (); }
+    unsigned spotlight_count () const { return spotlights.size (); }
 
 
 
@@ -875,91 +869,37 @@ public:
      */
     void cache_uniforms ( core::struct_uniform& light_system_uni );
 
-    /* reload_uniforms
+    /* recache_uniforms
      *
-     * reload the light collections based on the currently cached uniforms
+     * recache the light collections based on the currently cached uniforms
      */
-    void reload_uniforms ();
+    void recache_uniforms ();
 
 
 
 private:
 
+    /* arrays of types of lights */
+    std::vector<dirlight> dirlights;
+    std::vector<pointlight> pointlights;
+    std::vector<spotlight> spotlights;
+
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
         core::struct_uniform& light_system_uni;
+        core::uniform& dirlights_size_uni;
+        core::struct_array_uniform& dirlights_uni;
+        core::uniform& pointlights_size_uni;
+        core::struct_array_uniform& pointlights_uni;
+        core::uniform& spotlights_size_uni;
+        core::struct_array_uniform& spotlights_uni;
     };
 
     /* cached uniforms */
     std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 
 };
-
-
-
-/* LIGHT_COLLECTION IMPLEMENTATION */
-
-/* apply
- *
- * apply the lighting to uniforms
- * 
- * size_uni/lights_uni: the uniforms to apply the lights to
- */
-template<class T>
-inline void glh::lighting::light_collection<T>::apply ( core::uniform& size_uni, core::struct_array_uniform& lights_uni )
-{
-    /* cache uniform */
-    cache_uniforms ( size_uni, lights_uni );
-
-    /* apply */
-    apply ();
-}
-template<class T>
-inline void glh::lighting::light_collection<T>::apply () const
-{
-    /* throw if no uniform is cached */
-    if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to apply light_collection to uniform with out a complete uniform cache" };
-
-    /* set uniforms */
-    cached_uniforms->size_uni.set_int ( lights.size () );
-    for ( unsigned i = 0; i < lights.size (); ++i ) lights.at ( i ).apply ();
-}
-
-/* cache_uniforms
- *
- * cache uniforms for later use
- * 
- * size_uni/lights_uni: the uniforms to cache
- */
-template<class T>
-inline void glh::lighting::light_collection<T>::cache_uniforms ( core::uniform& size_uni, core::struct_array_uniform& lights_uni )
-{
-    /* if uniforms are not already cached, cache the new ones */
-    if ( !cached_uniforms || cached_uniforms->size_uni != size_uni || cached_uniforms->lights_uni != lights_uni )
-    {
-        cached_uniforms.reset ( new cached_uniforms_struct
-        {
-            size_uni,
-            lights_uni
-        } );
-    }
-
-    /* cache each light's uniforms */
-    for ( unsigned i = 0; i < lights.size (); ++i ) lights.at ( i ).cache_uniforms ( cached_uniforms->lights_uni.at ( i ) );
-
-}
-
-/* reload_uniforms
- *
- * reload the lights uniform caches based on current uniform cache
- */
-template <class T>
-inline void glh::lighting::light_collection<T>::reload_uniforms ()
-{
-    /* recache uniforms */
-    cache_uniforms ( cached_uniforms->light_collection_uni );
-}
 
 
 
