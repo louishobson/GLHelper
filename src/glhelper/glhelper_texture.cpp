@@ -454,7 +454,7 @@ void glh::core::texture2d_array::tex_storage ( const unsigned _width, const unsi
  *
  * OR:
  * 
- * images: an initialiser list of images to form the array from
+ * images: an initializer list of images to form the array from
  * use_srgb: true if the textures should be srgb
  */
 void glh::core::texture2d_array::tex_image ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const GLenum format, const GLenum type, const void * data )
@@ -520,7 +520,7 @@ void glh::core::texture2d_array::tex_image ( std::initializer_list<image> images
 * OR:
 * 
 * x/y/z_offset: x, y and z-offsets for substituting image data
-* images: an initialiser list of images to substitute into the array
+* images: an initializer list of images to substitute into the array
 */
 void glh::core::texture2d_array::tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum format, const GLenum type, const void * data )
 {
@@ -655,7 +655,7 @@ void glh::core::cubemap::tex_storage ( const unsigned _width, const unsigned _he
  * 
  * OR:
  * 
- * images: initialiser list of images that must be six elements large
+ * images: initializer list of images that must be six elements large
  * use_srgb: true if srgb texture should be used
  */
 void glh::core::cubemap::tex_image ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format, const GLenum type, const void * data )
@@ -746,7 +746,7 @@ void glh::core::cubemap::tex_image ( std::initializer_list<image> images, const 
  * OR: applied to every face with different textures
  * 
  * x/y_offset: the x and y offsets to begin substitution
- * images: initialiser list of images that must be six elements large
+ * images: initializer list of images that must be six elements large
  */
 void glh::core::cubemap::tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned _width, const unsigned _height, const GLenum format, const GLenum type, const void * data )
 {
@@ -804,4 +804,148 @@ void glh::core::cubemap::tex_sub_image ( const unsigned x_offset, const unsigned
     auto images_it = images.begin ();
     for ( unsigned i = 0; i < 6; ++i, ++images_it )
         glTexSubImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, x_offset, y_offset, images_it->get_width (), images_it->get_height (), GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
+}
+
+
+
+/* CUBEMAP_ARRAY IMPLEMENTATION */
+
+/* tex_storage
+ *
+ * set up the cubemap array with immutable storage
+ *
+ * _width/_height/_depth: the width and height of each face and the number of layer-faces in the cubemap array (so must be multiple of six)
+ * _internal_format: the internal format of the cubemap array
+ * mipmap_levels: the number of mipmap levels to allocate (defaults to 0, which will allocate the maximum)
+ */
+void glh::core::cubemap_array::tex_storage ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const unsigned mipmap_levels )
+{
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable cubemap_array" };
+
+    /* assert that all size parameters are more than 0 */
+    if ( _width == 0 || _height == 0 || _depth == 0 )
+        throw exception::texture_exception { "cannot call tex_storage on cubemap_array with any size parameter as 0" };
+
+    /* assert depth is a multiple of 6 */
+    if ( _depth % 6 != 0 ) throw exception::texture_exception { "cannot call tex_storage on cubemap_array with a depth that is not a multiple of 6" };
+
+    /* set the parameters */
+    width = _width; height = _height; depth = _depth;
+    internal_format = _internal_format;
+    is_immutable = true;
+
+    /* set storage */
+    bind ();
+    glTexStorage3D ( opengl_bind_target, ( mipmap_levels > 0 ? mipmap_levels : std::log2 ( std::max ( width, height ) ) + 1 ), internal_format, width, height, depth );
+}
+
+/* tex_image
+ *
+ * set up the cubemap array with mutable storage
+ * 
+ * EITHER: 
+ * 
+ * _width/_height/_depth: the width and height of each face and the number of layer-faces in the cubemap array (so must be multiple of six)
+ * _internal_format: the internal format of the cubemap array
+ * format/type: the format and component type of the input data for the cubemap (defaults to GL_RGBA and GL_UNSIGNED_BYTE)
+ * data: the data to apply to to the cubemap (defaults to NULL)
+ * 
+ * OR:
+ * 
+ * images: an initializer list of images which must be a multiple of six in size, where each image is applied to every face of the cubemap array
+ * use_srgb: true if srgb textures should be used
+ */
+void glh::core::cubemap_array::tex_image ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const GLenum format, const GLenum type, const void * data )
+{
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable cubemap_array" };
+
+    /* assert depth is a multiple of 6 */
+    if ( _depth % 6 != 0 ) throw exception::texture_exception { "cannot call tex_storage on cubemap_array with a depth that is not a multiple of 6" };
+
+    /* set the parameters */
+    width = _width; height = _height; depth = _depth;
+    internal_format = _internal_format;
+
+    /* set the storage */
+    bind ();
+    glTexImage3D ( opengl_bind_target, 0, internal_format, width, height, depth, 0, format, type, data );
+}
+void glh::core::cubemap_array::tex_image ( std::initializer_list<image> images, const bool use_srgb )
+{
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable cubemap_array" };
+
+    /* if images has size of 0, set width and height to 0 and create empty texture */
+    if ( images.size () == 0 )
+    {
+        width = 0; height = 0; depth = 0;
+    } else
+    /* otherwise process the images */
+    {
+        /* assert that there are a multiple of 6 images */
+        if ( images.size () % 6 != 0 ) throw exception::texture_exception { "attempted to call tex_image on a cubemap_array with a non-multiple of 6 number of images supplied" };
+
+        /* set width and height to the first image's width and height, and the depth to the number of images supplied */
+        width = images.begin ()->get_width ();
+        height = images.begin ()->get_height ();
+        depth = images.size ();
+
+        /* assert that all of the images are the same size */
+        for ( const image& _image: images ) if ( _image.get_width () != width || _image.get_height () != height )
+            throw exception::texture_exception { "attempted to call tex_image on texture2d_array without all the images supplied being of the same dimensions" };
+    }
+
+    /* set internal_format to RGBA or sRGBA */
+    internal_format = ( use_srgb ? GL_RGBA : GL_SRGB_ALPHA );
+
+    /* first set the size of the texture array, then substitute the images in */
+    bind ();
+    glTexImage3D ( opengl_bind_target, 0, internal_format, width, height, depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
+    auto images_it = images.begin ();
+    for ( unsigned i = 0; i < depth; ++i, ++images_it )
+        glTexSubImage3D ( opengl_bind_target, 0, 0, 0, i, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
+}
+
+/* tex_sub_image
+ *
+ * substitute data into the cubemap array
+ * changes are made to mipmap level 0, so remember to regenerate mipmaps if necessary
+ * 
+ * EIETHER: 
+ * 
+ * x/y/z_offset: the x, y and z offsets to begin substitution
+ * _width/_height/_depth: the width, height and depth of the area to substitute
+ * format/type: the format and type of the input data
+ * data: the data to substitute
+ * 
+ * OR:
+ * 
+ * x/y/z_offset: the x, y and z offsets to begin substitution
+ * images: initializer list of images to substitute
+ */
+void glh::core::cubemap_array::tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum format, const GLenum type, const void * data )
+{
+    /* check offsets and dimensions */
+    if ( x_offset + _width > width || y_offset + _height > height || z_offset + _depth > depth )
+        throw exception::texture_exception { "attempted to call tex_sub_image on texture2d_array with offsets and dimensions which are out of range" };
+
+    /* substitute the image data */
+    bind ();
+    glTexSubImage3D ( opengl_bind_target, 0, x_offset, y_offset, z_offset, _width, _height, _depth, format, type, data );
+}
+void glh::core::cubemap_array::tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, std::initializer_list<image> images )
+{
+    /* check offsets and dimensions */
+    if ( z_offset + images.size () > depth )
+        throw exception::texture_exception { "attempted to call tex_sub_image on texture2d_array with offsets and dimensions which are out of range" };
+    for ( const image& _image: images ) if ( x_offset + _image.get_width () > width || y_offset + _image.get_width () > height )
+        throw exception::texture_exception { "attempted to call tex_sub_image on texture2d_array with offsets and dimensions which are out of range" };
+
+    /* substitute the image data */
+    bind ();
+    auto images_it = images.begin ();
+    for ( unsigned i = 0; i < images.size (); ++i, ++images_it )
+        glTexSubImage3D ( opengl_bind_target, 0, x_offset, y_offset, z_offset + i, images_it->get_width (), images_it->get_width (), 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
 }
