@@ -4,7 +4,7 @@
  * cubemap fragment shader
  */
 
-#version 330 core
+#version 460 core
 
 /* transformations structure */
 struct trans_struct

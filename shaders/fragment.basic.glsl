@@ -4,7 +4,7 @@
  * basic fragment shader
  */
 
-#version 330 core
+#version 460 core
 
 /* fragpos, normal and texture coords */
 in vec3 fragpos;

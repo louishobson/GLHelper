@@ -4,7 +4,7 @@
  * model geometry shader
  */
 
-#version 330 core
+#version 460 core
 #extension GL_ARB_arrays_of_arrays : enable
 
 

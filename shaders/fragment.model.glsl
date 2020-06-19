@@ -4,7 +4,7 @@
  * model fragment shader
  */
 
-#version 330 core
+#version 460 core
 
 /* maximum number of color sets */
 #define MAX_COLOR_SETS 1
@@ -84,6 +84,9 @@ struct light_system_struct
 
     int spotlights_size;
     light_struct spotlights_size [ MAX_NUM_LIGHTS ];
+
+    sampler2DArrayShadow shadow_maps_2d;
+    samplerCubeArrayShadow shadow_maps_cube;
 };
 
 /* transformations structure */

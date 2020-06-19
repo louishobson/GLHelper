@@ -4,7 +4,7 @@
  * mirror fragment shader
  */
 
-#version 330 core
+#version 460 core
 
 /* texture coords, normal vector, position, vcolor */
 in vec3 texcoords;
