@@ -291,9 +291,9 @@ public:
      */
     explicit matrix ( const T& val = 0.0 ) { data.fill ( val ); }
 
-    /* initialiser list constructor
+    /* initializer list constructor
      *
-     * constructs data from initialiser list
+     * constructs data from initializer list
      */
     explicit matrix ( const std::initializer_list<T> init_list );
 
@@ -417,14 +417,14 @@ template<class _T> inline glh::math::matrix<M, N, T>::matrix ( const matrix<M, N
     for ( unsigned i = 0; i < M * N; ++i ) __at ( i ) = other.__at ( i );
 }
 
-/* initialiser list constructor
+/* initializer list constructor
  *
- * constructs data from initialiser list
+ * constructs data from initializer list
  */
 template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T>::matrix ( const std::initializer_list<T> init_list )
 {
     /* check the size of the list */
-    if ( init_list.size () != M * N ) throw exception::matrix_exception { "matrix initialiser list is invalid" };
+    if ( init_list.size () != M * N ) throw exception::matrix_exception { "matrix initializer list is invalid" };
     /* set the values */
     unsigned i = 0;
     for ( const T& v: init_list ) 
