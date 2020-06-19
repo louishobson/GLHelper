@@ -323,12 +323,15 @@ void glh::camera::camera_movement::set_direction ( const math::vec3& direction, 
 {
     /* set z */
     z = math::normalise ( -direction );
+    restrict_z = z;
 
     /* find x from cross product */
-    x = math::cross ( math::normalise ( world_y ), x );
+    x = math::cross ( math::normalise ( world_y ), z );
+    restrict_x = x;
 
     /* find y from cross product again */
     y = math::cross ( z, x );
+    restrict_y = y;
 
     /* set view as changed */
     view_change = true;
