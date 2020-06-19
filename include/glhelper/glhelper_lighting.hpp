@@ -246,9 +246,9 @@ public:
              , const bool _enabled = true, const bool _shadow_mapping_enabled = true )
         : direction { _direction }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
+        , shadow_region { _shadow_region }
         , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }
         , shadow_camera { math::vec3 { 0.0 }, _direction, math::any_perpandicular ( _direction ), math::vec3 { 0.0 }, math::vec3 { 0.0 } }
-        , shadow_region { _shadow_region }
         , shadow_camera_change { true }
     {}
 
@@ -259,7 +259,9 @@ public:
     dirlight ( const dirlight& other )
         : direction { other.direction }
         , ambient_color { other.ambient_color }, diffuse_color { other.diffuse_color }, specular_color { other.specular_color }
+        , shadow_region { other.shadow_region }
         , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }
+        , shadow_camera { other.shadow_camera }, shadow_camera_change { other.shadow_camera_change }
     {}
 
     /* default move constructor */
@@ -269,7 +271,9 @@ public:
     dirlight& operator= ( const dirlight& other )
         { direction = other.direction
         ; ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color
+        ; shadow_region = other.shadow_region
         ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled
+        ; shadow_camera = other.shadow_camera; shadow_camera_change = other.shadow_camera_change
     ; return * this; }
 
     /* default move assignment operator */
@@ -426,7 +430,9 @@ public:
         : position { other.position }
         , att_const { other.att_const }, att_linear { other.att_linear }, att_quad { other.att_quad }
         , ambient_color { other.ambient_color }, diffuse_color { other.diffuse_color }, specular_color { other.specular_color }
+        , shadow_region { other.shadow_region }
         , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }
+        , shadow_camera { other.shadow_camera }, shadow_camera_change { other.shadow_camera_change }
     {}
 
     /* default move constructor */
@@ -437,7 +443,9 @@ public:
         { position = other.position;
         ; att_const = other.att_const; att_linear = other.att_linear; att_quad = other.att_quad
         ; ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color
+        ; shadow_region = other.shadow_region
         ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled
+        ; shadow_camera = other.shadow_camera; shadow_camera_change = other.shadow_camera_change
     ; return * this; }
 
     /* default move assignment operator */
@@ -614,7 +622,9 @@ public:
         : position { other.position }, direction { other.direction }
         , inner_cone { other.inner_cone }, outer_cone { other.outer_cone }, att_const { other.att_const }, att_linear { other.att_linear }, att_quad { other.att_quad }
         , ambient_color { other.ambient_color }, diffuse_color { other.diffuse_color }, specular_color { other.specular_color }
+        , shadow_region { other.shadow_region }
         , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }
+        , shadow_camera { other.shadow_camera }, shadow_camera_change { other.shadow_camera_change }
     {}
 
     /* default move constructor */
@@ -625,7 +635,9 @@ public:
         { position = other.position; direction = other.direction
         ; inner_cone = other.inner_cone; outer_cone = other.outer_cone; att_const = other.att_const; att_linear = other.att_linear; att_quad = other.att_quad
         ; ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color
+        ; shadow_region = other.shadow_region
         ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled
+        ; shadow_camera = other.shadow_camera; shadow_camera_change = other.shadow_camera_change
     ; return * this; }
 
     /* default move assignment operator */
