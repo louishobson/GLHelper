@@ -118,6 +118,9 @@
  *
  *     int spotlights_size;
  *     light_struct spotlights_size [ MAX_NUM_LIGHTS ];
+ * 
+ *     sampler2DArrayShadow shadow_maps_2d; 
+ *     samplerCubeArrayShadow shadow_maps_cube;
  * };
  * 
  * this structure holds multiple arrays of lights
@@ -126,6 +129,7 @@
  * dirlights(_size): array of directional lights and its size
  * pointlights(_size): array of collection of point lights and its size
  * spotlights(_size): collection of spotlights and its size
+ * shadow_maps_2d/cube: samplers for 2d and cubemap shadow maps
  * 
  */
 
@@ -140,6 +144,7 @@
 /* INCLUDES */
 
 /* include core headers */
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <type_traits>
@@ -811,8 +816,11 @@ class glh::lighting::light_system
 {
 public:
 
-    /* default constructor */
-    light_system () = default;
+    /* full constructor
+     *
+     * shadow_map_2d/cube_width: an optional initial width for the shadow maps (defaults to 1024)
+     */
+    light_system ( const unsigned shadow_map_2d_width = 1024, const unsigned shadow_map_cube_width = 1024 );
 
     /* deleted copy constructor */
     light_system ( const light_system& other ) = delete;
@@ -910,12 +918,31 @@ public:
 
 
 
+    /* bind_shadow_maps_2d/cube_fbo
+     *
+     * reallocates the 2d texture array to size dirlights + pointlights * 6 + spotlights
+     * or reallocates the cubemap array to size pointlights * 6
+     * then binds the 2d/cubemap shadow map fbo
+     */
+    void bind_shadow_maps_2d_fbo () const;
+    void bind_shadow_maps_cube_fbo () const;
+
+
+
 private:
 
     /* arrays of types of lights */
     std::vector<dirlight> dirlights;
     std::vector<pointlight> pointlights;
     std::vector<spotlight> spotlights;
+
+    /* texture2d and cubemap array for shadow maps */
+    mutable core::texture2d_array shadow_maps_2d;
+    mutable core::cubemap_array shadow_maps_cube;
+
+    /* framebuffers for shadow mapping */
+    core::fbo shadow_maps_2d_fbo;
+    core::fbo shadow_maps_cube_fbo;
 
     /* struct for cached uniforms */
     struct cached_uniforms_struct
@@ -927,6 +954,8 @@ private:
         core::struct_array_uniform& pointlights_uni;
         core::uniform& spotlights_size_uni;
         core::struct_array_uniform& spotlights_uni;
+        core::uniform& shadow_maps_2d_uni;
+        core::uniform& shadow_maps_cube_uni;
     };
 
     /* cached uniforms */

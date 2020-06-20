@@ -250,6 +250,26 @@ void glh::lighting::spotlight::cache_uniforms ( core::struct_uniform& light_uni 
 
 /* LIGHT_SYSTEM IMPLEMENTATION */
 
+/* zero-parameter constructor */
+glh::lighting::light_system::light_system ( const unsigned shadow_map_2d_width, const unsigned shadow_map_cube_width )
+{
+    /* assert that neither shadow map width is 0 */
+    if ( shadow_map_2d_width == 0 || shadow_map_cube_width == 0 )
+        throw exception::texture_exception { "shadow map widths in light_system cannot be zero" };
+
+    /* set up the shadow map textures */
+    shadow_maps_2d.tex_image ( shadow_map_2d_width, shadow_map_2d_width, 0, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT );
+    shadow_maps_cube.tex_image ( shadow_map_cube_width, shadow_map_cube_width, 0, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT );
+
+    /* add the shadow map textures as attachments to their fbo's */
+    shadow_maps_2d_fbo.attach_texture ( shadow_maps_2d, GL_DEPTH_ATTACHMENT );
+    shadow_maps_cube_fbo.attach_texture ( shadow_maps_cube, GL_DEPTH_ATTACHMENT );
+
+    /* set the shadow map fbos to not have color attachments */
+    shadow_maps_2d_fbo.read_buffer ( GL_NONE ); shadow_maps_2d_fbo.draw_buffer ( GL_NONE );
+    shadow_maps_cube_fbo.read_buffer ( GL_NONE ); shadow_maps_cube_fbo.draw_buffer ( GL_NONE );
+}
+
 /* apply
  *
  * apply the lighting to uniforms
@@ -276,6 +296,10 @@ void glh::lighting::light_system::apply () const
     for ( unsigned i = 0; i < pointlights.size (); ++i ) pointlights.at ( i ).apply ();
     cached_uniforms->spotlights_size_uni.set_int ( spotlights.size () );
     for ( unsigned i = 0; i < spotlights.size (); ++i ) spotlights.at ( i ).apply ();
+
+    /* apply shadow maps */
+    cached_uniforms->shadow_maps_2d_uni.set_int ( shadow_maps_2d.bind_loop () );
+    cached_uniforms->shadow_maps_cube_uni.set_int ( shadow_maps_cube.bind_loop () );
 }
 
 /* cache_uniforms
@@ -298,6 +322,8 @@ void glh::lighting::light_system::cache_uniforms ( core::struct_uniform& light_s
             light_system_uni.get_struct_array_uniform ( "pointlights" ),
             light_system_uni.get_uniform ( "spotlights_size" ),
             light_system_uni.get_struct_array_uniform ( "pointlights" ),
+            light_system_uni.get_uniform ( "shadow_maps_2d" ),
+            light_system_uni.get_uniform ( "shadow_maps_cube" )
         } );
     }
 
@@ -315,4 +341,41 @@ void glh::lighting::light_system::recache_uniforms ()
 {
     /* recache uniforms */
     cache_uniforms ( cached_uniforms->light_system_uni );
+}
+
+/* bind_shadow_maps_2d/cube_fbo
+ *
+ * reallocates the 2d texture array to size dirlights + pointlights * 6 + spotlights
+ * or reallocates the cubemap array to size pointlights * 6
+ * then binds the 2d/cubemap shadow map fbo
+ * 
+ * width: the width of the shadow maps (or 0 for the same as previously)
+ */
+void glh::lighting::light_system::bind_shadow_maps_2d_fbo () const
+{
+    /* resize the texture array if necessary
+     * ensure that at least one light is allocated, so that fbo is complete
+     */
+    if ( dirlights.size () + pointlights.size () * 6 + spotlights.size () != shadow_maps_2d.get_depth () )
+        shadow_maps_2d.tex_image ( shadow_maps_2d.get_width (), shadow_maps_2d.get_height (), std::max<unsigned> ( dirlights.size () + pointlights.size () * 6 + spotlights.size (), 1 ), GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT ); 
+    
+    /* check the fbo is complete */
+    if ( !shadow_maps_2d_fbo.is_complete () ) throw exception::texture_exception { "2d shadow map fbo is not complete" };
+
+    /* bind the fbo */
+    shadow_maps_2d_fbo.bind ();
+}
+void glh::lighting::light_system::bind_shadow_maps_cube_fbo () const
+{
+    /* resize the texture array if necessary
+     * ensure that at least one light is allocated, so that fbo is complete
+     */
+    if ( pointlights.size () * 6 != shadow_maps_cube.get_depth () )
+        shadow_maps_cube.tex_image ( shadow_maps_2d.get_width (), shadow_maps_2d.get_height (), std::max<unsigned> ( pointlights.size (), 1 ) * 6, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT ); 
+    
+    /* check the fbo is complete */
+    if ( !shadow_maps_cube_fbo.is_complete () ) throw exception::texture_exception { "cubemap shadow map fbo is not complete" };
+
+    /* bind the fbo */
+    shadow_maps_cube_fbo.bind ();
 }
