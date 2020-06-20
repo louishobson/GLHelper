@@ -74,7 +74,7 @@ void glh::model::model::render (core::struct_uniform& material_uni, core::unifor
 void glh::model::model::render ( const math::mat4& transform, const unsigned flags ) const
 {
     /* throw if uniforms are not already cached */
-    if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to render model without a complete uniform cache" };
+    if ( ( !cached_material_uniforms && !( flags & render_flags::GLH_NO_MATERIAL ) ) || !cached_model_uniform ) throw exception::uniform_exception { "attempted to render model without a complete uniform cache" };
 
     /* cache the render flags */
     model_render_flags = flags;
@@ -94,10 +94,22 @@ void glh::model::model::render ( const math::mat4& transform, const unsigned fla
  */
 void glh::model::model::cache_uniforms ( core::struct_uniform& material_uni, core::uniform& model_uni )
 {
+    /* cache uniforms */
+    cache_material_uniforms ( material_uni );
+    cache_model_uniform ( model_uni );
+}
+
+/* cache_material_uniforms
+ * cache_model_uniform
+ * 
+ * cache material and model matrix uniforms separately
+ */
+void glh::model::model::cache_material_uniforms ( core::struct_uniform& material_uni )
+{
     /* if uniforms are not already cached, cache the new ones */
-    if ( !cached_uniforms || cached_uniforms->material_uni != material_uni || cached_uniforms->model_uni != model_uni )
+    if ( !cached_material_uniforms || cached_material_uniforms->material_uni != material_uni )
     {
-        cached_uniforms.reset ( new cached_uniforms_struct
+        cached_material_uniforms.reset ( new cached_material_uniforms_struct
         {
             material_uni,
             material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "stack_size" ),
@@ -116,10 +128,21 @@ void glh::model::model::cache_uniforms ( core::struct_uniform& material_uni, cor
             material_uni.get_uniform ( "shininess" ),
             material_uni.get_uniform ( "shininess_strength" ),
             material_uni.get_uniform ( "opacity" ),
-            model_uni,
         } );
     }
 }
+void glh::model::model::cache_model_uniform ( core::uniform& model_uni )
+{
+    /* if not already cached, cache new uniform */
+    if ( !cached_model_uniform || cached_model_uniform->model_uni != model_uni )
+    {
+        cached_model_uniform.reset ( new cached_model_uniform_struct
+        {
+            model_uni
+        } );
+    }
+}
+
 
 
 
@@ -761,7 +784,7 @@ void glh::model::model::render_node ( const node& _node, const math::fmat4& tran
     for ( const node& child: _node.children ) render_node ( child, trans );
 
     /* set the model matrix */
-    cached_uniforms->model_uni.set_matrix ( trans );
+    cached_model_uniform->model_uni.set_matrix ( trans );
 
     /* render all of the meshes */
     for ( const mesh * _mesh: _node.meshes ) render_mesh ( * _mesh );
@@ -801,19 +824,19 @@ void glh::model::model::render_mesh ( const mesh& _mesh ) const
 void glh::model::model::apply_material ( const material& _material ) const
 {
     /* apply the texture stacks */
-    apply_texture_stack ( _material.ambient_stack, cached_uniforms->ambient_stack_size_uni, cached_uniforms->ambient_stack_base_color_uni, cached_uniforms->ambient_stack_levels_uni, cached_uniforms->ambient_stack_textures_uni );
-    apply_texture_stack ( _material.diffuse_stack, cached_uniforms->diffuse_stack_size_uni, cached_uniforms->diffuse_stack_base_color_uni, cached_uniforms->diffuse_stack_levels_uni,cached_uniforms->diffuse_stack_textures_uni );
-    apply_texture_stack ( _material.specular_stack, cached_uniforms->specular_stack_size_uni, cached_uniforms->specular_stack_base_color_uni, cached_uniforms->specular_stack_levels_uni, cached_uniforms->specular_stack_textures_uni );
+    apply_texture_stack ( _material.ambient_stack, cached_material_uniforms->ambient_stack_size_uni, cached_material_uniforms->ambient_stack_base_color_uni, cached_material_uniforms->ambient_stack_levels_uni, cached_material_uniforms->ambient_stack_textures_uni );
+    apply_texture_stack ( _material.diffuse_stack, cached_material_uniforms->diffuse_stack_size_uni, cached_material_uniforms->diffuse_stack_base_color_uni, cached_material_uniforms->diffuse_stack_levels_uni,cached_material_uniforms->diffuse_stack_textures_uni );
+    apply_texture_stack ( _material.specular_stack, cached_material_uniforms->specular_stack_size_uni, cached_material_uniforms->specular_stack_base_color_uni, cached_material_uniforms->specular_stack_levels_uni, cached_material_uniforms->specular_stack_textures_uni );
 
     /* set blending mode */
-    cached_uniforms->blending_mode_uni.set_int ( _material.blending_mode );
+    cached_material_uniforms->blending_mode_uni.set_int ( _material.blending_mode );
 
     /* set shininess values */
-    cached_uniforms->shininess_uni.set_float ( _material.shininess );
-    cached_uniforms->shininess_strength_uni.set_float ( _material.shininess_strength );
+    cached_material_uniforms->shininess_uni.set_float ( _material.shininess );
+    cached_material_uniforms->shininess_strength_uni.set_float ( _material.shininess_strength );
 
     /* set opacity */
-    cached_uniforms->opacity_uni.set_float ( _material.opacity );
+    cached_material_uniforms->opacity_uni.set_float ( _material.opacity );
 }
 
 /* apply_texture_stack

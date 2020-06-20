@@ -691,6 +691,14 @@ public:
      */
     void cache_uniforms ( core::struct_uniform& material_uni, core::uniform& model_uni );
 
+    /* cache_material_uniforms
+     * cache_model_uniform
+     * 
+     * cache material and model matrix uniforms separately
+     */
+    void cache_material_uniforms ( core::struct_uniform& material_uni );
+    void cache_model_uniform ( core::uniform& model_uni );
+
 
 
     /* model_region
@@ -734,8 +742,8 @@ private:
 
 
 
-    /* struct for cached uniforms */
-    struct cached_uniforms_struct
+    /* struct for cached material uniforms */
+    struct cached_material_uniforms_struct
     {
         core::struct_uniform& material_uni;
         core::uniform& ambient_stack_size_uni;
@@ -754,11 +762,19 @@ private:
         core::uniform& shininess_uni;
         core::uniform& shininess_strength_uni;
         core::uniform& opacity_uni;
+    };
+
+    /* struct for cached model matrix uniform */
+    struct cached_model_uniform_struct
+    {
         core::uniform& model_uni;
     };
 
-    /* cached uniforms */
-    std::unique_ptr<cached_uniforms_struct> cached_uniforms;
+    /* cached material uniforms */
+    std::unique_ptr<cached_material_uniforms_struct> cached_material_uniforms;
+
+    /* cached model matrix uniform */
+    std::unique_ptr<cached_model_uniform_struct> cached_model_uniform;
 
 
 
