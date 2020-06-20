@@ -379,7 +379,7 @@ public:
      * 
      * returns true if a change in binding occured
      */
-    bool bind_framebuffer () const { return core::object::force_unbind ( core::object_bind_target::GLH_DRAW_FBO_TARGET ); }
+    bool bind_framebuffer () const { return core::object::force_unbind ( core::object_bind_target::GLH_FBO_TARGET ); }
 
     /* make_current
      *
