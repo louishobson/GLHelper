@@ -257,9 +257,17 @@ glh::lighting::light_system::light_system ( const unsigned shadow_map_2d_width, 
     if ( shadow_map_2d_width == 0 || shadow_map_cube_width == 0 )
         throw exception::texture_exception { "shadow map widths in light_system cannot be zero" };
 
-    /* set up the shadow map textures */
+    /* set up the shadow map textures' storage */
     shadow_maps_2d.tex_image ( shadow_map_2d_width, shadow_map_2d_width, 0, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT );
     shadow_maps_cube.tex_image ( shadow_map_cube_width, shadow_map_cube_width, 0, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT );
+
+    /* set their border color to be 1.0 and to clamp to border */
+    shadow_maps_2d.set_border_color ( math::vec4 { 1.0 } ); shadow_maps_2d.set_s_wrap ( GL_CLAMP_TO_BORDER ); shadow_maps_2d.set_t_wrap ( GL_CLAMP_TO_BORDER );
+    shadow_maps_cube.set_border_color ( math::vec4 { 1.0 } ); shadow_maps_cube.set_s_wrap ( GL_CLAMP_TO_BORDER ); shadow_maps_cube.set_t_wrap ( GL_CLAMP_TO_BORDER );
+
+    /* set to use linear interpolation */
+    shadow_maps_2d.set_mag_filter ( GL_LINEAR ); shadow_maps_2d.set_min_filter ( GL_LINEAR );
+    shadow_maps_cube.set_mag_filter ( GL_LINEAR ); shadow_maps_cube.set_min_filter ( GL_LINEAR );
 
     /* add the shadow map textures as attachments to their fbo's */
     shadow_maps_2d_fbo.attach_texture ( shadow_maps_2d, GL_DEPTH_ATTACHMENT );
@@ -268,6 +276,14 @@ glh::lighting::light_system::light_system ( const unsigned shadow_map_2d_width, 
     /* set the shadow map fbos to not have color attachments */
     shadow_maps_2d_fbo.read_buffer ( GL_NONE ); shadow_maps_2d_fbo.draw_buffer ( GL_NONE );
     shadow_maps_cube_fbo.read_buffer ( GL_NONE ); shadow_maps_cube_fbo.draw_buffer ( GL_NONE );
+
+    /* set up rotational matrices */
+    shadow_maps_cube_rotations.at ( 0 ) = math::look_along ( math::vec3 { 0.0 }, math::vec3 {  1.0,  0.0,  0.0 }, math::vec3 { 0.0, 1.0, 0.0 } );
+    shadow_maps_cube_rotations.at ( 1 ) = math::look_along ( math::vec3 { 0.0 }, math::vec3 { -1.0,  0.0,  0.0 }, math::vec3 { 0.0, 1.0, 0.0 } );
+    shadow_maps_cube_rotations.at ( 2 ) = math::look_along ( math::vec3 { 0.0 }, math::vec3 {  0.0,  1.0,  0.0 }, math::vec3 { 1.0, 0.0, 0.0 } );
+    shadow_maps_cube_rotations.at ( 3 ) = math::look_along ( math::vec3 { 0.0 }, math::vec3 {  0.0, -1.0,  0.0 }, math::vec3 { 1.0, 0.0, 0.0 } );
+    shadow_maps_cube_rotations.at ( 4 ) = math::look_along ( math::vec3 { 0.0 }, math::vec3 {  0.0,  0.0,  1.0 }, math::vec3 { 0.0, 1.0, 0.0 } );
+    shadow_maps_cube_rotations.at ( 5 ) = math::look_along ( math::vec3 { 0.0 }, math::vec3 {  0.0,  0.0, -1.0 }, math::vec3 { 0.0, 1.0, 0.0 } );
 }
 
 /* apply
@@ -300,6 +316,9 @@ void glh::lighting::light_system::apply () const
     /* apply shadow maps */
     cached_uniforms->shadow_maps_2d_uni.set_int ( shadow_maps_2d.bind_loop () );
     cached_uniforms->shadow_maps_cube_uni.set_int ( shadow_maps_cube.bind_loop () );
+
+    /* apply rotational matrices */
+    for ( unsigned i = 0; i < 6; ++i ) cached_uniforms->shadow_maps_cube_rotations_uni.at ( i ).set_matrix ( shadow_maps_cube_rotations.at ( i ) );
 }
 
 /* cache_uniforms
@@ -321,9 +340,10 @@ void glh::lighting::light_system::cache_uniforms ( core::struct_uniform& light_s
             light_system_uni.get_uniform ( "pointlights_size" ),
             light_system_uni.get_struct_array_uniform ( "pointlights" ),
             light_system_uni.get_uniform ( "spotlights_size" ),
-            light_system_uni.get_struct_array_uniform ( "pointlights" ),
+            light_system_uni.get_struct_array_uniform ( "spotlights" ),
             light_system_uni.get_uniform ( "shadow_maps_2d" ),
-            light_system_uni.get_uniform ( "shadow_maps_cube" )
+            light_system_uni.get_uniform ( "shadow_maps_cube" ),
+            light_system_uni.get_uniform_array_uniform ( "shadow_maps_cube_rotations" )
         } );
     }
 

@@ -121,6 +121,8 @@
  * 
  *     sampler2DArrayShadow shadow_maps_2d; 
  *     samplerCubeArrayShadow shadow_maps_cube;
+ * 
+ *     mat4 shadow_maps_cube_rotations [ 6 ];
  * };
  * 
  * this structure holds multiple arrays of lights
@@ -130,6 +132,7 @@
  * pointlights(_size): array of collection of point lights and its size
  * spotlights(_size): collection of spotlights and its size
  * shadow_maps_2d/cube: samplers for 2d and cubemap shadow maps
+ * shadow_maps_cube_rotations: array of rotations for each face of a cubemap
  * 
  */
 
@@ -144,6 +147,7 @@
 /* INCLUDES */
 
 /* include core headers */
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -944,6 +948,9 @@ private:
     core::fbo shadow_maps_2d_fbo;
     core::fbo shadow_maps_cube_fbo;
 
+    /* array of matrices for pointlight rotation */
+    std::array<math::fmat4, 6> shadow_maps_cube_rotations;
+
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
@@ -956,6 +963,7 @@ private:
         core::struct_array_uniform& spotlights_uni;
         core::uniform& shadow_maps_2d_uni;
         core::uniform& shadow_maps_cube_uni;
+        core::uniform_array_uniform& shadow_maps_cube_rotations_uni;
     };
 
     /* cached uniforms */
