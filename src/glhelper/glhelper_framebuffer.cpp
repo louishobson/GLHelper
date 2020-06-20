@@ -47,56 +47,27 @@ glh::core::rbo::rbo ( const unsigned _width, const unsigned _height, const GLenu
 
 /* FBO IMPLEMENTATION */
 
-/* attach_texture2d
+/* attach_texture
  *
- * add a texture2d attachment
+ * add a texture attachment
  *
  * texture: the texture to attach
  * attachment: which attachment the texture should be used as
  * mipmap: the mipmap level to attach (defaults to 0)
  */
-void glh::core::fbo::attach_texture2d ( const texture2d& texture, const GLenum attachment, const GLint mipmap )
+void glh::core::fbo::attach_texture ( const texture_base& texture, const GLenum attachment, const GLint mipmap )
 {
     /* bind the fbo */
     const bool binding_change = bind ();
 
     /* attach the texture */
-    glFramebufferTexture2D ( opengl_bind_target, attachment, texture.get_opengl_bind_taregt (), texture.internal_id (), mipmap );
-
-    /* unbind fbo */
-    if ( binding_change ) unbind ();
-}
-void glh::core::fbo::attach_texture2d ( const texture2d_multisample& texture, const GLenum attachment, const GLint mipmap )
-{
-    /* bind the fbo */
-    const bool binding_change = bind ();
-
-    /* attach the texture */
-    glFramebufferTexture2D ( opengl_bind_target, attachment, texture.get_opengl_bind_taregt (), texture.internal_id (), mipmap );
+    glFramebufferTexture ( opengl_bind_target, attachment, texture.internal_id (), mipmap );
 
     /* unbind fbo */
     if ( binding_change ) unbind ();
 }
 
-/* attach_cubemap
- *
- * add a cubemap attachment
- * 
- * _cubemap: the cubemap to attach
- * attachment: which attachment the cubemap should be used as
- * mipmap: the mipmap level to attach (defaults to 0)
- */
-void glh::core::fbo::attach_cubemap ( const cubemap& _cubemap, const GLenum attachment, const GLuint mipmap )
-{
-    /* bind the fbo */
-    const bool binding_change = bind ();
 
-    /* attach the cubemap */
-    glFramebufferTexture ( opengl_bind_target, attachment, _cubemap.internal_id (), mipmap );
-
-    /* unbind fbo */
-    if ( binding_change ) unbind ();
-}
 
 /* attach_rbo
  *
@@ -142,16 +113,16 @@ bool glh::core::fbo::is_complete () const
 void glh::core::fbo::draw_buffer ( const GLenum buff )
 {
     /* bind, set option, unbind */
-    const bool binding_change = bind_draw ();
+    const bool binding_change = bind ();
     glDrawBuffer ( buff );
-    if ( binding_change ) unbind_draw ();
+    if ( binding_change ) unbind ();
 }
 void glh::core::fbo::read_buffer ( const GLenum buff )
 {
     /* bind, set option, unbind */
-    const bool binding_change = bind_read ();
+    const bool binding_change = bind ();
     glReadBuffer ( buff );
-    if ( binding_change ) unbind_read ();
+    if ( binding_change ) unbind ();
 }
 
 
