@@ -339,7 +339,7 @@ public:
      *
      * set the color of the boarder, such that the texture can be clamped to the edge with a specific color
      */
-    void set_border_color ( const math::fvec3& color );
+    void set_border_color ( const math::fvec4& color );
 
     /* generate_mipmap
      *

@@ -267,7 +267,7 @@ void glh::core::texture_base::set_wrap ( const GLenum opt )
  *
  * set the color of the boarder, such that the texture can be clamped to the edge with a specific color
  */
-void glh::core::texture_base::set_border_color ( const math::fvec3& color )
+void glh::core::texture_base::set_border_color ( const math::fvec4& color )
 {
     /* bind, set paramater */
     bind (); 
