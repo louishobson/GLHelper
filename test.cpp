@@ -39,18 +39,28 @@ int main ()
     
 
 
-    /* SET UP PROGRAM */
+    /* SET UP PROGRAMS */
 
-    /* create shader program */
-    glh::core::vshader vshader { "shaders/vertex.model.glsl" };
-    glh::core::fshader fshader { "shaders/fragment.model.glsl" };
-    glh::core::program program { vshader, fshader };
+    /* create model shader program */
+    glh::core::vshader model_vshader { "shaders/vertex.model.glsl" };
+    glh::core::fshader model_fshader { "shaders/fragment.model.glsl" };
+    glh::core::program model_program { model_vshader, model_fshader };
 
-    /* extract uniforms out of program */
-    auto& trans_uni = program.get_struct_uniform ( "trans" );
-    auto& light_system_uni = program.get_struct_uniform ( "light_system" );
-    auto& material_uni = program.get_struct_uniform ( "material" );
-    auto& transparent_mode_uni = program.get_uniform ( "transparent_mode" );
+    /* create shadow shadow program */
+    glh::core::vshader shadow_vshader { "shaders/vertex.shadow.glsl" };
+    glh::core::gshader shadow_gshader { "shaders/geometry.shadow.glsl" };
+    glh::core::fshader shadow_fshader { "shaders/fragment.shadow.glsl" };
+    glh::core::program shadow_program { shadow_vshader, shadow_gshader, shadow_fshader };
+
+    /* extract uniforms out of model program */
+    auto& model_trans_uni = model_program.get_struct_uniform ( "trans" );
+    auto& model_light_system_uni = model_program.get_struct_uniform ( "light_system" );
+    auto& model_material_uni = model_program.get_struct_uniform ( "material" );
+    auto& model_transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
+
+    /* extract uniforms out of model program */
+    auto& shadow_model_matrix_uni = shadow_program.get_uniform ( "model_matrix" );
+    auto& shadow_light_system_uni = shadow_program.get_struct_uniform ( "light_system" );
 
 
 
@@ -67,7 +77,7 @@ int main ()
     camera.enable_restrictive_mode ();
 
     /* cache uniforms */
-    camera.cache_uniforms ( trans_uni.get_uniform ( "view" ), trans_uni.get_uniform ( "proj" ) );
+    camera.cache_uniforms ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
 
     /* movement per second of button hold
      * angle of rotation per side to side of window movement of mouse
@@ -96,8 +106,8 @@ int main ()
         0.1
     );
     
-    /* cache uniforms */
-    island.cache_uniforms ( material_uni, trans_uni.get_uniform ( "model" ) );
+    /* cache material uniform */
+    island.cache_material_uniforms ( model_material_uni );
 
 
 
@@ -117,7 +127,7 @@ int main ()
     );
 
     /* cache uniforms */
-    light_system.cache_uniforms ( light_system_uni );
+    //light_system.cache_uniforms ( model_light_system_uni );
 
 
 
@@ -143,7 +153,7 @@ int main ()
         auto gamepadinfo = window.get_gamepadinfo ( GLFW_JOYSTICK_1 );
 
         /* print framerate every 10th frame */
-        if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
+        //if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
         
         /* apply any viewport size changes */
         if ( dimensions.deltaheight || dimensions.deltawidth || frame % 15 == 0 )
@@ -182,23 +192,49 @@ int main ()
         
 
 
-        /* use the program */
-        program.use ();
+        /* first create shadow maps */
 
-        /* apply camera and light system */
-        camera.apply ();
-        light_system.apply ();
-        
+        /* bind the 2d shadow fbo */
+        light_system.bind_shadow_maps_2d_fbo ();
+
+        /* clear depth buffer */
+        glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
+
+        /* use the shadow program */
+        shadow_program.use ();
+
+        /* apply light system and cache model matrix uniform */
+        light_system.apply ( shadow_light_system_uni );
+        island.cache_model_uniform ( shadow_model_matrix_uni );
+
+        /* render the model */
+        island.render ( island_matrix, glh::model::render_flags::GLH_NO_MATERIAL );
+
+
+
+        /* now render the island to the default framebuffer */
+
+        /* bind the default framebuffer */
+        window.bind_framebuffer ();
+
         /* clear screen */
         glh::core::renderer::clear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
+        /* use the model program */
+        model_program.use ();
+
+        /* apply camera and light system and cache model matrix uniform */
+        camera.apply ();
+        light_system.apply ( model_light_system_uni );
+        island.cache_model_uniform ( model_trans_uni.get_uniform ( "model" ) );
+
         /* render opaque */
-        transparent_mode_uni.set_int ( false );
+        model_transparent_mode_uni.set_int ( false );
         glh::core::renderer::disable_blend ();
         island.render ( island_matrix );
        
         /* render transparent */
-        transparent_mode_uni.set_int ( true );
+        model_transparent_mode_uni.set_int ( true );
         glh::core::renderer::enable_blend ();
         island.render ( island_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
         
