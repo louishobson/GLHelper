@@ -116,14 +116,12 @@ void glh::core::uniform::set_int ( const GLint v0 )
     if 
     ( 
         uniform_type != GL_INT && uniform_type && uniform_type != GL_BOOL &&
-        uniform_type != GL_SAMPLER_1D && uniform_type != GL_SAMPLER_2D && uniform_type != GL_SAMPLER_3D && 
-        uniform_type != GL_SAMPLER_CUBE && 
-        uniform_type != GL_SAMPLER_1D_SHADOW && uniform_type != GL_SAMPLER_2D_SHADOW && 
-        uniform_type != GL_SAMPLER_1D_ARRAY && uniform_type != GL_SAMPLER_2D_ARRAY && 
-        uniform_type != GL_SAMPLER_1D_ARRAY_SHADOW && uniform_type != GL_SAMPLER_2D_ARRAY_SHADOW && 
+        uniform_type != GL_SAMPLER_1D && uniform_type != GL_SAMPLER_2D && uniform_type != GL_SAMPLER_3D && uniform_type != GL_SAMPLER_CUBE &&
+        uniform_type != GL_SAMPLER_1D_SHADOW && uniform_type != GL_SAMPLER_2D_SHADOW && uniform_type != GL_SAMPLER_CUBE_SHADOW &&
+        uniform_type != GL_SAMPLER_1D_ARRAY && uniform_type != GL_SAMPLER_2D_ARRAY && uniform_type != GL_SAMPLER_CUBE_MAP_ARRAY && 
+        uniform_type != GL_SAMPLER_1D_ARRAY_SHADOW && uniform_type != GL_SAMPLER_2D_ARRAY_SHADOW && uniform_type != GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW &&
         uniform_type != GL_SAMPLER_2D_MULTISAMPLE && 
         uniform_type != GL_SAMPLER_2D_MULTISAMPLE_ARRAY && 
-        uniform_type != GL_SAMPLER_CUBE_SHADOW && 
         uniform_type != GL_SAMPLER_BUFFER && 
         uniform_type != GL_SAMPLER_2D_RECT && 
         uniform_type != GL_SAMPLER_2D_RECT_SHADOW
@@ -154,15 +152,13 @@ void glh::core::uniform::set_uint ( const GLuint v0 )
     /* check that the type is correct */
     if 
     ( 
-        uniform_type != GL_UNSIGNED_INT && uniform_type && uniform_type != GL_BOOL &&
-        uniform_type != GL_SAMPLER_1D && uniform_type != GL_SAMPLER_2D && uniform_type != GL_SAMPLER_3D && 
-        uniform_type != GL_SAMPLER_CUBE && 
-        uniform_type != GL_SAMPLER_1D_SHADOW && uniform_type != GL_SAMPLER_2D_SHADOW && 
-        uniform_type != GL_SAMPLER_1D_ARRAY && uniform_type != GL_SAMPLER_2D_ARRAY && 
-        uniform_type != GL_SAMPLER_1D_ARRAY_SHADOW && uniform_type != GL_SAMPLER_2D_ARRAY_SHADOW && 
+        uniform_type != GL_INT && uniform_type && uniform_type != GL_BOOL &&
+        uniform_type != GL_SAMPLER_1D && uniform_type != GL_SAMPLER_2D && uniform_type != GL_SAMPLER_3D && uniform_type != GL_SAMPLER_CUBE &&
+        uniform_type != GL_SAMPLER_1D_SHADOW && uniform_type != GL_SAMPLER_2D_SHADOW && uniform_type != GL_SAMPLER_CUBE_SHADOW &&
+        uniform_type != GL_SAMPLER_1D_ARRAY && uniform_type != GL_SAMPLER_2D_ARRAY && uniform_type != GL_SAMPLER_CUBE_MAP_ARRAY && 
+        uniform_type != GL_SAMPLER_1D_ARRAY_SHADOW && uniform_type != GL_SAMPLER_2D_ARRAY_SHADOW && uniform_type != GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW &&
         uniform_type != GL_SAMPLER_2D_MULTISAMPLE && 
         uniform_type != GL_SAMPLER_2D_MULTISAMPLE_ARRAY && 
-        uniform_type != GL_SAMPLER_CUBE_SHADOW && 
         uniform_type != GL_SAMPLER_BUFFER && 
         uniform_type != GL_SAMPLER_2D_RECT && 
         uniform_type != GL_SAMPLER_2D_RECT_SHADOW
