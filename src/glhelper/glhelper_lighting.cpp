@@ -356,7 +356,7 @@ void glh::lighting::light_system::bind_shadow_maps_2d_fbo () const
     /* resize the texture array if necessary
      * ensure that at least one light is allocated, so that fbo is complete
      */
-    if ( dirlights.size () + pointlights.size () * 6 + spotlights.size () != shadow_maps_2d.get_depth () )
+    if ( dirlights.size () + pointlights.size () * 6 + spotlights.size () != shadow_maps_2d.get_depth () || shadow_maps_2d.get_depth () == 0 )
         shadow_maps_2d.tex_image ( shadow_maps_2d.get_width (), shadow_maps_2d.get_height (), std::max<unsigned> ( dirlights.size () + pointlights.size () * 6 + spotlights.size (), 1 ), GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT ); 
     
     /* check the fbo is complete */
@@ -370,7 +370,7 @@ void glh::lighting::light_system::bind_shadow_maps_cube_fbo () const
     /* resize the texture array if necessary
      * ensure that at least one light is allocated, so that fbo is complete
      */
-    if ( pointlights.size () * 6 != shadow_maps_cube.get_depth () )
+    if ( pointlights.size () * 6 != shadow_maps_cube.get_depth () || shadow_maps_cube.get_depth () == 0 )
         shadow_maps_cube.tex_image ( shadow_maps_2d.get_width (), shadow_maps_2d.get_height (), std::max<unsigned> ( pointlights.size (), 1 ) * 6, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT ); 
     
     /* check the fbo is complete */
