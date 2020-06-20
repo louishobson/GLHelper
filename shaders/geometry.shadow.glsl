@@ -49,7 +49,7 @@ struct light_system_struct
     light_struct pointlights [ MAX_NUM_LIGHTS ];
 
     int spotlights_size;
-    light_struct spotlights_size [ MAX_NUM_LIGHTS ];
+    light_struct spotlights [ MAX_NUM_LIGHTS ];
 
     sampler2DArrayShadow shadow_maps_2d;
     samplerCubeArrayShadow shadow_maps_cube;
@@ -75,10 +75,11 @@ uniform light_system_struct light_system;
 /* main */
 void main ()
 {
-    /* loop through lights */
+    /* loop through lights, and continue if shadow mapping is disabled */
     for ( int i = 0; i < light_system.dirlights_size; ++i )
     {
         /* transform the vertices */
+        if ( !light_system.dirlights [ i ].shadow_mapping_enabled ) continue;
         gl_Layer = i;
         gl_Position = light_system.dirlights [ i ].shadow_proj * light_system.dirlights [ i ].shadow_view * gl_in [ 0 ].gl_Position; EmitVertex ();
         gl_Position = light_system.dirlights [ i ].shadow_proj * light_system.dirlights [ i ].shadow_view * gl_in [ 1 ].gl_Position; EmitVertex ();
@@ -87,6 +88,7 @@ void main ()
     }
     for ( int i = 0; i < light_system.pointlights_size; ++i )
     {
+        if ( !light_system.pointlights [ i ].shadow_mapping_enabled ) continue;
         for ( int j = 0; j < 6; ++j ) 
         {
             /* transform the vertices */
@@ -100,6 +102,7 @@ void main ()
     for ( int i = 0; i < light_system.spotlights_size; ++i )
     {
         /* transform the vertices */
+        if ( !light_system.spotlights [ i ].shadow_mapping_enabled ) continue;
         gl_Layer = light_system.dirlights_size * light_system.pointlights_size * 6 + i;
         gl_Position = light_system.spotlights [ i ].shadow_proj * light_system.spotlights [ i ].shadow_view * gl_in [ 0 ].gl_Position; EmitVertex ();
         gl_Position = light_system.spotlights [ i ].shadow_proj * light_system.spotlights [ i ].shadow_view * gl_in [ 1 ].gl_Position; EmitVertex ();

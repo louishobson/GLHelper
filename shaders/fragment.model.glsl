@@ -83,10 +83,12 @@ struct light_system_struct
     light_struct pointlights [ MAX_NUM_LIGHTS ];
 
     int spotlights_size;
-    light_struct spotlights_size [ MAX_NUM_LIGHTS ];
+    light_struct spotlights [ MAX_NUM_LIGHTS ];
 
     sampler2DArrayShadow shadow_maps_2d;
     samplerCubeArrayShadow shadow_maps_cube;
+
+    mat4 shadow_maps_cube_rotations [ 6 ];
 };
 
 /* transformations structure */
@@ -199,7 +201,7 @@ vec3 compute_ambient_component ( vec3 base_color, material_struct mat, light_sys
     {
         /* continue if disabled */
         if ( !lighting.dirlights [ i ].enabled ) continue;
-        
+
         /* add ambient light from directional source */
         ambient_color += base_color * lighting.dirlights [ i ].ambient_color;
     }
@@ -248,6 +250,13 @@ vec3 compute_diffuse_component ( vec3 base_color, material_struct mat, light_sys
     {
         /* continue if disabled */
         if ( !lighting.dirlights [ i ].enabled ) continue;
+
+        /* calculate if in shadow shadow */
+        //vec4 shadow_fragpos = lighting.dirlights [ i ].shadow_proj * lighting.dirlights [ i ].shadow_view * vec4 ( fs_in.fragpos, 1.0 );
+        //shadow_fragpos = ( shadow_fragpos.xyzw / shadow_fragpos.w ) * 0.5 + 0.5;
+        //vec4 shadow_texcoords = vec4 ( shadow_fragpos.xy, i, shadow_fragpos.z );
+        //float shadow_check_passes = texture ( lighting.shadow_maps_2d, shadow_texcoords );
+        //if ( shadow_check_passes == 1.0 ) continue;
 
         /* get diffuse multiplier */
         float diff = max ( dot ( fs_in.normal, -lighting.dirlights [ i ].direction ), 0.0 );
