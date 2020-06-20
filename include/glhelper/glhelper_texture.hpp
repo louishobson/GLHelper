@@ -690,6 +690,22 @@ public:
 
 
 
+    /* get_width/height/depth
+     *
+     * get the width, height and depth of the texture
+     */
+    const unsigned& get_width () const { return width; }
+    const unsigned& get_height () const { return height; }
+    const unsigned& get_depth () const { return depth; }
+
+    /* get_internal_format
+     *
+     * get the internal format of the texture
+     */
+    const GLenum& get_internal_format () const { return internal_format; }
+
+
+
 private:
 
     /* width, height, depth
@@ -790,11 +806,26 @@ public:
 
     
 
+    /* get_width/height
+     *
+     * get the width and height of the texture
+     */
+    const unsigned& get_width () const { return width; }
+    const unsigned& get_height () const { return height; }
+
+    /* get_internal_format
+     *
+     * get the internal format of the texture
+     */
+    const GLenum& get_internal_format () const { return internal_format; }
+
     /* get_samples
      * 
      * get the number of samples the texture has
      */
     const unsigned& get_samples () const { return samples; }
+
+
 
 private:
 
@@ -978,6 +1009,8 @@ public:
      */
     const GLenum& get_internal_format () const { return internal_format; }
 
+
+
 private:
 
     /* width/height
@@ -1106,6 +1139,22 @@ public:
      */
     void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum format, const GLenum type, const void * data );
     void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, std::initializer_list<image> images );
+
+
+
+    /* get_width/height/depth
+     *
+     * get the width, height and depth of the texture
+     */
+    const unsigned& get_width () const { return width; }
+    const unsigned& get_height () const { return height; }
+    const unsigned& get_depth () const { return depth; }
+
+    /* get_internal_format
+     *
+     * get the internal format of the texture
+     */
+    const GLenum& get_internal_format () const { return internal_format; }
 
 
 
