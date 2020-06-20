@@ -356,8 +356,9 @@ void glh::lighting::light_system::bind_shadow_maps_2d_fbo () const
     /* resize the texture array if necessary
      * ensure that at least one light is allocated, so that fbo is complete
      */
-    if ( dirlights.size () + pointlights.size () * 6 + spotlights.size () != shadow_maps_2d.get_depth () || shadow_maps_2d.get_depth () == 0 )
-        shadow_maps_2d.tex_image ( shadow_maps_2d.get_width (), shadow_maps_2d.get_height (), std::max<unsigned> ( dirlights.size () + pointlights.size () * 6 + spotlights.size (), 1 ), GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT ); 
+    const unsigned tex_depth = std::max<unsigned> ( dirlights.size () + pointlights.size () * 6 + spotlights.size (), 1 );
+    if ( tex_depth != shadow_maps_2d.get_depth () )
+        shadow_maps_2d.tex_image ( shadow_maps_2d.get_width (), shadow_maps_2d.get_height (), tex_depth, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT ); 
     
     /* check the fbo is complete */
     if ( !shadow_maps_2d_fbo.is_complete () ) throw exception::texture_exception { "2d shadow map fbo is not complete" };
@@ -370,8 +371,9 @@ void glh::lighting::light_system::bind_shadow_maps_cube_fbo () const
     /* resize the texture array if necessary
      * ensure that at least one light is allocated, so that fbo is complete
      */
-    if ( pointlights.size () * 6 != shadow_maps_cube.get_depth () || shadow_maps_cube.get_depth () == 0 )
-        shadow_maps_cube.tex_image ( shadow_maps_2d.get_width (), shadow_maps_2d.get_height (), std::max<unsigned> ( pointlights.size (), 1 ) * 6, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT ); 
+    const unsigned tex_depth = std::max<unsigned> ( pointlights.size (), 1 ) * 6;
+    if ( tex_depth != shadow_maps_cube.get_depth () )
+        shadow_maps_cube.tex_image ( shadow_maps_2d.get_width (), shadow_maps_2d.get_height (), tex_depth, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT ); 
     
     /* check the fbo is complete */
     if ( !shadow_maps_cube_fbo.is_complete () ) throw exception::texture_exception { "cubemap shadow map fbo is not complete" };
