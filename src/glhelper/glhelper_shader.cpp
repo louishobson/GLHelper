@@ -47,23 +47,36 @@ bool operator!= ( const glh::core::struct_uniform& lhs, const glh::core::struct_
 
 /* SHADER IMPLEMENTATION */
 
-/* constructor */
-glh::core::shader::shader ( const minor_object_type _type, const std::string& _path )
+/* multi-source constructor */
+glh::core::shader::shader ( const minor_object_type _type, std::initializer_list<std::string> paths )
     : object { _type }
-    , path { _path }
+    , source { "#version 460" }
+    , compiled { false }
 {
-    /* try to open the shader */
-    std::ifstream shader_file { path, std::ios_base::in };
-    /* throw exception for failure */
-    if ( !shader_file ) throw exception::shader_exception { "could not open shader file" };
-    /* otherwise read shader as string */
-    source.assign ( std::istreambuf_iterator<char> ( shader_file ), std::istreambuf_iterator<char> () );
-    /* close the file */
-    shader_file.close ();
-    /* throw exception if shader source is empty */
-    if ( source.empty () ) throw exception::shader_exception { "imported shader source is empty at path " + path };
+    /* loop through paths */
+    for ( const auto& path: paths )
+    {
+        /* try to open the shader */
+        std::ifstream shader_file { path, std::ios_base::in };
 
-    /* generate shader object, attach the source and compile */
+        /* throw exception for failure */
+        if ( !shader_file ) throw exception::shader_exception { "could not open shader file" };
+
+        /* otherwise read shader as string */
+        source.append ( std::istreambuf_iterator<char> ( shader_file ), std::istreambuf_iterator<char> () );
+
+        /* close the file */
+        shader_file.close ();
+    }
+}
+
+/* compile
+ * 
+ * compiles the shader
+ */
+void glh::core::shader::compile ()
+{
+    /* attach the current source and compile */
     const char * source_ptr = source.c_str ();
     glShaderSource ( id, 1, &source_ptr, NULL );
     glCompileShader ( id );
@@ -77,13 +90,17 @@ glh::core::shader::shader ( const minor_object_type _type, const std::string& _p
          * first get log info */
         char comp_log [ GLH_SHADER_LOG_SIZE ];
         glGetShaderInfoLog ( id, GLH_SHADER_LOG_SIZE, NULL, comp_log );
+
         /* print log info to stderr */
         std::cerr << comp_log;
-        /* throw */
-        throw exception::shader_exception { "shader compilation failed for shader at path " + path };
-    }
-}
 
+        /* throw */
+        throw exception::shader_exception { "shader compilation failed" };
+    }
+
+    /* set is_compiled to true */
+    compiled = true;
+}
 
 
 /* UNIFORM IMPLEMENTATION */
@@ -505,37 +522,15 @@ bool glh::core::uniform::is_program_in_use () const
  * link all three shaders into a program
  * NOTE: the shader program remains valid even when linked shaders are destroyed
  */
-glh::core::program::program ( const vshader& vs, const gshader& gs, const fshader& fs )
+glh::core::program::program ( vshader& vs, gshader& gs, fshader& fs )
     : object { minor_object_type::GLH_PROGRAM_TYPE }
+    , vertex_shader { vs }, geometry_shader { gs }, fragment_shader { fs }
     , uniforms { "", * this }, struct_uniforms { "", * this }
     , uniform_array_uniforms { "", * this }, struct_array_uniforms { "", * this }
     , uniform_2d_array_uniforms { "", * this }, struct_2d_array_uniforms { "", * this }
 {
     /* check shaders are valid */
     if ( !vs.is_object_valid () || !gs.is_object_valid () || !fs.is_object_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
-
-    /* attach shaders */
-    glAttachShader ( id, vs.internal_id () );
-    glAttachShader ( id, gs.internal_id () );
-    glAttachShader ( id, fs.internal_id () );
-
-    /* link the program */
-    glLinkProgram ( id );
-
-    /* check linking success */
-    int link_success;
-    glGetProgramiv ( id, GL_LINK_STATUS, &link_success );
-    if ( !link_success )
-    {
-        /* linking failed
-         * first get log info */
-        char link_log [ GLH_SHADER_LOG_SIZE ];
-        glGetProgramInfoLog ( id, GLH_SHADER_LOG_SIZE, NULL, link_log );
-        /* print log info to stderr */
-        std::cerr << link_log;
-        /* throw exception */
-        throw exception::shader_exception { "program linking failed" };
-    }
 }
 
 /* two-shader constructor
@@ -544,18 +539,34 @@ glh::core::program::program ( const vshader& vs, const gshader& gs, const fshade
  * uses the default geometry shader
  * NOTE: the shader program remains valid even when linked shaders are destroyed
  */
-glh::core::program::program ( const vshader& vs, const fshader& fs )
+glh::core::program::program ( vshader& vs, fshader& fs )
     : object { minor_object_type::GLH_PROGRAM_TYPE }
+    , vertex_shader { vs }, fragment_shader { fs }
     , uniforms { "", * this }, struct_uniforms { "", * this }
     , uniform_array_uniforms { "", * this }, struct_array_uniforms { "", * this }
     , uniform_2d_array_uniforms { "", * this }, struct_2d_array_uniforms { "", * this }
 {
     /* check shaders are valid */
     if ( !vs.is_object_valid () || !fs.is_object_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
+}
+
+
+
+/* link
+ *
+ * link the shader program
+ * will throw if any of the shaders are not already compiled
+ */
+void glh::core::program::link ()
+{
+    /* check that the shaders are valid and compiled */
+    if ( !vertex_shader->is_compiled () || ( geometry_shader && !geometry_shader->is_compiled () ) || !fragment_shader->is_compiled () )
+        throw exception::shader_exception { "cannot link program with uncompiled shaders" };
 
     /* attach shaders */
-    glAttachShader ( id, vs.internal_id () );
-    glAttachShader ( id, fs.internal_id () );
+    glAttachShader ( id, vertex_shader->internal_id () );
+    if ( geometry_shader ) glAttachShader ( id, geometry_shader->internal_id () );
+    glAttachShader ( id, fragment_shader->internal_id () );
 
     /* link the program */
     glLinkProgram ( id );
@@ -569,12 +580,31 @@ glh::core::program::program ( const vshader& vs, const fshader& fs )
          * first get log info */
         char link_log [ GLH_SHADER_LOG_SIZE ];
         glGetProgramInfoLog ( id, GLH_SHADER_LOG_SIZE, NULL, link_log );
+
         /* print log info to stderr */
         std::cerr << link_log;
+
         /* throw exception */
         throw exception::shader_exception { "program linking failed" };
     }
 }
+
+/* compile_and_link
+ *
+ * compile the shaders then link them
+ */
+void glh::core::program::compile_and_link ()
+{
+    /* compile each shader */
+    vertex_shader->compile ();
+    if ( geometry_shader ) geometry_shader->compile ();
+    fragment_shader->compile ();
+
+    /* now link the program */
+    link ();    
+}
+
+
 
 /* get_uniform_location
  *

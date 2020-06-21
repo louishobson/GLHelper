@@ -14,9 +14,8 @@
  * CLASS GLH::CORE::SHADER
  * 
  * base class for any type of shader
- * the type of shader and source code path is passed in the constructor and the shader is compiled there and then
- * if any error orrcurs, a shader_exception will be thrown with a description of the error
- * this shader can then be used within a shader program
+ * the type of shader and source code paths are passed in the constructor, but the shader is not compiled yet
+ * shaders can be attached to a program without being compiled, however they must be compiled for the program to be linked
  * 
  * 
  * 
@@ -94,6 +93,7 @@
 
 /* include core headers */
 #include <fstream>
+#include <initializer_list>
 #include <iostream>
 #include <map>
 #include <string>
@@ -295,8 +295,13 @@ class glh::core::shader : public object
 {
 public:
 
-    /* constructor */
-    shader ( const minor_object_type _type, const std::string& _path );
+    /* no source constructor */
+    shader ( const minor_object_type _type )
+        : shader { _type, {} }
+    {}
+
+    /* multi-source constructor */
+    shader ( const minor_object_type _type, std::initializer_list<std::string> paths );
 
     /* deleted zero-parameter constructor */
     shader () = delete;
@@ -315,11 +320,13 @@ public:
 
 
 
-    /* get_path
-     *
-     * get the path of the shader
+    /* compile
+     * 
+     * compiles the shader
      */
-    const std::string& get_path () const { return path; }
+    void compile ();
+
+
 
     /* get_source
      *
@@ -327,15 +334,21 @@ public:
      */
     const std::string& get_source () const { return source; }
 
+    /* is_compiled
+     *
+     * returns true if has been compiled
+     */
+    bool is_compiled () const { return compiled; }
+
 
 
 private:
 
-    /* path to the shader */
-    const std::string path;
-
     /* shader source */
     std::string source;
+
+    /* true if has been compiled */
+    bool compiled;
 
 };
 
@@ -351,13 +364,15 @@ class glh::core::vshader : public shader
 {
 public:
 
-    /* constructor */
-    explicit vshader ( const std::string& _path )
-        : shader { minor_object_type::GLH_VSHADER_TYPE, _path }
+    /* no source constructor */
+    vshader ()
+        : shader { minor_object_type::GLH_VSHADER_TYPE }
     {}
 
-    /* deleted zero-parameter constructor */
-    vshader () = delete;
+    /* multi-source constructor */
+    explicit vshader ( std::initializer_list<std::string> paths )
+        : shader { minor_object_type::GLH_VSHADER_TYPE, paths }
+    {}
 
     /* deleted copy constructor */
     vshader ( const vshader& other ) = delete;
@@ -385,13 +400,15 @@ class glh::core::gshader : public shader
 {
 public:
 
-    /* constructor */
-    explicit gshader ( const std::string& _path )
-        : shader { minor_object_type::GLH_GSHADER_TYPE, _path }
+    /* no source constructor */
+    gshader ()
+        : shader { minor_object_type::GLH_GSHADER_TYPE }
     {}
 
-    /* deleted zero-parameter constructor */
-    gshader () = delete;
+    /* multi-source constructor */
+    explicit gshader ( std::initializer_list<std::string> paths )
+        : shader { minor_object_type::GLH_GSHADER_TYPE, paths }
+    {}
 
     /* deleted copy constructor */
     gshader ( const gshader& other ) = delete;
@@ -419,13 +436,15 @@ class glh::core::fshader : public shader
 {
 public:
 
-    /* constructor */
-    explicit fshader ( const std::string& _path )
-        : shader { minor_object_type::GLH_FSHADER_TYPE, _path }
+    /* no source constructor */
+    fshader ()
+        : shader { minor_object_type::GLH_FSHADER_TYPE }
     {}
-
-    /* deleted zero-parameter constructor */
-    fshader () = delete;
+    
+    /* multi-source constructor */
+    explicit fshader ( std::initializer_list<std::string> paths )
+        : shader { minor_object_type::GLH_FSHADER_TYPE, paths }
+    {}
 
     /* deleted copy constructor */
     fshader ( const fshader& other ) = delete;
@@ -1058,7 +1077,7 @@ public:
      * link all three shaders into a program
      * NOTE: the shader program remains valid even when linked shaders are destroyed
      */
-    program ( const vshader& vs, const gshader& gs, const fshader& fs );
+    program ( vshader& vs, gshader& gs, fshader& fs );
 
     /* two-shader constructor
      *
@@ -1066,7 +1085,7 @@ public:
      * uses the default geometry shader
      * NOTE: the shader program remains valid even when linked shaders are destroyed
      */
-    program ( const vshader& vs, const fshader& fs );
+    program ( vshader& vs, fshader& fs );
 
     /* deleted zero-parameter constructor */
     program () = delete;
@@ -1092,6 +1111,20 @@ public:
     using object::get_bound_object_pointer;
     static object_pointer<program> get_bound_object_pointer () { return get_bound_object_pointer<program> ( object_bind_target::GLH_PROGRAM_TARGET ); }
 
+
+
+    /* link
+     *
+     * link the shader program
+     * will throw if any of the shaders are not already compiled
+     */
+    void link ();
+
+    /* compile_and_link
+     *
+     * compile the shaders then link them
+     */
+    void compile_and_link ();
 
 
 
@@ -1213,6 +1246,11 @@ public:
 
 
 private:
+
+    /* pointers to the shaders of the program */
+    object_pointer<vshader> vertex_shader;
+    object_pointer<gshader> geometry_shader;
+    object_pointer<fshader> fragment_shader;
 
     /* uniform_locations
      * uniform_indices
