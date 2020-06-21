@@ -4,58 +4,10 @@
  * shadow geometry shader
  */
 
-#version 460 core
 
-
-
-/* maximum number of lights */
-#define MAX_NUM_LIGHTS 2
 
 /* pi */
 #define PI 3.1415926535897932384626433832795
-
-
-
-/* structure for a light (of any type) */
-struct light_struct
-{
-    vec3 position;
-    vec3 direction;
-    float inner_cone;
-    float outer_cone;
-
-    float att_const;
-    float att_linear;
-    float att_quad;
-
-    vec3 ambient_color;
-    vec3 diffuse_color;
-    vec3 specular_color;
-
-    bool enabled;
-    bool shadow_mapping_enabled;
-
-    mat4 shadow_view;
-    mat4 shadow_proj;
-};
-
-/* structure for storing multiple collections of lights */
-struct light_system_struct
-{
-    int dirlights_size;
-    light_struct dirlights [ MAX_NUM_LIGHTS ];
-
-    int pointlights_size;
-    light_struct pointlights [ MAX_NUM_LIGHTS ];
-
-    int spotlights_size;
-    light_struct spotlights [ MAX_NUM_LIGHTS ];
-
-    sampler2DArrayShadow shadow_maps_2d;
-    samplerCubeArrayShadow shadow_maps_cube;
-
-    mat4 shadow_maps_cube_rotations [ 6 ];
-};
 
 
 

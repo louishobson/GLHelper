@@ -4,8 +4,6 @@
  * shadow fragment shader
  */
 
-#version 460 core
-
 
 
 /* output color */

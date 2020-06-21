@@ -4,8 +4,6 @@
  * shadow vertex shader
  */
 
-#version 460 core
-
 /* maximum number of color sets */
 #define MAX_COLOR_SETS 1
 
