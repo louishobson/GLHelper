@@ -43,14 +43,16 @@ int main ()
 
     /* create model shader program */
     glh::core::vshader model_vshader { "shaders/vertex.model.glsl" };
-    glh::core::fshader model_fshader { "shaders/fragment.model.glsl" };
+    glh::core::fshader model_fshader { "shaders/materials.glsl", "shaders/lighting.glsl", "shaders/fragment.model.glsl"  };
     glh::core::program model_program { model_vshader, model_fshader };
+    model_program.compile_and_link ();
 
     /* create shadow shadow program */
     glh::core::vshader shadow_vshader { "shaders/vertex.shadow.glsl" };
-    glh::core::gshader shadow_gshader { "shaders/geometry.shadow.glsl" };
+    glh::core::gshader shadow_gshader { "shaders/lighting.glsl", "shaders/geometry.shadow.glsl" };
     glh::core::fshader shadow_fshader { "shaders/fragment.shadow.glsl" };
     glh::core::program shadow_program { shadow_vshader, shadow_gshader, shadow_fshader };
+    shadow_program.compile_and_link ();
 
     /* extract uniforms out of model program */
     auto& model_trans_uni = model_program.get_struct_uniform ( "trans" );
