@@ -138,7 +138,7 @@ int main ()
     /* SET UP LIGHT SYSTEM */
 
     /* create light system */
-    glh::lighting::light_system light_system { 4096 };
+    glh::lighting::light_system light_system { 1700 };
 
     /* add directional light */
     light_system.add_dirlight
@@ -148,7 +148,7 @@ int main ()
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region ( island_matrix ),
-        true, true, 0.035
+        false, true, 0.035
     );
 
     /* add point light */
@@ -159,7 +159,7 @@ int main ()
         glh::math::vec3 { 1.5 }, 
         glh::math::vec3 { 1.0 },
         island.model_region ( island_matrix ),
-        false, false, 0.005
+        true, true, 0.005
     );
 
 
