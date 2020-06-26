@@ -9,10 +9,7 @@
 /* DEFINITIONS */
 
 /* maximum number of textures in texture stack */
-#define MAX_TEX_STACK_SIZE 2
-
-/* maximum number of UV channels */
-#define MAX_UV_CHANNELS 2
+#define MAX_TEXTURE_STACK_SIZE 2
 
 
 
@@ -31,7 +28,7 @@ struct texture_stack_struct
 {
     vec4 base_color;
     int stack_size;
-    texture_stack_level_struct levels [ MAX_TEX_STACK_SIZE ];
+    texture_stack_level_struct levels [ MAX_TEXTURE_STACK_SIZE ];
     sampler2DArray textures;
 };
 
@@ -48,6 +45,7 @@ struct material_struct
     float shininess_strength;
 
     float opacity;
+    bool definitely_opaque;
 };
 
 
@@ -63,9 +61,9 @@ struct material_struct
  *
  * return: the overall color of the fragment of the stack
  */
-vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ MAX_UV_CHANNELS ] )
+vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ] )
 {
-    /* set stack color color to base color */
+    /* set stack color to base color */
     vec4 stack_color = stack.base_color;
 
     /* loop through the stack */
@@ -73,9 +71,11 @@ vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ M
     {
         /* get the level color from the texture */
         vec4 level_color = texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ].xy, i ) );
+
         /* multiply by blend strength */
         level_color *= stack.levels [ i ].blend_strength;
-        /* add to the stack */
+
+        /* add to the stack through the appropriate operation */
         switch ( stack.levels [ i ].blend_operation )
         {
             case 0: stack_color = stack_color * level_color; break;
@@ -90,4 +90,27 @@ vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ M
 
     /* return the stack color */
     return stack_color;
+}
+
+/* evaluate_stack_transparency
+ *
+ * useful for when shadow mapping
+ * is much more stripped down than evaluate_stack
+ *
+ * stack: the stack to evaluate
+ * texcoords: array of texture coords for the fragment
+ * transparency_cutoff: if the transparency is less than this value, return true
+ *
+ * return: boolean, true if has alpha < transparency_cutoff
+ */
+bool evaluate_stack_transparency ( const texture_stack_struct stack, const vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ], const float transparency_cutoff )
+{
+    /* if base transparency < 1.0, return true */
+    if ( stack.base_color.a < transparency_cutoff ) return true;
+
+    /* if has no textures, return false */
+    if ( stack.stack_size == 0 ) return false;
+
+    /* sample first texture, and return true if alpha is less than 1.0 */
+    return ( texture ( stack.textures, vec3 ( texcoords [ stack.levels [ 0 ].uvwsrc ].xy, 0 ) ).a < transparency_cutoff );
 }

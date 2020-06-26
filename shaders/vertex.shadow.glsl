@@ -4,21 +4,25 @@
  * shadow vertex shader
  */
 
-/* maximum number of color sets */
-#define MAX_COLOR_SETS 1
-
-/* maximum number of UV channels */
-#define MAX_UV_CHANNELS 2
 
 
+/* INPUTS AND OUTPUTS */
 
 /* vertices, texture coords and normal */
-layout ( location = 0 ) in vec3 pos;
+layout ( location = 0 ) in vec3 in_pos;
 layout ( location = 1 ) in vec3 in_normal;
-layout ( location = 2 ) in vec4 in_vcolor [ MAX_COLOR_SETS ];
-layout ( location = 3 ) in vec3 in_texcoords [ MAX_UV_CHANNELS ];
+layout ( location = 2 ) in vec4 in_vcolor;
+layout ( location = 3 ) in vec3 in_texcoords [ MAX_TEXTURE_STACK_SIZE ];
+
+/* output texcoords */
+out VS_OUT
+{
+    vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ];
+} vs_out;
 
 
+
+/* UNIFORMS */
 
 /* model transformation matrix */
 uniform mat4 model_matrix;
@@ -28,6 +32,9 @@ uniform mat4 model_matrix;
 /* main */
 void main ()
 {
-    /* set the position to be the same as the attribute, with an alpha of 1.0 */
-    gl_Position = model_matrix * vec4 ( pos, 1.0 );
+    /* transform the position by the model matrix */
+    gl_Position = model_matrix * vec4 ( in_pos, 1.0 );
+
+    /* transfer the texcoords */
+    vs_out.texcoords = in_texcoords;
 }
