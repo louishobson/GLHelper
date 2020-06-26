@@ -25,7 +25,19 @@
 /* include glhelper.hpp */
 #include <glhelper/glhelper.hpp>
 
-
+void GLAPIENTRY
+MessageCallback( GLenum source,
+                 GLenum type,
+                 GLuint id,
+                 GLenum severity,
+                 GLsizei length,
+                 const GLchar* message,
+                 const void* userParam )
+{
+  fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+           ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
+            type, severity, message );
+}
 
 int main ()
 {
@@ -37,25 +49,32 @@ int main ()
     /* disable mouse */
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
     
+    
+    
+    // During init, enable debug output
+    glEnable              ( GL_DEBUG_OUTPUT );
+    glDebugMessageCallback( MessageCallback, 0 );
+
 
 
     /* SET UP PROGRAMS */
 
     /* create model shader program */
-    glh::core::vshader model_vshader { "shaders/vertex.model.glsl" };
-    glh::core::fshader model_fshader { "shaders/materials.glsl", "shaders/lighting.glsl", "shaders/fragment.model.glsl"  };
+    glh::core::vshader model_vshader { "shaders/camera.glsl", "shaders/vertex.model.glsl" };
+    glh::core::fshader model_fshader { "shaders/camera.glsl", "shaders/materials.glsl", "shaders/lighting.glsl", "shaders/fragment.model.glsl"  };
     glh::core::program model_program { model_vshader, model_fshader };
     model_program.compile_and_link ();
 
     /* create shadow shadow program */
     glh::core::vshader shadow_vshader { "shaders/vertex.shadow.glsl" };
-    glh::core::gshader shadow_gshader { "shaders/lighting.glsl", "shaders/geometry.shadow.glsl" };
+    glh::core::gshader shadow_gshader { "shaders/camera.glsl", "shaders/lighting.glsl", "shaders/geometry.shadow.glsl" };
     glh::core::fshader shadow_fshader { "shaders/fragment.shadow.glsl" };
     glh::core::program shadow_program { shadow_vshader, shadow_gshader, shadow_fshader };
     shadow_program.compile_and_link ();
 
     /* extract uniforms out of model program */
-    auto& model_trans_uni = model_program.get_struct_uniform ( "trans" );
+    auto& model_camera_uni = model_program.get_struct_uniform ( "camera" );
+    auto& model_model_matrix_uni = model_program.get_uniform ( "model_matrix" );
     auto& model_light_system_uni = model_program.get_struct_uniform ( "light_system" );
     auto& model_material_uni = model_program.get_struct_uniform ( "material" );
     auto& model_transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
@@ -79,19 +98,25 @@ int main ()
     camera.enable_restrictive_mode ();
 
     /* cache uniforms */
-    camera.cache_uniforms ( model_trans_uni.get_uniform ( "view" ), model_trans_uni.get_uniform ( "proj" ) );
+    camera.cache_uniforms ( model_camera_uni );
+
+
+
+    /* SET SENSITIVITIES */
 
     /* movement per second of button hold
      * angle of rotation per side to side of window movement of mouse
      * the angle to change the fov per second of button hold
      * cutoff sensitivity for gamepads
+     * light rotation sensitivity
      */
     const double movement_sensitivity = 10.0;
     const double mouse_sensitivity = glh::math::rad ( 120.0 );
     const double fov_sensitivity = glh::math::rad ( 15.0 );
     const double gamepad_cutoff_sensitivity = 0.2;
     const double gamepad_look_sensitivity = glh::math::rad ( 120.0 );
-    
+    const double light_rotation_sensitivity = glh::math::rad ( 10 );
+
 
 
     /* IMPORT MODELS */
@@ -116,16 +141,28 @@ int main ()
     /* SET UP LIGHT SYSTEM */
 
     /* create light system */
-    glh::lighting::light_system light_system;
+    glh::lighting::light_system light_system { 2048 };
 
     /* add directional light */
     light_system.add_dirlight
     (
         glh::math::vec3 { 1.0, -1.0, 0.0 },
+        glh::math::vec3 { 0.0 },
+        glh::math::vec3 { 0.5 }, 
+        glh::math::vec3 { 0.5 },
+        island.model_region ( island_matrix ),
+        false, false, 0.035
+    );
+
+    /* add point light */
+    light_system.add_pointlight
+    (
+        glh::math::vec3 ( 30, 40, 20 ), 1.0, 0.0, 0.0,//0.007, 0.0002,
+        glh::math::vec3 { 0.2 },
+        glh::math::vec3 { 1.5 }, 
         glh::math::vec3 { 1.0 },
-        glh::math::vec3 { 1.0 }, 
-        glh::math::vec3 { 1.0 },
-        island.model_region ( island_matrix )
+        island.model_region ( island_matrix ),
+        true, true, 0.005
     );
 
     /* cache uniforms */
@@ -138,6 +175,7 @@ int main ()
     glh::core::renderer::set_clear_color ( glh::math::vec4 { 0.0, 0.5, 1.0, 1.0 } );
     glh::core::renderer::enable_depth_test ();
     glh::core::renderer::enable_face_culling ();
+    glh::core::renderer::set_cull_face ( GL_BACK );
     glh::core::renderer::enable_multisample ();
     glh::core::renderer::enable_blend ();
     glh::core::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
@@ -155,16 +193,13 @@ int main ()
         auto gamepadinfo = window.get_gamepadinfo ( GLFW_JOYSTICK_1 );
 
         /* print framerate every 10th frame */
-        //if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
-        
-        /* apply any viewport size changes */
+        if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
+
+
+
+        /* apply aspect change to camera */
         if ( dimensions.deltaheight || dimensions.deltawidth || frame % 15 == 0 )
-        {
             camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
-            glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );
-        }
-
-
 
         /* get movement keys and apply changes to camera */
         if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { 0.0, 0.0, -movement_sensitivity * timeinfo.delta } );
@@ -194,13 +229,15 @@ int main ()
         
 
 
+        /* rotate light */
+        light_system.pointlight_at ( 0 ).set_position ( glh::math::rotate3d ( light_system.pointlight_at ( 0 ).get_position (), light_rotation_sensitivity * timeinfo.delta, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
+
+
+
         /* first create shadow maps */
 
-        /* bind the 2d shadow fbo */
-        light_system.bind_shadow_maps_2d_fbo ();
-
-        /* clear depth buffer */
-        glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
+        /* bind the shadow fbo */
+        light_system.bind_shadow_maps_fbo ();
 
         /* use the shadow program */
         shadow_program.use ();
@@ -210,17 +247,18 @@ int main ()
         island.cache_model_uniform ( shadow_model_matrix_uni );
 
         /* render the model */
+        glh::core::renderer::disable_blend ();
+        glh::core::renderer::set_depth_mask ( GL_TRUE );
+        glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
         island.render ( island_matrix, glh::model::render_flags::GLH_NO_MATERIAL );
 
 
 
         /* now render the island to the default framebuffer */
 
-        /* bind the default framebuffer */
+        /* bind the default framebuffer and resize the viewport */
         window.bind_framebuffer ();
-
-        /* clear screen */
-        glh::core::renderer::clear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+        glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );        
 
         /* use the model program */
         model_program.use ();
@@ -228,16 +266,19 @@ int main ()
         /* apply camera and light system and cache model matrix uniform */
         camera.apply ();
         light_system.apply ( model_light_system_uni );
-        island.cache_model_uniform ( model_trans_uni.get_uniform ( "model" ) );
+        island.cache_model_uniform ( model_model_matrix_uni );
 
         /* render opaque */
-        model_transparent_mode_uni.set_int ( false );
+        model_transparent_mode_uni.set_int ( 2 );
         glh::core::renderer::disable_blend ();
+        glh::core::renderer::set_depth_mask ( GL_TRUE );
+        glh::core::renderer::clear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
         island.render ( island_matrix );
        
         /* render transparent */
-        model_transparent_mode_uni.set_int ( true );
+        model_transparent_mode_uni.set_int ( 1 );
         glh::core::renderer::enable_blend ();
+        glh::core::renderer::set_depth_mask ( GL_FALSE );
         island.render ( island_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
         
 
