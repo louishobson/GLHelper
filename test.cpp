@@ -19,8 +19,7 @@
 #include <chrono>
 #include <thread>
 
-#define GLH_MODEL_MAX_COLOR_SETS 1
-#define GLH_MODEL_MAX_UV_CHANNELS 2
+
 
 /* include glhelper.hpp */
 #include <glhelper/glhelper.hpp>
@@ -44,7 +43,7 @@ int main ()
     /* CREATE WINDOW */
 
     /* create a window with 4xMSAA */
-    glh::glfw::window window { "Test Window", 600, 400, 4 };
+    glh::glfw::window window { "Test Window", 600, 400 };
 
     /* disable mouse */
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
@@ -60,15 +59,15 @@ int main ()
     /* SET UP PROGRAMS */
 
     /* create model shader program */
-    glh::core::vshader model_vshader { "shaders/camera.glsl", "shaders/vertex.model.glsl" };
-    glh::core::fshader model_fshader { "shaders/camera.glsl", "shaders/materials.glsl", "shaders/lighting.glsl", "shaders/fragment.model.glsl"  };
+    glh::core::vshader model_vshader { "shaders/materials.glsl", "shaders/camera.glsl", "shaders/vertex.model.glsl" };
+    glh::core::fshader model_fshader { "shaders/materials.glsl", "shaders/camera.glsl", "shaders/lighting.glsl", "shaders/fragment.model.glsl"  };
     glh::core::program model_program { model_vshader, model_fshader };
     model_program.compile_and_link ();
 
     /* create shadow shadow program */
-    glh::core::vshader shadow_vshader { "shaders/vertex.shadow.glsl" };
-    glh::core::gshader shadow_gshader { "shaders/camera.glsl", "shaders/lighting.glsl", "shaders/geometry.shadow.glsl" };
-    glh::core::fshader shadow_fshader { "shaders/fragment.shadow.glsl" };
+    glh::core::vshader shadow_vshader { "shaders/materials.glsl", "shaders/vertex.shadow.glsl" };
+    glh::core::gshader shadow_gshader { "shaders/materials.glsl", "shaders/camera.glsl", "shaders/lighting.glsl", "shaders/geometry.shadow.glsl" };
+    glh::core::fshader shadow_fshader { "shaders/materials.glsl", "shaders/fragment.shadow.glsl" };
     glh::core::program shadow_program { shadow_vshader, shadow_gshader, shadow_fshader };
     shadow_program.compile_and_link ();
 
@@ -82,6 +81,7 @@ int main ()
     /* extract uniforms out of model program */
     auto& shadow_model_matrix_uni = shadow_program.get_uniform ( "model_matrix" );
     auto& shadow_light_system_uni = shadow_program.get_struct_uniform ( "light_system" );
+    auto& shadow_material_uni = shadow_program.get_struct_uniform ( "material" );
 
 
 
@@ -132,16 +132,13 @@ int main ()
         glh::math::identity<4, GLdouble> (),
         0.1
     );
-    
-    /* cache material uniform */
-    island.cache_material_uniforms ( model_material_uni );
 
 
 
     /* SET UP LIGHT SYSTEM */
 
     /* create light system */
-    glh::lighting::light_system light_system { 2048 };
+    glh::lighting::light_system light_system { 1750 };
 
     /* add directional light */
     light_system.add_dirlight
@@ -151,7 +148,7 @@ int main ()
         glh::math::vec3 { 0.5 }, 
         glh::math::vec3 { 0.5 },
         island.model_region ( island_matrix ),
-        false, false, 0.035
+        true, false, 0.035
     );
 
     /* add point light */
@@ -244,13 +241,12 @@ int main ()
 
         /* apply light system and cache model matrix uniform */
         light_system.apply ( shadow_light_system_uni );
-        island.cache_model_uniform ( shadow_model_matrix_uni );
 
         /* render the model */
         glh::core::renderer::disable_blend ();
         glh::core::renderer::set_depth_mask ( GL_TRUE );
         glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
-        island.render ( island_matrix, glh::model::render_flags::GLH_NO_MATERIAL );
+        island.render ( shadow_material_uni, shadow_model_matrix_uni, island_matrix );
 
 
 
@@ -266,14 +262,13 @@ int main ()
         /* apply camera and light system and cache model matrix uniform */
         camera.apply ();
         light_system.apply ( model_light_system_uni );
-        island.cache_model_uniform ( model_model_matrix_uni );
 
         /* render opaque */
         model_transparent_mode_uni.set_int ( 2 );
         glh::core::renderer::disable_blend ();
         glh::core::renderer::set_depth_mask ( GL_TRUE );
         glh::core::renderer::clear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-        island.render ( island_matrix );
+        island.render ( model_material_uni, model_model_matrix_uni, island_matrix );
        
         /* render transparent */
         model_transparent_mode_uni.set_int ( 1 );
