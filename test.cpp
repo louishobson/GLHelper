@@ -43,7 +43,7 @@ int main ()
     /* CREATE WINDOW */
 
     /* create a window with 4xMSAA */
-    glh::glfw::window window { "Test Window", 600, 400 };
+    glh::glfw::window window { "Test Window", 600, 400, 4 };
 
     /* disable mouse */
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
@@ -138,17 +138,17 @@ int main ()
     /* SET UP LIGHT SYSTEM */
 
     /* create light system */
-    glh::lighting::light_system light_system { 1750 };
+    glh::lighting::light_system light_system { 4096 };
 
     /* add directional light */
     light_system.add_dirlight
     (
-        glh::math::vec3 { 1.0, -1.0, 0.0 },
-        glh::math::vec3 { 0.0 },
-        glh::math::vec3 { 0.5 }, 
+        glh::math::vec3 { -1.0, -1.0, 0.0 },
         glh::math::vec3 { 0.5 },
+        glh::math::vec3 { 1.0 }, 
+        glh::math::vec3 { 1.0 },
         island.model_region ( island_matrix ),
-        true, false, 0.035
+        true, true, 0.035
     );
 
     /* add point light */
@@ -159,11 +159,8 @@ int main ()
         glh::math::vec3 { 1.5 }, 
         glh::math::vec3 { 1.0 },
         island.model_region ( island_matrix ),
-        true, true, 0.005
+        false, false, 0.005
     );
-
-    /* cache uniforms */
-    //light_system.cache_uniforms ( model_light_system_uni );
 
 
 
