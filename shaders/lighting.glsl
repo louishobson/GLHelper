@@ -113,9 +113,9 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
     vec3 base_color = vec3 ( 0.0, 0.0, 0.0 );
 
     /* check if any colors supplied are black, or shininess_strength is 0, as steps can be ignored if so */
-    const bool has_ambient_component = ( ambient_color != vec3 ( 0.0, 0.0, 0.0 ) );
-    const bool has_diffuse_component = ( diffuse_color != vec3 ( 0.0, 0.0, 0.0 ) );
-    const bool has_specular_component = ( specular_color != vec3 ( 0.0, 0.0, 0.0 ) && shininess_strength > 0.0 );
+    const bool fragment_has_ambient_component = ambient_color != vec3 ( 0.0, 0.0, 0.0 );
+    const bool fragment_has_diffuse_component = diffuse_color != vec3 ( 0.0, 0.0, 0.0 );
+    const bool fragment_has_specular_component = specular_color != vec3 ( 0.0, 0.0, 0.0 ) && shininess_strength != 0.0;
 
     /* calculate unit vector from fragment to viewer */
     const vec3 viewdir = normalize ( viewpos - fragpos ); 
@@ -126,12 +126,25 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         /* continue if not enabled */
         if ( !light_system.dirlights [ i ].enabled ) continue;
 
+        /* calculate diffuse constant */
+        float diffuse_constant = 0.0; if ( fragment_has_diffuse_component )
+            diffuse_constant = max ( dot ( normal, -light_system.dirlights [ i ].direction ), 0.0 );
+
+        /* calculate specular constant from halfway vector */
+        float specular_constant = 0.0; if ( fragment_has_specular_component ) 
+            specular_constant = max ( dot ( normal, normalize ( viewdir - light_system.dirlights [ i ].direction ) ), 0.0 );
+
+        /* calculate whether light has ambient, diffuse and specular components */
+        const bool light_has_ambient_component = fragment_has_ambient_component && light_system.dirlights [ i ].ambient_color != vec3 ( 0.0, 0.0, 0.0 );
+        const bool light_has_diffuse_component = fragment_has_diffuse_component && diffuse_constant != 0.0 && light_system.dirlights [ i ].diffuse_color != vec3 ( 0.0, 0.0, 0.0 );
+        const bool light_has_specular_component = fragment_has_specular_component && specular_constant != 0.0 && light_system.dirlights [ i ].specular_color != vec3 ( 0.0, 0.0, 0.0 ); 
+
         /* add ambient component */
-        if ( has_ambient_component ) base_color += light_system.dirlights [ i ].ambient_color * ambient_color; 
+        if ( light_has_ambient_component ) base_color += light_system.dirlights [ i ].ambient_color * ambient_color; 
 
         /* default shadow constant to 1.0, unless shadow mapping is enabled */
         float shadow_constant = 1.0;
-        if ( light_system.dirlights [ i ].shadow_mapping_enabled )
+        if ( light_system.dirlights [ i ].shadow_mapping_enabled && ( light_has_diffuse_component || light_has_specular_component ) )
         {
             /* transform the fragment position using the light's shadow matrices */
             vec4 fragpos_light_proj = light_system.dirlights [ i ].shadow_camera.view_proj * vec4 ( fragpos, 1.0 );
@@ -141,7 +154,7 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
 
             /* calculate z through z-component * the shadow bias, taking into account the angle of the surface
              * the closer the surface is to perpandicular to the light, the less bias */
-            const float depth = fragpos_light_proj.z - max ( light_system.dirlights [ i ].shadow_bias * ( 1.0 - dot ( normal, -light_system.dirlights [ i ].direction ) ), 0.001 );
+            const float depth = fragpos_light_proj.z - max ( light_system.dirlights [ i ].shadow_bias * ( 1.0 - diffuse_constant ), 0.001 );
 
             /* sample the shadow map to get the shadow constant */
             shadow_constant = texture ( light_system.shadow_maps, vec4 ( fragpos_light_proj.xy, i, depth ) );
@@ -151,17 +164,12 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         }
 
         /* add diffuse component */
-        if ( has_diffuse_component ) base_color += max ( dot ( normal, -light_system.dirlights [ i ].direction ), 0.0 ) * shadow_constant * light_system.dirlights [ i ].diffuse_color * diffuse_color;
+        if ( light_has_diffuse_component ) 
+            base_color += diffuse_constant * shadow_constant * light_system.dirlights [ i ].diffuse_color * diffuse_color;
 
         /* add specular component */
-        if ( has_specular_component )
-        {
-            /* calculate halfway vector */
-            const vec3 halfway = normalize ( viewdir - light_system.dirlights [ i ].direction );
-
-            /* add to base color depending on how close the halfway vector is to the normal */
-            base_color += pow ( max ( dot ( normal, halfway ), 0.0 ), shininess ) * shininess_strength * shadow_constant * light_system.dirlights [ i ].specular_color * specular_color;
-        }
+        if ( light_has_specular_component ) 
+            base_color += pow ( specular_constant, shininess ) * shininess_strength * shadow_constant * light_system.dirlights [ i ].specular_color * specular_color;
     }
 
     /* iterate through point lighting */
@@ -182,12 +190,25 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         /* normalize lightdir for use with dot product */
         lightdir = normalize ( lightdir );
 
+        /* calculate diffuse constant */
+        float diffuse_constant = 0.0; if ( fragment_has_diffuse_component )
+            diffuse_constant = max ( dot ( normal, lightdir ), 0.0 );
+
+        /* calculate specular constant from halfway vector */
+        float specular_constant = 0.0; if ( fragment_has_specular_component ) 
+            specular_constant = max ( dot ( normal, normalize ( viewdir + lightdir ) ), 0.0 );
+
+        /* calculate whether light has ambient, diffuse and specular components */
+        const bool light_has_ambient_component = fragment_has_ambient_component && light_system.pointlights [ i ].ambient_color != vec3 ( 0.0, 0.0, 0.0 );
+        const bool light_has_diffuse_component = fragment_has_diffuse_component && diffuse_constant != 0.0 && light_system.pointlights [ i ].diffuse_color != vec3 ( 0.0, 0.0, 0.0 );
+        const bool light_has_specular_component = fragment_has_specular_component && specular_constant != 0.0 && light_system.pointlights [ i ].specular_color != vec3 ( 0.0, 0.0, 0.0 ); 
+
         /* add ambient component */
-        if ( has_ambient_component ) base_color += attenuation * light_system.pointlights [ i ].ambient_color * ambient_color; 
+        if ( light_has_ambient_component ) base_color += attenuation * light_system.pointlights [ i ].ambient_color * ambient_color; 
 
         /* default shadow constant to 1.0, unless shadow mapping is enabled */
         float shadow_constant = 1.0;
-        if ( light_system.pointlights [ i ].shadow_mapping_enabled )
+        if ( light_system.pointlights [ i ].shadow_mapping_enabled && ( light_has_diffuse_component || light_has_specular_component ) )
         {
             /* calculate shadow constant by sampling texture */
             vec4 fragpos_light_view = light_system.pointlights [ i ].shadow_camera.view * vec4 ( fragpos, 1.0 );
@@ -224,7 +245,7 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
              * also take into account the angle of the surface to the light's position
              */
             const float depth = lightdist / light_system.pointlights [ i ].shadow_max_dist -
-                max ( light_system.pointlights [ i ].shadow_bias * ( 1.0 - dot ( normal, -light_system.pointlights [ i ].direction ) ), 0.001 );
+                max ( light_system.pointlights [ i ].shadow_bias * ( 1.0 - diffuse_constant ), 0.001 );
 
             /* sample the shadow map to get the shadow constant */
             shadow_constant = texture ( light_system.shadow_maps,  vec4 ( fragpos_light_proj.xy, light_system.dirlights_size + i * 6 + face_index, depth ) );
@@ -234,17 +255,12 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         }
 
         /* add diffuse component */
-        if ( has_diffuse_component ) base_color += max ( dot ( normal, lightdir ), 0.0 ) * shadow_constant * attenuation * light_system.pointlights [ i ].diffuse_color * diffuse_color;
+        if ( light_has_diffuse_component ) 
+            base_color += diffuse_constant * shadow_constant * attenuation * light_system.pointlights [ i ].diffuse_color * diffuse_color;
 
         /* add specular component */
-        if ( has_specular_component )
-        {
-            /* calculate halfway vector */
-            const vec3 halfway = normalize ( viewdir + lightdir );
-
-            /* add to base color depending on how close the halfway vector is to the normal */
-            base_color += pow ( max ( dot ( normal, halfway ), 0.0 ), shininess ) * shininess_strength * shadow_constant * attenuation * light_system.pointlights [ i ].specular_color * specular_color;
-        }
+        if ( light_has_specular_component )
+            base_color += pow ( specular_constant, shininess ) * shininess_strength * shadow_constant * attenuation * light_system.pointlights [ i ].specular_color * specular_color;
     }
 
     /* return the base color */
