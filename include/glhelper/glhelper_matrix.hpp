@@ -615,7 +615,7 @@ template<unsigned M, class T> inline std::enable_if_t<( M > 1 ), T> glh::math::d
     }
 
     /* return the determinant */
-    return det;
+    return determinant;
 }
 template<unsigned M, class T> inline std::enable_if_t<M == 1, T> glh::math::det ( const matrix<M, M, T>& _matrix )
 {
