@@ -6,10 +6,12 @@
 
 
 
-/* output color */
-out vec4 fragcolor;
+/* input linear depth */
+in float depth;
 
 
-
-/* do nothing in main */
-void main () {}
+/* main */
+void main ()
+{
+    gl_FragDepth = depth;
+}

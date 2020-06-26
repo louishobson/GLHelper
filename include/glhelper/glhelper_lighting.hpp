@@ -35,9 +35,11 @@
  *     vec3 specular_color;
  * 
  *     bool enabled;
+ *     bool shadow_mapping_enabled;
  * 
- *     mat4 shadow_view;
- *     mat4 shadow_proj;
+ *     camera_struct shadow_camera;
+ * 
+ *     float shadow_bias;
  * };
  * 
  * struct pointlight_struct
@@ -53,9 +55,12 @@
  *     vec3 specular_color;
  * 
  *     bool enabled;
+ *     bool shadow_mapping_enabled;
  * 
- *     mat4 shadow_view;
- *     mat4 shadow_proj;
+ *     camera_struct shadow_camera;
+ * 
+ *     float shadow_bias;
+ *     float shadow_max_dist;
  * };
  * 
  * struct light_struct
@@ -77,8 +82,10 @@
  *     bool enabled;
  *     bool shadow_mapping_enabled;
  * 
- *     mat4 shadow_view;
- *     mat4 shadow_proj;
+ *     camera_struct shadow_camera;
+ * 
+ *     float shadow_bias;
+ *     float shadow_max_dist;
  * };
  * 
  * these GLSL structures contain attributes for different light types
@@ -92,7 +99,9 @@
  * ambient/diffuse/specular_color: the colors of the different components of light produced (all types)
  * enabled: whether the light is 'turned on' (all types)
  * shadow_mapping_enabled: whether the light should be shadow mapped (all types)
- * shadow_view/proj: view and projection matrices for shadow mapping (all types)
+ * shadow_camera: the camera used for shadow mapping (all types)
+ * shadow_bias: the bias to apply when sampling from the shadow map
+ * shadow_max_dist: the side length of the perspective frustum (only point and spot lights)
  * 
  * the first two structures could potentially be completely ommited and just spotlight structs used, since the members of the other classes
  * are subsets of the members of the spotlight class. In this case, unused members will just not be set
@@ -119,10 +128,7 @@
  *     int spotlights_size;
  *     light_struct spotlights_size [ MAX_NUM_LIGHTS ];
  * 
- *     sampler2DArrayShadow shadow_maps_2d; 
- *     samplerCubeArrayShadow shadow_maps_cube;
- * 
- *     mat4 shadow_maps_cube_rotations [ 6 ];
+ *     sampler2DArrayShadow shadow_maps; 
  * };
  * 
  * this structure holds multiple arrays of lights
@@ -131,8 +137,7 @@
  * dirlights(_size): array of directional lights and its size
  * pointlights(_size): array of collection of point lights and its size
  * spotlights(_size): collection of spotlights and its size
- * shadow_maps_2d/cube: samplers for 2d and cubemap shadow maps
- * shadow_maps_cube_rotations: array of rotations for each face of a cubemap
+ * shadow_maps: sampler for shadow maps
  * 
  */
 
@@ -174,6 +179,9 @@
 
 /* include glhelper_framebuffer.hpp */
 #include <glhelper/glhelper_framebuffer.hpp>
+
+/* include glhelper_render.hpp */
+#include <glhelper/glhelper_render.hpp>
 
 
 
@@ -252,11 +260,11 @@ public:
     dirlight ( const math::vec3& _direction
              , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
              , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
-             , const bool _enabled = true, const bool _shadow_mapping_enabled = true )
+             , const bool _enabled = true, const bool _shadow_mapping_enabled = true, const double _shadow_bias = 0.0 )
         : direction { _direction }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
         , shadow_region { _shadow_region }
-        , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }
+        , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }, shadow_bias { _shadow_bias }
         , shadow_camera { math::vec3 { 0.0 }, _direction, math::any_perpandicular ( _direction ), math::vec3 { 0.0 }, math::vec3 { 0.0 } }
         , shadow_camera_change { true }
     {}
@@ -269,7 +277,7 @@ public:
         : direction { other.direction }
         , ambient_color { other.ambient_color }, diffuse_color { other.diffuse_color }, specular_color { other.specular_color }
         , shadow_region { other.shadow_region }
-        , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }
+        , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }, shadow_bias { other.shadow_bias }
         , shadow_camera { other.shadow_camera }, shadow_camera_change { other.shadow_camera_change }
     {}
 
@@ -281,7 +289,7 @@ public:
         { direction = other.direction
         ; ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color
         ; shadow_region = other.shadow_region
-        ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled
+        ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled; shadow_bias = other.shadow_bias
         ; shadow_camera = other.shadow_camera; shadow_camera_change = other.shadow_camera_change
     ; return * this; }
 
@@ -357,6 +365,12 @@ public:
     void disable_shadow_mapping () { shadow_mapping_enabled = false; }
     bool is_shadow_mapping_enabled () const { return shadow_mapping_enabled; }
 
+    /* get/set_shadow_bias
+     *
+     * get/set the shadow bias
+     */
+    const double& get_shadow_bias () const { return shadow_bias; }
+    void set_shadow_bias ( const double _shadow_bias ) { shadow_bias = _shadow_bias; }
 
 
 
@@ -376,6 +390,9 @@ private:
     /* whether the light should be shadow mapped */
     bool shadow_mapping_enabled;
 
+    /* the current shadow bias */
+    double shadow_bias;
+
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
@@ -386,6 +403,7 @@ private:
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
         core::uniform& shadow_mapping_enabled_uni;
+        core::uniform& shadow_bias_uni;
     };
 
     /* cached uniforms */
@@ -422,11 +440,11 @@ public:
                , const double _att_const, const double _att_linear, const double _att_quad
                , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
                , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
-               , const bool _enabled = true, const bool _shadow_mapping_enabled = true )
+               , const bool _enabled = true, const bool _shadow_mapping_enabled = true, const double _shadow_bias = 0.0 )
         : position { _position }, att_const { _att_const }, att_linear { _att_linear }, att_quad { _att_quad }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
-        , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }
-        , shadow_camera { _position, math::vec3 { 1.0, 0.0, 0.0 }, math::vec3 { 0.0, 1.0, 0.0 }, math::rad ( 90.0 ), 1.0, 0.1, 0.1 }
+        , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }, shadow_bias { _shadow_bias }
+        , shadow_camera { _position, math::vec3 { 0.0, 0.0, -1.0 }, math::vec3 { 0.0, 1.0, 0.0 }, math::rad ( 90.0 ), 1.0, 0.1, 0.1 }
         , shadow_region { _shadow_region }
     , shadow_camera_change { true }
     {}
@@ -440,7 +458,7 @@ public:
         , att_const { other.att_const }, att_linear { other.att_linear }, att_quad { other.att_quad }
         , ambient_color { other.ambient_color }, diffuse_color { other.diffuse_color }, specular_color { other.specular_color }
         , shadow_region { other.shadow_region }
-        , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }
+        , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }, shadow_bias { other.shadow_bias }
         , shadow_camera { other.shadow_camera }, shadow_camera_change { other.shadow_camera_change }
     {}
 
@@ -453,7 +471,7 @@ public:
         ; att_const = other.att_const; att_linear = other.att_linear; att_quad = other.att_quad
         ; ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color
         ; shadow_region = other.shadow_region
-        ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled
+        ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled; shadow_bias = other.shadow_bias
         ; shadow_camera = other.shadow_camera; shadow_camera_change = other.shadow_camera_change
     ; return * this; }
 
@@ -541,6 +559,13 @@ public:
     void disable_shadow_mapping () { shadow_mapping_enabled = false; }
     bool is_shadow_mapping_enabled () const { return shadow_mapping_enabled; }
 
+    /* get/set_shadow_bias
+     *
+     * get/set the shadow bias
+     */
+    const double& get_shadow_bias () const { return shadow_bias; }
+    void set_shadow_bias ( const double _shadow_bias ) { shadow_bias = _shadow_bias; }
+
 
 
 private:
@@ -564,6 +589,9 @@ private:
     /* whether the light should be shadow mapped */
     bool shadow_mapping_enabled;
 
+    /* the current shadow bias */
+    double shadow_bias;
+
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
@@ -577,6 +605,8 @@ private:
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
         core::uniform& shadow_mapping_enabled_uni;
+        core::uniform& shadow_bias_uni;
+        core::uniform& shadow_max_dist_uni;
     };
 
     /* cached uniforms */
@@ -613,11 +643,11 @@ public:
               , const double _inner_cone, const double _outer_cone, const double _att_const, const double _att_linear, const double _att_quad
               , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
               , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
-              , const bool _enabled = true, const bool _shadow_mapping_enabled = true )
+              , const bool _enabled = true, const bool _shadow_mapping_enabled = true, const double _shadow_bias = 0.0 )
         : position { _position }, direction { _direction }
         , inner_cone { _inner_cone }, outer_cone { _outer_cone }, att_const { _att_const }, att_linear { _att_linear }, att_quad { _att_quad }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
-        , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }
+        , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }, shadow_bias { _shadow_bias }
         , shadow_camera { _position, _direction, math::any_perpandicular ( _direction ), _outer_cone, 1.0, 0.1, 0.1 }
         , shadow_region { _shadow_region }
         , shadow_camera_change { true }
@@ -632,7 +662,7 @@ public:
         , inner_cone { other.inner_cone }, outer_cone { other.outer_cone }, att_const { other.att_const }, att_linear { other.att_linear }, att_quad { other.att_quad }
         , ambient_color { other.ambient_color }, diffuse_color { other.diffuse_color }, specular_color { other.specular_color }
         , shadow_region { other.shadow_region }
-        , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }
+        , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }, shadow_bias { other.shadow_bias }
         , shadow_camera { other.shadow_camera }, shadow_camera_change { other.shadow_camera_change }
     {}
 
@@ -645,7 +675,7 @@ public:
         ; inner_cone = other.inner_cone; outer_cone = other.outer_cone; att_const = other.att_const; att_linear = other.att_linear; att_quad = other.att_quad
         ; ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color
         ; shadow_region = other.shadow_region
-        ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled
+        ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled; shadow_bias = other.shadow_bias
         ; shadow_camera = other.shadow_camera; shadow_camera_change = other.shadow_camera_change
     ; return * this; }
 
@@ -746,6 +776,13 @@ public:
     void disable_shadow_mapping () { shadow_mapping_enabled = false; }
     bool is_shadow_mapping_enabled () const { return shadow_mapping_enabled; }
 
+    /* get/set_shadow_bias
+     *
+     * get/set the shadow bias
+     */
+    const double& get_shadow_bias () const { return shadow_bias; }
+    void set_shadow_bias ( const double _shadow_bias ) { shadow_bias = _shadow_bias; }
+
 
 
 private:
@@ -776,6 +813,9 @@ private:
     /* whether the light should be shadow mapped */
     bool shadow_mapping_enabled;
 
+    /* the current shadow bias */
+    double shadow_bias;
+
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
@@ -792,6 +832,8 @@ private:
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
         core::uniform& shadow_mapping_enabled_uni;
+        core::uniform& shadow_bias_uni;
+        core::uniform& shadow_max_dist_uni;
     };
 
     /* cached uniforms */
@@ -822,9 +864,9 @@ public:
 
     /* full constructor
      *
-     * shadow_map_2d/cube_width: an optional initial width for the shadow maps (defaults to 1024)
+     * shadow_map_width: an optional initial width for the shadow maps (defaults to 1024)
      */
-    light_system ( const unsigned shadow_map_2d_width = 1024, const unsigned shadow_map_cube_width = 1024 );
+    light_system ( const unsigned shadow_map_width = 1024 );
 
     /* deleted copy constructor */
     light_system ( const light_system& other ) = delete;
@@ -847,20 +889,20 @@ public:
     void add_dirlight ( const math::vec3& direction
                       , const math::vec3& ambient_color, const math::vec3& diffuse_color, const math::vec3& specular_color
                       , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
-                      , const bool enabled = true, const bool shadow_mapping_enabled = true )
-        { dirlights.emplace_back ( direction, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled ); }
+                      , const bool enabled = true, const bool shadow_mapping_enabled = true, const double shadow_bias = 0.0 )
+        { dirlights.emplace_back ( direction, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled, shadow_bias ); }
     void add_pointlight ( const math::vec3& position
                         , const double att_const, const double att_linear, const double att_quad
                         , const math::vec3& ambient_color, const math::vec3& diffuse_color, const math::vec3& specular_color
                         , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
-                        , const bool enabled = true, const bool shadow_mapping_enabled = true )
-        { pointlights.emplace_back ( position, att_const, att_linear, att_quad, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled ); }
+                        , const bool enabled = true, const bool shadow_mapping_enabled = true, const double shadow_bias = 0.0 )
+        { pointlights.emplace_back ( position, att_const, att_linear, att_quad, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled, shadow_bias ); }
     void add_spotlight ( const math::vec3& position, const math::vec3& direction
                        , const double inner_cone, const double outer_cone, const double att_const, const double att_linear, const double att_quad
                        , const math::vec3& ambient_color, const math::vec3& diffuse_color, const math::vec3& specular_color
                        , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
-                       , const bool enabled = true, const bool shadow_mapping_enabled = true )
-        { spotlights.emplace_back ( position, direction, inner_cone, outer_cone, att_const, att_linear, att_quad, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled ); }
+                       , const bool enabled = true, const bool shadow_mapping_enabled = true, const double shadow_bias = 0.0 )
+        { spotlights.emplace_back ( position, direction, inner_cone, outer_cone, att_const, att_linear, att_quad, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled, shadow_bias ); }
 
 
 
@@ -922,14 +964,12 @@ public:
 
 
 
-    /* bind_shadow_maps_2d/cube_fbo
+    /* bind_shadow_maps
      *
-     * reallocates the 2d texture array to size dirlights + pointlights * 6 + spotlights
-     * or reallocates the cubemap array to size pointlights * 6
-     * then binds the 2d/cubemap shadow map fbo
+     * reallocates the 2d texture arrays to size dirlights + pointlights * 6 + spotlights
+     * then binds the shadow map fbo and resizes the viewport
      */
-    void bind_shadow_maps_2d_fbo () const;
-    void bind_shadow_maps_cube_fbo () const;
+    void bind_shadow_maps_fbo () const;
 
 
 
@@ -940,16 +980,11 @@ private:
     std::vector<pointlight> pointlights;
     std::vector<spotlight> spotlights;
 
-    /* texture2d and cubemap array for shadow maps */
-    mutable core::texture2d_array shadow_maps_2d;
-    mutable core::cubemap_array shadow_maps_cube;
+    /* texture2d array for shadow maps */
+    mutable core::texture2d_array shadow_maps_depth;
 
-    /* framebuffers for shadow mapping */
-    core::fbo shadow_maps_2d_fbo;
-    core::fbo shadow_maps_cube_fbo;
-
-    /* array of matrices for pointlight rotation */
-    std::array<math::fmat4, 6> shadow_maps_cube_rotations;
+    /* framebuffer for shadow mapping */
+    core::fbo shadow_maps_fbo;
 
     /* struct for cached uniforms */
     struct cached_uniforms_struct
@@ -961,9 +996,7 @@ private:
         core::struct_array_uniform& pointlights_uni;
         core::uniform& spotlights_size_uni;
         core::struct_array_uniform& spotlights_uni;
-        core::uniform& shadow_maps_2d_uni;
-        core::uniform& shadow_maps_cube_uni;
-        core::uniform_array_uniform& shadow_maps_cube_rotations_uni;
+        core::uniform& shadow_maps_uni;
     };
 
     /* cached uniforms */

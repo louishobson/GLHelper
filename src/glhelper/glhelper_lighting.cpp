@@ -42,7 +42,7 @@ void glh::lighting::dirlight::apply () const
     if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to apply dirlight to uniform with out a complete uniform cache" };
 
     /* update the shadow camera if necessary */
-    if ( shadow_camera_change )
+    if ( shadow_mapping_enabled && shadow_camera_change )
     {
         shadow_camera.set_position ( shadow_region.centre );
         shadow_camera.set_direction ( direction, math::any_perpandicular ( direction ) );
@@ -58,6 +58,7 @@ void glh::lighting::dirlight::apply () const
     cached_uniforms->specular_color_uni.set_vector ( specular_color );
     cached_uniforms->enabled_uni.set_int ( enabled );
     cached_uniforms->shadow_mapping_enabled_uni.set_int ( shadow_mapping_enabled );
+    cached_uniforms->shadow_bias_uni.set_float ( shadow_bias );
 
     /* apply the shadow camera */
     shadow_camera.apply ();
@@ -82,9 +83,10 @@ void glh::lighting::dirlight::cache_uniforms ( core::struct_uniform& light_uni )
             light_uni.get_uniform ( "diffuse_color" ),
             light_uni.get_uniform ( "specular_color" ),
             light_uni.get_uniform ( "enabled" ),
-            light_uni.get_uniform ( "shadow_mapping_enabled" )
+            light_uni.get_uniform ( "shadow_mapping_enabled" ),
+            light_uni.get_uniform ( "shadow_bias" )
         } );
-        shadow_camera.cache_uniforms ( light_uni.get_uniform ( "shadow_view" ), light_uni.get_uniform ( "shadow_proj" ) );
+        shadow_camera.cache_uniforms ( light_uni.get_struct_uniform ( "shadow_camera" ) );
     }
 }
 
@@ -130,6 +132,8 @@ void glh::lighting::pointlight::apply () const
     cached_uniforms->specular_color_uni.set_vector ( specular_color );
     cached_uniforms->enabled_uni.set_int ( enabled );
     cached_uniforms->shadow_mapping_enabled_uni.set_int ( shadow_mapping_enabled );
+    cached_uniforms->shadow_bias_uni.set_float ( shadow_bias );
+    cached_uniforms->shadow_max_dist_uni.set_float ( shadow_camera.get_far () * std::sqrt ( 2 ) );
 
     /* apply the shadow camera */
     shadow_camera.apply ();
@@ -157,9 +161,11 @@ void glh::lighting::pointlight::cache_uniforms ( core::struct_uniform& light_uni
             light_uni.get_uniform ( "diffuse_color" ),
             light_uni.get_uniform ( "specular_color" ),
             light_uni.get_uniform ( "enabled" ),
-            light_uni.get_uniform ( "shadow_mapping_enabled" )
+            light_uni.get_uniform ( "shadow_mapping_enabled" ),
+            light_uni.get_uniform ( "shadow_bias" ),
+            light_uni.get_uniform ( "shadow_max_dist" )
         } );
-        shadow_camera.cache_uniforms ( light_uni.get_uniform ( "shadow_view" ), light_uni.get_uniform ( "shadow_proj" ) );
+        shadow_camera.cache_uniforms ( light_uni.get_struct_uniform ( "shadow_camera" ) );
     }
 }
 
@@ -210,6 +216,8 @@ void glh::lighting::spotlight::apply () const
     cached_uniforms->specular_color_uni.set_vector ( specular_color );
     cached_uniforms->enabled_uni.set_int ( enabled );
     cached_uniforms->shadow_mapping_enabled_uni.set_int ( shadow_mapping_enabled );
+    cached_uniforms->shadow_bias_uni.set_float ( shadow_bias );
+    cached_uniforms->shadow_max_dist_uni.set_float ( shadow_camera.get_far () * std::sqrt ( 2 ) );
 
     /* apply the shadow camera */
     shadow_camera.apply ();
@@ -240,9 +248,11 @@ void glh::lighting::spotlight::cache_uniforms ( core::struct_uniform& light_uni 
             light_uni.get_uniform ( "diffuse_color" ),
             light_uni.get_uniform ( "specular_color" ),
             light_uni.get_uniform ( "enabled" ),
-            light_uni.get_uniform ( "shadow_mapping_enabled" )
+            light_uni.get_uniform ( "shadow_mapping_enabled" ),
+            light_uni.get_uniform ( "shadow_bias" ),
+            light_uni.get_uniform ( "shadow_max_dist" )
         } );
-        shadow_camera.cache_uniforms ( light_uni.get_uniform ( "shadow_view" ), light_uni.get_uniform ( "shadow_proj" ) );
+        shadow_camera.cache_uniforms ( light_uni.get_struct_uniform ( "shadow_camera" ) );
     }
 }
 
@@ -251,39 +261,29 @@ void glh::lighting::spotlight::cache_uniforms ( core::struct_uniform& light_uni 
 /* LIGHT_SYSTEM IMPLEMENTATION */
 
 /* zero-parameter constructor */
-glh::lighting::light_system::light_system ( const unsigned shadow_map_2d_width, const unsigned shadow_map_cube_width )
+glh::lighting::light_system::light_system ( const unsigned shadow_map_width )
 {
     /* assert that neither shadow map width is 0 */
-    if ( shadow_map_2d_width == 0 || shadow_map_cube_width == 0 )
-        throw exception::texture_exception { "shadow map widths in light_system cannot be zero" };
+    if ( shadow_map_width == 0 )
+        throw exception::texture_exception { "shadow map width in light_system cannot be zero" };
 
-    /* set up the shadow map textures' storage */
-    shadow_maps_2d.tex_image ( shadow_map_2d_width, shadow_map_2d_width, 0, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT );
-    shadow_maps_cube.tex_image ( shadow_map_cube_width, shadow_map_cube_width, 0, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT );
+    /* set up the shadow depth map texture storage */
+    shadow_maps_depth.tex_image ( shadow_map_width, shadow_map_width, 0, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT );
 
-    /* set their border color to be 1.0 and to clamp to border */
-    shadow_maps_2d.set_border_color ( math::vec4 { 1.0 } ); shadow_maps_2d.set_s_wrap ( GL_CLAMP_TO_BORDER ); shadow_maps_2d.set_t_wrap ( GL_CLAMP_TO_BORDER );
-    shadow_maps_cube.set_border_color ( math::vec4 { 1.0 } ); shadow_maps_cube.set_s_wrap ( GL_CLAMP_TO_BORDER ); shadow_maps_cube.set_t_wrap ( GL_CLAMP_TO_BORDER );
-
+    /* set the border color to be 0.0 and to clamp to border */
+    shadow_maps_depth.set_border_color ( math::vec4 { 1.0 } ); shadow_maps_depth.set_s_wrap ( GL_CLAMP_TO_BORDER ); shadow_maps_depth.set_t_wrap ( GL_CLAMP_TO_BORDER );
+   
     /* set to use linear interpolation */
-    shadow_maps_2d.set_mag_filter ( GL_LINEAR ); shadow_maps_2d.set_min_filter ( GL_LINEAR );
-    shadow_maps_cube.set_mag_filter ( GL_LINEAR ); shadow_maps_cube.set_min_filter ( GL_LINEAR );
+    shadow_maps_depth.set_mag_filter ( GL_LINEAR ); shadow_maps_depth.set_min_filter ( GL_LINEAR );
 
-    /* add the shadow map textures as attachments to their fbo's */
-    shadow_maps_2d_fbo.attach_texture ( shadow_maps_2d, GL_DEPTH_ATTACHMENT );
-    shadow_maps_cube_fbo.attach_texture ( shadow_maps_cube, GL_DEPTH_ATTACHMENT );
+    /* set to use comparison */
+    shadow_maps_depth.set_compare_mode ( GL_COMPARE_REF_TO_TEXTURE ); shadow_maps_depth.set_compare_func ( GL_LEQUAL );
 
-    /* set the shadow map fbos to not have color attachments */
-    shadow_maps_2d_fbo.read_buffer ( GL_NONE ); shadow_maps_2d_fbo.draw_buffer ( GL_NONE );
-    shadow_maps_cube_fbo.read_buffer ( GL_NONE ); shadow_maps_cube_fbo.draw_buffer ( GL_NONE );
+    /* add the shadow map texture as attachment to the fbo */
+    shadow_maps_fbo.attach_texture ( shadow_maps_depth, GL_DEPTH_ATTACHMENT );
 
-    /* set up rotational matrices */
-    shadow_maps_cube_rotations.at ( 0 ) = math::look_along ( math::vec3 { 0.0 }, math::vec3 {  1.0,  0.0,  0.0 }, math::vec3 { 0.0, 1.0, 0.0 } );
-    shadow_maps_cube_rotations.at ( 1 ) = math::look_along ( math::vec3 { 0.0 }, math::vec3 { -1.0,  0.0,  0.0 }, math::vec3 { 0.0, 1.0, 0.0 } );
-    shadow_maps_cube_rotations.at ( 2 ) = math::look_along ( math::vec3 { 0.0 }, math::vec3 {  0.0,  1.0,  0.0 }, math::vec3 { 1.0, 0.0, 0.0 } );
-    shadow_maps_cube_rotations.at ( 3 ) = math::look_along ( math::vec3 { 0.0 }, math::vec3 {  0.0, -1.0,  0.0 }, math::vec3 { 1.0, 0.0, 0.0 } );
-    shadow_maps_cube_rotations.at ( 4 ) = math::look_along ( math::vec3 { 0.0 }, math::vec3 {  0.0,  0.0,  1.0 }, math::vec3 { 0.0, 1.0, 0.0 } );
-    shadow_maps_cube_rotations.at ( 5 ) = math::look_along ( math::vec3 { 0.0 }, math::vec3 {  0.0,  0.0, -1.0 }, math::vec3 { 0.0, 1.0, 0.0 } );
+    /* set the fbo to have no color attachment */
+    shadow_maps_fbo.read_buffer ( GL_NONE ); shadow_maps_fbo.draw_buffer ( GL_NONE );
 }
 
 /* apply
@@ -313,12 +313,8 @@ void glh::lighting::light_system::apply () const
     cached_uniforms->spotlights_size_uni.set_int ( spotlights.size () );
     for ( unsigned i = 0; i < spotlights.size (); ++i ) spotlights.at ( i ).apply ();
 
-    /* apply shadow maps */
-    cached_uniforms->shadow_maps_2d_uni.set_int ( shadow_maps_2d.bind_loop () );
-    cached_uniforms->shadow_maps_cube_uni.set_int ( shadow_maps_cube.bind_loop () );
-
-    /* apply rotational matrices */
-    for ( unsigned i = 0; i < 6; ++i ) cached_uniforms->shadow_maps_cube_rotations_uni.at ( i ).set_matrix ( shadow_maps_cube_rotations.at ( i ) );
+    /* apply shadow map */
+    cached_uniforms->shadow_maps_uni.set_int ( shadow_maps_depth.bind_loop () );
 }
 
 /* cache_uniforms
@@ -341,9 +337,7 @@ void glh::lighting::light_system::cache_uniforms ( core::struct_uniform& light_s
             light_system_uni.get_struct_array_uniform ( "pointlights" ),
             light_system_uni.get_uniform ( "spotlights_size" ),
             light_system_uni.get_struct_array_uniform ( "spotlights" ),
-            light_system_uni.get_uniform ( "shadow_maps_2d" ),
-            light_system_uni.get_uniform ( "shadow_maps_cube" ),
-            light_system_uni.get_uniform_array_uniform ( "shadow_maps_cube_rotations" )
+            light_system_uni.get_uniform ( "shadow_maps" )
         } );
     }
 
@@ -363,41 +357,26 @@ void glh::lighting::light_system::recache_uniforms ()
     cache_uniforms ( cached_uniforms->light_system_uni );
 }
 
-/* bind_shadow_maps_2d/cube_fbo
+/* bind_shadow_maps
  *
- * reallocates the 2d texture array to size dirlights + pointlights * 6 + spotlights
- * or reallocates the cubemap array to size pointlights * 6
- * then binds the 2d/cubemap shadow map fbo
- * 
- * width: the width of the shadow maps (or 0 for the same as previously)
+ * reallocates the 2d texture arrays to size dirlights + pointlights * 6 + spotlights
+ * then binds the shadow map fbo and resizes the viewport
  */
-void glh::lighting::light_system::bind_shadow_maps_2d_fbo () const
+void glh::lighting::light_system::bind_shadow_maps_fbo () const
 {
-    /* resize the texture array if necessary
+    /* resize the texture arrays if necessary
      * ensure that at least one light is allocated, so that fbo is complete
      */
     const unsigned tex_depth = std::max<unsigned> ( dirlights.size () + pointlights.size () * 6 + spotlights.size (), 1 );
-    if ( tex_depth != shadow_maps_2d.get_depth () )
-        shadow_maps_2d.tex_image ( shadow_maps_2d.get_width (), shadow_maps_2d.get_height (), tex_depth, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT ); 
+    if ( tex_depth != shadow_maps_depth.get_depth () )
+        shadow_maps_depth.tex_image ( shadow_maps_depth.get_width (), shadow_maps_depth.get_height (), tex_depth, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT ); 
     
     /* check the fbo is complete */
-    if ( !shadow_maps_2d_fbo.is_complete () ) throw exception::texture_exception { "2d shadow map fbo is not complete" };
+    if ( !shadow_maps_fbo.is_complete () ) throw exception::texture_exception { "2d shadow map fbo is not complete" };
+
+    /* resize the viewport */
+    glh::core::renderer::viewport ( 0, 0, shadow_maps_depth.get_width (), shadow_maps_depth.get_height () );
 
     /* bind the fbo */
-    shadow_maps_2d_fbo.bind ();
-}
-void glh::lighting::light_system::bind_shadow_maps_cube_fbo () const
-{
-    /* resize the texture array if necessary
-     * ensure that at least one light is allocated, so that fbo is complete
-     */
-    const unsigned tex_depth = std::max<unsigned> ( pointlights.size (), 1 ) * 6;
-    if ( tex_depth != shadow_maps_cube.get_depth () )
-        shadow_maps_cube.tex_image ( shadow_maps_2d.get_width (), shadow_maps_2d.get_height (), tex_depth, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT ); 
-    
-    /* check the fbo is complete */
-    if ( !shadow_maps_cube_fbo.is_complete () ) throw exception::texture_exception { "cubemap shadow map fbo is not complete" };
-
-    /* bind the fbo */
-    shadow_maps_cube_fbo.bind ();
+    shadow_maps_fbo.bind ();
 }
