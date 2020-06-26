@@ -254,10 +254,10 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
 
     /* get the base color */
     if ( aimaterial.Get ( base_color, __bgtype, __bgidx, temp_color ) == aiReturn_SUCCESS )
-    _texture_stack.base_color = cast_vector ( temp_color ); else _texture_stack.base_color = math::fvec3 { 0.0 };
+    _texture_stack.base_color = math::fvec4 { cast_vector ( temp_color ) }; else _texture_stack.base_color = math::fvec4 { 0.0 };
 
     /* apply sRGBA transformation to base color */
-    if ( use_srgb ) _texture_stack.base_color = math::pow ( _texture_stack.base_color, math::fvec3 { 2.2 } );
+    if ( use_srgb ) _texture_stack.base_color = math::pow ( _texture_stack.base_color, math::fvec4 { 2.2 } );
 
 
 
@@ -280,9 +280,12 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
         /* set the blend attributes */
         if ( aimaterial.Get ( AI_MATKEY_TEXOP ( aitexturetype, i ), temp_int ) == aiReturn_SUCCESS )
         _texture_stack.levels.at ( i ).blend_operation = temp_int; else
-        _texture_stack.levels.at ( i ).blend_operation = ( _texture_stack.base_color == math::fvec3 { 0.0 } && i == 0 ? 1 : 0 );
+        _texture_stack.levels.at ( i ).blend_operation = ( i == 0 && _texture_stack.base_color == math::fvec4 { 0.0 } ? 1 : 0 );
         if ( aimaterial.Get ( AI_MATKEY_TEXBLEND ( aitexturetype, i ), temp_float ) == aiReturn_SUCCESS ) 
         _texture_stack.levels.at ( i ).blend_strength = temp_float; else _texture_stack.levels.at ( i ).blend_strength = 1.0;
+
+        /* if blend operation of first level is not addition, set the opacity of the base color to 1.0 */
+        if ( i == 0 && _texture_stack.levels.at ( i ).blend_operation != 1 ) _texture_stack.base_color.at ( 3 ) = 1.0;
 
         /* is i == 0, set wrapping modes, else assert that the wrapping modes are consistent */
         if ( aimaterial.Get ( AI_MATKEY_MAPPINGMODE_U ( aitexturetype, i ), temp_int ) != aiReturn_SUCCESS ) temp_int = aiTextureMapMode_Wrap;

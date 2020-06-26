@@ -78,7 +78,7 @@
  * 
  * struct texture_stack_struct
  * {
- *     vec3 base_color;
+ *     vec4 base_color;
  *     int stack_size;
  *     texture_stack_level_struct levels [];
  *     sampler2DArray sampler;
@@ -343,7 +343,7 @@ struct glh::model::texture_stack_level
  struct glh::model::texture_stack
  {
     /* the base color */
-    math::fvec3 base_color;
+    math::fvec4 base_color;
 
     /* the size of the stack */
     unsigned stack_size;
