@@ -405,7 +405,7 @@ template<unsigned M, class T> inline glh::math::matrix<M, M, T> glh::math::ident
  * promote/demote a matrix' size
  * a size promotion leaves the new rows/columns as like in an identity matrix
  */
-template<unsigned M, unsigned _M, class T> inline glh::math::matrix<_M, _M, T> glh::math::resize ( const matrix<M, M, T>& trans )
+template<unsigned _M, unsigned M, class T> inline glh::math::matrix<_M, _M, T> glh::math::resize ( const matrix<M, M, T>& trans )
 {
     /* result matrix */
     matrix<_M, _M, T> result { identity<_M> () };
