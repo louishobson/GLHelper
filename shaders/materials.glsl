@@ -29,7 +29,7 @@ struct texture_stack_level_struct
 /* structure for a texture stack */
 struct texture_stack_struct
 {
-    vec3 base_color;
+    vec4 base_color;
     int stack_size;
     texture_stack_level_struct levels [ MAX_TEX_STACK_SIZE ];
     sampler2DArray textures;
@@ -58,16 +58,15 @@ struct material_struct
  *
  * evaluate multiple stacked textures
  *
- * material: the material the stack if part of
  * stack: the stack to evaluate
  * texcoords: array of texture coords for the fragment
  *
  * return: the overall color of the fragment of the stack
  */
-vec4 evaluate_stack ( const material_struct material, const texture_stack_struct stack, const vec3 texcoords [ MAX_UV_CHANNELS ] )
+vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ MAX_UV_CHANNELS ] )
 {
-    /* get base color */
-    vec4 stack_color = vec4 ( stack.base_color, material.opacity );
+    /* set stack color color to base color */
+    vec4 stack_color = stack.base_color;
 
     /* loop through the stack */
     for ( int i = 0; i < stack.stack_size; ++i )
@@ -77,12 +76,16 @@ vec4 evaluate_stack ( const material_struct material, const texture_stack_struct
         /* multiply by blend strength */
         level_color *= stack.levels [ i ].blend_strength;
         /* add to the stack */
-        if ( stack.levels [ i ].blend_operation == 0 ) stack_color = stack_color * level_color; else
-        if ( stack.levels [ i ].blend_operation == 1 ) stack_color = stack_color + level_color; else
-        if ( stack.levels [ i ].blend_operation == 2 ) stack_color = stack_color - level_color; else
-        if ( stack.levels [ i ].blend_operation == 3 ) stack_color = stack_color / level_color; else
-        if ( stack.levels [ i ].blend_operation == 4 ) stack_color = ( stack_color + level_color ) - ( stack_color * level_color ); else
-        if ( stack.levels [ i ].blend_operation == 5 ) stack_color = stack_color + ( level_color - 0.5 );   
+        switch ( stack.levels [ i ].blend_operation )
+        {
+            case 0: stack_color = stack_color * level_color; break;
+            case 1: stack_color = stack_color + level_color; break;
+            case 2: stack_color = stack_color - level_color; break;
+            case 3: stack_color = stack_color / level_color; break;
+            case 4: stack_color = ( stack_color + level_color ) - ( stack_color * level_color ); break;
+            case 5: stack_color = stack_color + ( level_color - 0.5 ); break;
+            default: stack_color = stack_color * level_color; break;
+        }
     }
 
     /* return the stack color */
