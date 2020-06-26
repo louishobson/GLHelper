@@ -63,7 +63,7 @@ glh::model::model::model ( const std::string& _directory, const std::string& _en
  * transform: the overall model transformation to apply (identity by default)
  * flags: rendering flags (none by default)
  */
-void glh::model::model::render (core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform, const unsigned flags )
+void glh::model::model::render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform, const unsigned flags )
 {
     /* reload the cache of uniforms  */
     cache_uniforms ( material_uni, model_uni );
@@ -128,6 +128,7 @@ void glh::model::model::cache_material_uniforms ( core::struct_uniform& material
             material_uni.get_uniform ( "shininess" ),
             material_uni.get_uniform ( "shininess_strength" ),
             material_uni.get_uniform ( "opacity" ),
+            material_uni.get_uniform ( "definitely_opaque" )
         } );
     }
 }
@@ -264,7 +265,6 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
     /* get the stack size */
     _texture_stack.stack_size = aimaterial.GetTextureCount ( aitexturetype );
     _texture_stack.stack_width = 0; _texture_stack.stack_height = 0;
-    _texture_stack.levels.resize ( _texture_stack.stack_size );
 
     /* set has_alpha to false */
     _texture_stack.stack_has_alpha = false;
@@ -300,8 +300,8 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
         _texture_stack.levels.at ( i ).uvwsrc = temp_int; else _texture_stack.levels.at ( i ).uvwsrc = 0;
 
         /* check that the uv channel is actually possible */
-        if ( _texture_stack.levels.at ( i ).uvwsrc >= GLH_MODEL_MAX_UV_CHANNELS )
-            throw exception::model_exception { "level of texture stack requires UV channel greater than the maximum (which is" + std::to_string ( GLH_MODEL_MAX_UV_CHANNELS ) + ")" };
+        if ( _texture_stack.levels.at ( i ).uvwsrc >= GLH_MODEL_MAX_TEXTURE_STACK_SIZE )
+            throw exception::model_exception { "level of texture stack requires UV channel greater than the maximum (which is" + std::to_string ( GLH_MODEL_MAX_TEXTURE_STACK_SIZE ) + ")" };
 
         /* set the image index by importing the image */
         aimaterial.GetTexture ( aitexturetype, i, &temp_string );
@@ -399,9 +399,8 @@ bool glh::model::model::is_definitely_opaque ( const mesh& _mesh )
     /* if material is not definitely opaque, return */
     if ( !_mesh.properties->definitely_opaque ) return false;
 
-    /* loop through all vertices and color sets and check that alpha components are all 1 */
-    for ( unsigned i = 0; i < _mesh.vertices.size (); ++i ) for ( unsigned j = 0; j < _mesh.vertices.at ( i ).colorsets.size (); ++j )
-    if ( _mesh.vertices.at ( i ).colorsets.at ( i ).at ( 0 ) < 1.0 ) return false;
+    /* loop through all vertices and vertex colors and check that alpha components are all 1 */
+    for ( unsigned i = 0; i < _mesh.vertices.size (); ++i ) if ( _mesh.vertices.at ( i ).vcolor.at ( 3 ) < 1.0 ) return false;
 
     /* otherwise the mesh is definitely opaque */
     return true; 
@@ -420,13 +419,11 @@ bool glh::model::model::is_definitely_opaque ( const mesh& _mesh )
  */
 glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimesh )
 {
-    /* set the number of color sets */
-    _mesh.num_color_sets = std::min<unsigned> ( aimesh.GetNumColorChannels (), GLH_MODEL_MAX_COLOR_SETS );
-
     /* set the number of uv channels */
-    _mesh.num_uv_channels = std::min<unsigned> ( aimesh.GetNumUVChannels (), GLH_MODEL_MAX_UV_CHANNELS );
+    _mesh.num_uv_channels = std::min<unsigned> ( aimesh.GetNumUVChannels (), GLH_MODEL_MAX_TEXTURE_STACK_SIZE );
 
-
+    /* true if has vertex colors */
+    const bool has_vcolors = aimesh.GetNumColorChannels ();
 
     /* add vertices, normals and texcoords */
     _mesh.num_vertices = aimesh.mNumVertices;
@@ -437,27 +434,21 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
         _mesh.vertices.at ( i ).position = cast_vector ( aimesh.mVertices [ i ] );
         _mesh.vertices.at ( i ).normal = cast_vector ( aimesh.mNormals [ i ] );
 
-        /* set color sets */
-        for ( unsigned j = 0; j < _mesh.num_color_sets; ++j )
-            _mesh.vertices.at ( i ).colorsets.at ( j ) = cast_vector ( aimesh.mColors [ j ][ i ] );
+        /* set vertex colors */
+        _mesh.vertices.at ( i ).vcolor = ( has_vcolors ? cast_vector ( aimesh.mColors [ 0 ][ i ] ) : math::fvec4 ( 1.0 ) );
 
         /* apply gamma correction */
-        if ( model_import_flags & import_flags::GLH_VERTEX_SRGBA ) for ( unsigned j = 0; j < _mesh.num_color_sets; ++j )
-            _mesh.vertices.at ( i ).colorsets.at ( j ) = 
-            math::fvec4 { math::pow ( math::fvec3 { _mesh.vertices.at ( i ).colorsets.at ( j ) }, math::fvec3 { 2.2 } ), _mesh.vertices.at ( i ).colorsets.at ( j ).at ( 3 ) };
+        if ( model_import_flags & import_flags::GLH_VERTEX_SRGBA ) _mesh.vertices.at ( i ).vcolor = 
+            math::fvec4 { math::pow ( math::fvec3 { _mesh.vertices.at ( i ).vcolor }, math::fvec3 { 2.2 } ), _mesh.vertices.at ( i ).vcolor.at ( 3 ) };
 
         /* set uv channel coords */
         for ( unsigned j = 0; j < _mesh.num_uv_channels; ++j )
             _mesh.vertices.at ( i ).texcoords.at ( j ) = cast_vector ( aimesh.mTextureCoords [ j ][ i ] );
     }
 
-
-
     /* add material reference */
     _mesh.properties_index = aimesh.mMaterialIndex;
     _mesh.properties = &materials.at ( _mesh.properties_index );
-
-
 
     /* add faces */
     _mesh.num_faces = aimesh.mNumFaces;
@@ -473,12 +464,11 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
     _mesh.index_data.buffer_data ( _mesh.faces.begin (), _mesh.faces.end () );
 
     /* configure the vao */
-    _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 0 );
+    _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 0 * sizeof ( GLfloat ));
     _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 3 * sizeof ( GLfloat ) );
-    for ( unsigned i = 0; i < _mesh.num_color_sets; ++i )
-        _mesh.array_object.set_vertex_attrib ( 2 + i, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 6 + ( i * 4 ) ) * sizeof ( GLfloat ) );
+    _mesh.array_object.set_vertex_attrib ( 2, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 6 * sizeof ( GLfloat ) );
     for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
-        _mesh.array_object.set_vertex_attrib ( 2 + GLH_MODEL_MAX_COLOR_SETS + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 6 + ( GLH_MODEL_MAX_COLOR_SETS * 4 ) + ( i * 3 ) ) * sizeof ( GLfloat ) );
+        _mesh.array_object.set_vertex_attrib ( 3 + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 10 + i * 3 ) * sizeof ( GLfloat ) );
     _mesh.array_object.bind_ebo ( _mesh.index_data );
 
 
@@ -840,6 +830,9 @@ void glh::model::model::apply_material ( const material& _material ) const
 
     /* set opacity */
     cached_material_uniforms->opacity_uni.set_float ( _material.opacity );
+
+    /* set definitely_opaque */
+    cached_material_uniforms->definitely_opaque_uni.set_int ( _material.definitely_opaque );
 }
 
 /* apply_texture_stack

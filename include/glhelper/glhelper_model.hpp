@@ -62,6 +62,7 @@
  *     float shininess_strength;
  * 
  *     float opacity;
+ *     bool definitely_opaque;
  * };
  * 
  * this structure is for a material
@@ -71,6 +72,7 @@
  * shininess: the shininess value for the material
  * shininess_strength: a multiple for the specular contribution for a pixel's color
  * opacity: the opacity of the material (1 = opaque, 0 = transparent)
+ * definitely_opaque: true if the material is definitely opaque
  * 
  * 
  * 
@@ -115,10 +117,10 @@
  * 
  * 0  : vec3    : vertices
  * 1  : vec3    : normals
- * 2  : vec4[x] : vertex colors
- * 2+x: vec3[y] : UV channels of texture coordinates
+ * 2  : vec4    : vertex colors
+ * 2+x: vec3[x] : UV channels of texture coordinates
  * 
- * the number of vertex colors and UV channels is defined by GLH_MODEL_MAX_COLOR_SETS and GLH_MODEL_MAX_UV_CHANNELS respectively
+ * the number of UV channels is defined by GLH_MODEL_MAX_TEXTURE_STACK_SIZE
  * 
  * 
  * 
@@ -138,22 +140,13 @@
 
 /* MACROS */
 
-/* GLH_MODEL_MAX_COLOR_SETS
+/* GLH_MODEL_MAX_TEXTURE_STACK_SIZE
  *
- * the maximum number of color sets a model can contain
- * defaults to 1
+ * the maximum size of a texture stack
+ * defaults to 2
  */
-#ifndef GLH_MODEL_MAX_COLOR_SETS
-    #define GLH_MODEL_MAX_COLOR_SETS 1
-#endif
-
-/* GLH_MODEL_MAX_UV_CHANNELS
- *
- * the maximum number of uv channels a model can contain
- * defaults to 4
- */
-#ifndef GLH_MODEL_MAX_UV_CHANNELS
-    #define GLH_MODEL_MAX_UV_CHANNELS 4
+#ifndef GLH_MODEL_MAX_TEXTURE_STACK_SIZE
+    #define GLH_MODEL_MAX_TEXTURE_STACK_SIZE 2
 #endif
 
 
@@ -302,11 +295,11 @@ struct glh::model::vertex
     /* normal vector */
     math::fvec3 normal;
 
-    /* multiple color sets */
-    std::array<math::fvec4, GLH_MODEL_MAX_COLOR_SETS> colorsets;
+    /* vertex color */
+    math::fvec4 vcolor;
 
     /* multiple uv channels of texture coords */
-    std::array<math::fvec3, GLH_MODEL_MAX_UV_CHANNELS> texcoords;
+    std::array<math::fvec3, GLH_MODEL_MAX_TEXTURE_STACK_SIZE> texcoords;
 };
 
 
@@ -360,7 +353,7 @@ struct glh::model::texture_stack_level
     int wrapping_v;
 
     /* array of texture references */
-    std::vector<texture_stack_level> levels;
+    std::array<texture_stack_level, GLH_MODEL_MAX_TEXTURE_STACK_SIZE> levels;
  
     /* 2d texture array representing the stack */
     core::texture2d_array textures;
@@ -440,9 +433,6 @@ struct glh::model::face
  */
 struct glh::model::mesh
 {
-    /* the number of color sets the mesh contains for each vertex */
-    unsigned num_color_sets;
-
     /* the number of uv channels the mesh consists of for each vertex */
     unsigned num_uv_channels;
 
@@ -762,6 +752,7 @@ private:
         core::uniform& shininess_uni;
         core::uniform& shininess_strength_uni;
         core::uniform& opacity_uni;
+        core::uniform& definitely_opaque_uni;
     };
 
     /* struct for cached model matrix uniform */
