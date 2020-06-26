@@ -274,6 +274,28 @@ void glh::core::texture_base::set_border_color ( const math::fvec4& color )
     glTexParameterfv ( opengl_bind_target, GL_TEXTURE_BORDER_COLOR, color.internal_ptr () );
 }
 
+/* set_compare_mode
+ *
+ * set the compare mode for the texture (GL_TEXTURE_COMPARE_MODE)
+ */
+void glh::core::texture_base::set_compare_mode ( const GLenum opt )
+{
+    /* bind, set parameter */
+    bind ();
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_COMPARE_MODE, opt );
+}
+
+/* set_compare_func
+ *
+ * set the comparison function for the texture
+ */
+void glh::core::texture_base::set_compare_func ( const GLenum opt )
+{
+    /* bind, set parameter */
+    bind ();
+    glTexParameteri ( opengl_bind_target, GL_TEXTURE_COMPARE_FUNC, opt );
+}
+
 /* generate_mipmap
  *
  * generate texture mipmap

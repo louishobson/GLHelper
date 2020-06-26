@@ -341,6 +341,18 @@ public:
      */
     void set_border_color ( const math::fvec4& color );
 
+    /* set_compare_mode
+     *
+     * set the compare mode for the texture (GL_TEXTURE_COMPARE_MODE)
+     */
+    void set_compare_mode ( const GLenum opt );
+
+    /* set_compare_func
+     *
+     * set the comparison function for the texture
+     */
+    void set_compare_func ( const GLenum opt );
+
     /* generate_mipmap
      *
      * generate texture mipmap
