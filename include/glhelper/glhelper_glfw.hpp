@@ -103,9 +103,9 @@ public:
      * 
      * title: the title of the window
      * width/height: the width and height of the window
-     * msaa_samples: the number of MSAA samples (defaults to 1)
+     * msaa_samples: the number of MSAA samples (defaults to 0)
      */
-    window ( const std::string& title, const unsigned width = 600, const unsigned height  = 400, const unsigned msaa_samples = 1 );
+    window ( const std::string& title, const unsigned width = 600, const unsigned height  = 400, const unsigned msaa_samples = 0 );
 
     /* zero-parameter constructor
      *
@@ -375,7 +375,7 @@ public:
 
     /* bind_framebuffer 
      *
-     * bind the window's framebuffer
+     * bind the window's framebuffer as well as resize the viewport
      * 
      * returns true if a change in binding occured
      */
