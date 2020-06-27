@@ -279,8 +279,14 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
     {
         /* set the blend attributes */
         if ( aimaterial.Get ( AI_MATKEY_TEXOP ( aitexturetype, i ), temp_int ) == aiReturn_SUCCESS )
-        _texture_stack.levels.at ( i ).blend_operation = temp_int; else
-        _texture_stack.levels.at ( i ).blend_operation = ( i == 0 && _texture_stack.base_color == math::fvec4 { 0.0 } ? 1 : 0 );
+        _texture_stack.levels.at ( i ).blend_operation = temp_int; else _texture_stack.levels.at ( i ).blend_operation = 0;
+        if ( i == 0 && ( _texture_stack.base_color == math::fvec4 { 0.0 } || _texture_stack.base_color == math::fvec4 { 1.0 } ) && ( _texture_stack.levels.at ( 0 ).blend_operation <= 1 ) )
+            { _texture_stack.base_color = math::fvec4 { 1.0 }; _texture_stack.levels.at ( 0 ).blend_operation = 0; }
+        if ( i == 1 && ( _texture_stack.base_color == math::fvec4 { 0.0 } || _texture_stack.base_color == math::fvec4 { 1.0 } ) && _texture_stack.levels.at ( 1 ).blend_operation <= 1 && _texture_stack.levels.at ( 1 ).blend_operation != _texture_stack.levels.at ( 0 ).blend_operation )
+        {
+            if ( _texture_stack.levels.at ( 1 ).blend_operation == 0 ) { _texture_stack.base_color = math::fvec4 { 1.0 }; _texture_stack.levels.at ( 0 ).blend_operation = 0; }
+            else { _texture_stack.base_color = math::fvec4 { 0.0 }; _texture_stack.levels.at ( 0 ).blend_operation = 1; }
+        }
         if ( aimaterial.Get ( AI_MATKEY_TEXBLEND ( aitexturetype, i ), temp_float ) == aiReturn_SUCCESS ) 
         _texture_stack.levels.at ( i ).blend_strength = temp_float; else _texture_stack.levels.at ( i ).blend_strength = 1.0;
 
