@@ -1252,6 +1252,9 @@ private:
     object_pointer<gshader> geometry_shader;
     object_pointer<fshader> fragment_shader;
 
+    /* true if has a geometry shader */
+    const bool has_geometry_shader;
+
     /* uniform_locations
      * uniform_indices
      * uniform_block_indices

@@ -525,6 +525,7 @@ bool glh::core::uniform::is_program_in_use () const
 glh::core::program::program ( vshader& vs, gshader& gs, fshader& fs )
     : object { minor_object_type::GLH_PROGRAM_TYPE }
     , vertex_shader { vs }, geometry_shader { gs }, fragment_shader { fs }
+    , has_geometry_shader { true }
     , uniforms { "", * this }, struct_uniforms { "", * this }
     , uniform_array_uniforms { "", * this }, struct_array_uniforms { "", * this }
     , uniform_2d_array_uniforms { "", * this }, struct_2d_array_uniforms { "", * this }
@@ -542,6 +543,7 @@ glh::core::program::program ( vshader& vs, gshader& gs, fshader& fs )
 glh::core::program::program ( vshader& vs, fshader& fs )
     : object { minor_object_type::GLH_PROGRAM_TYPE }
     , vertex_shader { vs }, fragment_shader { fs }
+    , has_geometry_shader { false }
     , uniforms { "", * this }, struct_uniforms { "", * this }
     , uniform_array_uniforms { "", * this }, struct_array_uniforms { "", * this }
     , uniform_2d_array_uniforms { "", * this }, struct_2d_array_uniforms { "", * this }
@@ -560,12 +562,12 @@ glh::core::program::program ( vshader& vs, fshader& fs )
 void glh::core::program::link ()
 {
     /* check that the shaders are valid and compiled */
-    if ( !vertex_shader->is_compiled () || ( geometry_shader && !geometry_shader->is_compiled () ) || !fragment_shader->is_compiled () )
+    if ( !vertex_shader->is_compiled () || ( has_geometry_shader && !geometry_shader->is_compiled () ) || !fragment_shader->is_compiled () )
         throw exception::shader_exception { "cannot link program with uncompiled shaders" };
 
     /* attach shaders */
     glAttachShader ( id, vertex_shader->internal_id () );
-    if ( geometry_shader ) glAttachShader ( id, geometry_shader->internal_id () );
+    if ( has_geometry_shader ) glAttachShader ( id, geometry_shader->internal_id () );
     glAttachShader ( id, fragment_shader->internal_id () );
 
     /* link the program */
@@ -597,7 +599,7 @@ void glh::core::program::compile_and_link ()
 {
     /* compile each shader */
     vertex_shader->compile ();
-    if ( geometry_shader ) geometry_shader->compile ();
+    if ( has_geometry_shader ) geometry_shader->compile ();
     fragment_shader->compile ();
 
     /* now link the program */
