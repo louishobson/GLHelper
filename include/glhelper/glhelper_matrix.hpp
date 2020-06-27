@@ -915,12 +915,12 @@ template<unsigned M, unsigned N, class T> inline std::ostream& operator<< ( std:
     /* stream intro into ostream */
     os << "matrix<" << M << "," << N << ">{";
     /* loop for each value */
-    for ( unsigned i = 0; i < M * N; ++i )
+    for ( unsigned i = 0; i < M; ++i ) for ( unsigned j = 0; j < N; ++j )
     {
         /* stream the value */
-        os << _matrix.at ( i );
-        /* if not end of stream, stream comma */
-        if ( i + 1 < M * N ) os << ",";
+        os << _matrix.at ( i, j );
+        /* if not end of stream, output comma */
+        if ( i * N + j < M * N ) os << ",";
     }
     /* stream closing } */
     os << "}";
