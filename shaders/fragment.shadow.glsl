@@ -27,9 +27,6 @@ uniform material_struct material;
 /* main */
 void main ()
 {
-    /* sample diffuse stack, and discard if at all transparent */
-    if ( !material.definitely_opaque && material.opacity >= 1.0 && evaluate_stack_transparency ( material.diffuse_stack, gs_out.texcoords, 0.99 ) ) discard;
-
     /* set the depth */
-    gl_FragDepth = gs_out.depth;
+    gl_FragDepth = ( material.definitely_opaque || ( material.opacity >= 1.0 && !evaluate_stack_transparency ( material.diffuse_stack, gs_out.texcoords, 0.99 ) ) ? gs_out.depth : 2.0 );
 }

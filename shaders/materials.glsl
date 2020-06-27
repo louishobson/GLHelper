@@ -69,22 +69,19 @@ vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ M
     /* loop through the stack */
     for ( int i = 0; i < stack.stack_size; ++i )
     {
-        /* get the level color from the texture */
-        vec4 level_color = texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ].xy, i ) );
-
-        /* multiply by blend strength */
-        level_color *= stack.levels [ i ].blend_strength;
+        /* get the level color from the texture multiplied by the stength */
+        const vec4 level_color = texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ].xy, i ) ) * stack.levels [ i ].blend_strength;
 
         /* add to the stack through the appropriate operation */
         switch ( stack.levels [ i ].blend_operation )
         {
-            case 0: stack_color = stack_color * level_color; break;
-            case 1: stack_color = stack_color + level_color; break;
-            case 2: stack_color = stack_color - level_color; break;
-            case 3: stack_color = stack_color / level_color; break;
+            case 0: stack_color *= level_color; break;
+            case 1: stack_color += level_color; break;
+            case 2: stack_color -= level_color; break;
+            case 3: stack_color /= level_color; break;
             case 4: stack_color = ( stack_color + level_color ) - ( stack_color * level_color ); break;
             case 5: stack_color = stack_color + ( level_color - 0.5 ); break;
-            default: stack_color = stack_color * level_color; break;
+            default: stack_color *= level_color; break;
         }
     }
 
@@ -105,12 +102,8 @@ vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ M
  */
 bool evaluate_stack_transparency ( const texture_stack_struct stack, const vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ], const float transparency_cutoff )
 {
-    /* if base transparency < 1.0, return true */
-    if ( stack.base_color.a < transparency_cutoff ) return true;
-
-    /* if has no textures, return false */
-    if ( stack.stack_size == 0 ) return false;
-
-    /* sample first texture, and return true if alpha is less than 1.0 */
-    return ( texture ( stack.textures, vec3 ( texcoords [ stack.levels [ 0 ].uvwsrc ].xy, 0 ) ).a < transparency_cutoff );
+    /* if base transparency < 1.0, return true
+     * if has no textures, return false
+     * if has texture, return true if alpha is less than 1.0 */
+    return ( stack.base_color.a < transparency_cutoff || ( stack.stack_size != 0 && texture ( stack.textures, vec3 ( texcoords [ stack.levels [ 0 ].uvwsrc ].xy, 0 ) ).a < transparency_cutoff ) );
 }
