@@ -58,9 +58,10 @@
  *     bool shadow_mapping_enabled;
  * 
  *     camera_struct shadow_camera;
+ *     mat4 shadow_cube_matrices [ 6 ];
  * 
  *     float shadow_bias;
- *     float shadow_max_dist;
+ *     float shadow_depth_range_mult;
  * };
  * 
  * struct light_struct
@@ -85,7 +86,7 @@
  *     camera_struct shadow_camera;
  * 
  *     float shadow_bias;
- *     float shadow_max_dist;
+ *     float shadow_depth_range_mult;
  * };
  * 
  * these GLSL structures contain attributes for different light types
@@ -100,8 +101,9 @@
  * enabled: whether the light is 'turned on' (all types)
  * shadow_mapping_enabled: whether the light should be shadow mapped (all types)
  * shadow_camera: the camera used for shadow mapping (all types)
+ * shadow_cube_matrices: six pre-combined matrices for projecting the six sides of the cubemap (pointlight only)
  * shadow_bias: the bias to apply when sampling from the shadow map
- * shadow_max_dist: the side length of the perspective frustum (only point and spot lights)
+ * shadow_depth_range_mult: reciprocal the side length of the perspective frustum (only point and spot lights)
  * 
  * the first two structures could potentially be completely ommited and just spotlight structs used, since the members of the other classes
  * are subsets of the members of the spotlight class. In this case, unused members will just not be set
@@ -128,7 +130,8 @@
  *     int spotlights_size;
  *     light_struct spotlights_size [ MAX_NUM_LIGHTS ];
  * 
- *     sampler2DArrayShadow shadow_maps; 
+ *     sampler2DArrayShadow shadow_maps_2d; 
+ *     samplerCubeArrayShadow shadow_maps_cube;
  * };
  * 
  * this structure holds multiple arrays of lights
@@ -137,7 +140,7 @@
  * dirlights(_size): array of directional lights and its size
  * pointlights(_size): array of collection of point lights and its size
  * spotlights(_size): collection of spotlights and its size
- * shadow_maps: sampler for shadow maps
+ * shadow_maps_2d/cube: samplers for 2d and cube shadow maps
  * 
  */
 
@@ -605,8 +608,9 @@ private:
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
         core::uniform& shadow_mapping_enabled_uni;
+        core::uniform_array_uniform& shadow_cube_matrices_uni;
         core::uniform& shadow_bias_uni;
-        core::uniform& shadow_max_dist_uni;
+        core::uniform& shadow_depth_range_mult_uni;
     };
 
     /* cached uniforms */
@@ -833,7 +837,7 @@ private:
         core::uniform& enabled_uni;
         core::uniform& shadow_mapping_enabled_uni;
         core::uniform& shadow_bias_uni;
-        core::uniform& shadow_max_dist_uni;
+        core::uniform& shadow_depth_range_mult_uni;
     };
 
     /* cached uniforms */
@@ -866,7 +870,7 @@ public:
      *
      * shadow_map_width: an optional initial width for the shadow maps (defaults to 1024)
      */
-    light_system ( const unsigned shadow_map_width = 1024 );
+    light_system ( const unsigned _shadow_map_width = 1024 );
 
     /* deleted copy constructor */
     light_system ( const light_system& other ) = delete;
@@ -964,12 +968,30 @@ public:
 
 
 
-    /* bind_shadow_maps
+    /* bind_shadow_maps_2d/cube_fbo
      *
-     * reallocates the 2d texture arrays to size dirlights + pointlights * 6 + spotlights
-     * then binds the shadow map fbo and resizes the viewport
+     * 2d: reallocates the 2d texture array to size max ( dirlights + spotlights, 1 ), then binds the 2d shadow map fbo
+     * cube: reallocates the cubemap array to size max ( pointlights, 1 ) * 6, then binds the cube shadow map fbo
      */
-    void bind_shadow_maps_fbo () const;
+    void bind_shadow_maps_2d_fbo () const;
+    void bind_shadow_maps_cube_fbo () const;
+
+
+
+    /* requires_2d/cube_shadow_mapping
+     *
+     * true if there are lights which require 2d or cube shadow mapping respectively
+     */
+    bool requires_2d_shadow_mapping () const;
+    bool requires_cube_shadow_mapping () const;
+
+
+
+    /* get_shadow_map_width
+     *
+     * get the width of the shadow maps
+     */
+    const unsigned& get_shadow_map_width () const { return shadow_map_width; }
 
 
 
@@ -980,11 +1002,16 @@ private:
     std::vector<pointlight> pointlights;
     std::vector<spotlight> spotlights;
 
-    /* texture2d array for shadow maps */
-    mutable core::texture2d_array shadow_maps_depth;
+    /* texture2d and cubemap array for shadow maps */
+    mutable core::texture2d_array shadow_maps_2d;
+    mutable core::cubemap_array shadow_maps_cube;
 
-    /* framebuffer for shadow mapping */
-    core::fbo shadow_maps_fbo;
+    /* framebuffers for shadow mapping */
+    core::fbo shadow_maps_2d_fbo;
+    core::fbo shadow_maps_cube_fbo;
+
+    /* the size of the shadow maps */
+    const unsigned shadow_map_width;
 
     /* struct for cached uniforms */
     struct cached_uniforms_struct
@@ -996,7 +1023,8 @@ private:
         core::struct_array_uniform& pointlights_uni;
         core::uniform& spotlights_size_uni;
         core::struct_array_uniform& spotlights_uni;
-        core::uniform& shadow_maps_uni;
+        core::uniform& shadow_maps_2d_uni;
+        core::uniform& shadow_maps_cube_uni;
     };
 
     /* cached uniforms */

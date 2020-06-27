@@ -82,6 +82,7 @@ int main ()
     auto& shadow_model_matrix_uni = shadow_program.get_uniform ( "model_matrix" );
     auto& shadow_light_system_uni = shadow_program.get_struct_uniform ( "light_system" );
     auto& shadow_material_uni = shadow_program.get_struct_uniform ( "material" );
+    auto& shadow_shadow_mode_uni = shadow_program.get_uniform ( "shadow_mode" );
 
 
 
@@ -138,14 +139,14 @@ int main ()
     /* SET UP LIGHT SYSTEM */
 
     /* create light system */
-    glh::lighting::light_system light_system { 1700 };
+    glh::lighting::light_system light_system { 2048 };
 
     /* add directional light */
     light_system.add_dirlight
     (
-        glh::math::vec3 { -1.0, -1.0, 0.0 },
-        glh::math::vec3 { 0.5 },
-        glh::math::vec3 { 1.0 }, 
+        glh::math::vec3 { 0.0, -1.0, 1.0 },
+        glh::math::vec3 { 0.1 },
+        glh::math::vec3 { 0.8 }, 
         glh::math::vec3 { 1.0 },
         island.model_region ( island_matrix ),
         false, true, 0.035
@@ -155,8 +156,8 @@ int main ()
     light_system.add_pointlight
     (
         glh::math::vec3 ( 30, 40, 20 ), 1.0, 0.0, 0.0,//0.007, 0.0002,
-        glh::math::vec3 { 0.2 },
-        glh::math::vec3 { 1.5 }, 
+        glh::math::vec3 { 0.4 },
+        glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region ( island_matrix ),
         true, true, 0.005
@@ -176,10 +177,13 @@ int main ()
 
 
 
+
     /* RENDERING LOOP */
 
     for ( unsigned frame = 0; !window.should_close (); ++frame )
     {
+        /* GET PROPERTIES */
+
         /* get window properties */
         auto dimensions = window.get_dimensions ();
         auto timeinfo = window.get_timeinfo ();
@@ -190,6 +194,8 @@ int main ()
         if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
 
 
+
+        /* MOVE CAMERAS AND LIGHTS */
 
         /* apply aspect change to camera */
         if ( dimensions.deltaheight || dimensions.deltawidth || frame % 15 == 0 )
@@ -221,17 +227,12 @@ int main ()
         if ( window.get_key ( GLFW_KEY_Q ).action == GLFW_PRESS ) camera.set_fov ( camera.get_fov () + ( fov_sensitivity * timeinfo.delta ) );
         if ( window.get_key ( GLFW_KEY_E ).action == GLFW_PRESS ) camera.set_fov ( camera.get_fov () - ( fov_sensitivity * timeinfo.delta ) );
         
-
-
         /* rotate light */
-        light_system.pointlight_at ( 0 ).set_position ( glh::math::rotate3d ( light_system.pointlight_at ( 0 ).get_position (), light_rotation_sensitivity * timeinfo.delta, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );
+        light_system.pointlight_at ( 0 ).set_position ( glh::math::rotate3d ( light_system.pointlight_at ( 0 ).get_position (), light_rotation_sensitivity * timeinfo.delta, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );        
 
 
 
-        /* first create shadow maps */
-
-        /* bind the shadow fbo */
-        light_system.bind_shadow_maps_fbo ();
+        /* CREATE SHADOW MAPS */
 
         /* use the shadow program */
         shadow_program.use ();
@@ -239,15 +240,32 @@ int main ()
         /* apply light system and cache model matrix uniform */
         light_system.apply ( shadow_light_system_uni );
 
-        /* render the model */
+        /* prepare for rendering  */
         glh::core::renderer::disable_blend ();
         glh::core::renderer::set_depth_mask ( GL_TRUE );
-        glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
-        island.render ( shadow_material_uni, shadow_model_matrix_uni, island_matrix );
+        glh::core::renderer::viewport ( 0, 0, light_system.get_shadow_map_width (), light_system.get_shadow_map_width () );
+
+        /* create 2d shadow maps */
+        if ( light_system.requires_2d_shadow_mapping () )
+        {
+            light_system.bind_shadow_maps_2d_fbo ();
+            glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
+            shadow_shadow_mode_uni.set_int ( 0 );
+            island.render ( shadow_material_uni, shadow_model_matrix_uni, island_matrix );
+        }
+
+        /* create cube shadow maps */
+        if ( light_system.requires_cube_shadow_mapping () )
+        {
+            light_system.bind_shadow_maps_cube_fbo ();
+            glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
+            shadow_shadow_mode_uni.set_int ( 1 );
+            island.render ( shadow_material_uni, shadow_model_matrix_uni, island_matrix );
+        }
 
 
 
-        /* now render the island to the default framebuffer */
+        /* render the island to the default framebuffer */
 
         /* bind the default framebuffer and resize the viewport */
         window.bind_framebuffer ();
