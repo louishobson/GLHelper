@@ -28,16 +28,25 @@
  * _directory: directory in which the model resides
  * _entry: the entry file to the model
  * _model_import_flags: import flags for the model (or default recommended)
- * _pps: post processing steps (or default recommended)
+ * _pretransform_matrix: the pre-transformation matrix to use if GLH_PRETRANSFORM_VERTICES is set as an import flag
  */
-glh::model::model::model ( const std::string& _directory, const std::string& _entry, const unsigned _model_import_flags, const unsigned _pps )
+glh::model::model::model ( const std::string& _directory, const std::string& _entry, const unsigned _model_import_flags, const math::mat4& _pretransform_matrix )
     : directory { _directory }
     , entry { _entry }
     , model_import_flags { _model_import_flags }
-    , pps { _pps | aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_TransformUVCoords }
+    , pps { aiProcessPreset_TargetRealtime_MaxQuality }
+    , pretransform_matrix { _pretransform_matrix }
+    , pretransform_normal_matrix { math::normal ( _pretransform_matrix ) }
 {
+    /* add debone and optimise graph */
+    pps |= aiProcess_Debone | aiProcess_OptimizeGraph;
+
+    /* remove find degenerates flag, as this causes incomplete triangulation */
+    pps &= ~aiProcess_FindDegenerates;
+
     /* modify pps based on import flags */
     if ( model_import_flags & import_flags::GLH_FLIP_V_TEXTURES ) pps |= aiProcess_FlipUVs;
+    if ( model_import_flags & import_flags::GLH_PRETRANSFORM_VERTICES ) pps |= aiProcess_PreTransformVertices;
 
     /* create the importer */
     Assimp::Importer importer;
@@ -59,14 +68,14 @@ glh::model::model::model ( const std::string& _directory, const std::string& _en
  * render the model
  * 
  * material_uni: material uniform to cache and set the material properties to
- * model_uni: a 4x4 matrix uniform to cache and apply set the model transformations to
+ * model_matrix_uni: a 4x4 matrix uniform to cache and apply set the model transformations to
  * transform: the overall model transformation to apply (identity by default)
  * flags: rendering flags (none by default)
  */
-void glh::model::model::render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform, const unsigned flags )
+void glh::model::model::render ( core::struct_uniform& material_uni, core::uniform& model_matrix_uni, const math::mat4& transform, const unsigned flags )
 {
     /* reload the cache of uniforms  */
-    cache_uniforms ( material_uni, model_uni );
+    cache_uniforms ( material_uni, model_matrix_uni );
 
     /* render */
     render ( transform, flags );
@@ -74,13 +83,19 @@ void glh::model::model::render ( core::struct_uniform& material_uni, core::unifo
 void glh::model::model::render ( const math::mat4& transform, const unsigned flags ) const
 {
     /* throw if uniforms are not already cached */
-    if ( ( !cached_material_uniforms && !( flags & render_flags::GLH_NO_MATERIAL ) ) || !cached_model_uniform ) throw exception::uniform_exception { "attempted to render model without a complete uniform cache" };
+    if ( !cached_material_uniforms && ~flags & render_flags::GLH_NO_MATERIAL || !cached_model_matrix_uniform && ~flags & render_flags::GLH_NO_MODEL_MATRIX )
+        throw exception::uniform_exception { "attempted to render model without a complete uniform cache" };
 
     /* cache the render flags */
     model_render_flags = flags;
 
     /* render the root node */
     render_node ( root_node, transform );
+}
+void glh::model::model::render ( const unsigned flags )
+{
+    /* call overload with identity matrix */
+    render ( math::identity<4> (), flags );
 }
 
 
@@ -90,13 +105,13 @@ void glh::model::model::render ( const math::mat4& transform, const unsigned fla
  * cache all uniforms
  *
  * material_uni: the material uniform to cache
- * model_uni: model uniform to cache
+ * model_matrix_uni: model uniform to cache
  */
-void glh::model::model::cache_uniforms ( core::struct_uniform& material_uni, core::uniform& model_uni )
+void glh::model::model::cache_uniforms ( core::struct_uniform& material_uni, core::uniform& model_matrix_uni )
 {
     /* cache uniforms */
     cache_material_uniforms ( material_uni );
-    cache_model_uniform ( model_uni );
+    cache_model_uniform ( model_matrix_uni );
 }
 
 /* cache_material_uniforms
@@ -132,14 +147,14 @@ void glh::model::model::cache_material_uniforms ( core::struct_uniform& material
         } );
     }
 }
-void glh::model::model::cache_model_uniform ( core::uniform& model_uni )
+void glh::model::model::cache_model_uniform ( core::uniform& model_matrix_uni )
 {
     /* if not already cached, cache new uniform */
-    if ( !cached_model_uniform || cached_model_uniform->model_uni != model_uni )
+    if ( !cached_model_matrix_uniform || cached_model_matrix_uniform->model_matrix_uni != model_matrix_uni )
     {
-        cached_model_uniform.reset ( new cached_model_uniform_struct
+        cached_model_matrix_uniform.reset ( new cached_model_matrix_uniform_struct
         {
-            model_uni
+            model_matrix_uni
         } );
     }
 }
@@ -439,6 +454,13 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
         /* add vertices and normals */
         _mesh.vertices.at ( i ).position = cast_vector ( aimesh.mVertices [ i ] );
         _mesh.vertices.at ( i ).normal = cast_vector ( aimesh.mNormals [ i ] );
+
+        /* transform them if pretransform is set */
+        if ( model_import_flags & import_flags::GLH_PRETRANSFORM_VERTICES )
+        {
+            _mesh.vertices.at ( i ).position = math::vec3 ( pretransform_matrix * math::vec4 ( _mesh.vertices.at ( i ).position, 1.0 ) );
+            _mesh.vertices.at ( i ).normal = math::normalise ( pretransform_normal_matrix * _mesh.vertices.at ( i ).normal );
+        }
 
         /* set vertex colors */
         _mesh.vertices.at ( i ).vcolor = ( has_vcolors ? cast_vector ( aimesh.mColors [ 0 ][ i ] ) : math::fvec4 ( 1.0 ) );
@@ -782,8 +804,9 @@ void glh::model::model::render_node ( const node& _node, const math::fmat4& tran
     /* first render the child nodes */
     for ( const node& child: _node.children ) render_node ( child, trans );
 
-    /* set the model matrix */
-    cached_model_uniform->model_uni.set_matrix ( trans );
+    /* set the model matrix, if no model matrix flag not set */
+    if ( ~model_render_flags & render_flags::GLH_NO_MODEL_MATRIX ) 
+        cached_model_matrix_uniform->model_matrix_uni.set_matrix ( trans );
 
     /* render all of the meshes */
     for ( const mesh * _mesh: _node.meshes ) render_mesh ( * _mesh );
@@ -798,14 +821,14 @@ void glh::model::model::render_node ( const node& _node, const math::fmat4& tran
 void glh::model::model::render_mesh ( const mesh& _mesh ) const
 {
     /* don't draw if transparent mode and mesh is definitely opaque */
-    if ( ( model_render_flags & render_flags::GLH_TRANSPARENT_MODE ) && _mesh.definitely_opaque ) return;
+    if ( model_render_flags & render_flags::GLH_TRANSPARENT_MODE && _mesh.definitely_opaque ) return;
 
     /* if face culling is on and material is two sided, disable face culling */
     const bool culling_active = core::renderer::face_culling_enabled ();
     if ( culling_active && _mesh.properties->two_sided ) core::renderer::disable_face_culling ();
 
     /* apply the material, if not disabled in flags */
-    if ( !( model_render_flags & render_flags::GLH_NO_MATERIAL ) ) apply_material ( * _mesh.properties );
+    if ( ~model_render_flags & render_flags::GLH_NO_MATERIAL ) apply_material ( * _mesh.properties );
 
     /* draw elements */
     core::renderer::draw_elements ( _mesh.array_object, GL_TRIANGLES, _mesh.faces.size () * 3, GL_UNSIGNED_INT, 0 );

@@ -580,6 +580,14 @@ struct glh::model::import_flags
 
 
 
+    /* pretransform vertices
+     * the matrix supplied to the constructor will be used to pre-transform all vertices
+     * the Assimp post-process option aiProcess_PreTransformVertices will be force-enabled
+     */
+    static const unsigned GLH_PRETRANSFORM_VERTICES = 0x0200;
+    
+
+
     /* PRESET VALUES */
     
     /* preset for sRGBA visual texture stacks and vertex colors
@@ -611,10 +619,14 @@ struct glh::model::render_flags
     static const unsigned GLH_TRANSPARENT_MODE = 0x01;
 
     /* no matierials
-     * no material-associated uniforms are set
-     * this is useful for shadow mapping and such, where material is not important
+     * no material-associated uniforms are set, and do not have to be cached
      */
     static const unsigned GLH_NO_MATERIAL = 0x02;
+
+    /* no model matrix
+     * the uniform does not have to be cached
+     */
+    static const unsigned GLH_NO_MODEL_MATRIX = 0x04;
 
 };
 
@@ -637,9 +649,9 @@ public:
      * _directory: directory in which the model resides
      * _entry: the entry file to the model
      * _model_import_flags: import flags for the model (or default recommended)
-     * _pps: post processing steps (or default recommended)
+     * _pretransform_matrix: the pre-transformation matrix to use if GLH_PRETRANSFORM_VERTICES is set as an import flag
      */
-    model ( const std::string& _directory, const std::string& _entry, const unsigned _model_import_flags = import_flags::GLH_NONE, const unsigned _pps = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone | aiProcess_OptimizeGraph );
+    model ( const std::string& _directory, const std::string& _entry, const unsigned _model_import_flags = import_flags::GLH_NONE, const math::mat4& _pretransform_matrix = math::identity<4> () );
 
     /* deleted zero parameter constructor */
     model () = delete;
@@ -663,12 +675,13 @@ public:
      * render the model
      * 
      * material_uni: material uniform to cache and set the material properties to
-     * model_uni: a 4x4 matrix uniform to cache and apply set the model transformations to
+     * model_matrix_uni: a 4x4 matrix uniform to cache and apply set the model transformations to
      * transform: the overall model transformation to apply (identity by default)
      * flags: rendering flags (none by default)
      */
-    void render ( core::struct_uniform& material_uni, core::uniform& model_uni, const math::mat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE );
+    void render ( core::struct_uniform& material_uni, core::uniform& model_matrix_uni, const math::mat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE );
     void render ( const math::mat4& transform = math::identity<4> (), const unsigned flags = render_flags::GLH_NONE ) const;
+    void render ( const unsigned flags = render_flags::GLH_NONE );
 
 
 
@@ -677,9 +690,9 @@ public:
      * cache all uniforms
      *
      * material_uni: the material uniform to cache
-     * model_uni: model uniform to cache
+     * model_matrix_uni: model uniform to cache
      */
-    void cache_uniforms ( core::struct_uniform& material_uni, core::uniform& model_uni );
+    void cache_uniforms ( core::struct_uniform& material_uni, core::uniform& model_matrix_uni );
 
     /* cache_material_uniforms
      * cache_model_uniform
@@ -695,7 +708,8 @@ public:
      *
      * get the region of the model based on a model matrix
      */
-    region::spherical_region<> model_region ( const math::mat4& trans = math::identity<4> () ) { return trans * root_node.node_region; }
+    region::spherical_region<> model_region ( const math::mat4& trans ) const { return trans * root_node.node_region; }
+    const region::spherical_region<>& model_region () const { return root_node.node_region; }
 
 
 
@@ -715,6 +729,10 @@ private:
 
     /* the rendering flags currently being used */
     mutable unsigned model_render_flags;
+
+    /* the pre-transform matrix and its normal matrix */
+    const math::mat4 pretransform_matrix;
+    const math::mat3 pretransform_normal_matrix;
 
 
 
@@ -756,16 +774,16 @@ private:
     };
 
     /* struct for cached model matrix uniform */
-    struct cached_model_uniform_struct
+    struct cached_model_matrix_uniform_struct
     {
-        core::uniform& model_uni;
+        core::uniform& model_matrix_uni;
     };
 
     /* cached material uniforms */
     std::unique_ptr<cached_material_uniforms_struct> cached_material_uniforms;
 
     /* cached model matrix uniform */
-    std::unique_ptr<cached_model_uniform_struct> cached_model_uniform;
+    std::unique_ptr<cached_model_matrix_uniform_struct> cached_model_matrix_uniform;
 
 
 
