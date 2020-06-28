@@ -48,7 +48,7 @@ void main ()
 {
     /* evaluate stacks */
     vec4 ambient = evaluate_stack ( material.diffuse_stack, vs_out.texcoords );
-    vec4 diffuse = evaluate_stack ( material.diffuse_stack, vs_out.texcoords );
+    vec4 diffuse = ambient;
     vec4 specular = evaluate_stack ( material.specular_stack, vs_out.texcoords );
 
     /* discard if opaque/transparent */
