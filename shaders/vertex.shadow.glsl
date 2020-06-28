@@ -22,18 +22,11 @@ out VS_OUT
 
 
 
-/* UNIFORMS */
-
-/* model transformation matrix */
-uniform mat4 model_matrix;
-
-
-
 /* main */
 void main ()
 {
-    /* transform the position by the model matrix */
-    gl_Position = model_matrix * vec4 ( in_pos, 1.0 );
+    /* pass through vertex position */
+    gl_Position = vec4 ( in_pos, 1.0 );
 
     /* transfer the texcoords */
     vs_out.texcoords = in_texcoords;

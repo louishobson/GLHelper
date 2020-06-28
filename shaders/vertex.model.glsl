@@ -30,9 +30,6 @@ out VS_OUT
 /* camera matrices */
 uniform camera_struct camera;
 
-/* model matrix */
-uniform mat4 model_matrix;
-
 
 
 /* MAIN */
@@ -40,14 +37,14 @@ uniform mat4 model_matrix;
 /* main */
 void main ()
 {
-    /* set the position to be the same as the attribute, with an alpha of 1.0 */
-    gl_Position = camera.view_proj * model_matrix * vec4 ( in_pos, 1.0 );
+    /* transform position based on camera */
+    gl_Position = camera.view_proj * vec4 ( in_pos, 1.0 );
 
-    /* set normal to normal matrix * in_normal */
-    vs_out.normal = normalize ( transpose ( inverse ( mat3 ( model_matrix ) ) ) * in_normal );
+    /* pass through normal */
+    vs_out.normal = in_normal;
 
     /* set fragpos */
-    vs_out.fragpos = vec3 ( model_matrix * vec4 ( in_pos, 1.0 ) );
+    vs_out.fragpos = in_pos;
 
     /* set vcolor */
     vs_out.vcolor = in_vcolor;
