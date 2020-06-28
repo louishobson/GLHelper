@@ -73,13 +73,11 @@ int main ()
 
     /* extract uniforms out of model program */
     auto& model_camera_uni = model_program.get_struct_uniform ( "camera" );
-    auto& model_model_matrix_uni = model_program.get_uniform ( "model_matrix" );
     auto& model_light_system_uni = model_program.get_struct_uniform ( "light_system" );
     auto& model_material_uni = model_program.get_struct_uniform ( "material" );
     auto& model_transparent_mode_uni = model_program.get_uniform ( "transparent_mode" );
 
     /* extract uniforms out of model program */
-    auto& shadow_model_matrix_uni = shadow_program.get_uniform ( "model_matrix" );
     auto& shadow_light_system_uni = shadow_program.get_struct_uniform ( "light_system" );
     auto& shadow_material_uni = shadow_program.get_struct_uniform ( "material" );
     auto& shadow_shadow_mode_uni = shadow_program.get_uniform ( "shadow_mode" );
@@ -123,16 +121,19 @@ int main ()
     /* IMPORT MODELS */
 
     /* import island model */
-    glh::model::model island { "assets/island", "scene.gltf", 
-        glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
-        glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION
-    };
     const glh::math::mat4 island_matrix =
     glh::math::enlarge3d
     (
         glh::math::identity<4, GLdouble> (),
         0.1
     );
+    glh::model::model island { "assets/island", "scene.gltf", 
+        glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
+        glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
+        glh::model::import_flags::GLH_FLIP_V_TEXTURES |
+        glh::model::import_flags::GLH_PRETRANSFORM_VERTICES,
+        island_matrix
+    };
 
 
 
@@ -145,21 +146,33 @@ int main ()
     light_system.add_dirlight
     (
         glh::math::vec3 { 0.0, -1.0, 1.0 },
-        glh::math::vec3 { 0.1 },
-        glh::math::vec3 { 0.8 }, 
+        glh::math::vec3 { 0.4 },
+        glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
-        island.model_region ( island_matrix ),
+        island.model_region (),
         false, true, 0.035
     );
 
     /* add point light */
     light_system.add_pointlight
     (
-        glh::math::vec3 ( 30, 40, 20 ), 1.0, 0.0, 0.0,//0.007, 0.0002,
+        glh::math::vec3 ( 30, 40, 20 ), 1.0, 0.0, 0.0,
         glh::math::vec3 { 0.4 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
-        island.model_region ( island_matrix ),
+        island.model_region (),
+        false, true, 0.005
+    );
+
+    /* add spotlights */
+    light_system.add_spotlight
+    (
+        glh::math::vec3 ( 30, 40, 20 ), glh::math::vec3 ( -30, -40, -20 ),
+        glh::math::rad ( 25 ), glh::math::rad ( 40 ), 1.0, 0.0, 0.0,
+        glh::math::vec3 { 0.4 },
+        glh::math::vec3 { 1.0 }, 
+        glh::math::vec3 { 1.0 },
+        island.model_region (),
         true, true, 0.005
     );
 
@@ -251,7 +264,8 @@ int main ()
             light_system.bind_shadow_maps_2d_fbo ();
             glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
             shadow_shadow_mode_uni.set_int ( 0 );
-            island.render ( shadow_material_uni, shadow_model_matrix_uni, island_matrix );
+            island.cache_material_uniforms ( shadow_material_uni );
+            island.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
         }
 
         /* create cube shadow maps */
@@ -260,7 +274,8 @@ int main ()
             light_system.bind_shadow_maps_cube_fbo ();
             glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
             shadow_shadow_mode_uni.set_int ( 1 );
-            island.render ( shadow_material_uni, shadow_model_matrix_uni, island_matrix );
+            island.cache_material_uniforms ( shadow_material_uni );
+            island.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
         }
 
 
@@ -283,13 +298,14 @@ int main ()
         glh::core::renderer::disable_blend ();
         glh::core::renderer::set_depth_mask ( GL_TRUE );
         glh::core::renderer::clear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-        island.render ( model_material_uni, model_model_matrix_uni, island_matrix );
+        island.cache_material_uniforms ( model_material_uni );
+        island.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
        
         /* render transparent */
         model_transparent_mode_uni.set_int ( 1 );
         glh::core::renderer::enable_blend ();
         glh::core::renderer::set_depth_mask ( GL_FALSE );
-        island.render ( island_matrix, glh::model::render_flags::GLH_TRANSPARENT_MODE );
+        island.render ( glh::model::render_flags::GLH_TRANSPARENT_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
         
 
 
