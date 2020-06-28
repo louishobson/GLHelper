@@ -25,13 +25,12 @@
  *
  * apply the camera to view and projection matrices
  * 
- * view_uni: 4x4 matrix uniform for the view matrix
- * proj_uni: 4x4 matrix uniform for the projection matrix
+ * camera_uni: the uniform to cache and apply to
  */
-void glh::camera::camera_base::apply ( core::uniform& view_uni, core::uniform& proj_uni )
+void glh::camera::camera_base::apply ( core::struct_uniform& camera_uni )
 {
     /* cache the uniforms */
-    cache_uniforms ( view_uni, proj_uni );
+    cache_uniforms ( camera_uni );
 
     /* apply */
     apply ();
@@ -49,27 +48,38 @@ void glh::camera::camera_base::apply () const
     /* throw if uniforms are not already cached */
     if ( !cached_uniforms ) throw exception::uniform_exception { "attempted to apply camera without a complete uniform cache" };
 
-    /* set the matrices */
-    cached_uniforms->view_uni.set_matrix ( get_view () );
-    cached_uniforms->proj_uni.set_matrix ( get_proj () );
+    /* update parameters */
+    update_parameters ();
+
+    /* set the parameters */
+    cached_uniforms->view_uni.set_matrix ( view );
+    cached_uniforms->proj_uni.set_matrix ( proj );
+    cached_uniforms->view_proj_uni.set_matrix ( view_proj );
+    cached_uniforms->view_inverse_uni.set_matrix ( view_inverse );
+    cached_uniforms->proj_inverse_uni.set_matrix ( proj_inverse );
+    cached_uniforms->view_proj_inverse_uni.set_matrix ( view_proj_inverse );
+    cached_uniforms->viewpos_uni.set_vector ( viewpos );
 }
 
 /* cache_uniforms
  *
- * cache all uniforms simultaneously
- *
- * view_uni: 4x4 matrix uniform for the view matrix
- * proj_uni: 4x4 matrix uniform for the projection matrix
+ * camera_uni: the uniform to cache
  */
-void glh::camera::camera_base::cache_uniforms ( core::uniform& view_uni, core::uniform& proj_uni )
+void glh::camera::camera_base::cache_uniforms ( core::struct_uniform& camera_uni )
 {
     /* if uniforms are not already cached, cache the new ones */
-    if ( !cached_uniforms || cached_uniforms->view_uni != view_uni || cached_uniforms->proj_uni != proj_uni )
+    if ( !cached_uniforms || cached_uniforms->camera_uni != camera_uni )
     {
         cached_uniforms.reset ( new cached_uniforms_struct
         {
-            view_uni,
-            proj_uni
+            camera_uni,
+            camera_uni.get_uniform ( "view" ),
+            camera_uni.get_uniform ( "proj" ),
+            camera_uni.get_uniform ( "view_proj" ),
+            camera_uni.get_uniform ( "view_inverse" ),
+            camera_uni.get_uniform ( "proj_inverse" ),
+            camera_uni.get_uniform ( "view_proj_inverse" ),
+            camera_uni.get_uniform ( "viewpos" )
         } );
     }
 }
@@ -81,7 +91,7 @@ void glh::camera::camera_base::cache_uniforms ( core::uniform& view_uni, core::u
 const glh::math::mat4& glh::camera::camera_base::get_view () const
 {
     /* update and return view */
-    update_view ();
+    update_parameters ();
     return view;
 }
 
@@ -92,40 +102,54 @@ const glh::math::mat4& glh::camera::camera_base::get_view () const
 const glh::math::mat4& glh::camera::camera_base::get_proj () const
 {
     /* update and return proj */
-    update_proj ();
+    update_parameters ();
     return proj;
 }
 
-/* get_trans
+/* get_view_proj
  *
- * recieve the transformation
+ * recieve the view_proj matrix
  */
-const glh::math::mat4& glh::camera::camera_base::get_trans () const
+const glh::math::mat4& glh::camera::camera_base::get_view_proj () const
 {
     /* update and return trans */
-    update_trans ();
-    return trans;
+    update_parameters ();
+    return view_proj;
 }
 
-/* update_trans
+
+
+
+/* update_parameters
  *
- * update view, proj then trans if changes to parameters have occured
- * 
- * return: bool for if any changes were applied
+ * update the camera parameters, if any need updating
  */
-bool glh::camera::camera_base::update_trans () const
+void glh::camera::camera_base::update_parameters () const
 {
-    /* if any change occured in updating view and proj, update trans */
-    bool view_update = update_view ();
-    bool proj_update = update_proj ();
-    if ( view_update || proj_update ) 
+    /* if any change to view matrix, update related parameters */
+    if ( view_change )
     {
-        trans = view * proj;
-        return true;
+        view = create_view ();
+        view_inverse = math::inverse ( view );
+        viewpos = math::vec3 { view_inverse * math::vec4 { 0.0, 0.0, 0.0, 1.0 } };
     }
-    
-    /* else return false */
-    return false;
+
+    /* if any change to proj matrix, update related parameters */
+    if ( proj_change )
+    {
+        proj = create_proj ();
+        proj_inverse = math::inverse ( proj );
+    }
+
+    /* if any change to either, update view_proj parameters */
+    if ( view_change || proj_change )
+    {
+        view_proj = proj * view;
+        view_proj_inverse = math::inverse ( view_proj );
+    }
+
+    view_change = false;
+    proj_change = false;
 }
 
 
@@ -154,9 +178,6 @@ glh::camera::camera_movement::camera_movement ( const math::vec3& _position, con
     restrict_x = x;
     restrict_y = y;
     restrict_z = z;
-
-    /* update view */
-    update_view ();
 }
 
 
@@ -258,15 +279,15 @@ const glh::math::vec3& glh::camera::camera_movement::pitch ( const double arg )
     {
         /* if trying to pitch beyond vertical, reduce arg accordingly */
         double pitch_angle = math::angle ( restrict_y, z );
-        if ( pitch_angle + arg > math::rad ( 180 ) )
+        if ( pitch_angle + arg > math::rad ( 180.0 ) )
         {
-            y = math::rotate3d ( y, math::rad ( 180 ) - pitch_angle, restrict_x );
-            z = math::rotate3d ( z, math::rad ( 180 ) - pitch_angle, restrict_x );
+            y = math::rotate3d ( y, math::rad ( 180.0 ) - pitch_angle, restrict_x );
+            z = math::rotate3d ( z, math::rad ( 180.0 ) - pitch_angle, restrict_x );
         } else
-        if ( pitch_angle + arg < math::rad ( 0 ) )
+        if ( pitch_angle + arg < math::rad ( 0.0 ) )
         {
-            y = math::rotate3d ( y, math::rad ( 0 ) - pitch_angle, restrict_x );
-            z = math::rotate3d ( z, math::rad ( 0 ) - pitch_angle, restrict_x );
+            y = math::rotate3d ( y, math::rad ( 0.0 ) - pitch_angle, restrict_x );
+            z = math::rotate3d ( z, math::rad ( 0.0 ) - pitch_angle, restrict_x );
         } else
         {        
             y = math::rotate3d ( y, arg, restrict_x );
@@ -315,22 +336,36 @@ const glh::math::vec3& glh::camera::camera_movement::roll ( const double arg )
     return position;
 }
 
-/* update_view
+/* get/set_direction
  *
- * update the view matrix
+ * get/set the direction of the camera
  */
-bool glh::camera::camera_movement::update_view () const
+void glh::camera::camera_movement::set_direction ( const math::vec3& direction, const math::vec3& world_y )
 {
-    /* if view has been changed, update */
-    if ( view_change )
-    {
-        view = math::camera ( position, x, y, z );
-        view_change = false;
-        return true;
-    }
+    /* set z */
+    z = math::normalise ( -direction );
+    restrict_z = z;
 
-    /* else return false */
-    return false;
+    /* find x from cross product */
+    x = math::cross ( math::normalise ( world_y ), z );
+    restrict_x = x;
+
+    /* find y from cross product again */
+    y = math::cross ( z, x );
+    restrict_y = y;
+
+    /* set view as changed */
+    view_change = true;
+}
+
+/* create_view
+ *
+ * create the view matrix
+ */
+glh::math::mat4 glh::camera::camera_movement::create_view () const
+{
+    /* return view matrix using math::camera */
+    return math::camera ( position, x, y, z );
 }
 
 
@@ -346,28 +381,16 @@ glh::camera::camera_perspective::camera_perspective ( const double _fov, const d
     , aspect { _aspect }
     , near { _near }
     , far { _far }
-{
-    /* update proj */
-    update_proj ();
-}
+{}
 
-/* update_proj
+/* create_proj
  *
- * update the projection matrix
+ * create the projection matrix
  */
-bool glh::camera::camera_perspective::update_proj () const
+glh::math::mat4 glh::camera::camera_perspective::create_proj () const
 {
-    /* if proj has been changed, update */
-    if ( proj_change )
-    {
-        proj = math::perspective_fov ( fov, aspect, near, far );
-        proj_change = false;
-        return true;
-    }
-
-    /* else return false */
-    return false;
-
+    /* return projection matrix using math::projection_fov */
+    return math::perspective_fov ( fov, aspect, near, far );
 }
 
 
@@ -381,39 +404,27 @@ bool glh::camera::camera_perspective::update_proj () const
 glh::camera::camera_orthographic::camera_orthographic ( const math::vec3& _lbn, const math::vec3& _rtf )
     : lbn { _lbn }
     , rtf { _rtf }
-{
-    /* update proj */
-    update_proj ();
-}
+{}
 
-/* update_proj
+/* create_proj
  *
  * update the projection matrix
  */
-bool glh::camera::camera_orthographic::update_proj () const
+glh::math::mat4 glh::camera::camera_orthographic::create_proj () const
 {
-    /* if proj has been changed, update */
-    if ( proj_change )
-    {
-        proj = math::orthographic ( lbn.at ( 0 ), rtf.at ( 0 ), lbn.at ( 1 ), rtf.at ( 1 ), lbn.at ( 2 ), rtf.at ( 2 ) );
-        proj_change = false;
-        return true;
-    }
-
-    /* else return false */
-    return false;
-
+    /* return projection matrix using math::orthographic */
+    return math::orthographic ( lbn.at ( 0 ), rtf.at ( 0 ), lbn.at ( 1 ), rtf.at ( 1 ), lbn.at ( 2 ), rtf.at ( 2 ) );
 }
 
 
 
 /* MIRROR_CAMERA IMPLEMENTATION */
 
-/* update_view
+/* create_view
  *
- * update the view matrix
+ * create the view matrix
  */
-bool glh::camera::mirror_camera::update_view () const
+glh::math::mat4 glh::camera::mirror_camera::create_view () const
 {
     /* true means cam pos is same side as normal to mirror */
     const bool sign = !std::signbit ( math::dot ( normal, cam.get_position () - position ) );
@@ -423,18 +434,15 @@ bool glh::camera::mirror_camera::update_view () const
     math::vec3 pos { cam.get_position () };
     if ( sign ) pos = math::reflect3d ( pos, normal, position );
 
-    /* view matrix created by reflecting position in the mirror and looking towards it */
-    view = math::look_along ( pos, normal, ytan );
-
-    /* return true */
-    return true;
+    /* return view matrix created by reflecting position in the mirror and looking towards it */
+    return math::look_along ( pos, normal, ytan );
 }
 
-/* update_proj
+/* create_proj
  *
- * update the projection matrix
+ * create the projection matrix
  */
-bool glh::camera::mirror_camera::update_proj () const
+glh::math::mat4 glh::camera::mirror_camera::create_proj () const
 {
     /* get the view matrix */
     math::mat4 view_matrix { get_view () };
@@ -442,12 +450,10 @@ bool glh::camera::mirror_camera::update_proj () const
     /* apply view matrix to the mirror position */
     math::vec3 mirror_pos { view_matrix * glh::math::vec4 { position, 1.0 } };
 
-    /* create projection matrix
+    /* return projection matrix
      * notice the sign of the half_widths vs the half_heights
      * we reflect the texture in the x-axis
      */
-    proj = math::perspective ( mirror_pos.at ( 0 ) + half_width, mirror_pos.at ( 0 ) - half_width, mirror_pos.at ( 1 ) - half_height, mirror_pos.at ( 1 ) + half_height, -mirror_pos.at ( 2 ), cam.get_far () );
-    /* return true */
-    return true;
+    return math::perspective ( mirror_pos.at ( 0 ) + half_width, mirror_pos.at ( 0 ) - half_width, mirror_pos.at ( 1 ) - half_height, mirror_pos.at ( 1 ) + half_height, -mirror_pos.at ( 2 ), cam.get_far () );
 
 }

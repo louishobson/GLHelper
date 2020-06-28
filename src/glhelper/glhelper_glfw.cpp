@@ -156,7 +156,7 @@ bool glh::glfw::window::should_close () const
 void glh::glfw::window::set_should_close ()
 {
     /* set should close */
-    glfwWindowShouldClose ( winptr );
+    glfwSetWindowShouldClose ( winptr, true );
 }
 
 /* get_dimensions
@@ -255,6 +255,116 @@ glh::glfw::window::timeinfo_t glh::glfw::window::get_timeinfo () const
     return timeinfo;
 }
 
+/* get_gamepadinfo
+ *
+ * get info about a gamepad
+ * 
+ * joystick: the joystick to get info on
+ * 
+ * return gamepadinfo_t containing info about the gamepad
+ */
+glh::glfw::window::gamepadinfo_t glh::glfw::window::get_gamepadinfo ( const int joystick ) const
+{
+    /* create empty struct */
+    gamepadinfo_t gamepadinfo;
+    std::memset ( &gamepadinfo, 0, sizeof ( gamepadinfo ) );
+
+    /* return if gamepad not present */
+    if ( !glfwJoystickPresent ( joystick ) ) return gamepadinfo;
+
+    /* if can be mapped to a gamepad, use that */
+    if ( glfwJoystickIsGamepad ( joystick ) )
+    {
+        /* generate gamepadinfo */
+        GLFWgamepadstate glfw_gamepadinfo;
+        glfwGetGamepadState ( joystick, &glfw_gamepadinfo );
+
+        /* generate gamepadinfo */
+        gamepadinfo.button_a = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_A ];
+        gamepadinfo.button_b = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_B ];
+        gamepadinfo.button_x = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_X ];
+        gamepadinfo.button_y = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_Y ];
+
+        gamepadinfo.button_lh_bumper = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_LEFT_BUMPER ];
+        gamepadinfo.button_rh_bumper = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER ];
+
+        gamepadinfo.button_back = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_BACK ];
+        gamepadinfo.button_start = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_START ];
+
+        gamepadinfo.button_lh_thumb = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_LEFT_THUMB ];
+        gamepadinfo.button_rh_thumb = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_RIGHT_THUMB ];
+
+        gamepadinfo.button_dpad_up = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_DPAD_UP ];
+        gamepadinfo.button_dpad_right = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_DPAD_RIGHT ];
+        gamepadinfo.button_dpad_down = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_DPAD_DOWN ];
+        gamepadinfo.button_dpad_left = glfw_gamepadinfo.buttons [ GLFW_GAMEPAD_BUTTON_DPAD_LEFT ];
+
+        gamepadinfo.axis_lh_x = glfw_gamepadinfo.axes [ GLFW_GAMEPAD_AXIS_LEFT_X ];
+        gamepadinfo.axis_lh_y = glfw_gamepadinfo.axes [ GLFW_GAMEPAD_AXIS_LEFT_Y ];
+        gamepadinfo.axis_rh_x = glfw_gamepadinfo.axes [ GLFW_GAMEPAD_AXIS_RIGHT_X ];
+        gamepadinfo.axis_rh_y = glfw_gamepadinfo.axes [ GLFW_GAMEPAD_AXIS_RIGHT_Y ];
+
+        gamepadinfo.axis_lh_trigger = glfw_gamepadinfo.axes [ GLFW_GAMEPAD_AXIS_LEFT_TRIGGER ];
+        gamepadinfo.axis_rh_trigger = glfw_gamepadinfo.axes [ GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER ];
+    } else
+    /* otherwise take a guess as to which axis and buttons map to which */
+    {
+        /* get buttons and set them */
+        int button_count;
+        const unsigned char * buttons = glfwGetJoystickButtons ( joystick, &button_count );
+        if ( button_count >= 4 )
+        {
+            gamepadinfo.button_a = buttons [ 0 ];
+            gamepadinfo.button_b = buttons [ 1 ];
+            gamepadinfo.button_x = buttons [ 2 ];
+            gamepadinfo.button_y = buttons [ 3 ];
+        }
+        if ( button_count >= 6 )
+        {
+            gamepadinfo.button_lh_bumper = buttons [ 4 ];
+            gamepadinfo.button_rh_bumper = buttons [ 5 ];
+        }
+        if ( button_count >= 8 )
+        {
+            gamepadinfo.button_back = buttons [ 6 ];
+            gamepadinfo.button_start = buttons [ 7 ];
+        }
+
+        /* get axis and set them */
+        int axis_count;
+        const float * axis = glfwGetJoystickAxes ( joystick, &axis_count );
+        if ( axis_count >= 2 )
+        {
+            gamepadinfo.axis_lh_x = axis [ 0 ];
+            gamepadinfo.axis_lh_y = axis [ 1 ];            
+        }
+        if ( axis_count >= 4 )
+        {
+            gamepadinfo.axis_rh_x = axis [ 2 ];
+            gamepadinfo.axis_rh_y = axis [ 3 ];     
+        }
+        if ( axis_count >= 6 )
+        {
+            gamepadinfo.axis_lh_trigger = axis [ 4 ];
+            gamepadinfo.axis_rh_trigger = axis [ 5 ];     
+        }
+
+        /* get hats and set them */
+        int hat_count;
+        const unsigned char * hats = glfwGetJoystickHats ( joystick, &hat_count );
+        if ( hat_count >= 1 )
+        {
+            gamepadinfo.button_dpad_up = hats [ 0 ] & GLFW_HAT_UP;
+            gamepadinfo.button_dpad_right = hats [ 0 ] & GLFW_HAT_RIGHT;
+            gamepadinfo.button_dpad_down = hats [ 0 ] & GLFW_HAT_DOWN;
+            gamepadinfo.button_dpad_left = hats [ 0 ] & GLFW_HAT_LEFT;
+        }
+    }
+
+    /* return info */
+    return gamepadinfo;    
+}
+
 
 
 /* OTHER INPUT METHODS */
@@ -336,8 +446,8 @@ void glh::glfw::window::register_object ()
         /* init glfw */
         glfwInit ();
         /* set version to 3, and only use core OpenGL functionality */
-        glfwWindowHint ( GLFW_CONTEXT_VERSION_MAJOR, 3 );
-        glfwWindowHint ( GLFW_CONTEXT_VERSION_MINOR, 3 );
+        glfwWindowHint ( GLFW_CONTEXT_VERSION_MAJOR, 4 );
+        glfwWindowHint ( GLFW_CONTEXT_VERSION_MINOR, 4 );
         glfwWindowHint ( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
     }
 }

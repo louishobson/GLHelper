@@ -224,26 +224,15 @@ public:
 
 
 
-    /* attach_texture2d
+    /* attach_texture
      *
-     * add a texture2d attachment
+     * add a texture attachment
      *
      * texture: the texture to attach
      * attachment: which attachment the texture should be used as
      * mipmap: the mipmap level to attach (defaults to 0)
      */
-    void attach_texture2d ( const texture2d& texture, const GLenum attachment, const GLint mipmap = 0 );
-    void attach_texture2d ( const texture2d_multisample& texture, const GLenum attachment, const GLint mipmap = 0 );
-
-    /* attach_cubemap
-     *
-     * add a cubemap attachment
-     * 
-     * _cubemap: the cubemap to attach
-     * attachment: which attachment the cubemap should be used as
-     * mipmap: the mipmap level to attach (defaults to 0)
-     */
-    void attach_cubemap ( const cubemap& _cubemap, const GLenum attachment, const GLuint mipmap = 0 );
+    void attach_texture ( const texture_base& texture, const GLenum attachment, const GLint mipmap = 0 );
 
     /* attach_rbo
      *

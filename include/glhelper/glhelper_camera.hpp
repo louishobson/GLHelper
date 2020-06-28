@@ -16,6 +16,32 @@
  * abstract base class for all further camera classes
  * functionality such as uniform and matrix caching and applying uniforms is common to all cameras
  * the pure virtual methods are the update_view/proj as the creation of these matrices will differ for each camera
+ * this class is applied to the following uniform structure
+ * 
+ * 
+ * 
+ * GLSL STRUCT CAMERA_STRUCT
+ * 
+ * struct camera_struct
+ * {
+ *     mat4 view;
+ *     mat4 proj;
+ *     mat4 view_proj;
+ *
+ *     mat4 view_inverse;
+ *     mat4 proj_inverse;
+ *     mat4 view_proj_inverse;
+ *
+ *     vec3 viewpos;
+ * }
+ * 
+ * this struct contains the core parameters for a camera, described below
+ * 
+ * view/proj: the view and projection matrices
+ * view_proj: equal to proj * view
+ * view/proj_inverse: the inverse of the view and proj matrices
+ * view_proj_inverse: the inverse of the view_proj matrix
+ * viewpos: the viewer position
  * 
  * 
  * 
@@ -193,20 +219,16 @@ public:
      *
      * apply the camera to view and projection matrices
      * 
-     * view_uni: 4x4 matrix uniform for the view matrix
-     * proj_uni: 4x4 matrix uniform for the projection matrix
+     * camera_uni: the uniform to cache and apply to
      */
-    void apply ( core::uniform& view_uni, core::uniform& proj_uni );
+    void apply ( core::struct_uniform& camera_uni );
     void apply () const;
 
     /* cache_uniforms
      *
-     * cache all uniforms
-     *
-     * view_uni: 4x4 matrix uniform for the view matrix
-     * proj_uni: 4x4 matrix uniform for the projection matrix
+     * camera_uni: the uniform to cache
      */
-    void cache_uniforms ( core::uniform& view_uni, core::uniform& proj_uni );
+    void cache_uniforms ( core::struct_uniform& camera_uni );
 
 
 
@@ -222,22 +244,52 @@ public:
      */
     const math::mat4& get_proj () const;
 
-    /* get_trans
+    /* get_view_proj
      *
-     * recieve the full transformation
-     * found by projection * view
+     * recieve the view_proj matrix
      */
-    const math::mat4& get_trans () const;
+    const math::mat4& get_view_proj () const;
 
 
 
 protected:
 
+    /* change in the view matrix */
+    mutable bool view_change;
+
+    /* changes to the matrices in the camera */
+    mutable bool proj_change;
+
+
+
+private:
+
+    /* the current core matrices */
+    mutable math::mat4 view;
+    mutable math::mat4 proj;
+    mutable math::mat4 view_proj;
+
+    /* current inverse matrices */
+    mutable math::mat4 view_inverse;
+    mutable math::mat4 proj_inverse;
+    mutable math::mat4 view_proj_inverse;
+
+    /* viewing position */
+    mutable math::vec3 viewpos;
+
+
+
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
+        core::struct_uniform camera_uni;
         core::uniform& view_uni;
         core::uniform& proj_uni;
+        core::uniform& view_proj_uni;
+        core::uniform& view_inverse_uni;
+        core::uniform& proj_inverse_uni;
+        core::uniform& view_proj_inverse_uni;
+        core::uniform& viewpos_uni;
     };
 
     /* cached uniforms */
@@ -245,51 +297,25 @@ protected:
 
 
 
-    /* view
+    /* update_parameters
      *
-     * the current view matrix
+     * update the camera parameters, if any need updating
      */
-    mutable math::mat4 view;
+    void update_parameters () const;
 
-    /* changes to the matrices in the camera */
-    mutable bool proj_change;
 
-    /* proj
+
+    /* create_view
      *
-     * the current projection matrix
+     * create the view matrix
      */
-    mutable math::mat4 proj;
+    virtual math::mat4 create_view () const = 0;
 
-    /* change in the view matrix */
-    mutable bool view_change;
-
-    /* trans
+    /* create_proj
      *
-     * the current combination of the view and projection matrix
+     * create the projection matrix
      */
-    mutable math::mat4 trans;
-
-
-
-    /* update_view
-     *
-     * update the view matrix
-     */
-    virtual bool update_view () const = 0;
-
-    /* update_proj
-     *
-     * update the projection matrix
-     */
-    virtual bool update_proj () const = 0;
-
-    /* update_trans
-     *
-     * update view, proj then trans if changes to parameters have occured
-     * 
-     * return: bool for if any changes were applied
-     */
-    bool update_trans () const;
+    virtual math::mat4 create_proj () const = 0;
 
 };
 
@@ -385,6 +411,13 @@ public:
     const math::vec3& get_position () const { return position; }
     void set_position ( const math::vec3& _position ) { position = _position; view_change = true; }
 
+    /* get/set_direction
+     *
+     * get/set the direction of the camera
+     */
+    math::vec3 get_direction () const { return -z; }
+    void set_direction ( const math::vec3& direction, const math::vec3& world_y );
+
     /* get_x/y/z
      *
      * get the current coordinate axis of the camera
@@ -412,11 +445,11 @@ protected:
 
 
 
-    /* update_view
+    /* create_view
      *
-     * update the view matrix
+     * create the view matrix
      */
-    bool update_view () const final;
+    math::mat4 create_view () const final;
 
 };
 
@@ -496,11 +529,11 @@ protected:
 
     
 
-    /* update_proj
+    /* create_proj
      *
-     * update the projection matrix
+     * create the projection matrix
      */
-    bool update_proj () const final;
+    math::mat4 create_proj () const final;
 
 };
 
@@ -565,11 +598,11 @@ protected:
 
 
 
-    /* update_proj
+    /* create_proj
      *
-     * update the projection matrix
+     * create the projection matrix
      */
-    bool update_proj () const final;
+    math::mat4 create_proj () const final;
 
 };
 
@@ -738,17 +771,17 @@ protected:
 
 
 
-    /* update_view
+    /* create_view
      *
-     * update the view matrix
+     * create the view matrix
      */
-    bool update_view () const;
+    math::mat4 create_view () const final;
 
-    /* update_proj
+    /* create_proj
      *
-     * update the projection matrix
+     * create the projection matrix
      */
-    bool update_proj () const;
+    math::mat4 create_proj () const;
 
 };
 

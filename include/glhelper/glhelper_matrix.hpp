@@ -289,11 +289,11 @@ public:
      *
      * sets all elements to the value provided
      */
-    explicit matrix ( const T& val = 0 ) { data.fill ( val ); }
+    explicit matrix ( const T& val = 0.0 ) { data.fill ( val ); }
 
-    /* initialiser list constructor
+    /* initializer list constructor
      *
-     * constructs data from initialiser list
+     * constructs data from initializer list
      */
     explicit matrix ( const std::initializer_list<T> init_list );
 
@@ -417,14 +417,14 @@ template<class _T> inline glh::math::matrix<M, N, T>::matrix ( const matrix<M, N
     for ( unsigned i = 0; i < M * N; ++i ) __at ( i ) = other.__at ( i );
 }
 
-/* initialiser list constructor
+/* initializer list constructor
  *
- * constructs data from initialiser list
+ * constructs data from initializer list
  */
 template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T>::matrix ( const std::initializer_list<T> init_list )
 {
     /* check the size of the list */
-    if ( init_list.size () != M * N ) throw exception::matrix_exception { "matrix initialiser list is invalid" };
+    if ( init_list.size () != M * N ) throw exception::matrix_exception { "matrix initializer list is invalid" };
     /* set the values */
     unsigned i = 0;
     for ( const T& v: init_list ) 
@@ -615,7 +615,7 @@ template<unsigned M, class T> inline std::enable_if_t<( M > 1 ), T> glh::math::d
     }
 
     /* return the determinant */
-    return det;
+    return determinant;
 }
 template<unsigned M, class T> inline std::enable_if_t<M == 1, T> glh::math::det ( const matrix<M, M, T>& _matrix )
 {
@@ -915,12 +915,12 @@ template<unsigned M, unsigned N, class T> inline std::ostream& operator<< ( std:
     /* stream intro into ostream */
     os << "matrix<" << M << "," << N << ">{";
     /* loop for each value */
-    for ( unsigned i = 0; i < M * N; ++i )
+    for ( unsigned i = 0; i < M; ++i ) for ( unsigned j = 0; j < N; ++j )
     {
         /* stream the value */
-        os << _matrix.at ( i );
-        /* if not end of stream, stream comma */
-        if ( i + 1 < M * N ) os << ",";
+        os << _matrix.at ( i, j );
+        /* if not end of stream, output comma */
+        if ( i * N + j < M * N ) os << ",";
     }
     /* stream closing } */
     os << "}";

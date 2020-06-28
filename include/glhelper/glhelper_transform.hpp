@@ -260,9 +260,9 @@ namespace glh
          * return: the new transformation matrix/vector
          */
         template<class T> matrix<3, 3, T> reflect3d ( const matrix<3, 3, T>& trans, const vec3& norm );
-        template<class T> vector<3, T> reflect3d ( const vector<3, T>& vec, const vec3& norm, const vec3& pos = vec3 {});
-        template<class T> matrix<4, 4, T> reflect3d ( const matrix<4, 4, T>& trans, const vec3& norm, const vec3& pos = vec3 {});
-        template<class T> vector<4, T> reflect3d ( const vector<4, T>& vec, const vec3& norm, const vec3& pos = vec3 {});
+        template<class T> vector<3, T> reflect3d ( const vector<3, T>& vec, const vec3& norm, const vec3& pos = vec3 { 0.0 });
+        template<class T> matrix<4, 4, T> reflect3d ( const matrix<4, 4, T>& trans, const vec3& norm, const vec3& pos = vec3 { 0.0 });
+        template<class T> vector<4, T> reflect3d ( const vector<4, T>& vec, const vec3& norm, const vec3& pos = vec3 { 0.0 });
 
 
 
@@ -405,7 +405,7 @@ template<unsigned M, class T> inline glh::math::matrix<M, M, T> glh::math::ident
  * promote/demote a matrix' size
  * a size promotion leaves the new rows/columns as like in an identity matrix
  */
-template<unsigned M, unsigned _M, class T> inline glh::math::matrix<_M, _M, T> glh::math::resize ( const matrix<M, M, T>& trans )
+template<unsigned _M, unsigned M, class T> inline glh::math::matrix<_M, _M, T> glh::math::resize ( const matrix<M, M, T>& trans )
 {
     /* result matrix */
     matrix<_M, _M, T> result { identity<_M> () };
