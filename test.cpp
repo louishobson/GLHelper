@@ -161,7 +161,7 @@ int main ()
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        false, true, 0.005
+        true, true, 0.005
     );
 
     /* add spotlights */
@@ -173,7 +173,7 @@ int main ()
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        true, true, 0.005
+        false, true, 0.005
     );
 
 
