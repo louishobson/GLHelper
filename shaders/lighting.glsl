@@ -211,7 +211,8 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         const float lighttheta = acos ( dot ( light_system.spotlights [ i ].direction, -lightdir ) );
 
         /* set spotlight_constant to 1.0, unless inbetween inner and outer cone */
-        const float spotlight_constant = ( max ( lighttheta, light_system.spotlights [ i ].inner_cone ) - light_system.spotlights [ i ].inner_cone ) / light_system.spotlights [ i ].outer_cone;
+        const float spotlight_constant = 1.0 - ( ( clamp ( lighttheta, light_system.spotlights [ i ].inner_cone, light_system.spotlights [ i ].outer_cone ) - light_system.spotlights [ i ].inner_cone ) / 
+            ( light_system.spotlights [ i ].outer_cone - light_system.spotlights [ i ].inner_cone ) );
 
         /* use distance to light to calculate the attenuation */
         const float attenuation = compute_attenuation ( lightdist, light_system.spotlights [ i ].att_const, light_system.spotlights [ i ].att_linear, light_system.spotlights [ i ].att_quad );
@@ -229,11 +230,14 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
             /* transform the fragment position using the light's shadow matrices */
             vec4 fragpos_light_proj = light_system.spotlights [ i ].shadow_camera.view_proj * vec4 ( fragpos, 1.0 );
 
+            /* divide by w component */
+            fragpos_light_proj.xy /= fragpos_light_proj.w;
+
             /* map to range 0-1 */
             fragpos_light_proj.xy = fragpos_light_proj.xy * 0.5 + 0.5;
 
             /* create the depth linearly using the distance from the fragment to the light
-             * by dividing by shadow_max_dist, the depth will be in range 0-1
+             * by multiplying by shadow_depth_range_mult, the depth will be in range 0-1
              * also take into account the angle of the surface to the light's position
              */
             fragpos_light_proj.z = lightdist * light_system.spotlights [ i ].shadow_depth_range_mult -
@@ -244,7 +248,7 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         }
 
         /* add ambient component */
-        base_color += spotlight_constant * light_system.spotlights [ i ].ambient_color * ambient_color; 
+        base_color += light_system.spotlights [ i ].ambient_color * ambient_color; 
 
         /* add diffuse component */
         base_color += diffuse_constant * spotlight_constant * shadow_constant * light_system.spotlights [ i ].diffuse_color * diffuse_color;

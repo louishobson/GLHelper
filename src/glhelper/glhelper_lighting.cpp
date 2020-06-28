@@ -133,7 +133,7 @@ void glh::lighting::pointlight::apply () const
     cached_uniforms->enabled_uni.set_int ( enabled );
     cached_uniforms->shadow_mapping_enabled_uni.set_int ( shadow_mapping_enabled );
     cached_uniforms->shadow_bias_uni.set_float ( shadow_bias );
-    cached_uniforms->shadow_depth_range_mult_uni.set_float ( 1.0 / ( shadow_camera.get_far () * std::sqrt ( 2 ) ) );
+    cached_uniforms->shadow_depth_range_mult_uni.set_float ( 1.0 / ( shadow_camera.get_far () * std::sqrt ( 2.0 ) ) );
 
     /* apply the shadow camera */
     shadow_camera.apply ();
@@ -214,7 +214,7 @@ void glh::lighting::spotlight::apply () const
         shadow_camera.set_position ( position );
         shadow_camera.set_direction ( direction, math::any_perpandicular ( direction ) );
         shadow_camera.set_far ( math::modulus ( shadow_region.centre - position ) + shadow_region.radius );
-        shadow_camera.set_fov ( outer_cone );
+        shadow_camera.set_fov ( outer_cone * 2.0 );
         shadow_camera_change = false;
     }
 
@@ -232,7 +232,7 @@ void glh::lighting::spotlight::apply () const
     cached_uniforms->enabled_uni.set_int ( enabled );
     cached_uniforms->shadow_mapping_enabled_uni.set_int ( shadow_mapping_enabled );
     cached_uniforms->shadow_bias_uni.set_float ( shadow_bias );
-    cached_uniforms->shadow_depth_range_mult_uni.set_float ( 1.0 / ( shadow_camera.get_far () * std::sqrt ( 2 ) ) );
+    cached_uniforms->shadow_depth_range_mult_uni.set_float ( 1.0 / ( shadow_camera.get_far () * std::sqrt ( 2.0 ) ) );
 
     /* apply the shadow camera */
     shadow_camera.apply ();
@@ -427,7 +427,7 @@ bool glh::lighting::light_system::requires_2d_shadow_mapping () const
 {
     /* loop through dirlights and determine if any require shadow sampling */
     for ( const dirlight& light: dirlights ) if ( light.is_enabled () && light.is_shadow_mapping_enabled () ) return true;
-    for ( const pointlight& light: pointlights ) if ( light.is_enabled () && light.is_shadow_mapping_enabled () ) return true;
+    for ( const spotlight& light: spotlights ) if ( light.is_enabled () && light.is_shadow_mapping_enabled () ) return true;
 
     /* else return false */
     return false;
