@@ -140,7 +140,7 @@ int main ()
     glh::math::enlarge3d
     (
         glh::math::identity<4, GLdouble> (),
-        30.0
+        15.0
     );
     glh::model::model box { "assets/box", "scene.gltf", 
         glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
@@ -165,7 +165,7 @@ int main ()
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        true, false, 0.035
+        true, true, 0.035
     );
 
     /* add point light */
