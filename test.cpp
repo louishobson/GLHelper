@@ -161,7 +161,7 @@ int main ()
     light_system.add_dirlight
     (
         glh::math::vec3 { 1.0, 0.0, 0.0 },
-        glh::math::vec3 { 0.4 },
+        glh::math::vec3 { 0.6 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
@@ -172,7 +172,7 @@ int main ()
     light_system.add_pointlight
     (
         glh::math::vec3 ( 30, 40, 20 ), 1.0, 0.0, 0.0,
-        glh::math::vec3 { 0.4 },
+        glh::math::vec3 { 0.6 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
@@ -184,7 +184,7 @@ int main ()
     (
         glh::math::vec3 ( 30, 40, 20 ), glh::math::vec3 ( -30, -40, -20 ),
         glh::math::rad ( 30 ), glh::math::rad ( 50 ), 1.0, 0.0, 0.0,
-        glh::math::vec3 { 0.4 },
+        glh::math::vec3 { 0.6 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
