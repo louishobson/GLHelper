@@ -229,13 +229,10 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         if ( !light_system.pointlights [ i ].enabled ) continue;
 
         /* get vector from fragment to light */
-        vec3 lightdir = light_system.pointlights [ i ].position - fragpos;
+        const vec3 lightdir = normalize ( light_system.pointlights [ i ].position - fragpos );
 
         /* get the distance from the fragment to the light */
-        const float lightdist = length ( lightdir );
-
-        /* normalize lightdir for use with dot product */
-        lightdir = normalize ( lightdir );
+        const float lightdist = length ( light_system.pointlights [ i ].position - fragpos );
 
         /* use distance to light to calculate the attenuation */
         const float attenuation = compute_attenuation ( lightdist, light_system.pointlights [ i ].att_const, light_system.pointlights [ i ].att_linear, light_system.pointlights [ i ].att_quad ); 
@@ -270,13 +267,10 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         if ( !light_system.spotlights [ i ].enabled ) continue;
 
         /* get vector from fragment to light */
-        vec3 lightdir = light_system.spotlights [ i ].position - fragpos;
+        const vec3 lightdir = normalize ( light_system.spotlights [ i ].position - fragpos );
 
         /* get the distance from the fragment to the light */
-        const float lightdist = length ( lightdir );
-
-        /* normalize lightdir for use with dot product */
-        lightdir = normalize ( lightdir );
+        const float lightdist = length ( light_system.spotlights [ i ].position - fragpos );
 
         /* compute spotlight constant */
         const float spotlight_constant = compute_spotlight_constant ( light_system.spotlights [ i ].direction, lightdir, light_system.spotlights [ i ].inner_cone, light_system.spotlights [ i ].outer_cone );
