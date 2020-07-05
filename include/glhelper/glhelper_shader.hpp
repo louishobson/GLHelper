@@ -296,12 +296,12 @@ class glh::core::shader : public object
 public:
 
     /* no source constructor */
-    shader ( const minor_object_type _type )
-        : shader { _type, {} }
+    shader ( const GLenum type )
+        : shader { type, {} }
     {}
 
     /* multi-source constructor */
-    shader ( const minor_object_type _type, std::initializer_list<std::string> paths );
+    shader ( const GLenum type, std::initializer_list<std::string> paths );
 
     /* deleted zero-parameter constructor */
     shader () = delete;
@@ -315,8 +315,8 @@ public:
     /* deleted copy asignment operator */
     shader& operator= ( const shader& other ) = delete;
 
-    /* default virtual destructor */
-    virtual ~shader () = default;
+    /* virtual destructor */
+    virtual ~shader ();
 
 
 
@@ -366,12 +366,12 @@ public:
 
     /* no source constructor */
     vshader ()
-        : shader { minor_object_type::GLH_VSHADER_TYPE }
+        : shader { GL_VERTEX_SHADER }
     {}
 
     /* multi-source constructor */
     explicit vshader ( std::initializer_list<std::string> paths )
-        : shader { minor_object_type::GLH_VSHADER_TYPE, paths }
+        : shader { GL_VERTEX_SHADER, paths }
     {}
 
     /* deleted copy constructor */
@@ -402,12 +402,12 @@ public:
 
     /* no source constructor */
     gshader ()
-        : shader { minor_object_type::GLH_GSHADER_TYPE }
+        : shader { GL_GEOMETRY_SHADER }
     {}
 
     /* multi-source constructor */
     explicit gshader ( std::initializer_list<std::string> paths )
-        : shader { minor_object_type::GLH_GSHADER_TYPE, paths }
+        : shader { GL_GEOMETRY_SHADER, paths }
     {}
 
     /* deleted copy constructor */
@@ -438,12 +438,12 @@ public:
 
     /* no source constructor */
     fshader ()
-        : shader { minor_object_type::GLH_FSHADER_TYPE }
+        : shader { GL_FRAGMENT_SHADER }
     {}
     
     /* multi-source constructor */
     explicit fshader ( std::initializer_list<std::string> paths )
-        : shader { minor_object_type::GLH_FSHADER_TYPE, paths }
+        : shader { GL_FRAGMENT_SHADER, paths }
     {}
 
     /* deleted copy constructor */
@@ -1099,17 +1099,22 @@ public:
     /* deleted copy assignment operator */
     program& operator= ( const program& other ) = delete;
 
-    /* default destructor */
-    ~program () = default;
+    /* destructor */
+    ~program ();
 
 
 
-    /* get_bound_object_pointer
-     *
-     * produce a pointer to the program currently bound
-     */
-    using object::get_bound_object_pointer;
-    static object_pointer<program> get_bound_object_pointer () { return get_bound_object_pointer<program> ( object_bind_target::GLH_PROGRAM_TARGET ); }
+    /* default bind the program */
+    bool bind () const;
+    bool is_bound () const { return bound_program == this; }
+
+    /* use/is_in_use an alias of bind and is_bound respectively */
+    bool use () const { return bind (); }
+    bool is_in_use () const { return is_bound (); }
+
+    /* get the currently bound/in use program */
+    static const object_pointer<program>& get_bound_program () { return bound_program; }
+    static const object_pointer<program>& get_in_use_program () { return bound_program; }
 
 
 
@@ -1227,25 +1232,10 @@ public:
 
 
 
-    /* use
-     *
-     * use the shader program for the following OpenGL function calls
-     * will not call glUseProgram if already in use
-     * same as bind method
-     */
-    bool use () const { return bind (); }
-
-    /* is_in_use
-     *
-     * same as is_bound method
-     * 
-     * return: boolean for if the program is in use
-     */
-    bool is_in_use () const { return is_bound (); }
-
-
-
 private:
+
+    /* the currently bound program */
+    static object_pointer<program> bound_program;
 
     /* pointers to the shaders of the program */
     object_pointer<vshader> vertex_shader;

@@ -28,10 +28,6 @@
  *     mat4 proj;
  *     mat4 view_proj;
  *
- *     mat4 view_inverse;
- *     mat4 proj_inverse;
- *     mat4 view_proj_inverse;
- *
  *     vec3 viewpos;
  * }
  * 
@@ -39,8 +35,6 @@
  * 
  * view/proj: the view and projection matrices
  * view_proj: equal to proj * view
- * view/proj_inverse: the inverse of the view and proj matrices
- * view_proj_inverse: the inverse of the view_proj matrix
  * viewpos: the viewer position
  * 
  * 
@@ -269,11 +263,6 @@ private:
     mutable math::mat4 proj;
     mutable math::mat4 view_proj;
 
-    /* current inverse matrices */
-    mutable math::mat4 view_inverse;
-    mutable math::mat4 proj_inverse;
-    mutable math::mat4 view_proj_inverse;
-
     /* viewing position */
     mutable math::vec3 viewpos;
 
@@ -286,9 +275,6 @@ private:
         core::uniform& view_uni;
         core::uniform& proj_uni;
         core::uniform& view_proj_uni;
-        core::uniform& view_inverse_uni;
-        core::uniform& proj_inverse_uni;
-        core::uniform& view_proj_inverse_uni;
         core::uniform& viewpos_uni;
     };
 
@@ -705,7 +691,7 @@ public:
      * _height: the height of the mirror
      */
     mirror_camera ( const camera_perspective_movement& _cam, const math::vec3& _position, const math::vec3& _normal, const math::vec3& _ytan, const double _width, const double _height )
-        : cam { _cam }, position { _position }, normal { math::normalise ( _normal ) }, ytan { math::normalise ( _ytan ) }, half_width { _width / 2.0 }, half_height { _height / 2.0 }
+        : cam { _cam }, position { _position }, normal { math::normalize ( _normal ) }, ytan { math::normalize ( _ytan ) }, half_width { _width / 2.0 }, half_height { _height / 2.0 }
     {}
 
     /* deleted zero-parameter constructor */
@@ -737,14 +723,14 @@ public:
      * get/set the normal vector of the mirror
      */
     const math::vec3& get_normal () const { return normal; }
-    void set_normal ( const math::vec3& _normal ) { normal = math::normalise ( _normal ); }
+    void set_normal ( const math::vec3& _normal ) { normal = math::normalize ( _normal ); }
 
     /* get/set_ytan
      *
      * get/set the y tangent of the mirror
      */
     const math::vec3& get_ytan () const { return ytan; }
-    void set_ytan ( const math::vec3& _ytan ) { ytan = math::normalise ( _ytan ); }
+    void set_ytan ( const math::vec3& _ytan ) { ytan = math::normalize ( _ytan ); }
 
     /* get/set_width/height
      *

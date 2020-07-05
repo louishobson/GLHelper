@@ -58,10 +58,8 @@ void glh::lighting::dirlight::apply () const
     cached_uniforms->specular_color_uni.set_vector ( specular_color );
     cached_uniforms->enabled_uni.set_int ( enabled );
     cached_uniforms->shadow_mapping_enabled_uni.set_int ( shadow_mapping_enabled );
+    cached_uniforms->shadow_trans_uni.set_matrix ( shadow_camera.get_view_proj () );
     cached_uniforms->shadow_bias_uni.set_float ( shadow_bias );
-
-    /* apply the shadow camera */
-    shadow_camera.apply ();
 }
 
 /* cache_uniforms
@@ -84,9 +82,9 @@ void glh::lighting::dirlight::cache_uniforms ( core::struct_uniform& light_uni )
             light_uni.get_uniform ( "specular_color" ),
             light_uni.get_uniform ( "enabled" ),
             light_uni.get_uniform ( "shadow_mapping_enabled" ),
+            light_uni.get_uniform ( "shadow_trans" ),
             light_uni.get_uniform ( "shadow_bias" )
         } );
-        shadow_camera.cache_uniforms ( light_uni.get_struct_uniform ( "shadow_camera" ) );
     }
 }
 
@@ -135,21 +133,18 @@ void glh::lighting::pointlight::apply () const
     cached_uniforms->shadow_bias_uni.set_float ( shadow_bias );
     cached_uniforms->shadow_depth_range_mult_uni.set_float ( 1.0 / ( shadow_camera.get_far () * std::sqrt ( 2.0 ) ) );
 
-    /* apply the shadow camera */
-    shadow_camera.apply ();
-
     /* set the shadow cube matrices */
-    cached_uniforms->shadow_cube_matrices_uni.at ( 0 ).set_matrix 
+    cached_uniforms->shadow_trans_uni.at ( 0 ).set_matrix 
         ( shadow_camera.get_proj () * math::look_along ( math::vec3 { 0.0 }, math::vec3 { 1.0, 0.0, 0.0 }, math::vec3 { 0.0, -1.0, 0.0 } ) * shadow_camera.get_view () );
-    cached_uniforms->shadow_cube_matrices_uni.at ( 1 ).set_matrix 
+    cached_uniforms->shadow_trans_uni.at ( 1 ).set_matrix 
         ( shadow_camera.get_proj () * math::look_along ( math::vec3 { 0.0 }, math::vec3 { -1.0, 0.0, 0.0 }, math::vec3 { 0.0, -1.0, 0.0 } ) * shadow_camera.get_view () );
-    cached_uniforms->shadow_cube_matrices_uni.at ( 2 ).set_matrix 
+    cached_uniforms->shadow_trans_uni.at ( 2 ).set_matrix 
         ( shadow_camera.get_proj () * math::look_along ( math::vec3 { 0.0 }, math::vec3 { 0.0, 1.0, 0.0 }, math::vec3 { 0.0, 0.0, 1.0 } ) * shadow_camera.get_view () );
-    cached_uniforms->shadow_cube_matrices_uni.at ( 3 ).set_matrix 
+    cached_uniforms->shadow_trans_uni.at ( 3 ).set_matrix 
         ( shadow_camera.get_proj () * math::look_along ( math::vec3 { 0.0 }, math::vec3 { 0.0, -1.0, 0.0 }, math::vec3 { 0.0, 0.0, -1.0 } ) * shadow_camera.get_view () );
-    cached_uniforms->shadow_cube_matrices_uni.at ( 4 ).set_matrix 
+    cached_uniforms->shadow_trans_uni.at ( 4 ).set_matrix 
         ( shadow_camera.get_proj () * math::look_along ( math::vec3 { 0.0 }, math::vec3 { 0.0, 0.0, 1.0 }, math::vec3 { 0.0, -1.0, 0.0 } ) * shadow_camera.get_view () );
-    cached_uniforms->shadow_cube_matrices_uni.at ( 5 ).set_matrix 
+    cached_uniforms->shadow_trans_uni.at ( 5 ).set_matrix 
         ( shadow_camera.get_proj () * math::look_along ( math::vec3 { 0.0 }, math::vec3 { 0.0, 0.0, -1.0 }, math::vec3 { 0.0, -1.0, 0.0 } ) * shadow_camera.get_view () );
 }
 
@@ -176,11 +171,10 @@ void glh::lighting::pointlight::cache_uniforms ( core::struct_uniform& light_uni
             light_uni.get_uniform ( "specular_color" ),
             light_uni.get_uniform ( "enabled" ),
             light_uni.get_uniform ( "shadow_mapping_enabled" ),
-            light_uni.get_uniform_array_uniform ( "shadow_cube_matrices" ),
+            light_uni.get_uniform_array_uniform ( "shadow_trans" ),
             light_uni.get_uniform ( "shadow_bias" ),
             light_uni.get_uniform ( "shadow_depth_range_mult" )
         } );
-        shadow_camera.cache_uniforms ( light_uni.get_struct_uniform ( "shadow_camera" ) );
     }
 }
 
@@ -231,11 +225,9 @@ void glh::lighting::spotlight::apply () const
     cached_uniforms->specular_color_uni.set_vector ( specular_color );
     cached_uniforms->enabled_uni.set_int ( enabled );
     cached_uniforms->shadow_mapping_enabled_uni.set_int ( shadow_mapping_enabled );
+    cached_uniforms->shadow_trans_uni.set_matrix ( shadow_camera.get_view_proj () );
     cached_uniforms->shadow_bias_uni.set_float ( shadow_bias );
     cached_uniforms->shadow_depth_range_mult_uni.set_float ( 1.0 / ( shadow_camera.get_far () * std::sqrt ( 2.0 ) ) );
-
-    /* apply the shadow camera */
-    shadow_camera.apply ();
 }
 
 /* cache_uniforms
@@ -264,10 +256,10 @@ void glh::lighting::spotlight::cache_uniforms ( core::struct_uniform& light_uni 
             light_uni.get_uniform ( "specular_color" ),
             light_uni.get_uniform ( "enabled" ),
             light_uni.get_uniform ( "shadow_mapping_enabled" ),
+            light_uni.get_uniform ( "shadow_trans" ),
             light_uni.get_uniform ( "shadow_bias" ),
             light_uni.get_uniform ( "shadow_depth_range_mult" )
         } );
-        shadow_camera.cache_uniforms ( light_uni.get_struct_uniform ( "shadow_camera" ) );
     }
 }
 

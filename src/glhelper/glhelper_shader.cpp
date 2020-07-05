@@ -48,11 +48,13 @@ bool operator!= ( const glh::core::struct_uniform& lhs, const glh::core::struct_
 /* SHADER IMPLEMENTATION */
 
 /* multi-source constructor */
-glh::core::shader::shader ( const minor_object_type _type, std::initializer_list<std::string> paths )
-    : object { _type }
-    , source { "#version 460" }
+glh::core::shader::shader ( const GLenum type, std::initializer_list<std::string> paths )
+    : source { "#version 460" }
     , compiled { false }
 {
+    /* generate shader */
+    id = glCreateShader ( type );
+
     /* loop through paths */
     for ( const auto& path: paths )
     {
@@ -69,6 +71,17 @@ glh::core::shader::shader ( const minor_object_type _type, std::initializer_list
         shader_file.close ();
     }
 }
+
+
+
+/* destructor */
+glh::core::shader::~shader ()
+{
+    /* destroy shader */
+    glDeleteShader ( id );
+}
+
+
 
 /* compile
  * 
@@ -101,6 +114,7 @@ void glh::core::shader::compile ()
     /* set is_compiled to true */
     compiled = true;
 }
+
 
 
 /* UNIFORM IMPLEMENTATION */
@@ -157,9 +171,9 @@ void glh::core::uniform::set_int ( const GLint v0 )
     } else
     {   
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( v0 ), &v0 );
     }
@@ -194,9 +208,9 @@ void glh::core::uniform::set_uint ( const GLuint v0 )
     } else
     {   
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( v0 ), &v0 );
     }
@@ -215,9 +229,9 @@ void glh::core::uniform::set_float ( const GLfloat v0 )
     } else
     {   
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( v0 ), &v0 );
     }
@@ -236,9 +250,9 @@ void glh::core::uniform::set_vector ( const math::fvec2& v0 )
     } else
     {   
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( v0 ), v0.internal_ptr () );
     }
@@ -258,9 +272,9 @@ void glh::core::uniform::set_vector ( const math::fvec3& v0 )
     } else
     {   
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( v0 ), v0.internal_ptr () );
     }
@@ -279,9 +293,9 @@ void glh::core::uniform::set_vector ( const math::fvec4& v0 )
     } else
     {   
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( v0 ), v0.internal_ptr () );
     }
@@ -302,9 +316,9 @@ void glh::core::uniform::set_matrix ( const math::fmat2& v0 )
         /* convert to uniform-aligned matrix */
         math::ua_fmat2 ua_v0 { v0 };
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
     }
@@ -325,9 +339,9 @@ void glh::core::uniform::set_matrix ( const math::fmat2x3& v0 )
         /* convert to uniform-aligned matrix */
         math::ua_fmat2x3 ua_v0 { v0 };
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
     }
@@ -348,9 +362,9 @@ void glh::core::uniform::set_matrix ( const math::fmat2x4& v0 )
         /* convert to uniform-aligned matrix */
         math::ua_fmat2x4 ua_v0 { v0 };
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
     }
@@ -371,9 +385,9 @@ void glh::core::uniform::set_matrix ( const math::fmat3x2& v0 )
         /* convert to uniform-aligned matrix */
         math::ua_fmat3x2 ua_v0 { v0 };
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
     }
@@ -394,9 +408,9 @@ void glh::core::uniform::set_matrix ( const math::fmat3& v0 )
         /* convert to uniform-aligned matrix */
         math::ua_fmat3 ua_v0 { v0 };
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
     }
@@ -417,9 +431,9 @@ void glh::core::uniform::set_matrix ( const math::fmat3x4& v0 )
         /* convert to uniform-aligned matrix */
         math::ua_fmat3x4 ua_v0 { v0 };
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
     }
@@ -440,9 +454,9 @@ void glh::core::uniform::set_matrix ( const math::fmat4x2& v0 )
         /* convert to uniform-aligned matrix */
         math::ua_fmat4x2 ua_v0 { v0 };
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
     }
@@ -463,9 +477,9 @@ void glh::core::uniform::set_matrix ( const math::fmat4x3& v0 )
         /* convert to uniform-aligned matrix */
         math::ua_fmat4x3 ua_v0 { v0 };
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
     }
@@ -486,9 +500,9 @@ void glh::core::uniform::set_matrix ( const math::fmat4& v0 )
         /* convert to uniform-aligned matrix */
         math::ua_fmat4 ua_v0 { v0 };
         /* get ubo for bind point and throw if anything goes wrong, then set the value */
-        const int bind_point = prog.get_uniform_block_binding ( block_index );
-        if ( bind_point < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
-        object_pointer<ubo> bound_ubo = ubo::get_index_bound_ubo_pointer ( bind_point );
+        const int bind_index = prog.get_uniform_block_binding ( block_index );
+        if ( bind_index < 0 ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without it's block being bound to an index" };
+        auto bound_ubo = ubo::get_bound_ubo_index ( bind_index );
         if ( !bound_ubo ) throw exception::uniform_exception { "attempted to set value to uniform not in default block without a ubo being associated to its block's index" };
         bound_ubo->buffer_sub_data ( offset, sizeof ( ua_v0 ), ua_v0.internal_ptr () );
     }
@@ -523,13 +537,15 @@ bool glh::core::uniform::is_program_in_use () const
  * NOTE: the shader program remains valid even when linked shaders are destroyed
  */
 glh::core::program::program ( vshader& vs, gshader& gs, fshader& fs )
-    : object { minor_object_type::GLH_PROGRAM_TYPE }
-    , vertex_shader { vs }, geometry_shader { gs }, fragment_shader { fs }
+    : vertex_shader { vs }, geometry_shader { gs }, fragment_shader { fs }
     , has_geometry_shader { true }
     , uniforms { "", * this }, struct_uniforms { "", * this }
     , uniform_array_uniforms { "", * this }, struct_array_uniforms { "", * this }
     , uniform_2d_array_uniforms { "", * this }, struct_2d_array_uniforms { "", * this }
 {
+    /* generate program */
+    id = glCreateProgram ();
+
     /* check shaders are valid */
     if ( !vs.is_object_valid () || !gs.is_object_valid () || !fs.is_object_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
 }
@@ -541,15 +557,36 @@ glh::core::program::program ( vshader& vs, gshader& gs, fshader& fs )
  * NOTE: the shader program remains valid even when linked shaders are destroyed
  */
 glh::core::program::program ( vshader& vs, fshader& fs )
-    : object { minor_object_type::GLH_PROGRAM_TYPE }
-    , vertex_shader { vs }, fragment_shader { fs }
+    : vertex_shader { vs }, fragment_shader { fs }
     , has_geometry_shader { false }
     , uniforms { "", * this }, struct_uniforms { "", * this }
     , uniform_array_uniforms { "", * this }, struct_array_uniforms { "", * this }
     , uniform_2d_array_uniforms { "", * this }, struct_2d_array_uniforms { "", * this }
 {
+    /* generate program */
+    id = glCreateProgram ();
+
     /* check shaders are valid */
     if ( !vs.is_object_valid () || !fs.is_object_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
+}
+
+/* destructor */
+glh::core::program::~program ()
+{
+    /* destroy program */
+    glDeleteProgram ( id );
+}
+
+
+
+/* default bind the program */
+bool glh::core::program::bind () const
+{
+    /* if bound, return false, else bind and return true */
+    if ( bound_program == this ) return false;
+    glUseProgram ( id );
+    bound_program = const_cast<program *> ( this );
+    return true;
 }
 
 
@@ -590,6 +627,8 @@ void glh::core::program::link ()
         throw exception::shader_exception { "program linking failed" };
     }
 }
+
+
 
 /* compile_and_link
  *
@@ -794,3 +833,8 @@ GLint glh::core::program::get_uniform_block_binding ( const std::string& block_n
     /* get index and call overload */
     return get_uniform_block_binding ( get_uniform_block_index ( block_name ) );
 }
+
+
+
+/* the currently bound program */
+glh::core::object_pointer<glh::core::program> glh::core::program::bound_program {};

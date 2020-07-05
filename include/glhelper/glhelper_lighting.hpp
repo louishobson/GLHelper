@@ -37,7 +37,7 @@
  *     bool enabled;
  *     bool shadow_mapping_enabled;
  * 
- *     camera_struct shadow_camera;
+ *     mat4 shadow_trans;
  * 
  *     float shadow_bias;
  * };
@@ -57,8 +57,7 @@
  *     bool enabled;
  *     bool shadow_mapping_enabled;
  * 
- *     camera_struct shadow_camera;
- *     mat4 shadow_cube_matrices [ 6 ];
+ *     mat4 shadow_trans [ 6 ];
  * 
  *     float shadow_bias;
  *     float shadow_depth_range_mult;
@@ -83,7 +82,7 @@
  *     bool enabled;
  *     bool shadow_mapping_enabled;
  * 
- *     camera_struct shadow_camera;
+ *     mat4 shadow_trans;
  * 
  *     float shadow_bias;
  *     float shadow_depth_range_mult;
@@ -100,8 +99,7 @@
  * ambient/diffuse/specular_color: the colors of the different components of light produced (all types)
  * enabled: whether the light is 'turned on' (all types)
  * shadow_mapping_enabled: whether the light should be shadow mapped (all types)
- * shadow_camera: the camera used for shadow mapping (all types)
- * shadow_cube_matrices: six pre-combined matrices for projecting the six sides of the cubemap (pointlight only)
+ * shadow_trans: the transformation(s) used for shadow mapping (all types)
  * shadow_bias: the bias to apply when sampling from the shadow map
  * shadow_depth_range_mult: reciprocal the side length of the perspective frustum (only point and spot lights)
  * 
@@ -264,7 +262,7 @@ public:
              , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
              , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
              , const bool _enabled = true, const bool _shadow_mapping_enabled = true, const double _shadow_bias = 0.0 )
-        : direction { math::normalise ( _direction ) }
+        : direction { math::normalize ( _direction ) }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
         , shadow_region { _shadow_region }
         , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }, shadow_bias { _shadow_bias }
@@ -406,6 +404,7 @@ private:
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
         core::uniform& shadow_mapping_enabled_uni;
+        core::uniform& shadow_trans_uni;
         core::uniform& shadow_bias_uni;
     };
 
@@ -608,7 +607,7 @@ private:
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
         core::uniform& shadow_mapping_enabled_uni;
-        core::uniform_array_uniform& shadow_cube_matrices_uni;
+        core::uniform_array_uniform& shadow_trans_uni;
         core::uniform& shadow_bias_uni;
         core::uniform& shadow_depth_range_mult_uni;
     };
@@ -648,7 +647,7 @@ public:
               , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
               , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
               , const bool _enabled = true, const bool _shadow_mapping_enabled = true, const double _shadow_bias = 0.0 )
-        : position { _position }, direction { math::normalise ( _direction ) }
+        : position { _position }, direction { math::normalize ( _direction ) }
         , inner_cone { _inner_cone }, outer_cone { _outer_cone }, att_const { _att_const }, att_linear { _att_linear }, att_quad { _att_quad }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
         , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }, shadow_bias { _shadow_bias }
@@ -836,6 +835,7 @@ private:
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
         core::uniform& shadow_mapping_enabled_uni;
+        core::uniform& shadow_trans_uni;
         core::uniform& shadow_bias_uni;
         core::uniform& shadow_depth_range_mult_uni;
     };

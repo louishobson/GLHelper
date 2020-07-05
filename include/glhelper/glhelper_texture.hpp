@@ -298,12 +298,8 @@ public:
     /* full constructor
      *
      * set everything to defaults
-     * 
-     * _minor_type: the type of the texture
      */
-    texture_base ( const minor_object_type _minor_type )
-        : object { _minor_type }
-    {}
+    texture_base ();
     
     /* deleted copy constructor */
     texture_base ( const texture_base& other ) = delete;
@@ -314,8 +310,46 @@ public:
     /* deleted copy constructor */
     texture_base& operator= ( const texture_base& other ) = delete;
 
-    /* default virtual destructor */
-    virtual ~texture_base () = default;
+    /* virtual destructor */
+    virtual ~texture_base ();
+
+
+
+    /* using bind methods from base class */
+    using object::bind;
+    using object::unbind;
+    using object::is_bound;
+
+    /* bind/unbind to texture units */
+    bool bind ( const unsigned index ) const;
+    bool unbind ( const unsigned index ) const;
+    bool is_bound ( const unsigned index ) const;
+
+    /* get the currently bound texture */
+    static const object_pointer<texture_base>& get_bound_texture ( const unsigned index = 0 );
+
+
+
+    /* bind_loop
+     *
+     * this will keep looping around texture units, disincluding 0, and making subsequent binds to the next unit
+     * this avoids binding a texture to a unit already in use
+     * 
+     * returns the unit just bound to
+     */
+    unsigned bind_loop () const;
+
+    /* bind_loop_next
+     *
+     * return the next index of the bind loop without binding
+     */
+    unsigned bind_loop_next () const { return bind_loop_index; }
+
+    /* bind_loop_previous
+     *
+     * return the previous binding of the loop
+     */
+    unsigned bind_loop_previous () const;
 
 
 
@@ -361,68 +395,10 @@ public:
 
 
 
-    /* bind/unbind
-     *
-     * bind the texture to a texture unit
-     * 
-     * unit: the texture unit to bind to/unbind from
-     */
-    using object::bind;
-    bool bind ( const unsigned texture_unit ) const { return bind ( static_cast<object_bind_target> ( static_cast<unsigned> ( bind_target ) + texture_unit ) ); }
-
-    /* unbind
-     *
-     * unbind the texture from a texture unit
-     * 
-     * uniy: the texture unit to unbind from
-     */
-    using object::unbind;
-    bool unbind ( const unsigned texture_unit ) const { return unbind ( static_cast<object_bind_target> ( static_cast<unsigned> ( bind_target ) + texture_unit ) ); }
-
-    /* unbind_all
-     *
-     * unbind from all targets
-     * this includes all texture units
-     */
-    bool unbind_all () const;
-
-    /* is_bound
-     *
-     * check if is bound to a texture unit
-     * 
-     * unit: the texture unit to check if it is bound to
-     * 
-     * return: boolean for if the texture is bound to the unit supplied
-     */
-    using object::is_bound;
-    bool is_bound ( const unsigned texture_unit ) const { return is_bound ( static_cast<object_bind_target> ( static_cast<unsigned> ( bind_target ) + texture_unit ) ); }
-
-
-
-    /* bind_loop
-     *
-     * this will keep looping around texture units, disincluding 0, and making subsequent binds to the next unit
-     * this avoids binding a texture to a unit already in use
-     * 
-     * returns the unit just bound to
-     */
-    unsigned bind_loop () const;
-
-    /* bind_loop_next
-     *
-     * return the next index of the bind loop without binding
-     */
-    unsigned bind_loop_next () const { return bind_loop_index; }
-
-    /* bind_loop_previous
-     *
-     * return the previous binding of the loop
-     */
-    unsigned bind_loop_previous () const;
-
-
-
 protected:
+
+    /* currently bound textures */
+    static std::array<object_pointer<texture_base>, 80> bound_texture_indices;
 
     /* bind_loop_index
      *
@@ -449,23 +425,20 @@ public:
      * see tex_image for details
      */
     texture2d ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL )
-        : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE }
-        , is_immutable { false }
+        : is_immutable { false }
         { tex_image ( _width, _height, _internal_format, format, type, data ); }
     explicit texture2d ( const image& _image, const bool use_srgb = false )
-        : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE }
-        , is_immutable { false }
+        : is_immutable { false }
         { tex_image ( _image, use_srgb ); }
 
 
     /* zero-parameter constructor */
     texture2d ()
-        : texture_base { minor_object_type::GLH_TEXTURE2D_TYPE }
-        , width { 0 }, height { 0 }
+        : width { 0 }, height { 0 }
         , internal_format { GL_NONE }
         , has_alpha_component { false }
         , is_immutable { false }
-    {}
+    { bind (); }
 
     /* deleted copy constructor */
     texture2d ( const texture2d& other ) = delete;
@@ -481,13 +454,10 @@ public:
 
 
 
-    /* get_bound_object_pointer
-     *
-     * produce a pointer to the texture2d currently bound to a unit
-     */
-    using object::get_bound_object_pointer;
-    static object_pointer<texture2d> get_bound_object_pointer ( const unsigned unit = 0 )
-    { return get_bound_object_pointer<texture2d> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_0_TARGET ) + unit ) ); }
+    /* default bind/unbind the texture */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_texture_indices.at ( 0 ) == this; }
 
 
 
@@ -609,21 +579,18 @@ public:
      * see tex_image for details
      */
     texture2d_array ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL )
-        : texture_base { minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE }
-        , is_immutable { false }
+        : is_immutable { false }
         { tex_image ( _width, _height, _depth, _internal_format, format, type, data ); }
     explicit texture2d_array ( std::initializer_list<image> images, const bool use_srgb = false )
-        : texture_base { minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE }
-        , is_immutable { false }
+        : is_immutable { false }
         { tex_image ( images, use_srgb ); }
 
     /* zero=parameter constructor */
     texture2d_array ()
-        : texture_base { minor_object_type::GLH_TEXTURE2D_ARRAY_TYPE }
-        , width { 0 }, height { 0 }, depth { 0 }
+        : width { 0 }, height { 0 }, depth { 0 }
         , internal_format { GL_NONE }
         , is_immutable { false }
-    {}
+    { bind (); }
 
     /* deleted copy constructor */
     texture2d_array ( const texture2d_array& other ) = delete;
@@ -639,13 +606,10 @@ public:
 
 
 
-    /* get_bound_object_pointer
-     *
-     * produce a pointer to the texture2d_array currently bound to a unit
-     */
-    using object::get_bound_object_pointer;
-    static object_pointer<texture2d_array> get_bound_object_pointer ( const unsigned unit = 0 )
-    { return get_bound_object_pointer<texture2d_array> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_ARRAY_0_TARGET ) + unit ) ); }
+    /* default bind/unbind the texture */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_texture_indices.at ( 0 ) == this; }
 
 
 
@@ -759,19 +723,17 @@ public:
      * see tex_image for details
      */
     texture2d_multisample ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations = GL_TRUE )
-        : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE }
-        , is_immutable { false }
+        : is_immutable { false }
     { tex_image ( _width, _height, _samples, _internal_format, _fixed_sample_locations ); }
 
     /* zero-parameter constructor */
     texture2d_multisample ()
-        : texture_base { minor_object_type::GLH_TEXTURE2D_MULTISAMPLE_TYPE }
-        , width { 0 }, height { 0 }
+        : width { 0 }, height { 0 }
         , samples { 0 }
         , internal_format { GL_NONE }
         , fixed_sample_locations { GL_TRUE }
         , is_immutable { false }
-    {}
+    { bind (); }
 
     /* deleted copy constructor */
     texture2d_multisample ( const texture2d_multisample& other ) = delete;
@@ -784,13 +746,10 @@ public:
 
 
 
-    /* get_bound_object_pointer
-     *
-     * produce a pointer to the texture2d_multisample currently bound to a unit
-     */
-    using object::get_bound_object_pointer;
-    static object_pointer<texture2d_multisample> get_bound_object_pointer ( const unsigned unit = 0 )
-    { return get_bound_object_pointer<texture2d_multisample> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_TEXTURE2D_MULTISAMPLE_0_TARGET ) + unit ) ); }
+    /* default bind/unbind the texture */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_texture_indices.at ( 0 ) == this; }
 
 
 
@@ -885,25 +844,21 @@ public:
      * see tex_image for details
      */
     cubemap ( const unsigned _width, const unsigned _height, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL )
-        : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
-        , is_immutable { false }
+        : is_immutable { false }
         { tex_image ( _width, _height, _internal_format, format, type, data ); }
     explicit cubemap ( const image& _image, const bool use_srgb = false )
-        : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
-        , is_immutable { false }
+        : is_immutable { false }
         { tex_image ( _image, use_srgb ); }
     explicit cubemap ( std::initializer_list<image> images, const bool use_srgb = false )
-        : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
-        , is_immutable { false }
+        : is_immutable { false }
         { tex_image ( images, use_srgb ); }
 
     /* zero-parameter constructor */
     cubemap ()
-        : texture_base { minor_object_type::GLH_CUBEMAP_TYPE }
-        , width { 0 }, height { 0 }
+        : width { 0 }, height { 0 }
         , internal_format { GL_NONE }
         , is_immutable { false }
-    {}
+    { bind (); }
 
     /* deleted copy constructor */
     cubemap ( const cubemap& other ) = delete;
@@ -919,13 +874,10 @@ public:
 
 
 
-    /* get_bound_object_pointer
-     *
-     * produce a pointer to the cubemap currently bound to a unit
-     */
-    using object::get_bound_object_pointer;
-    static object_pointer<cubemap> get_bound_object_pointer ( const unsigned unit = 0 )
-    { return get_bound_object_pointer<cubemap> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_0_TARGET ) + unit ) ); }
+    /* default bind/unbind the texture */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_texture_indices.at ( 0 ) == this; }
 
 
 
@@ -1063,21 +1015,18 @@ public:
      * see tex_image for details
      */
     cubemap_array ( const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL )
-        : texture_base { minor_object_type::GLH_CUBEMAP_ARRAY_TYPE }
-        , is_immutable { false }
+        : is_immutable { false }
         { tex_image ( _width, _height, _depth, _internal_format, format, type, data ); }
     explicit cubemap_array ( std::initializer_list<image> images, const bool use_srgb = false )
-        : texture_base { minor_object_type::GLH_CUBEMAP_ARRAY_TYPE }
-        , is_immutable { false }
+        : is_immutable { false }
         { tex_image ( images, use_srgb ); }
 
     /* zero-parameter constructor */
     cubemap_array ()
-        : texture_base { minor_object_type::GLH_CUBEMAP_ARRAY_TYPE }
-        , width { 0 }, height { 0 }, depth { 0 }
+        : width { 0 }, height { 0 }, depth { 0 }
         , internal_format { GL_NONE }
         , is_immutable { false }
-    {}
+    { bind (); }
 
     /* deleted copy constructor */
     cubemap_array ( const cubemap_array& other ) = delete;
@@ -1093,13 +1042,10 @@ public:
 
 
 
-    /* get_bound_object_pointer
-     *
-     * produce a pointer to the cubemap array currently bound to a unit
-     */
-    using object::get_bound_object_pointer;
-    static object_pointer<cubemap_array> get_bound_object_pointer ( const unsigned unit = 0 )
-    { return get_bound_object_pointer<cubemap_array> ( static_cast<object_bind_target> ( static_cast<unsigned> ( object_bind_target::GLH_CUBEMAP_ARRAY_0_TARGET ) + unit ) ); }
+    /* default bind/unbind the texture */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_texture_indices.at ( 0 ) == this; }
 
 
 

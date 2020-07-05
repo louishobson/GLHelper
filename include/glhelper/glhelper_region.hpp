@@ -214,8 +214,8 @@ template<unsigned M, class T0, class T1> inline glh::region::uniform_region<M, g
     const auto difference = rhs.centre - lhs.centre;
     const auto distance = math::modulus ( difference );
 
-    /* normalise difference */
-    const auto norm_difference = math::normalise ( difference );
+    /* normalize difference */
+    const auto norm_difference = math::normalize ( difference );
 
     /* create the new region and return it */
     return uniform_region<M, meta::pat_t<T0, T1>>

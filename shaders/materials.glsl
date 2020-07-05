@@ -38,6 +38,7 @@ struct material_struct
     texture_stack_struct ambient_stack;
     texture_stack_struct diffuse_stack;
     texture_stack_struct specular_stack;
+    texture_stack_struct normal_stack;
 
     int blending_mode;
 
@@ -106,4 +107,23 @@ bool evaluate_stack_transparency ( const texture_stack_struct stack, const vec3 
      * if has no textures, return false
      * if has texture, return true if alpha is less than 1.0 */
     return ( stack.base_color.a < transparency_cutoff || ( stack.stack_size != 0 && texture ( stack.textures, vec3 ( texcoords [ stack.levels [ 0 ].uvwsrc ].xy, 0 ) ).a < transparency_cutoff ) );
+}
+
+/* evaluate_normal
+ *
+ * calculate the new normal from a normal map, doing nothing if one is not present
+ *
+ * stack: the normal stack
+ * texcoords: array of texture coords for the fragment
+ * tbn_matrix: the TBN matrix to use to transform the normal, if map is present
+ *
+ * return: the new normal, or the original if no map is present
+ */
+vec3 evaluate_normal ( const texture_stack_struct stack, const vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ], const mat3 tbn_matrix )
+{
+    /* if no normal map, return origninal normal */
+    if ( stack.stack_size == 0 ) return tbn_matrix [ 2 ];
+
+    /* else sample the map and return the transformed normal */
+    return tbn_matrix * normalize ( ( evaluate_stack ( stack, texcoords ).xyz * 2.0 - 1.0 ) );
 }

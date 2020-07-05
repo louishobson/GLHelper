@@ -115,10 +115,11 @@
  * 
  * VERTEX ATTTRIBUTES
  * 
- * 0  : vec3    : vertices
- * 1  : vec3    : normals
- * 2  : vec4    : vertex colors
- * 2+x: vec3[x] : UV channels of texture coordinates
+ * 0 : vec3    : vertex
+ * 1 : vec3    : normal
+ * 2 : vec3    : tangent
+ * 3 : vec4    : vertex color
+ * 4 : vec3[x] : UV channels of texture coordinates
  * 
  * the number of UV channels is defined by GLH_MODEL_MAX_TEXTURE_STACK_SIZE
  * 
@@ -295,6 +296,9 @@ struct glh::model::vertex
     /* normal vector */
     math::fvec3 normal;
 
+    /* tangent vector */
+    math::fvec3 tangent;
+
     /* vertex color */
     math::fvec4 vcolor;
 
@@ -373,6 +377,7 @@ struct glh::model::material
     texture_stack ambient_stack;
     texture_stack diffuse_stack;
     texture_stack specular_stack;
+    texture_stack normal_stack;
 
     /* blend mode
      * 
@@ -757,15 +762,19 @@ private:
         core::uniform& ambient_stack_size_uni;
         core::uniform& diffuse_stack_size_uni;
         core::uniform& specular_stack_size_uni;
+        core::uniform& normal_stack_size_uni;
         core::uniform& ambient_stack_base_color_uni;
         core::uniform& diffuse_stack_base_color_uni;
         core::uniform& specular_stack_base_color_uni;
+        core::uniform& normal_stack_base_color_uni;
         core::struct_array_uniform& ambient_stack_levels_uni; 
         core::struct_array_uniform& diffuse_stack_levels_uni; 
         core::struct_array_uniform& specular_stack_levels_uni;
+        core::struct_array_uniform& normal_stack_levels_uni;
         core::uniform& ambient_stack_textures_uni;
         core::uniform& diffuse_stack_textures_uni;
         core::uniform& specular_stack_textures_uni;
+        core::uniform& normal_stack_textures_uni;
         core::uniform& blending_mode_uni;
         core::uniform& shininess_uni;
         core::uniform& shininess_strength_uni;
@@ -854,12 +863,12 @@ private:
      * _texture_stack: the texture stack to configure
      * aimaterial: the material to get the texture stack from
      * aitexturetype: the type of texture to add
-     * base_color/__bgtype/__bgidx: the AI_MATKEY macro for the base color
+     * base_color: base color of the texture, as recieved by assimp
      * use_srgb: true if colors should be gamma corrected
      * 
      * return: the texture_stack just added
      */
-    texture_stack& add_texture_stack ( texture_stack& _texture_stack, const aiMaterial& aimaterial, const aiTextureType aitexturetype, const char * base_color, const unsigned int __bgtype, const unsigned int __bgidx, const bool use_srgb );
+    texture_stack& add_texture_stack ( texture_stack& _texture_stack, const aiMaterial& aimaterial, const aiTextureType aitexturetype, const math::fvec3 base_color, const bool use_srgb );
 
     /* add_image
      *

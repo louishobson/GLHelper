@@ -55,9 +55,6 @@ void glh::camera::camera_base::apply () const
     cached_uniforms->view_uni.set_matrix ( view );
     cached_uniforms->proj_uni.set_matrix ( proj );
     cached_uniforms->view_proj_uni.set_matrix ( view_proj );
-    cached_uniforms->view_inverse_uni.set_matrix ( view_inverse );
-    cached_uniforms->proj_inverse_uni.set_matrix ( proj_inverse );
-    cached_uniforms->view_proj_inverse_uni.set_matrix ( view_proj_inverse );
     cached_uniforms->viewpos_uni.set_vector ( viewpos );
 }
 
@@ -76,9 +73,6 @@ void glh::camera::camera_base::cache_uniforms ( core::struct_uniform& camera_uni
             camera_uni.get_uniform ( "view" ),
             camera_uni.get_uniform ( "proj" ),
             camera_uni.get_uniform ( "view_proj" ),
-            camera_uni.get_uniform ( "view_inverse" ),
-            camera_uni.get_uniform ( "proj_inverse" ),
-            camera_uni.get_uniform ( "view_proj_inverse" ),
             camera_uni.get_uniform ( "viewpos" )
         } );
     }
@@ -130,22 +124,19 @@ void glh::camera::camera_base::update_parameters () const
     if ( view_change )
     {
         view = create_view ();
-        view_inverse = math::inverse ( view );
-        viewpos = math::vec3 { view_inverse * math::vec4 { 0.0, 0.0, 0.0, 1.0 } };
+        viewpos = math::vec3 { math::inverse ( view ) * math::vec4 { 0.0, 0.0, 0.0, 1.0 } };
     }
 
     /* if any change to proj matrix, update related parameters */
     if ( proj_change )
     {
         proj = create_proj ();
-        proj_inverse = math::inverse ( proj );
     }
 
     /* if any change to either, update view_proj parameters */
     if ( view_change || proj_change )
     {
         view_proj = proj * view;
-        view_proj_inverse = math::inverse ( view_proj );
     }
 
     view_change = false;
@@ -172,8 +163,8 @@ glh::camera::camera_movement::camera_movement ( const math::vec3& _position, con
     , restrictive_mode { false }
 {
     /* set x, y, z, restrict_x, restrict_y and restrict_z */
-    z = math::normalise ( - _direction );
-    x = math::cross ( math::normalise ( _world_y ), z );
+    z = math::normalize ( - _direction );
+    x = math::cross ( math::normalize ( _world_y ), z );
     y = math::cross ( z, x );
     restrict_x = x;
     restrict_y = y;
@@ -343,11 +334,11 @@ const glh::math::vec3& glh::camera::camera_movement::roll ( const double arg )
 void glh::camera::camera_movement::set_direction ( const math::vec3& direction, const math::vec3& world_y )
 {
     /* set z */
-    z = math::normalise ( -direction );
+    z = math::normalize ( -direction );
     restrict_z = z;
 
     /* find x from cross product */
-    x = math::cross ( math::normalise ( world_y ), z );
+    x = math::cross ( math::normalize ( world_y ), z );
     restrict_x = x;
 
     /* find y from cross product again */

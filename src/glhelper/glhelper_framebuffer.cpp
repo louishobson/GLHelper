@@ -30,22 +30,152 @@
  * _samples: the number of samples the renderbuffer should contain defaults to 0, (meaning no multisampling)
  */
 glh::core::rbo::rbo ( const unsigned _width, const unsigned _height, const GLenum _format, const unsigned _samples )
-    : object { minor_object_type::GLH_RBO_TYPE }
-    , width { _width }
+    : width { _width }
     , height { _height }
     , format { _format }
     , samples { _samples }
 {
+    /* generate rbo */
+    glGenRenderbuffers ( 1, &id );
+
     /* bind, set the storage, unbind */
     const bool binding_change = bind ();
-    if ( samples == 0 ) glRenderbufferStorage ( opengl_bind_target, format, width, height );
-    else glRenderbufferStorageMultisample ( opengl_bind_target, samples, format, width, height );
+    if ( samples == 0 ) glNamedRenderbufferStorage ( id, format, width, height );
+    else glNamedRenderbufferStorageMultisample ( id, samples, format, width, height );
     if ( binding_change ) unbind ();
+}
+
+/* destructor */
+glh::core::rbo::~rbo ()
+{
+    /* destroy object */
+    if ( id != 0 ) glDeleteRenderbuffers ( 1, &id );
 }
 
 
 
+/* default bind/unbind the rbo */
+bool glh::core::rbo::bind () const
+{
+    /* if already bound, return false, else bind and return true */
+    if ( bound_rbo == this ) return false;
+    glBindRenderbuffer ( GL_RENDERBUFFER, id );
+    bound_rbo = const_cast<rbo *> ( this );
+    return false;
+}
+bool glh::core::rbo::unbind () const
+{
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_rbo != this ) return false;
+    glBindRenderbuffer ( GL_RENDERBUFFER, 0 );
+    bound_rbo = NULL;
+    return false;
+}
+
+
+
+/* the currently bound rbo */
+glh::core::object_pointer<glh::core::rbo> glh::core::rbo::bound_rbo {};
+
+
+
 /* FBO IMPLEMENTATION */
+
+/* zero-parameter constructor
+*
+* construct empty framebuffer
+*/
+glh::core::fbo::fbo ()
+{
+    /* generate fbo */
+    glCreateFramebuffers ( 1, &id );
+}
+
+/* destructor */
+glh::core::fbo::~fbo ()
+{
+    /* destroy fbo */
+    glDeleteFramebuffers ( 1, &id );
+}
+
+
+
+/* default bind/unbind the fbo
+ *
+ * equivalent to binding/unbinding from read and draw targets simultaneously
+ */
+bool glh::core::fbo::bind () const
+{
+    /* if bound, return false, else bind and return true */
+    if ( bound_read_fbo == this && bound_draw_fbo == this ) return false;
+    glBindFramebuffer ( GL_FRAMEBUFFER, id );
+    bound_read_fbo = const_cast<fbo *> ( this );
+    bound_draw_fbo = const_cast<fbo *> ( this );
+    return true;
+}
+bool glh::core::fbo::unbind () const
+{
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_read_fbo != this && bound_draw_fbo != this ) return false;
+    glBindFramebuffer ( GL_FRAMEBUFFER, 0 );
+    bound_read_fbo = NULL;
+    bound_draw_fbo = NULL;
+    return true;
+}
+
+/* bind to read/draw targets separately */
+bool glh::core::fbo::bind_read () const
+{
+    /* if bound, return false, else bind and return true */
+    if ( bound_read_fbo == this ) return false;
+    glBindFramebuffer ( GL_READ_FRAMEBUFFER, id );
+    bound_read_fbo = const_cast<fbo *> ( this );
+    return true;
+}
+bool glh::core::fbo::bind_draw () const
+{
+    /* if bound, return false, else bind and return true */
+    if ( bound_draw_fbo == this ) return false;
+    glBindFramebuffer ( GL_DRAW_FRAMEBUFFER, id );
+    bound_draw_fbo = const_cast<fbo *> ( this );
+    return true;
+}
+
+/* unbind from read/draw targets */
+bool glh::core::fbo::unbind_read () const
+{
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_read_fbo != this ) return false;
+    glBindFramebuffer ( GL_READ_FRAMEBUFFER, 0 );
+    bound_read_fbo = NULL;
+    return true;
+}
+bool glh::core::fbo::unbind_draw () const
+{
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_draw_fbo != this ) return false;
+    glBindFramebuffer ( GL_DRAW_FRAMEBUFFER, 0 );
+    bound_draw_fbo = NULL;
+    return true;
+}
+
+/* bind the default framebuffer set up by the window manager */
+bool glh::core::fbo::bind_default_framebuffer ()
+{
+    /* if bound, return false, else bind and return true */
+    if ( bound_read_fbo.internal_id () == 0 && bound_draw_fbo.internal_id () == 0 ) return false;
+    glBindFramebuffer ( GL_FRAMEBUFFER, 0 );
+    bound_read_fbo = NULL;
+    bound_draw_fbo = NULL;
+    return true;
+}
+bool glh::core::fbo::is_default_framebuffer_bound ()
+{
+    /* return true if bound framebuffer has internal id of 0 */
+    return bound_read_fbo.internal_id () == 0 && bound_draw_fbo.internal_id () == 0;
+}
+
+
 
 /* attach_texture
  *
@@ -57,14 +187,8 @@ glh::core::rbo::rbo ( const unsigned _width, const unsigned _height, const GLenu
  */
 void glh::core::fbo::attach_texture ( const texture_base& texture, const GLenum attachment, const GLint mipmap )
 {
-    /* bind the fbo */
-    const bool binding_change = bind ();
-
     /* attach the texture */
-    glFramebufferTexture ( opengl_bind_target, attachment, texture.internal_id (), mipmap );
-
-    /* unbind fbo */
-    if ( binding_change ) unbind ();
+    glNamedFramebufferTexture ( id, attachment, texture.internal_id (), mipmap );
 }
 
 
@@ -78,14 +202,14 @@ void glh::core::fbo::attach_texture ( const texture_base& texture, const GLenum 
  */
 void glh::core::fbo::attach_rbo ( const rbo& _rbo, const GLenum attachment )
 {
-    /* bind the fb */
-    const bool binding_change = bind ();
+    /* bind the rbo */
+    const bool binding_change = _rbo.bind ();
 
     /* attach the rbo */
-    glFramebufferRenderbuffer ( opengl_bind_target, attachment, _rbo.get_opengl_bind_taregt (), _rbo.internal_id () );
+    glNamedFramebufferRenderbuffer ( id, attachment, GL_RENDERBUFFER, _rbo.internal_id () );
 
-    /* unbind fbo */
-    if ( binding_change ) unbind ();
+    /* unbind rbo */
+    if ( binding_change ) _rbo.unbind ();
 }
 
 /* is_complete
@@ -94,11 +218,8 @@ void glh::core::fbo::attach_rbo ( const rbo& _rbo, const GLenum attachment )
  */
 bool glh::core::fbo::is_complete () const
 {
-    /* bind, check if is complete, unbind and return */
-    const bool binding_change = bind ();
-    const bool complete = ( glCheckFramebufferStatus ( opengl_bind_target ) == GL_FRAMEBUFFER_COMPLETE );
-    if ( binding_change ) unbind ();
-    return complete;
+    /* return completeness */
+    return glCheckNamedFramebufferStatus ( id, GL_FRAMEBUFFER ) == GL_FRAMEBUFFER_COMPLETE;
 }
 
 
@@ -112,17 +233,13 @@ bool glh::core::fbo::is_complete () const
  */
 void glh::core::fbo::draw_buffer ( const GLenum buff )
 {
-    /* bind, set option, unbind */
-    const bool binding_change = bind ();
-    glDrawBuffer ( buff );
-    if ( binding_change ) unbind ();
+    /* set option */
+    glNamedFramebufferDrawBuffer ( id, buff );
 }
 void glh::core::fbo::read_buffer ( const GLenum buff )
 {
-    /* bind, set option, unbind */
-    const bool binding_change = bind ();
-    glReadBuffer ( buff );
-    if ( binding_change ) unbind ();
+    /* set option */
+    glNamedFramebufferReadBuffer ( id, buff );
 }
 
 
@@ -140,14 +257,12 @@ void glh::core::fbo::read_buffer ( const GLenum buff )
 void glh::core::fbo::blit_copy ( const fbo& other, const unsigned srcx0, const unsigned srcy0, const unsigned srcx1, const unsigned srcy1, 
                                  const unsigned dstx0, const unsigned dsty0, const unsigned dstx1, const unsigned dsty1, const GLbitfield copy_mask, const GLenum filter )
 {
-    /* bind both framebuffers */
-    const bool read_binding_change = other.bind_read ();
-    const bool draw_binding_change = bind_draw ();
-
     /* copy data */
-    glBlitFramebuffer ( srcx0, srcy0, srcx1, srcy1, dstx0, dsty0, dstx1, dsty1, copy_mask, filter );
-
-    /* unbind both framebuffers */
-    if ( draw_binding_change ) unbind_draw ();
-    if ( read_binding_change ) other.unbind_read ();
+    glBlitNamedFramebuffer ( other.internal_id (), id, srcx0, srcy0, srcx1, srcy1, dstx0, dsty0, dstx1, dsty1, copy_mask, filter );
 }
+
+
+
+/* bound read/draw fbos */
+glh::core::object_pointer<glh::core::fbo> glh::core::fbo::bound_read_fbo {};
+glh::core::object_pointer<glh::core::fbo> glh::core::fbo::bound_draw_fbo {};

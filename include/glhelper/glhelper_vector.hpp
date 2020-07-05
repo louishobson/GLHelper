@@ -27,7 +27,7 @@
  * DOT: dot/scalar product of two vectors of the same dimension
  * CROSS: cross product of two 3d vectors
  * MODULUS: find the modulus (length) of a vector
- * NORMALISE: normalise a vector (to create a normal vector of the same size)
+ * NORMALISE: normalize a vector (to create a normal vector of the same size)
  * ANGLE: find the angle between two vectors
  * 
  * 
@@ -145,11 +145,11 @@ namespace glh
          */
         template<unsigned M, class T> T square_modulus ( const vector<M, T>& vec );
 
-        /* normalise
+        /* normalize
          *
          * convert to a unit vector
          */
-        template<unsigned M, class T> vector<M, T> normalise ( const vector<M, T>& vec );
+        template<unsigned M, class T> vector<M, T> normalize ( const vector<M, T>& vec );
 
         /* angle
          *
@@ -590,11 +590,11 @@ template<unsigned M, class T> inline T glh::math::square_modulus ( const vector<
     return mod;
 }
 
-/* normalise
+/* normalize
  *
  * convert to a unit vector
  */
-template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::normalise ( const vector<M, T>& vec )
+template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::normalize ( const vector<M, T>& vec )
 {
     /* return the vector divided by its modulus */
     return vec / modulus ( vec );
@@ -661,11 +661,11 @@ template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::any_perp
      * if we let y = 1
      * x = -(b/a) 
      * 
-     * then return the normalised vector
+     * then return the normalized vector
      */
     if ( lhs.at ( 0 ) == 0.0 ) return vector<M, T> { 1.0 };
     if ( lhs.at ( 1 ) == 0.0 ) return vector<M, T> { 0.0, 1.0 };
-    return normalise ( vector<M, T> { - ( lhs.at ( 1 ) / lhs.at ( 0 ) ), 1.0 } );
+    return normalize ( vector<M, T> { - ( lhs.at ( 1 ) / lhs.at ( 0 ) ), 1.0 } );
 }
 
 

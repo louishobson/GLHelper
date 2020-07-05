@@ -960,7 +960,7 @@ inline glh::math::mat4 glh::math::look_at ( const vec3& p, const vec3& t, const 
      * if ( z.wup < 1.0 ) X = norm ( wup x z ) else X = fbx
      * y = z x X
      */
-    const vec3 z = normalise ( t - p );
+    const vec3 z = normalize ( t - p );
     const vec3 x = ( std::abs ( dot ( z, wup ) ) < 1.0 ? cross ( wup, z ) : fbx );
     const vec3 y = cross ( z, x );
     /* return the camera matrix */
