@@ -166,6 +166,13 @@ glh::core::texture_base::texture_base ()
     glGenTextures ( 1, &id );
 }
 
+/* destructor */
+glh::core::texture_base::~texture_base ()
+{
+    /* destroy texture */
+    glDeleteTextures ( 1, &id );
+}
+
 
 
 /* bind/unbind to texture units */

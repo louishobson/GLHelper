@@ -310,8 +310,8 @@ public:
     /* deleted copy constructor */
     texture_base& operator= ( const texture_base& other ) = delete;
 
-    /* default virtual destructor */
-    virtual ~texture_base () = default;
+    /* virtual destructor */
+    virtual ~texture_base ();
 
 
 

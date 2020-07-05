@@ -72,6 +72,17 @@ glh::core::shader::shader ( const GLenum type, std::initializer_list<std::string
     }
 }
 
+
+
+/* destructor */
+glh::core::shader::~shader ()
+{
+    /* destroy shader */
+    glDeleteShader ( id );
+}
+
+
+
 /* compile
  * 
  * compiles the shader
@@ -557,6 +568,13 @@ glh::core::program::program ( vshader& vs, fshader& fs )
 
     /* check shaders are valid */
     if ( !vs.is_object_valid () || !fs.is_object_valid () ) throw exception::shader_exception { "cannot create shader program from invalid shaders" };
+}
+
+/* destructor */
+glh::core::program::~program ()
+{
+    /* destroy program */
+    glDeleteProgram ( id );
 }
 
 

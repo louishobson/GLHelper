@@ -104,8 +104,8 @@ public:
     /* deleted copy assignment operator */
     rbo& operator= ( const rbo& other ) = delete;
 
-    /* default estructor */
-    ~rbo () = default;
+    /* destructor */
+    ~rbo ();
 
 
 
@@ -176,8 +176,8 @@ public:
     /* deleted copy assignment operator */
     fbo& operator= ( const fbo& other ) = delete;
 
-    /* default destructor */
-    ~fbo () = default;
+    /* destructor */
+    ~fbo ();
 
 
 

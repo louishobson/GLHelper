@@ -45,6 +45,15 @@ glh::core::rbo::rbo ( const unsigned _width, const unsigned _height, const GLenu
     if ( binding_change ) unbind ();
 }
 
+/* destructor */
+glh::core::rbo::~rbo ()
+{
+    /* destroy object */
+    if ( id != 0 ) glDeleteRenderbuffers ( 1, &id );
+}
+
+
+
 /* default bind/unbind the rbo */
 bool glh::core::rbo::bind () const
 {
@@ -81,6 +90,15 @@ glh::core::fbo::fbo ()
     /* generate fbo */
     glCreateFramebuffers ( 1, &id );
 }
+
+/* destructor */
+glh::core::fbo::~fbo ()
+{
+    /* destroy fbo */
+    glDeleteFramebuffers ( 1, &id );
+}
+
+
 
 /* default bind/unbind the fbo
  *
