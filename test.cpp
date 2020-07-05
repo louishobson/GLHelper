@@ -140,7 +140,7 @@ int main ()
     /* SET UP LIGHT SYSTEM */
 
     /* create light system */
-    glh::lighting::light_system light_system { 2048 };
+    glh::lighting::light_system light_system { 4096 };
 
     /* add directional light */
     light_system.add_dirlight
