@@ -176,7 +176,8 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
 
         /* add specular component */
         //base_color += pow ( specular_constant, shininess ) * shininess_strength * shadow_constant * light_system.dirlights [ i ].specular_color * specular_color;
-        base_color += pow ( max ( dot ( normal, normalize ( viewdir - light_system.dirlights [ i ].direction ) ), 0.0 ), shininess ) * shininess_strength * shadow_constant * light_system.dirlights [ i ].specular_color * specular_color;
+        //base_color += pow ( max ( dot ( normal, normalize ( viewdir - light_system.dirlights [ i ].direction ) ), 0.0 ), shininess ) * shininess_strength * shadow_constant * light_system.dirlights [ i ].specular_color * specular_color;
+        base_color += pow ( max ( dot ( normal, normalize ( viewdir - light_system.dirlights [ i ].direction ) ), 0.0 ), 256.0 ) * 0.75 * light_system.dirlights [ i ].specular_color;
     }
 
     /* iterate through point lighting */
