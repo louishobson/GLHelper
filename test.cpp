@@ -135,6 +135,21 @@ int main ()
         island_matrix
     };
 
+    /* import box model */
+    const glh::math::mat4 box_matrix =
+    glh::math::enlarge3d
+    (
+        glh::math::identity<4, GLdouble> (),
+        30.0
+    );
+    glh::model::model box { "assets/box", "scene.gltf", 
+        glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
+        glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
+        glh::model::import_flags::GLH_FLIP_V_TEXTURES |
+        glh::model::import_flags::GLH_PRETRANSFORM_VERTICES,
+        box_matrix
+    };
+
 
 
     /* SET UP LIGHT SYSTEM */
@@ -145,12 +160,12 @@ int main ()
     /* add directional light */
     light_system.add_dirlight
     (
-        glh::math::vec3 { 0.0, -1.0, 1.0 },
+        glh::math::vec3 { 1.0, 0.0, 0.0 },
         glh::math::vec3 { 0.4 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        false, true, 0.035
+        true, false, 0.035
     );
 
     /* add point light */
@@ -173,7 +188,7 @@ int main ()
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        true, true, 0.005
+        false, true, 0.005
     );
 
 
@@ -264,8 +279,10 @@ int main ()
             light_system.bind_shadow_maps_2d_fbo ();
             glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
             shadow_shadow_mode_uni.set_int ( 0 );
-            island.cache_material_uniforms ( shadow_material_uni );
-            island.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+            //island.cache_material_uniforms ( shadow_material_uni );
+            //island.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+            box.cache_material_uniforms ( shadow_material_uni );
+            box.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
         }
 
         /* create cube shadow maps */
@@ -274,13 +291,15 @@ int main ()
             light_system.bind_shadow_maps_cube_fbo ();
             glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
             shadow_shadow_mode_uni.set_int ( 1 );
-            island.cache_material_uniforms ( shadow_material_uni );
-            island.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+            //island.cache_material_uniforms ( shadow_material_uni );
+            //island.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+            box.cache_material_uniforms ( shadow_material_uni );
+            box.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
         }
 
 
 
-        /* render the island to the default framebuffer */
+        /* render models to the default framebuffer */
 
         /* bind the default framebuffer and resize the viewport */
         window.bind_framebuffer ();
@@ -298,14 +317,17 @@ int main ()
         glh::core::renderer::disable_blend ();
         glh::core::renderer::set_depth_mask ( GL_TRUE );
         glh::core::renderer::clear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-        island.cache_material_uniforms ( model_material_uni );
-        island.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+        //island.cache_material_uniforms ( model_material_uni );
+        //island.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+        box.cache_material_uniforms ( model_material_uni );
+        box.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
        
         /* render transparent */
         model_transparent_mode_uni.set_int ( 1 );
         glh::core::renderer::enable_blend ();
         glh::core::renderer::set_depth_mask ( GL_FALSE );
-        island.render ( glh::model::render_flags::GLH_TRANSPARENT_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+        //island.render ( glh::model::render_flags::GLH_TRANSPARENT_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+        box.render ( glh::model::render_flags::GLH_TRANSPARENT_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
         
 
 
