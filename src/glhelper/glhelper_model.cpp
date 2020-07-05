@@ -451,16 +451,22 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
     _mesh.vertices.resize ( _mesh.num_vertices );
     for ( unsigned i = 0; i < aimesh.mNumVertices; ++i )
     {
-        /* add vertices and normals */
+        /* add vertex position, normal and tangent */
         _mesh.vertices.at ( i ).position = cast_vector ( aimesh.mVertices [ i ] );
         _mesh.vertices.at ( i ).normal = cast_vector ( aimesh.mNormals [ i ] );
+        _mesh.vertices.at ( i ).tangent = cast_vector ( aimesh.mTangents [ i ] );
 
         /* transform them if pretransform is set */
         if ( model_import_flags & import_flags::GLH_PRETRANSFORM_VERTICES )
         {
             _mesh.vertices.at ( i ).position = math::vec3 ( pretransform_matrix * math::vec4 ( _mesh.vertices.at ( i ).position, 1.0 ) );
-            _mesh.vertices.at ( i ).normal = math::normalise ( pretransform_normal_matrix * _mesh.vertices.at ( i ).normal );
+            _mesh.vertices.at ( i ).normal = pretransform_normal_matrix * _mesh.vertices.at ( i ).normal;
+            _mesh.vertices.at ( i ).tangent = pretransform_normal_matrix * _mesh.vertices.at ( i ).tangent;
         }
+
+        /* use Gram-Schmidt process to re-orthogonalize the normal and tangent vectors */
+        _mesh.vertices.at ( i ).normal = math::normalise ( _mesh.vertices.at ( i ).normal );
+        _mesh.vertices.at ( i ).tangent = math::normalise ( _mesh.vertices.at ( i ).tangent - ( math::dot ( _mesh.vertices.at ( i ).normal, _mesh.vertices.at ( i ).tangent ) * _mesh.vertices.at ( i ).normal ) );
 
         /* set vertex colors */
         _mesh.vertices.at ( i ).vcolor = ( has_vcolors ? cast_vector ( aimesh.mColors [ 0 ][ i ] ) : math::fvec4 ( 1.0 ) );
@@ -494,9 +500,10 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
     /* configure the vao */
     _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 0 * sizeof ( GLfloat ));
     _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 3 * sizeof ( GLfloat ) );
-    _mesh.array_object.set_vertex_attrib ( 2, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 6 * sizeof ( GLfloat ) );
+    _mesh.array_object.set_vertex_attrib ( 2, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 6 * sizeof ( GLfloat ) );
+    _mesh.array_object.set_vertex_attrib ( 3, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 9 * sizeof ( GLfloat ) );
     for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
-        _mesh.array_object.set_vertex_attrib ( 3 + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 10 + i * 3 ) * sizeof ( GLfloat ) );
+        _mesh.array_object.set_vertex_attrib ( 4 + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 13 + i * 3 ) * sizeof ( GLfloat ) );
     _mesh.array_object.bind_ebo ( _mesh.index_data );
 
 

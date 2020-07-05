@@ -115,10 +115,11 @@
  * 
  * VERTEX ATTTRIBUTES
  * 
- * 0  : vec3    : vertices
- * 1  : vec3    : normals
- * 2  : vec4    : vertex colors
- * 2+x: vec3[x] : UV channels of texture coordinates
+ * 0 : vec3    : vertex
+ * 1 : vec3    : normal
+ * 2 : vec3    : tangent
+ * 3 : vec4    : vertex color
+ * 4 : vec3[x] : UV channels of texture coordinates
  * 
  * the number of UV channels is defined by GLH_MODEL_MAX_TEXTURE_STACK_SIZE
  * 
@@ -294,6 +295,9 @@ struct glh::model::vertex
 
     /* normal vector */
     math::fvec3 normal;
+
+    /* tangent vector */
+    math::fvec3 tangent;
 
     /* vertex color */
     math::fvec4 vcolor;
