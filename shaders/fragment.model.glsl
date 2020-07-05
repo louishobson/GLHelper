@@ -8,11 +8,11 @@
 
 /* INPUT AND OUTPUT */
 
-/* input fragpos, normal, vcolor and texcoords */
+/* input fragpos, tbn_matrix, vcolor and texcoords */
 in VS_OUT
 {
     vec3 fragpos;
-    vec3 normal;
+    mat3 tbn_matrix;
     vec4 vcolor;
     vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ];
 } vs_out;
@@ -63,7 +63,7 @@ void main ()
     /* calculate lighting color */
     fragcolor = vec4
     (
-        compute_lighting ( ambient.xyz, diffuse.xyz, specular.xyz, material.shininess, material.shininess_strength, vs_out.fragpos, camera.viewpos, vs_out.normal, light_system ),
+        compute_lighting ( ambient.xyz, diffuse.xyz, specular.xyz, material.shininess, material.shininess_strength, vs_out.fragpos, camera.viewpos, vs_out.tbn_matrix [ 2 ], light_system ),
         diffuse.a * material.opacity
     );
 }
