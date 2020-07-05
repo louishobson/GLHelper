@@ -156,28 +156,60 @@ void glh::core::image::resize ( const unsigned new_width, const unsigned new_hei
 
 /* TEXTURE_BASE IMPLEMENTATION */
 
-/* unbind_all
+/* full constructor
  *
- * unbind from all targets
- * this includes all texture units
+ * set everything to defaults
  */
-bool glh::core::texture_base::unbind_all () const
+glh::core::texture_base::texture_base ()
 {
-    /* track whether anything was unbound */
-    bool binding_change = false;
+    /* generate the texture */
+    glGenTextures ( 1, &id );
+}
 
-    /* get number of units */
-    unsigned texture_units;
-    if ( is_texture2d_bind_target ( bind_target ) ) texture_units = static_cast<unsigned> ( object_bind_target::__TEXTURE2D_END__ ) - static_cast<unsigned> ( object_bind_target::__TEXTURE2D_START__ ) - 1; else
-    if ( is_cubemap_bind_target ( bind_target ) ) texture_units = static_cast<unsigned> ( object_bind_target::__CUBEMAP_START__ ) - static_cast<unsigned> ( object_bind_target::__CUBEMAP_END__ ) - 1; else
-    if ( is_texture2d_multisample_bind_target ( bind_target ) )  texture_units = static_cast<unsigned> ( object_bind_target::__TEXTURE2D_MULTISAMPLE_START__ ) - static_cast<unsigned> ( object_bind_target::__TEXTURE2D_MULTISAMPLE_END__ ) - 1;
-    else throw exception::object_exception { "attempted to perform unbind all operation to unknown target" };
 
-    /* unbind all units */
-    for ( unsigned i = 0; i < texture_units; ++i ) binding_change |= unbind ( i );
 
-    /* return binding change */
-    return binding_change;
+/* bind/unbind to texture units */
+bool glh::core::texture_base::bind ( const unsigned index ) const
+{
+    /* if index is out of range, throw */
+    if ( index >= 80 ) throw exception::texture_exception { "texture unit is out of range" };
+
+    /* if already bound, return false, else bind and return true */
+    if ( bound_texture_indices.at ( index ) == this ) return false;
+    glBindTextureUnit ( index, id );
+    bound_texture_indices.at ( index ) = const_cast<texture_base *> ( this );
+    return true;
+}
+bool glh::core::texture_base::unbind ( const unsigned index ) const
+{
+    /* if index is out of range, throw */
+    if ( index >= 80 ) throw exception::texture_exception { "texture unit is out of range" };
+
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_texture_indices.at ( index ) != this ) return false;
+    glBindTextureUnit ( index, 0 );
+    bound_texture_indices.at ( index ) = NULL;
+    return true;
+}
+bool glh::core::texture_base::is_bound ( const unsigned index ) const
+{
+    /* if index is out of range, throw */
+    if ( index >= 80 ) throw exception::texture_exception { "texture unit is out of range" };
+
+    /* return true if is bound */
+    return bound_texture_indices.at ( index ) == this;
+}
+
+
+
+/* get the currently bound texture */
+const glh::core::object_pointer<glh::core::texture_base>& glh::core::texture_base::get_bound_texture ( const unsigned index )
+{
+    /* if index is out of range, throw */
+    if ( index >= 80 ) throw exception::texture_exception { "texture unit is out of range" };
+
+    /* return bound texture pointer */
+    return bound_texture_indices.at ( index );
 }
 
 
@@ -196,7 +228,7 @@ unsigned glh::core::texture_base::bind_loop () const
     const unsigned temp_unit = bind_loop_index++;
 
     /* loop if necesary */
-    if ( bind_loop_index == 32 ) bind_loop_index = 1;
+    if ( bind_loop_index == 80 ) bind_loop_index = 1;
 
     /* return unit just bound to */
     return temp_unit;
@@ -209,7 +241,7 @@ unsigned glh::core::texture_base::bind_loop () const
 unsigned glh::core::texture_base::bind_loop_previous () const
 {
     /* if is 1, return 31, else return next index - 1 */
-    if ( bind_loop_index == 1 ) return 31;
+    if ( bind_loop_index == 1 ) return 79;
     else return bind_loop_index - 1;
 }
 
@@ -221,15 +253,13 @@ unsigned glh::core::texture_base::bind_loop_previous () const
  */
 void glh::core::texture_base::set_mag_filter ( const GLenum opt ) 
 { 
-    /* bind, set paramater, unbind */
-    bind (); 
-    glTexParameteri ( opengl_bind_target, GL_TEXTURE_MAG_FILTER, opt ); 
+    /* set paramater, unbind */
+    glTextureParameteri ( id, GL_TEXTURE_MAG_FILTER, opt ); 
 }
 void glh::core::texture_base::set_min_filter ( const GLenum opt ) 
 { 
-    /* bind, set paramater */
-    bind (); 
-    glTexParameteri ( opengl_bind_target, GL_TEXTURE_MIN_FILTER, opt );
+    /* set paramater */
+    glTextureParameteri ( id, GL_TEXTURE_MIN_FILTER, opt );
 }
 
 /* set_(s/t/r)_wrap
@@ -238,29 +268,25 @@ void glh::core::texture_base::set_min_filter ( const GLenum opt )
  */
 void glh::core::texture_base::set_s_wrap ( const GLenum opt ) 
 { 
-    /* bind, set paramater */
-    bind (); 
-    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_S, opt );
+    /* set paramater */
+    glTextureParameteri ( id, GL_TEXTURE_WRAP_S, opt );
 }
 void glh::core::texture_base::set_t_wrap ( const GLenum opt ) 
 { 
-    /* bind, set paramater */
-    bind (); 
-    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_T, opt );
+    /* set paramater */
+    glTextureParameteri ( id, GL_TEXTURE_WRAP_T, opt );
 }
 void glh::core::texture_base::set_r_wrap ( const GLenum opt ) 
 { 
-    /* bind, set paramater */
-    bind (); 
-    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_R, opt );
+    /* set paramater */
+    glTextureParameteri ( id, GL_TEXTURE_WRAP_R, opt );
 }
 void glh::core::texture_base::set_wrap ( const GLenum opt ) 
 {
-    /* bind, set paramaters */
-    bind (); 
-    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_S, opt ); 
-    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_T, opt );
-    glTexParameteri ( opengl_bind_target, GL_TEXTURE_WRAP_R, opt );
+    /* set paramaters */
+    glTextureParameteri ( id, GL_TEXTURE_WRAP_S, opt ); 
+    glTextureParameteri ( id, GL_TEXTURE_WRAP_T, opt );
+    glTextureParameteri ( id, GL_TEXTURE_WRAP_R, opt );
 }
 
 /* set_border_color
@@ -269,9 +295,8 @@ void glh::core::texture_base::set_wrap ( const GLenum opt )
  */
 void glh::core::texture_base::set_border_color ( const math::fvec4& color )
 {
-    /* bind, set paramater */
-    bind (); 
-    glTexParameterfv ( opengl_bind_target, GL_TEXTURE_BORDER_COLOR, color.internal_ptr () );
+    /* set paramater */
+    glTextureParameterfv ( id, GL_TEXTURE_BORDER_COLOR, color.internal_ptr () );
 }
 
 /* set_compare_mode
@@ -280,9 +305,8 @@ void glh::core::texture_base::set_border_color ( const math::fvec4& color )
  */
 void glh::core::texture_base::set_compare_mode ( const GLenum opt )
 {
-    /* bind, set parameter */
-    bind ();
-    glTexParameteri ( opengl_bind_target, GL_TEXTURE_COMPARE_MODE, opt );
+    /* set parameter */
+    glTextureParameteri ( id, GL_TEXTURE_COMPARE_MODE, opt );
 }
 
 /* set_compare_func
@@ -291,9 +315,8 @@ void glh::core::texture_base::set_compare_mode ( const GLenum opt )
  */
 void glh::core::texture_base::set_compare_func ( const GLenum opt )
 {
-    /* bind, set parameter */
-    bind ();
-    glTexParameteri ( opengl_bind_target, GL_TEXTURE_COMPARE_FUNC, opt );
+    /* set parameter */
+    glTextureParameteri ( id, GL_TEXTURE_COMPARE_FUNC, opt );
 }
 
 /* generate_mipmap
@@ -302,19 +325,39 @@ void glh::core::texture_base::set_compare_func ( const GLenum opt )
  */
 void glh::core::texture_base::generate_mipmap ()
 {
-    /* bind and generate mipmap */
-    bind ();
-    glGenerateMipmap ( opengl_bind_target );
+    /* generate mipmap */
+    glGenerateTextureMipmap ( id );
 }
 
 
 
+/* currently bound textures */
+std::array<glh::core::object_pointer<glh::core::texture_base>, 80> glh::core::texture_base::bound_texture_indices {};
+
 /* bind_loop_next defaults to 1 */
-unsigned glh::core::texture_base::bind_loop_index = 1;
+unsigned glh::core::texture_base::bind_loop_index { 1 };
 
 
 
 /* TEXTURE2D IMPLEMENTATION */
+
+/* default bind/unbind the texture */
+bool glh::core::texture2d::bind () const
+{
+    /* if already bound, return false, else bind and return true */
+    if ( bound_texture_indices.at ( 0 ) == this ) return false;
+    glBindTexture ( GL_TEXTURE_2D, id );
+    bound_texture_indices.at ( 0 ) = const_cast<texture2d *> ( this );
+    return true;
+}
+bool glh::core::texture2d::unbind () const
+{
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_texture_indices.at ( 0 ) != this ) return false;
+    glBindTexture ( GL_TEXTURE_2D, 0 );
+    bound_texture_indices.at ( 0 ) = NULL;
+    return true;
+}
 
 /* tex_storage
  *
@@ -339,8 +382,7 @@ void glh::core::texture2d::tex_storage ( const unsigned _width, const unsigned _
     is_immutable = true;
 
     /* set the storage */
-    bind ();
-    glTexStorage2D ( opengl_bind_target, ( mipmap_levels > 0 ? mipmap_levels : std::log2 ( std::max ( width, height ) ) + 1 ), internal_format, width, height );
+    glTextureStorage2D ( id, ( mipmap_levels > 0 ? mipmap_levels : std::log2 ( std::max ( width, height ) ) + 1 ), internal_format, width, height );
 }
 
 /* tex_image
@@ -371,7 +413,7 @@ void glh::core::texture2d::tex_image ( const unsigned _width, const unsigned _he
 
     /* call glTexImage2D */
     bind ();
-    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, format, type, data );
+    glTexImage2D ( GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, type, data );
 }
 void glh::core::texture2d::tex_image ( const image& _image, const bool use_srgb )
 {
@@ -385,7 +427,7 @@ void glh::core::texture2d::tex_image ( const image& _image, const bool use_srgb 
 
     /* call glTexImage2D */
     bind ();
-    glTexImage2D ( opengl_bind_target, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _image.get_ptr () );
+    glTexImage2D ( GL_TEXTURE_2D, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _image.get_ptr () );
 }
 
 /* tex_sub_image
@@ -415,7 +457,7 @@ void glh::core::texture2d::tex_sub_image ( const unsigned x_offset, const unsign
 
     /* call glTesSubImage2D */
     bind ();
-    glTexSubImage2D ( opengl_bind_target, 0, x_offset, y_offset, _width, _height, format, type, data );
+    glTexSubImage2D ( GL_TEXTURE_2D, 0, x_offset, y_offset, _width, _height, format, type, data );
 }
 void glh::core::texture2d::tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const image& _image )
 {
@@ -429,12 +471,30 @@ void glh::core::texture2d::tex_sub_image ( const unsigned x_offset, const unsign
 
     /* call glTesSubImage2D */
     bind ();
-    glTexSubImage2D ( opengl_bind_target, 0, x_offset, y_offset, _image.get_width (), _image.get_height (), GL_RGBA, GL_UNSIGNED_BYTE, _image.get_ptr () );
+    glTexSubImage2D ( GL_TEXTURE_2D, 0, x_offset, y_offset, _image.get_width (), _image.get_height (), GL_RGBA, GL_UNSIGNED_BYTE, _image.get_ptr () );
 }
 
 
 
 /* TEXTURE2D_ARRAY IMPLEMENTATION */
+
+/* default bind/unbind the texture */
+bool glh::core::texture2d_array::bind () const
+{
+    /* if already bound, return false, else bind and return true */
+    if ( bound_texture_indices.at ( 0 ) == this ) return false;
+    glBindTexture ( GL_TEXTURE_2D_ARRAY, id );
+    bound_texture_indices.at ( 0 ) = const_cast<texture2d_array *> ( this );
+    return true;
+}
+bool glh::core::texture2d_array::unbind () const
+{
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_texture_indices.at ( 0 ) != this ) return false;
+    glBindTexture ( GL_TEXTURE_2D_ARRAY, 0 );
+    bound_texture_indices.at ( 0 ) = NULL;
+    return true;
+}
 
 /* tex_storage
  *
@@ -459,8 +519,7 @@ void glh::core::texture2d_array::tex_storage ( const unsigned _width, const unsi
     is_immutable = true;
 
     /* set up the storage */
-    bind ();
-    glTexStorage3D ( opengl_bind_target, ( mipmap_levels > 0 ? mipmap_levels : std::log2 ( std::max ( width, height ) ) + 1 ), internal_format, width, height, depth );
+    glTextureStorage3D ( id, ( mipmap_levels > 0 ? mipmap_levels : std::log2 ( std::max ( width, height ) ) + 1 ), internal_format, width, height, depth );
 } 
 
 /* tex_image
@@ -490,7 +549,7 @@ void glh::core::texture2d_array::tex_image ( const unsigned _width, const unsign
 
     /* set up the texture array */
     bind ();
-    glTexImage3D ( opengl_bind_target, 0, internal_format, width, height, depth, 0, format, type, data );
+    glTexImage3D ( GL_TEXTURE_2D_ARRAY, 0, internal_format, width, height, depth, 0, format, type, data );
 }
 void glh::core::texture2d_array::tex_image ( std::initializer_list<image> images, const bool use_srgb )
 {
@@ -519,10 +578,10 @@ void glh::core::texture2d_array::tex_image ( std::initializer_list<image> images
 
     /* first set the size of the texture array, then substitute the images in */
     bind ();
-    glTexImage3D ( opengl_bind_target, 0, internal_format, width, height, depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
+    glTexImage3D ( GL_TEXTURE_2D_ARRAY, 0, internal_format, width, height, depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
     auto images_it = images.begin ();
     for ( unsigned i = 0; i < depth; ++i, ++images_it )
-        glTexSubImage3D ( opengl_bind_target, 0, 0, 0, i, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
+        glTexSubImage3D ( GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
 }
 
 
@@ -552,7 +611,7 @@ void glh::core::texture2d_array::tex_sub_image ( const unsigned x_offset, const 
 
     /* substitute the image data */
     bind ();
-    glTexSubImage3D ( opengl_bind_target, 0, x_offset, y_offset, z_offset, _width, _height, _depth, format, type, data );
+    glTexSubImage3D ( GL_TEXTURE_2D_ARRAY, 0, x_offset, y_offset, z_offset, _width, _height, _depth, format, type, data );
 }
 void glh::core::texture2d_array::tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, std::initializer_list<image> images )
 {
@@ -566,12 +625,30 @@ void glh::core::texture2d_array::tex_sub_image ( const unsigned x_offset, const 
     bind ();
     auto images_it = images.begin ();
     for ( unsigned i = 0; i < images.size (); ++i, ++images_it )
-        glTexSubImage3D ( opengl_bind_target, 0, x_offset, y_offset, z_offset + i, images_it->get_width (), images_it->get_width (), 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
+        glTexSubImage3D ( GL_TEXTURE_2D_ARRAY, 0, x_offset, y_offset, z_offset + i, images_it->get_width (), images_it->get_width (), 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
 }
 
 
 
 /* TEXTURE2D_MULTISAMPLE IMPLEMENTATION */
+
+/* default bind/unbind the texture */
+bool glh::core::texture2d_multisample::bind () const
+{
+    /* if already bound, return false, else bind and return true */
+    if ( bound_texture_indices.at ( 0 ) == this ) return false;
+    glBindTexture ( GL_TEXTURE_2D_MULTISAMPLE, id );
+    bound_texture_indices.at ( 0 ) = const_cast<texture2d_multisample *> ( this );
+    return true;
+}
+bool glh::core::texture2d_multisample::unbind () const
+{
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_texture_indices.at ( 0 ) != this ) return false;
+    glBindTexture ( GL_TEXTURE_2D_MULTISAMPLE, 0 );
+    bound_texture_indices.at ( 0 ) = NULL;
+    return true;
+}
 
 /* tex_storage
  *
@@ -599,8 +676,7 @@ void glh::core::texture2d_multisample::tex_storage ( const unsigned _width, cons
     is_immutable = true;
 
     /* set up the texture */
-    bind ();
-    glTexStorage2DMultisample ( opengl_bind_target, samples, internal_format, width, height, fixed_sample_locations );
+    glTextureStorage2DMultisample ( id, samples, internal_format, width, height, fixed_sample_locations );
 }
 
 /* tex_image
@@ -625,12 +701,30 @@ void glh::core::texture2d_multisample::tex_image ( const unsigned _width, const 
 
     /* set up the texture */
     bind ();
-    glTexImage2DMultisample ( opengl_bind_target, samples, internal_format, width, height, fixed_sample_locations );
+    glTexImage2DMultisample ( GL_TEXTURE_2D_MULTISAMPLE, samples, internal_format, width, height, fixed_sample_locations );
 }
 
 
 
 /* CUBEMAP IMPLEMENTATION */
+
+/* default bind/unbind the texture */
+bool glh::core::cubemap::bind () const
+{
+    /* if already bound, return false, else bind and return true */
+    if ( bound_texture_indices.at ( 0 ) == this ) return false;
+    glBindTexture ( GL_TEXTURE_CUBE_MAP, id );
+    bound_texture_indices.at ( 0 ) = const_cast<cubemap *> ( this );
+    return true;
+}
+bool glh::core::cubemap::unbind () const
+{
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_texture_indices.at ( 0 ) != this ) return false;
+    glBindTexture ( GL_TEXTURE_CUBE_MAP, 0 );
+    bound_texture_indices.at ( 0 ) = NULL;
+    return true;
+}
 
 /* tex_storage
  *
@@ -655,8 +749,7 @@ void glh::core::cubemap::tex_storage ( const unsigned _width, const unsigned _he
     is_immutable = true;
 
     /* set storage */
-    bind ();
-    glTexStorage2D ( opengl_bind_target, ( mipmap_levels > 0 ? mipmap_levels : std::log2 ( std::max ( width, height ) ) + 1 ), internal_format, width, height );
+    glTextureStorage2D ( 0, ( mipmap_levels > 0 ? mipmap_levels : std::log2 ( std::max ( width, height ) ) + 1 ), internal_format, width, height );
 }
 
 /* tex_image
@@ -832,6 +925,24 @@ void glh::core::cubemap::tex_sub_image ( const unsigned x_offset, const unsigned
 
 /* CUBEMAP_ARRAY IMPLEMENTATION */
 
+/* default bind/unbind the texture */
+bool glh::core::cubemap_array::bind () const
+{
+    /* if already bound, return false, else bind and return true */
+    if ( bound_texture_indices.at ( 0 ) == this ) return false;
+    glBindTexture ( GL_TEXTURE_CUBE_MAP_ARRAY, id );
+    bound_texture_indices.at ( 0 ) = const_cast<cubemap_array *> ( this );
+    return true;
+}
+bool glh::core::cubemap_array::unbind () const
+{
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_texture_indices.at ( 0 ) != this ) return false;
+    glBindTexture ( GL_TEXTURE_CUBE_MAP_ARRAY, 0 );
+    bound_texture_indices.at ( 0 ) = NULL;
+    return true;
+}
+
 /* tex_storage
  *
  * set up the cubemap array with immutable storage
@@ -858,8 +969,7 @@ void glh::core::cubemap_array::tex_storage ( const unsigned _width, const unsign
     is_immutable = true;
 
     /* set storage */
-    bind ();
-    glTexStorage3D ( opengl_bind_target, ( mipmap_levels > 0 ? mipmap_levels : std::log2 ( std::max ( width, height ) ) + 1 ), internal_format, width, height, depth );
+    glTextureStorage3D ( id, ( mipmap_levels > 0 ? mipmap_levels : std::log2 ( std::max ( width, height ) ) + 1 ), internal_format, width, height, depth );
 }
 
 /* tex_image
@@ -892,7 +1002,7 @@ void glh::core::cubemap_array::tex_image ( const unsigned _width, const unsigned
 
     /* set the storage */
     bind ();
-    glTexImage3D ( opengl_bind_target, 0, internal_format, width, height, depth, 0, format, type, data );
+    glTexImage3D ( GL_TEXTURE_CUBE_MAP_ARRAY, 0, internal_format, width, height, depth, 0, format, type, data );
 }
 void glh::core::cubemap_array::tex_image ( std::initializer_list<image> images, const bool use_srgb )
 {
@@ -924,10 +1034,10 @@ void glh::core::cubemap_array::tex_image ( std::initializer_list<image> images, 
 
     /* first set the size of the texture array, then substitute the images in */
     bind ();
-    glTexImage3D ( opengl_bind_target, 0, internal_format, width, height, depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
+    glTexImage3D ( GL_TEXTURE_CUBE_MAP_ARRAY, 0, internal_format, width, height, depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
     auto images_it = images.begin ();
     for ( unsigned i = 0; i < depth; ++i, ++images_it )
-        glTexSubImage3D ( opengl_bind_target, 0, 0, 0, i, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
+        glTexSubImage3D ( GL_TEXTURE_CUBE_MAP_ARRAY, 0, 0, 0, i, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
 }
 
 /* tex_sub_image
@@ -955,7 +1065,7 @@ void glh::core::cubemap_array::tex_sub_image ( const unsigned x_offset, const un
 
     /* substitute the image data */
     bind ();
-    glTexSubImage3D ( opengl_bind_target, 0, x_offset, y_offset, z_offset, _width, _height, _depth, format, type, data );
+    glTexSubImage3D ( GL_TEXTURE_CUBE_MAP_ARRAY, 0, x_offset, y_offset, z_offset, _width, _height, _depth, format, type, data );
 }
 void glh::core::cubemap_array::tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, std::initializer_list<image> images )
 {
@@ -969,5 +1079,5 @@ void glh::core::cubemap_array::tex_sub_image ( const unsigned x_offset, const un
     bind ();
     auto images_it = images.begin ();
     for ( unsigned i = 0; i < images.size (); ++i, ++images_it )
-        glTexSubImage3D ( opengl_bind_target, 0, x_offset, y_offset, z_offset + i, images_it->get_width (), images_it->get_width (), 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
+        glTexSubImage3D ( GL_TEXTURE_CUBE_MAP_ARRAY, 0, x_offset, y_offset, z_offset + i, images_it->get_width (), images_it->get_width (), 1, GL_RGBA, GL_UNSIGNED_BYTE, images_it->get_ptr () );
 }

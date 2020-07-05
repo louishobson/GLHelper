@@ -51,6 +51,9 @@
 /* include glhelper_glad.hpp */
 #include <glhelper/glhelper_glad.hpp>
 
+/* include glhelper_framebuffer */
+#include <glhelper/glhelper_framebuffer.hpp>
+
 
 
 /* NAMESPACE DECLARATIONS */
@@ -379,7 +382,7 @@ public:
      * 
      * returns true if a change in binding occured
      */
-    bool bind_framebuffer () const { return core::object::force_unbind ( core::object_bind_target::GLH_FBO_TARGET ); }
+    bool bind_framebuffer () const { return core::fbo::bind_default_framebuffer (); }
 
     /* make_current
      *

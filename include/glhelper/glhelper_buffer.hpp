@@ -80,16 +80,6 @@ namespace glh
          */
         class buffer;
 
-        /* class buffer_iterator_base 
-         * class forward_buffer_iterator : buffer_iterator_base
-         * class reverse_buffer_iterator : buffer_iterator_base
-         *
-         * iterators for a buffer
-         */
-        template<class T> class buffer_iterator_base;
-        template<class T> class forward_buffer_iterator;
-        template<class T> class reverse_buffer_iterator;
-
         /* class vbo : buffer
          *
          * vertex buffer object
@@ -135,45 +125,13 @@ namespace glh
  */
 class glh::core::buffer : public object
 {
-
-    /* friend of buffer_iterator_base */
-    template<class T> friend class buffer_iterator_base;
-
 public:
 
     /* constructor
      *
      * generates a buffer
-     * 
-     * _minor_type: the minor type of the buffer
      */
-    buffer ( const minor_object_type _minor_type );
-
-    /* construct and immediately buffer data
-     *
-     * generates a buffer and immediately buffers data
-     * 
-     * _minor_type: the minor type of the buffer
-     * size: size of data in bytes
-     * data: pointer to data
-     * usage: the storage method for the data (defaults to GL_STATIC_DRAW)
-     */
-    buffer ( const minor_object_type _minor_type, const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW );
-
-    /* construct and immediately buffer data from iterators
-     *
-     * generates a buffer and immediately buffers data from iterators
-     * 
-     * _minor_type: the minor type of the buffer
-     * first/last: iterators to the beginning and end of the data to buffer
-     * usage: the storage method for the data (defaults to GL_STATIC_DRAW)
-     */
-    template<class It> buffer ( const minor_object_type _minor_type, It first, It last, const GLenum usage = GL_STATIC_DRAW )
-        : buffer { _minor_type, std::distance ( first, last ) * sizeof ( typename std::iterator_traits<It>::value_type ), NULL, usage }
-    { std::copy ( first, last, begin<typename std::iterator_traits<It>::value_type> () ); }
-
-    /* deleted zero-parameter constructor */
-    buffer () = delete;
+    buffer ();
 
     /* deleted copy constructor */
     buffer ( const buffer& other ) = delete;
@@ -184,16 +142,51 @@ public:
     /* deleted copy assignment operator */
     buffer& operator= ( const buffer& other ) = delete;
 
-    /* default virtual destructor */
-    virtual ~buffer () = default;
+    /* virtual destructor */
+    virtual ~buffer ();
 
 
 
-    /* iterator using declarations */
-    template<class T> using iterator = forward_buffer_iterator<T>;
-    template<class T> using const_iterator = forward_buffer_iterator<const T>;
-    template<class T> using reverse_iterator = reverse_buffer_iterator<T>;
-    template<class T> using const_reverse_iterator = reverse_buffer_iterator<const T>;
+    /* bind_copy_read/write
+     *
+     * bind the buffer to the copy read/write targets
+     * 
+     * returns true if a change in binding occured
+     */
+    bool bind_copy_read () const;
+    bool bind_copy_write () const;
+
+    /* unbind_copy_read/write
+     *
+     * unbind the buffer to the copy read/write targets
+     * 
+     * returns true if a change in binding occured
+     */
+    bool unbind_copy_read () const;
+    bool unbind_copy_write () const;
+
+    /* unbind_all
+     *
+     * unbind from all targets
+     * this includes copy read/write targets
+     * 
+     * returns true if a change in binding occured
+     */
+    virtual bool unbind_all () const { return ( unbind () | unbind_copy_read () | unbind_copy_write () ); }
+
+    /* is_copy_read/write_bound
+     *
+     * check if the buffer is bound to the copy read/write targets
+     */
+    bool is_copy_read_bound () const { return bound_copy_read_buffer == this; }
+    bool is_copy_write_bound () const { return bound_copy_write_buffer == this; }
+
+    /* get_bound_copy_read/write_buffer
+     *
+     * return a reference to the bound copy read/write buffers
+     */
+    static const object_pointer<buffer>& get_bound_copy_read_buffer () { return bound_copy_read_buffer; }
+    static const object_pointer<buffer>& get_bound_copy_write_buffer () { return bound_copy_write_buffer; }
 
 
 
@@ -223,9 +216,9 @@ public:
     /* buffer_sub_data with iterators
      *
      * first/last: iterators for the data (ie. from begin and end)
-     * offset: iterator to the position in buffer to write the elements
+     * offset: index of the buffer to write the elements
      */
-    template<class It> void buffer_sub_data ( It first, It last, iterator<typename std::iterator_traits<It>::value_type> offset );
+    template<class It> void buffer_sub_data ( It first, It last, const unsigned offset );
 
     /* copy_sub_data
      *
@@ -246,24 +239,6 @@ public:
 
 
 
-    /* iterator-getting methods
-     *
-     * get an iterator to the buffers storage
-     * all iterators are invalidated on a call to buffer_data  
-     */
-    template<class T> iterator<T> begin () { return iterator<T> { 0, map_id, * this }; }
-    template<class T> const_iterator<T> begin () const { return iterator<T> { 0, map_id, * this }; }
-    template<class T> const_iterator<T> cbegin () const { return iterator<T> { 0, map_id, * this }; }
-    template<class T> reverse_iterator<T> rbegin () { return iterator<T> { ( capacity / sizeof ( T ) ) - 1, map_id, * this }; }
-    template<class T> const_reverse_iterator<T> rbegin () const { return iterator<T> { ( capacity / sizeof ( T ) ) - 1, map_id, * this }; }
-    template<class T> const_reverse_iterator<T> crbegin () const { return iterator<T> { ( capacity / sizeof ( T ) ) - 1, map_id, * this }; }
-
-    template<class T> iterator<T> end () { return iterator<T> { capacity / sizeof ( T ), map_id, * this }; }
-    template<class T> const_iterator<T> end () const { return iterator<T> { capacity / sizeof ( T ), map_id, * this }; }
-    template<class T> const_iterator<T> cend () const { return iterator<T> { capacity / sizeof ( T ), map_id, * this }; }
-    template<class T> reverse_iterator<T> rend () { return iterator<T> { -1, map_id, * this }; }
-    template<class T> const_reverse_iterator<T> rend () const { return iterator<T> { -1, map_id, * this }; }
-    template<class T> const_reverse_iterator<T> crend () const { return iterator<T> { -1, map_id, * this }; }
 
     /* at
      *
@@ -271,42 +246,6 @@ public:
      */
     template<class T> T& at ( const unsigned i );
     template<class T> const T& at ( const unsigned i ) const;
-
-
-
-    /* bind_copy_read/write
-     *
-     * bind the buffer to the copy read/write targets
-     * 
-     * returns true if a change in binding occured
-     */
-    bool bind_copy_read () const { return bind ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
-    bool bind_copy_write () const  { return bind ( object_bind_target::GLH_COPY_WRITE_BUFFER_TARGET ); }
-
-    /* unbind_copy_read/write
-     *
-     * unbind the buffer to the copy read/write targets
-     * 
-     * returns true if a change in binding occured
-     */
-    bool unbind_copy_read () const { return unbind ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
-    bool unbind_copy_write () const  { return unbind ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
-
-    /* unbind_all
-     *
-     * unbind from all targets
-     * this includes copy read/write targets
-     * 
-     * returns true if a change in binding occured
-     */
-    bool unbind_all () const { return ( unbind () | unbind_copy_read () | unbind_copy_write () ); }
-
-    /* is_copy_read/write_bound
-     *
-     * check if the buffer is bound to the copy read/write targets
-     */
-    bool is_copy_read_bound () const { return is_bound ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
-    bool is_copy_write_bound () const { return is_bound ( object_bind_target::GLH_COPY_READ_BUFFER_TARGET ); }
 
 
 
@@ -352,6 +291,8 @@ public:
 
 private:
 
+    /* NON-STATIC MEMBERS */
+
     /* GLsizeiptr capacity
      *
      * the number of bytes allocated to the buffer
@@ -369,190 +310,18 @@ private:
      * the map id, which is incremented every time the buffer_data is called
      * this ensures that outdated iterators know when they are outdated
      */
-    unsigned map_id;
-
-};
+    mutable unsigned map_id;
 
 
 
-/* BUFFER ITERATOR DEFINITIONS */
+    /* STATIC MEMBERS */
 
-/* class buffer_iterator_base 
- * class forward_buffer_iterator : buffer_iterator_base
- * class reverse_buffer_iterator : buffer_iterator_base
- *
- * iterators for a buffer
- */
-template<class T> class glh::core::buffer_iterator_base
-{
-public:
-
-    /* full constructor
+    /* bound_copy_read/write_buffer
      *
-     * construct iterator from an offset, map id and a reference to the buffer object
-     *
-     * _offset: offset in multiples of T from the start of the buffer
-     * _map_id: the id of this map (supplied by buffer class)
-     * _buff: the buffer object the map is for
+     * object pointers to the currently bound read and write buffers
      */
-    buffer_iterator_base ( const int _offset, const unsigned _map_id, std::conditional_t<std::is_const<T>::value, const buffer&, buffer&> _buff )
-        : map_ptr { reinterpret_cast<T *> ( NULL ) }
-        , offset_map_ptr { reinterpret_cast<T *> ( _offset * sizeof ( T ) ) }
-        , map_id { _map_id }
-        , buff { _buff }
-    {}
-
-    /* deleted zero-parameter constructor */
-    buffer_iterator_base () = delete;
-
-    /* construct from non-cv version */
-    buffer_iterator_base ( const buffer_iterator_base<std::remove_const_t<T>>& other )
-        : map_ptr { other.map_ptr }
-        , offset_map_ptr { other.offset_map_ptr }
-        , map_id { other.map_id }
-        , buff { other.buff }
-    {}
-
-
-    /* default copy assignment operator */
-    buffer_iterator_base& operator= ( const buffer_iterator_base& other ) = default;
-
-    /* default destructor */
-    ~buffer_iterator_base () = default;
-
-
-
-    /* iterator typedefs */
-    typedef T value_type;
-    typedef std::ptrdiff_t difference_type;
-    typedef T * pointer;
-    typedef T& reference;
-    typedef std::random_access_iterator_tag iterator_category;
-
-
-
-    /* dereferencing methods */
-    T& operator* () const { return * get_map_pointer (); }
-    T& operator-> () const { return * get_map_pointer (); }
-
-
-
-    /* iterator comparison operators */
-    bool operator== ( const buffer_iterator_base& other ) const { return ( this->offset_map_ptr - this->map_ptr == other.offset_map_ptr - other.map_ptr ); }
-    bool operator!= ( const buffer_iterator_base& other ) const { return ( this->offset_map_ptr - this->map_ptr != other.offset_map_ptr - other.map_ptr ); }
-
-
-
-protected:
-
-    /* pointer to the map and the current index of the map */
-    mutable T * map_ptr;
-    mutable T * offset_map_ptr;
-
-    /* id for the map */
-    const unsigned map_id;
-
-    /* reference to the buffer that is mapped */
-    std::conditional_t<std::is_const<T>::value, const buffer&, buffer&> buff;
-
-
-
-    /* get_map_pointer
-     *
-     * get a pointer to the position in the map after applying the offset
-     * will throw if the iterator has been invalidated or offset causes an out of range error
-     */
-    T * get_map_pointer () const;
-
-};
-template<class T> class glh::core::forward_buffer_iterator : public buffer_iterator_base<T>
-{
-public:
-
-    /* full constructor
-     *
-     * construct iterator from an offset, map id and a reference to the buffer object
-     *
-     * _offset: offset in the map in multiples of T
-     * _map_id: the id of this map (supplied by buffer class)
-     * _buff: the buffer object the map is for
-     */
-    forward_buffer_iterator ( const int _offset, const unsigned _map_id, std::conditional_t<std::is_const<T>::value, const buffer&, buffer&> _buff )
-        : buffer_iterator_base<T> { _offset, _map_id, _buff }
-    {}
-
-    /* deleted zero-parameter constructor */
-    forward_buffer_iterator () = delete;
-
-    /* construct from non-cv version */
-    forward_buffer_iterator ( const forward_buffer_iterator<std::remove_const_t<T>>& other )
-        : buffer_iterator_base<T> { other }
-    {}
-
-    /* default destructor */
-    ~forward_buffer_iterator () = default;
-
-
-
-    /* iterator-modifying operators */
-    forward_buffer_iterator& operator++ () { ++this->offset_map_ptr; return * this; }
-    forward_buffer_iterator& operator-- () { --this->offset_map_ptr; return * this; }
-    forward_buffer_iterator operator++ ( int ) { auto tmp = * this; ++this->offset_map_ptr; return tmp; }
-    forward_buffer_iterator operator-- ( int ) { auto tmp = * this; --this->offset_map_ptr; return tmp; }
-    forward_buffer_iterator& operator+= ( const int scalar ) { this->offset_map_ptr += scalar; return * this; }
-    forward_buffer_iterator& operator-= ( const int scalar ) { this->offset_map_ptr -= scalar; return * this; }
-    forward_buffer_iterator operator+ ( const int scalar ) const { auto tmp = * this; tmp += scalar; return tmp; }
-    forward_buffer_iterator operator- ( const int scalar ) const { auto tmp = * this; tmp -= scalar; return tmp; }
-
-
-
-    /* difference operator */
-    std::ptrdiff_t operator- ( const forward_buffer_iterator& other ) const { return ( this->offset_map_ptr - this->map_ptr ) - ( other.offset_map_ptr - other.map_ptr ); }
-
-};
-template<class T> class glh::core::reverse_buffer_iterator : public buffer_iterator_base<T>
-{
-public:
-
-    /* full constructor
-     *
-     * construct iterator from an offset, map id and a reference to the buffer object
-     *
-     * _offset: offset in the map in multiples of T
-     * _map_id: the id of this map (supplied by buffer class)
-     * _buff: the buffer object the map is for
-     */
-    reverse_buffer_iterator ( const int _offset, const unsigned _map_id, std::conditional_t<std::is_const<T>::value, const buffer&, buffer&> _buff )
-        : buffer_iterator_base<T> { _offset, _map_id, _buff }
-    {}
-
-    /* deleted zero-parameter constructor */
-    reverse_buffer_iterator () = delete;
-
-    /* construct from non-cv version */
-    reverse_buffer_iterator ( const reverse_buffer_iterator<std::remove_const_t<T>>& other )
-        : buffer_iterator_base<T> { other }
-    {}
-
-    /* default destructor */
-    ~reverse_buffer_iterator () = default;
-
-
-
-    /* iterator-modifying operators */
-    reverse_buffer_iterator& operator++ () { --this->offset_map_ptr; return * this; }
-    reverse_buffer_iterator& operator-- () { ++this->offset_map_ptr; return * this; }
-    reverse_buffer_iterator operator++ ( int ) { auto tmp = * this; --this->offset_map_ptr; return tmp; }
-    reverse_buffer_iterator operator-- ( int ) { auto tmp = * this; ++this->offset_map_ptr; return tmp; }
-    reverse_buffer_iterator& operator+= ( const int scalar ) { this->offset_map_ptr -= scalar; return * this; }
-    reverse_buffer_iterator& operator-= ( const int scalar ) { this->offset_map_ptr += scalar; return * this; }
-    reverse_buffer_iterator operator+ ( const int scalar ) const { auto tmp = * this; tmp += scalar; return tmp; }
-    reverse_buffer_iterator operator- ( const int scalar ) const { auto tmp = * this; tmp -= scalar; return tmp; }
-
-
-
-    /* difference operator */
-    std::ptrdiff_t operator- ( const reverse_buffer_iterator& other ) const { return ( other.offset_map_ptr - other.map_ptr ) - ( this->offset_map_ptr - this->map_ptr ); }
+    static object_pointer<buffer> bound_copy_read_buffer;
+    static object_pointer<buffer> bound_copy_write_buffer;
 
 };
 
@@ -568,13 +337,8 @@ class glh::core::vbo : public buffer
 {
 public:
 
-    /* constructor
-     *
-     * generates the buffer
-     */
-    vbo ()
-        : buffer { minor_object_type::GLH_VBO_TYPE }
-    {}
+    /* zero-parameter constructor */
+    vbo () { bind (); }
 
     /* construct and immediately buffer data
      *
@@ -585,8 +349,7 @@ public:
      * usage: the storage method for the data
      */
     vbo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
-        : buffer { minor_object_type::GLH_VBO_TYPE, size, data, usage }
-    {}
+        { bind (); buffer_data ( size, data, usage ); }
 
     /* deleted copy constructor */
     vbo ( const vbo& other ) = delete;
@@ -602,12 +365,20 @@ public:
 
 
 
-    /* get_bound_object_pointer
-     *
-     * produce a pointer to the vbo currently bound
-     */
-    using object::get_bound_object_pointer;
-    static object_pointer<vbo> get_bound_object_pointer () { return get_bound_object_pointer<vbo> ( object_bind_target::GLH_VBO_TARGET ); }
+    /* default bind/unbind the vbo */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_vbo == this; }
+
+    /* get the currently bound vbo */
+    static const object_pointer<vbo>& get_bound_vbo () { return bound_vbo; }
+
+
+
+private:
+
+    /* the currently bound vbo */
+    static object_pointer<vbo> bound_vbo;
 
 };
 
@@ -623,13 +394,8 @@ class glh::core::ebo : public buffer
 {
 public:
 
-    /* constructor
-     *
-     * generates the buffer
-     */
-    ebo ()
-        : buffer { minor_object_type::GLH_EBO_TYPE }
-    {}
+    /* zero-parameter constructor */
+    ebo () { bind (); }
 
     /* construct and immediately buffer data
      *
@@ -640,8 +406,7 @@ public:
      * usage: the storage method for the data
      */
     ebo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
-        : buffer { minor_object_type::GLH_EBO_TYPE, size, data, usage }
-    {}
+        { bind (); buffer_data ( size, data, usage ); }
 
     /* deleted copy constructor */
     ebo ( const ebo& other ) = delete;
@@ -657,12 +422,20 @@ public:
 
 
 
-    /* get_bound_object_pointer
-     *
-     * produce a pointer to the ebo currently bound
-     */
-    using object::get_bound_object_pointer;
-    static object_pointer<ebo> get_bound_object_pointer () { return get_bound_object_pointer<ebo> ( object_bind_target::GLH_EBO_TARGET ); }
+    /* default bind/unbind the ebo */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_ebo == this; }
+
+    /* get the currently bound ebo */
+    static const object_pointer<ebo>& get_bound_ebo () { return bound_ebo; }
+
+
+
+private:
+
+    /* the currently bound ebo */
+    static object_pointer<ebo> bound_ebo;
 
 };
 
@@ -678,13 +451,8 @@ class glh::core::ubo : public buffer
 {
 public:
 
-    /* constructor
-     *
-     * generates the buffer
-     */
-    ubo ()
-        : buffer { minor_object_type::GLH_UBO_TYPE }
-    { glGetIntegerv ( GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &uniform_buffer_offset_alignment ); }
+    /* zero-parameter constructor */
+    ubo ();
 
     /* construct and immediately buffer data
      *
@@ -694,9 +462,7 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    ubo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
-        : buffer { minor_object_type::GLH_UBO_TYPE, size, data, usage }
-    { glGetIntegerv ( GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &uniform_buffer_offset_alignment ); }
+    ubo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW );
 
     /* deleted copy constructor */
     ubo ( const ubo& other ) = delete;
@@ -712,44 +478,35 @@ public:
 
 
 
-    /* get_bound_object_pointer
-     *
-     * produce a pointer to the ebo currently bound
-     */
-    using object::get_bound_object_pointer;
-    static object_pointer<ubo> get_bound_object_pointer () { return get_bound_object_pointer<ubo> ( object_bind_target::GLH_UBO_TARGET ); }
+    /* default bind/unbind the ubo */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_ubo == this; }
 
-    /* get_index_bound_ubo_pointer
-     *
-     * produce a pointer to the ubo currently bound to an index bind point
-     * 
-     * index: the index to produce the pointer from
-     */
-    static object_pointer<ubo> get_index_bound_ubo_pointer ( const unsigned index );
+    /* bind the ubo to an index */
+    bool bind ( const unsigned index ) const;
+    bool unbind ( const unsigned index ) const;
+    bool is_bound ( const unsigned index ) const { return bound_ubo_indices.size () > index && bound_ubo_indices.at ( index ) == this; }
 
+    /* unbind from all bind points */
+    bool unbind_all () const;
 
+    /* get bound ubo and bound ubo index */
+    static const object_pointer<ubo>& get_bound_ubo () { return bound_ubo; }
+    static object_pointer<ubo> get_bound_ubo_index ( const unsigned index ) 
+        { return ( bound_ubo_indices.size () > index ?bound_ubo_indices.at ( index ) : object_pointer<ubo> { NULL } ); }
 
-    /* bind/unbuffer_base
-     *
-     * special indexed bindings for ubos
-     * 
-     * returns true if a change in binding occured
-     */
-    bool bind_buffer_base ( const unsigned index );
-    bool unbind_buffer_base ( const unsigned index );
-
-    /* is_bound_buffer_base
-     *
-     * returns true if is bound to the ubo index supplied
-     */
-    bool is_bound_buffer_base ( const unsigned index );
-    
 
 
 private:
 
-    /* records of ubo indexed bindings */
-    static std::vector<GLuint> ubo_indexed_bindings;
+    /* bound_ubo
+     * bound_ubo_indices
+     *
+     * bound ubo and index-bound objects
+     */
+    static object_pointer<ubo> bound_ubo;
+    static std::vector<object_pointer<ubo>> bound_ubo_indices;
 
     /* uniform_buffer_offset_alignment
      *
@@ -775,11 +532,7 @@ public:
      *
      * creates a vertex array object without any vbo or ebo bound
      */
-    vao ()
-        : object { minor_object_type::GLH_VAO_TYPE }
-        , vertex_attribs { 8, { 0, GL_NONE, GL_NONE, 0, 0, {}, false } }
-        , bound_ebo {}
-    {}
+    vao ();
 
     /* deleted copy constructor */
     vao ( const vao& other ) = delete;
@@ -795,12 +548,13 @@ public:
 
 
 
-    /* get_bound_object_pointer
-     *
-     * produce a pointer to the vao currently bound
-     */
-    using object::get_bound_object_pointer;
-    static object_pointer<vao> get_bound_object_pointer () { return get_bound_object_pointer<vao> ( object_bind_target::GLH_VAO_TARGET ); }
+    /* default bind/unbind the vao */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_vao == this; }
+
+    /* get the currently bound vao */
+    static const object_pointer<vao>& get_bound_vao () { return bound_vao; }
 
 
 
@@ -864,6 +618,9 @@ public:
 
 
 private:
+
+    /* the currently bound vao */
+    static object_pointer<vao> bound_vao;
 
     /* struct to represent a vertex attribute */
     struct vertex_attrib
@@ -931,22 +688,22 @@ template<class It> void glh::core::buffer::buffer_data ( It first, It last, cons
     buffer_data ( std::distance ( first, last ) * sizeof ( typename std::iterator_traits<It>::value_type ), NULL, usage );
 
     /* copy data */
-    std::copy ( first, last, begin<typename std::iterator_traits<It>::value_type> () );
+    std::copy ( first, last, reinterpret_cast<typename std::iterator_traits<It>::pointer> ( map_buffer () ) );
 }
 
 /* buffer_sub_data with iterators
  *
  * first/last: iterators for the data (ie. from begin and end)
- * offset: iterator to the position in buffer to write the elements
+ * offset: index of buffer to write the elements
  */
-template<class It> void glh::core::buffer::buffer_sub_data ( It first, It last, iterator<typename std::iterator_traits<It>::value_type> offset )
+template<class It> void glh::core::buffer::buffer_sub_data ( It first, It last, const unsigned offset )
 {
     /* check will fit capacity */
-    if ( ( ( last - first ) + ( offset - begin<typename std::iterator_traits<It>::value_type> () ) ) * sizeof ( typename std::iterator_traits<It>::value_type ) > capacity )
+    if ( ( ( last - first ) + offset ) * sizeof ( typename std::iterator_traits<It>::value_type ) > capacity )
     throw exception::buffer_exception { "attempted to perform buffer sub data operation with incompatible paramaters for buffer capacity" };
 
     /* purely copy using iterators */
-    std::copy ( first, last, offset );    
+    std::copy ( first, last, reinterpret_cast<typename std::iterator_traits<It>::pointer> ( map_buffer () ) + offset );    
 }
 
 /* at
@@ -964,36 +721,6 @@ template<class T> const T& glh::core::buffer::at ( const unsigned i ) const
     /* check i is in range, then return */
     if ( ( i + 1 ) * sizeof ( T ) > capacity ) throw exception::buffer_exception { "attempted to get reference to out of range object in buffer" };
     return * reinterpret_cast<const T *> ( map_buffer () ) + i;
-}
-
-
-
-
-/* BUFFER_ITERATOR_BASE IMPLEMENTATION */
-
-/* get_map_pointer
- *
- * get a pointer to the position in the map after applying the offset
- * will throw if the iterator has been invalidated or offset causes an out of range error
- */
-template<class T> inline T * glh::core::buffer_iterator_base<T>::get_map_pointer () const
-{
-    /* check id matches */
-    if ( this->map_id != this->buff.map_id ) throw exception::buffer_exception { "attempted to dereference invalidated buffer iterator" };
-
-    /* check range */
-    if ( this->offset_map_ptr < this->map_ptr || this->offset_map_ptr > this->map_ptr + this->buff.get_capacity () - 1 ) throw exception::buffer_exception { "attempted to dereference out of range buffer iterator"};
-
-    /* if map location has changed, update it */
-    if ( this->map_ptr != reinterpret_cast<T *> ( this->buff.map_buffer () ) ) 
-    {
-        const int offset = this->offset_map_ptr - this->map_ptr;
-        this->map_ptr = reinterpret_cast<T *> ( this->buff.map_buffer () );
-        this->offset_map_ptr = reinterpret_cast<T *> ( reinterpret_cast<GLbyte *> ( this->map_ptr ) + offset );
-    }
-
-    /* return offset map */
-    return this->offset_map_ptr;
 }
 
 

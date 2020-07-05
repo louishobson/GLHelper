@@ -109,12 +109,13 @@ public:
 
 
 
-    /* get_bound_object_pointer
-     *
-     * produce a pointer to the rbo currently bound
-     */
-    using object::get_bound_object_pointer;
-    static object_pointer<rbo> get_bound_object_pointer () { return get_bound_object_pointer<rbo> ( object_bind_target::GLH_RBO_TARGET ); }
+    /* default bind/unbind the rbo */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_rbo == this; }
+
+    /* get the currently bound rbo */
+    static const object_pointer<rbo>& get_bound_rbo () { return bound_rbo; }
 
 
 
@@ -132,6 +133,9 @@ public:
     const unsigned& get_samples () const { return samples; }
 
 private:
+
+    /* the currently bound rbo */
+    static object_pointer<rbo> bound_rbo;
 
     /* width and height of the rbo */
     const unsigned width;
@@ -161,9 +165,7 @@ public:
      *
      * construct empty framebuffer
      */
-    fbo ()
-        : object { minor_object_type::GLH_FBO_TYPE }
-    {}
+    fbo ();
 
     /* deleted copy constructor */
     fbo ( const fbo& other ) = delete;
@@ -179,48 +181,33 @@ public:
 
 
 
-        /* get_bound_object_pointer
+    /* default bind/unbind the fbo
      *
-     * produce a pointer to the fbo currently bound
+     * equivalent to binding/unbinding from read and draw targets simultaneously
      */
-    using object::get_bound_object_pointer;
-    static object_pointer<fbo> get_bound_object_pointer () { return get_bound_object_pointer<fbo> ( object_bind_target::GLH_FBO_TARGET ); }
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_read_fbo == this && bound_draw_fbo == this; }
 
+    /* bind to read/draw targets separately */
+    bool bind_read () const;
+    bool bind_draw () const;
 
+    /* unbind from read/draw targets */
+    bool unbind_read () const;
+    bool unbind_draw () const;
 
+    /* get if bound to read or draw targets */
+    bool is_read_bound () const { return bound_read_fbo == this; }
+    bool is_draw_bound () const { return bound_draw_fbo == this; }
 
-    /* bind_read/draw
-     *
-     * bind to the read/draw targets
-     * 
-     * returns true if a change in binding occured
-     */
-    bool bind_read () const { return bind ( object_bind_target::GLH_READ_FBO_TARGET ); }
-    bool bind_draw () const { return bind ( object_bind_target::GLH_DRAW_FBO_TARGET ); }
+    /* bind the default framebuffer set up by the window manager */
+    static bool bind_default_framebuffer ();
+    static bool is_default_framebuffer_bound ();
 
-    /* unbind_read/draw
-     *
-     * unbind from the read/draw targets
-     * 
-     * returns true if a change in binding occured
-     */
-    bool unbind_read () const { return unbind ( object_bind_target::GLH_READ_FBO_TARGET ); }
-    bool unbind_draw () const { return unbind ( object_bind_target::GLH_DRAW_FBO_TARGET ); }
-
-    /* is_read/draw_bound
-     *
-     * return true if is bound to read/draw target
-     */
-    bool is_read_bound () const { return is_bound ( object_bind_target::GLH_READ_FBO_TARGET ); }
-    bool is_draw_bound () const { return is_bound ( object_bind_target::GLH_DRAW_FBO_TARGET ); }
-
-    /* unbind_all
-     *
-     * unbind from all bind points, including read and sraw targets
-     * 
-     * return true if a change in binding occured
-     */
-    bool unbind_all () const { return ( unbind () | unbind_read () | unbind_draw () ); }
+    /* get the bound read/draw fbos */
+    static const object_pointer<fbo>& get_bound_read_fbo () { return bound_read_fbo; }
+    static const object_pointer<fbo>& get_bound_draw_fbo () { return bound_draw_fbo; }
 
 
 
@@ -284,6 +271,14 @@ public:
      */
     void blit_copy ( const fbo& other, const unsigned srcx0, const unsigned srcy0, const unsigned srcx1, const unsigned srcy1, 
                      const unsigned dstx0, const unsigned dsty0, const unsigned dstx1, const unsigned dsty1, const GLbitfield copy_mask, const GLenum filter );
+
+
+
+private:
+
+    /* bound read/draw fbos */
+    static object_pointer<fbo> bound_read_fbo;
+    static object_pointer<fbo> bound_draw_fbo;
 
 };
 
