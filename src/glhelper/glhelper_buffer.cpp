@@ -465,7 +465,7 @@ bool glh::core::vao::unbind () const
  * buff: the vertex buffer object to bind to the attribute
  * size: components per vertex (1, 2, 3 or 4)
  * type: the type of each component of each vertex
- * norm: boolean as to whether to normalise the vertex data
+ * norm: boolean as to whether to normalize the vertex data
  * stride: offset between consecutive vertices in bytes
  * offset: the offset from the start of the vertex data in bytes
  */

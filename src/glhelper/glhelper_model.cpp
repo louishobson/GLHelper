@@ -465,8 +465,8 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
         }
 
         /* use Gram-Schmidt process to re-orthogonalize the normal and tangent vectors */
-        _mesh.vertices.at ( i ).normal = math::normalise ( _mesh.vertices.at ( i ).normal );
-        _mesh.vertices.at ( i ).tangent = math::normalise ( _mesh.vertices.at ( i ).tangent - ( math::dot ( _mesh.vertices.at ( i ).normal, _mesh.vertices.at ( i ).tangent ) * _mesh.vertices.at ( i ).normal ) );
+        _mesh.vertices.at ( i ).normal = math::normalize ( _mesh.vertices.at ( i ).normal );
+        _mesh.vertices.at ( i ).tangent = math::normalize ( _mesh.vertices.at ( i ).tangent - ( math::dot ( _mesh.vertices.at ( i ).normal, _mesh.vertices.at ( i ).tangent ) * _mesh.vertices.at ( i ).normal ) );
 
         /* set vertex colors */
         _mesh.vertices.at ( i ).vcolor = ( has_vcolors ? cast_vector ( aimesh.mColors [ 0 ][ i ] ) : math::fvec4 ( 1.0 ) );

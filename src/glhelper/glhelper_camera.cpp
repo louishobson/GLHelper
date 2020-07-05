@@ -163,8 +163,8 @@ glh::camera::camera_movement::camera_movement ( const math::vec3& _position, con
     , restrictive_mode { false }
 {
     /* set x, y, z, restrict_x, restrict_y and restrict_z */
-    z = math::normalise ( - _direction );
-    x = math::cross ( math::normalise ( _world_y ), z );
+    z = math::normalize ( - _direction );
+    x = math::cross ( math::normalize ( _world_y ), z );
     y = math::cross ( z, x );
     restrict_x = x;
     restrict_y = y;
@@ -334,11 +334,11 @@ const glh::math::vec3& glh::camera::camera_movement::roll ( const double arg )
 void glh::camera::camera_movement::set_direction ( const math::vec3& direction, const math::vec3& world_y )
 {
     /* set z */
-    z = math::normalise ( -direction );
+    z = math::normalize ( -direction );
     restrict_z = z;
 
     /* find x from cross product */
-    x = math::cross ( math::normalise ( world_y ), z );
+    x = math::cross ( math::normalize ( world_y ), z );
     restrict_x = x;
 
     /* find y from cross product again */

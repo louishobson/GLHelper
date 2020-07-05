@@ -262,7 +262,7 @@ public:
              , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
              , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
              , const bool _enabled = true, const bool _shadow_mapping_enabled = true, const double _shadow_bias = 0.0 )
-        : direction { math::normalise ( _direction ) }
+        : direction { math::normalize ( _direction ) }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
         , shadow_region { _shadow_region }
         , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }, shadow_bias { _shadow_bias }
@@ -647,7 +647,7 @@ public:
               , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
               , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
               , const bool _enabled = true, const bool _shadow_mapping_enabled = true, const double _shadow_bias = 0.0 )
-        : position { _position }, direction { math::normalise ( _direction ) }
+        : position { _position }, direction { math::normalize ( _direction ) }
         , inner_cone { _inner_cone }, outer_cone { _outer_cone }, att_const { _att_const }, att_linear { _att_linear }, att_quad { _att_quad }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
         , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }, shadow_bias { _shadow_bias }

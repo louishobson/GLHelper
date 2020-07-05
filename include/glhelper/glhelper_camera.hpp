@@ -691,7 +691,7 @@ public:
      * _height: the height of the mirror
      */
     mirror_camera ( const camera_perspective_movement& _cam, const math::vec3& _position, const math::vec3& _normal, const math::vec3& _ytan, const double _width, const double _height )
-        : cam { _cam }, position { _position }, normal { math::normalise ( _normal ) }, ytan { math::normalise ( _ytan ) }, half_width { _width / 2.0 }, half_height { _height / 2.0 }
+        : cam { _cam }, position { _position }, normal { math::normalize ( _normal ) }, ytan { math::normalize ( _ytan ) }, half_width { _width / 2.0 }, half_height { _height / 2.0 }
     {}
 
     /* deleted zero-parameter constructor */
@@ -723,14 +723,14 @@ public:
      * get/set the normal vector of the mirror
      */
     const math::vec3& get_normal () const { return normal; }
-    void set_normal ( const math::vec3& _normal ) { normal = math::normalise ( _normal ); }
+    void set_normal ( const math::vec3& _normal ) { normal = math::normalize ( _normal ); }
 
     /* get/set_ytan
      *
      * get/set the y tangent of the mirror
      */
     const math::vec3& get_ytan () const { return ytan; }
-    void set_ytan ( const math::vec3& _ytan ) { ytan = math::normalise ( _ytan ); }
+    void set_ytan ( const math::vec3& _ytan ) { ytan = math::normalize ( _ytan ); }
 
     /* get/set_width/height
      *
