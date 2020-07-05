@@ -56,7 +56,7 @@ void main ()
     {
         case 0: break;
         case 1: if ( diffuse.a * material.opacity >= 1.0 ) discard; break;
-        case 2: if ( diffuse.a * material.opacity < 1.0 ) discard; break;
+        case 2: if ( diffuse.a * material.opacity < 0.98 ) discard; break;
         default: break;
     }
 
