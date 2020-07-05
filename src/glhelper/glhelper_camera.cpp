@@ -55,9 +55,6 @@ void glh::camera::camera_base::apply () const
     cached_uniforms->view_uni.set_matrix ( view );
     cached_uniforms->proj_uni.set_matrix ( proj );
     cached_uniforms->view_proj_uni.set_matrix ( view_proj );
-    cached_uniforms->view_inverse_uni.set_matrix ( view_inverse );
-    cached_uniforms->proj_inverse_uni.set_matrix ( proj_inverse );
-    cached_uniforms->view_proj_inverse_uni.set_matrix ( view_proj_inverse );
     cached_uniforms->viewpos_uni.set_vector ( viewpos );
 }
 
@@ -76,9 +73,6 @@ void glh::camera::camera_base::cache_uniforms ( core::struct_uniform& camera_uni
             camera_uni.get_uniform ( "view" ),
             camera_uni.get_uniform ( "proj" ),
             camera_uni.get_uniform ( "view_proj" ),
-            camera_uni.get_uniform ( "view_inverse" ),
-            camera_uni.get_uniform ( "proj_inverse" ),
-            camera_uni.get_uniform ( "view_proj_inverse" ),
             camera_uni.get_uniform ( "viewpos" )
         } );
     }
@@ -130,22 +124,19 @@ void glh::camera::camera_base::update_parameters () const
     if ( view_change )
     {
         view = create_view ();
-        view_inverse = math::inverse ( view );
-        viewpos = math::vec3 { view_inverse * math::vec4 { 0.0, 0.0, 0.0, 1.0 } };
+        viewpos = math::vec3 { math::inverse ( view ) * math::vec4 { 0.0, 0.0, 0.0, 1.0 } };
     }
 
     /* if any change to proj matrix, update related parameters */
     if ( proj_change )
     {
         proj = create_proj ();
-        proj_inverse = math::inverse ( proj );
     }
 
     /* if any change to either, update view_proj parameters */
     if ( view_change || proj_change )
     {
         view_proj = proj * view;
-        view_proj_inverse = math::inverse ( view_proj );
     }
 
     view_change = false;

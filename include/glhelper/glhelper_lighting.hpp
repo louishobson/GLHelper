@@ -37,7 +37,7 @@
  *     bool enabled;
  *     bool shadow_mapping_enabled;
  * 
- *     camera_struct shadow_camera;
+ *     mat4 shadow_trans;
  * 
  *     float shadow_bias;
  * };
@@ -57,8 +57,7 @@
  *     bool enabled;
  *     bool shadow_mapping_enabled;
  * 
- *     camera_struct shadow_camera;
- *     mat4 shadow_cube_matrices [ 6 ];
+ *     mat4 shadow_trans [ 6 ];
  * 
  *     float shadow_bias;
  *     float shadow_depth_range_mult;
@@ -83,7 +82,7 @@
  *     bool enabled;
  *     bool shadow_mapping_enabled;
  * 
- *     camera_struct shadow_camera;
+ *     mat4 shadow_trans;
  * 
  *     float shadow_bias;
  *     float shadow_depth_range_mult;
@@ -100,8 +99,7 @@
  * ambient/diffuse/specular_color: the colors of the different components of light produced (all types)
  * enabled: whether the light is 'turned on' (all types)
  * shadow_mapping_enabled: whether the light should be shadow mapped (all types)
- * shadow_camera: the camera used for shadow mapping (all types)
- * shadow_cube_matrices: six pre-combined matrices for projecting the six sides of the cubemap (pointlight only)
+ * shadow_trans: the transformation(s) used for shadow mapping (all types)
  * shadow_bias: the bias to apply when sampling from the shadow map
  * shadow_depth_range_mult: reciprocal the side length of the perspective frustum (only point and spot lights)
  * 
@@ -406,6 +404,7 @@ private:
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
         core::uniform& shadow_mapping_enabled_uni;
+        core::uniform& shadow_trans_uni;
         core::uniform& shadow_bias_uni;
     };
 
@@ -608,7 +607,7 @@ private:
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
         core::uniform& shadow_mapping_enabled_uni;
-        core::uniform_array_uniform& shadow_cube_matrices_uni;
+        core::uniform_array_uniform& shadow_trans_uni;
         core::uniform& shadow_bias_uni;
         core::uniform& shadow_depth_range_mult_uni;
     };
@@ -836,6 +835,7 @@ private:
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
         core::uniform& shadow_mapping_enabled_uni;
+        core::uniform& shadow_trans_uni;
         core::uniform& shadow_bias_uni;
         core::uniform& shadow_depth_range_mult_uni;
     };

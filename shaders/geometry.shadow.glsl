@@ -55,9 +55,9 @@ void main ()
         /* continue if light is disabled */
         if ( !light_system.dirlights [ i ].enabled || !light_system.dirlights [ i ].shadow_mapping_enabled ) continue;
         gl_Layer = i;
-        gl_Position = light_system.dirlights [ i ].shadow_camera.view_proj * gl_in [ 0 ].gl_Position; gs_out.texcoords = vs_out [ 0 ].texcoords; gs_out.depth = gl_Position.z * 0.5 + 0.5; EmitVertex ();
-        gl_Position = light_system.dirlights [ i ].shadow_camera.view_proj * gl_in [ 1 ].gl_Position; gs_out.texcoords = vs_out [ 1 ].texcoords; gs_out.depth = gl_Position.z * 0.5 + 0.5; EmitVertex ();
-        gl_Position = light_system.dirlights [ i ].shadow_camera.view_proj * gl_in [ 2 ].gl_Position; gs_out.texcoords = vs_out [ 2 ].texcoords; gs_out.depth = gl_Position.z * 0.5 + 0.5; EmitVertex ();
+        gl_Position = light_system.dirlights [ i ].shadow_trans * gl_in [ 0 ].gl_Position; gs_out.texcoords = vs_out [ 0 ].texcoords; gs_out.depth = gl_Position.z * 0.5 + 0.5; EmitVertex ();
+        gl_Position = light_system.dirlights [ i ].shadow_trans * gl_in [ 1 ].gl_Position; gs_out.texcoords = vs_out [ 1 ].texcoords; gs_out.depth = gl_Position.z * 0.5 + 0.5; EmitVertex ();
+        gl_Position = light_system.dirlights [ i ].shadow_trans * gl_in [ 2 ].gl_Position; gs_out.texcoords = vs_out [ 2 ].texcoords; gs_out.depth = gl_Position.z * 0.5 + 0.5; EmitVertex ();
         EndPrimitive ();
     }
 
@@ -71,17 +71,20 @@ void main ()
         /* precalculate view-space position and depth for vertices 0-3
          * the depth linear by using the distance to the light, and mapped to 0-1 by multiplying by shadow_depth_range_mult
          */
-        const float v0_depth = length ( light_system.pointlights [ i ].position - gl_in [ 0 ].gl_Position.xyz ) * light_system.pointlights [ i ].shadow_depth_range_mult;
-        const float v1_depth = length ( light_system.pointlights [ i ].position - gl_in [ 1 ].gl_Position.xyz ) * light_system.pointlights [ i ].shadow_depth_range_mult;
-        const float v2_depth = length ( light_system.pointlights [ i ].position - gl_in [ 2 ].gl_Position.xyz ) * light_system.pointlights [ i ].shadow_depth_range_mult;
+        const vec3 depths = vec3
+        (
+            length ( light_system.pointlights [ i ].position - gl_in [ 0 ].gl_Position.xyz ),
+            length ( light_system.pointlights [ i ].position - gl_in [ 1 ].gl_Position.xyz ),
+            length ( light_system.pointlights [ i ].position - gl_in [ 2 ].gl_Position.xyz )
+        ) * light_system.pointlights [ i ].shadow_depth_range_mult;
 
         /* repeatedly set the layer, transform the vertices, and emit the primatives */
         for ( int j = 0; j < 6; ++j )
         {
             gl_Layer = i * 6 + j;
-            gl_Position = light_system.pointlights [ i ].shadow_cube_matrices [ j ] * gl_in [ 0 ].gl_Position; gs_out.texcoords = vs_out [ 0 ].texcoords; gs_out.depth = v0_depth; EmitVertex ();
-            gl_Position = light_system.pointlights [ i ].shadow_cube_matrices [ j ] * gl_in [ 1 ].gl_Position; gs_out.texcoords = vs_out [ 1 ].texcoords; gs_out.depth = v1_depth; EmitVertex ();
-            gl_Position = light_system.pointlights [ i ].shadow_cube_matrices [ j ] * gl_in [ 2 ].gl_Position; gs_out.texcoords = vs_out [ 2 ].texcoords; gs_out.depth = v2_depth; EmitVertex ();
+            gl_Position = light_system.pointlights [ i ].shadow_trans [ j ] * gl_in [ 0 ].gl_Position; gs_out.texcoords = vs_out [ 0 ].texcoords; gs_out.depth = depths [ 0 ]; EmitVertex ();
+            gl_Position = light_system.pointlights [ i ].shadow_trans [ j ] * gl_in [ 1 ].gl_Position; gs_out.texcoords = vs_out [ 1 ].texcoords; gs_out.depth = depths [ 1 ]; EmitVertex ();
+            gl_Position = light_system.pointlights [ i ].shadow_trans [ j ] * gl_in [ 2 ].gl_Position; gs_out.texcoords = vs_out [ 2 ].texcoords; gs_out.depth = depths [ 2 ]; EmitVertex ();
             EndPrimitive ();
         }
     }
@@ -99,11 +102,11 @@ void main ()
         /* set the positions and depths of all of the vertices, then emit the primative
          * the depth linear by using the distance to the light, and mapped to 0-1 by multiplying by shadow_depth_range_mult
          */
-        gl_Position = light_system.spotlights [ i ].shadow_camera.view_proj * gl_in [ 0 ].gl_Position; gs_out.texcoords = vs_out [ 0 ].texcoords;
+        gl_Position = light_system.spotlights [ i ].shadow_trans * gl_in [ 0 ].gl_Position; gs_out.texcoords = vs_out [ 0 ].texcoords;
         gs_out.depth = length ( light_system.spotlights [ i ].position - gl_in [ 0 ].gl_Position.xyz ) * light_system.spotlights [ i ].shadow_depth_range_mult; EmitVertex ();
-        gl_Position = light_system.spotlights [ i ].shadow_camera.view_proj * gl_in [ 1 ].gl_Position; gs_out.texcoords = vs_out [ 1 ].texcoords;
+        gl_Position = light_system.spotlights [ i ].shadow_trans * gl_in [ 1 ].gl_Position; gs_out.texcoords = vs_out [ 1 ].texcoords;
         gs_out.depth = length ( light_system.spotlights [ i ].position - gl_in [ 1 ].gl_Position.xyz ) * light_system.spotlights [ i ].shadow_depth_range_mult; EmitVertex ();
-        gl_Position = light_system.spotlights [ i ].shadow_camera.view_proj * gl_in [ 2 ].gl_Position; gs_out.texcoords = vs_out [ 2 ].texcoords;
+        gl_Position = light_system.spotlights [ i ].shadow_trans * gl_in [ 2 ].gl_Position; gs_out.texcoords = vs_out [ 2 ].texcoords;
         gs_out.depth = length ( light_system.spotlights [ i ].position - gl_in [ 2 ].gl_Position.xyz ) * light_system.spotlights [ i ].shadow_depth_range_mult; EmitVertex ();
         EndPrimitive ();
     }
