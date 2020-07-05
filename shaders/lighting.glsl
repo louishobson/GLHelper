@@ -108,11 +108,60 @@ struct light_system_struct
  * att_quad: quadratic part
  *
  * return: the multiple of attenuation
+ *
+ * prototype: float compute_attenuation ( float dist, float att_const, float att_linear, float att_quad )
  */
-float compute_attenuation ( const float dist, const float att_const, const float att_linear, const float att_quad )
-{
-    return 1.0 / ( att_const + ( att_linear * dist ) + ( att_quad * dist * dist ) );
-}
+#define compute_attenuation( dist, att_const, att_linear, att_quad ) \
+    ( 1.0 / ( att_const + att_linear * dist + att_quad * dist * dist ) )
+
+/* compute_diffuse_constant
+ *
+ * compute the diffuse component of lighting a fragment
+ *
+ * lightdir: unit vector from fragment to light position
+ * normal: normal of the fragment
+ *
+ * return: the multiple of diffuse lighting
+ *
+ * prototype: float compute_diffuse_constant ( vec3 lightdir, vec3 normal )
+ */
+#define compute_diffuse_constant( lightdir, normal ) \
+    ( clamp ( dot ( lightdir, normal ), 0.0, 1.0 ) )
+
+/* compute_specular_constant
+ *
+ * compute the specular component of lighting a fragment
+ *
+ * viewdir: unit vector from fragment to viewer position
+ * lightdir: unit vector from fragment to light position
+ * normal: normal of the fragment
+ * shininess: shininess of the material
+ *
+ * return: the multiple of specular lighting
+ *
+ * prototype: float compute_specular_constant ( vec3 viewdir, vec3 lightdir, vec3 normal, float shininess )
+ */
+#define compute_specular_constant( viewdir, lightdir, normal, shininess ) \
+    ( pow ( clamp ( dot ( normalize ( viewdir + lightdir ), normal ), 0.0, 1.0 ), shininess ) )
+
+/* calculate_spotlight_constant
+ *
+ * compute the spotlight constant for lighting a fragment
+ *
+ * direction: unit vector for the central direction of the spotlight
+ * lightdir: unit vector from fragment to light position
+ * inner/outer_cone: inner and outer cone in radians for the spotlight
+ * 
+ * return: the multiple for spotlight lighting
+ *
+ * prototype: float compute_spotlight_constant ( vec3 directiom, vec3 lightdir, float inner_cone, float outer_cone )
+ */
+#define compute_spotlight_constant( direction, lightdir, inner_cone, outer_cone ) \
+    ( 1.0 - smoothstep ( inner_cone, outer_cone, acos ( dot ( direction, -lightdir ) ) ) )
+    /* set spotlight_constant to 1.0, unless inbetween inner and outer cone
+     * in this case, the arccos of the dot product of lightdir and -direction of the light gives the angle
+     * we can then use Hermite interpolation to create a smooth gradient between the inner and outer come
+     */
 
 /* compute_lighting
  *
@@ -144,12 +193,6 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         /* continue if disabled */
         if ( !light_system.dirlights [ i ].enabled ) continue;
 
-        /* calculate diffuse constant */
-        const float diffuse_constant = max ( dot ( normal, -light_system.dirlights [ i ].direction ), 0.0 );
-
-        /* calculate specular constant from halfway vector */
-        //const float specular_constant = max ( dot ( normal, normalize ( viewdir - light_system.dirlights [ i ].direction ) ), 0.0 );
-
         /* calculate shadow_constant */
         float shadow_constant = 1.0;
         if ( light_system.dirlights [ i ].shadow_mapping_enabled )
@@ -162,7 +205,7 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
 
             /* calculate z through z-component * the shadow bias, taking into account the angle of the surface
              * the closer the surface is to perpandicular to the light, the less bias */
-            fragpos_light_proj.z -= max ( light_system.dirlights [ i ].shadow_bias * ( 1.0 - diffuse_constant ), 0.001 );
+            fragpos_light_proj.z -= max ( light_system.dirlights [ i ].shadow_bias * ( 1.0 - compute_diffuse_constant ( -light_system.dirlights [ i ].direction, normal ) ), 0.001 );
 
             /* sample the shadow map to get the shadow constant */
             shadow_constant = texture ( light_system.shadow_maps_2d, vec4 ( fragpos_light_proj.xy, i, fragpos_light_proj.z ) );
@@ -172,12 +215,11 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         base_color += light_system.dirlights [ i ].ambient_color * ambient_color; 
 
         /* add diffuse component */
-        base_color += diffuse_constant * shadow_constant * light_system.dirlights [ i ].diffuse_color * diffuse_color;
+        base_color += compute_diffuse_constant ( -light_system.dirlights [ i ].direction, normal ) * shadow_constant * light_system.dirlights [ i ].diffuse_color * diffuse_color;
 
         /* add specular component */
-        //base_color += pow ( specular_constant, shininess ) * shininess_strength * shadow_constant * light_system.dirlights [ i ].specular_color * specular_color;
-        //base_color += pow ( max ( dot ( normal, normalize ( viewdir - light_system.dirlights [ i ].direction ) ), 0.0 ), shininess ) * shininess_strength * shadow_constant * light_system.dirlights [ i ].specular_color * specular_color;
-        base_color += pow ( max ( dot ( normal, normalize ( viewdir - light_system.dirlights [ i ].direction ) ), 0.0 ), 256.0 ) * 0.75 * shadow_constant * light_system.dirlights [ i ].specular_color;
+        //base_color += compute_specular_constant ( viewdir, -light_system.dirlights [ i ].direction, normal, shininess ) * shininess_strength * shadow_constant * light_system.dirlights [ i ].specular_color * specular_color;
+        base_color += compute_specular_constant ( viewdir, -light_system.dirlights [ i ].direction, normal, 128 ) * shadow_constant * light_system.dirlights [ i ].specular_color * ( diffuse_color + vec3 ( 0.2, 0.2, 0.2 ) );
     }
 
     /* iterate through point lighting */
@@ -196,13 +238,7 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         lightdir = normalize ( lightdir );
 
         /* use distance to light to calculate the attenuation */
-        const float attenuation = compute_attenuation ( lightdist, light_system.pointlights [ i ].att_const, light_system.pointlights [ i ].att_linear, light_system.pointlights [ i ].att_quad );
-
-        /* calculate diffuse constant */
-        const float diffuse_constant = max ( dot ( normal, lightdir ), 0.0 );
-
-        /* calculate specular constant from halfway vector */
-        //const float specular_constant = max ( dot ( normal, normalize ( viewdir + lightdir ) ), 0.0 );        
+        const float attenuation = compute_attenuation ( lightdist, light_system.pointlights [ i ].att_const, light_system.pointlights [ i ].att_linear, light_system.pointlights [ i ].att_quad ); 
         
         /* calculate shadow_constant */
         float shadow_constant = 1.0;
@@ -213,7 +249,7 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
             ( 
                 light_system.shadow_maps_cube, vec4 ( -lightdir, i ), 
                 lightdist * light_system.pointlights [ i ].shadow_depth_range_mult -
-                    max ( light_system.pointlights [ i ].shadow_bias * ( 1.0 - diffuse_constant ), 0.001 )
+                    max ( light_system.pointlights [ i ].shadow_bias * ( 1.0 - compute_diffuse_constant ( lightdir, normal ) ), 0.001 )
             );
         }
 
@@ -221,11 +257,10 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         base_color += attenuation * light_system.pointlights [ i ].ambient_color * ambient_color; 
 
         /* add diffuse component */
-        base_color += diffuse_constant * shadow_constant * attenuation * light_system.pointlights [ i ].diffuse_color * diffuse_color;
+        base_color += compute_diffuse_constant ( lightdir, normal ) * shadow_constant * attenuation * light_system.pointlights [ i ].diffuse_color * diffuse_color;
 
         /* add specular component */
-        //base_color += pow ( specular_constant, shininess ) * shininess_strength * shadow_constant * attenuation * light_system.pointlights [ i ].specular_color * specular_color;
-        base_color += pow ( max ( dot ( normal, normalize ( viewdir + lightdir ) ), 0.0 ), shininess ) * shininess_strength * shadow_constant * attenuation * light_system.pointlights [ i ].specular_color * specular_color;
+        base_color += compute_specular_constant ( viewdir, lightdir, normal, shininess ) * shininess_strength * shadow_constant * attenuation * light_system.pointlights [ i ].specular_color * specular_color;
     }
 
     /* iterate through spot lighting */
@@ -243,23 +278,11 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         /* normalize lightdir for use with dot product */
         lightdir = normalize ( lightdir );
 
-        /* get arccos of the dot product of vector to light and direction of the light
-         * this equals the cosine of the angle between the light and the fragment
-         */
-        //const float lighttheta = acos ( dot ( light_system.spotlights [ i ].direction, -lightdir ) );
-
-        /* set spotlight_constant to 1.0, unless inbetween inner and outer cone */
-        //const float spotlight_constant = 1.0 - smoothstep ( light_system.spotlights [ i ].inner_cone, light_system.spotlights [ i ].outer_cone, lighttheta );
-        const float spotlight_constant = 1.0 - smoothstep ( light_system.spotlights [ i ].inner_cone, light_system.spotlights [ i ].outer_cone, acos ( dot ( light_system.spotlights [ i ].direction, -lightdir ) ) );
+        /* compute spotlight constant */
+        const float spotlight_constant = compute_spotlight_constant ( light_system.spotlights [ i ].direction, lightdir, light_system.spotlights [ i ].inner_cone, light_system.spotlights [ i ].outer_cone );
 
         /* use distance to light to calculate the attenuation */
         const float attenuation = compute_attenuation ( lightdist, light_system.spotlights [ i ].att_const, light_system.spotlights [ i ].att_linear, light_system.spotlights [ i ].att_quad );
-
-        /* calculate diffuse constant */
-        const float diffuse_constant = max ( dot ( normal, lightdir ), 0.0 );
-
-        /* calculate specular constant from halfway vector */
-        //const float specular_constant = max ( dot ( normal, normalize ( viewdir + lightdir ) ), 0.0 );
 
         /* calculate shadow_constant */
         float shadow_constant = 1.0;
@@ -279,7 +302,7 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
              * also take into account the angle of the surface to the light's position
              */
             fragpos_light_proj.z = lightdist * light_system.spotlights [ i ].shadow_depth_range_mult -
-                max ( light_system.spotlights [ i ].shadow_bias * ( 1.0 - diffuse_constant ), 0.001 );
+                max ( light_system.spotlights [ i ].shadow_bias * ( 1.0 - compute_diffuse_constant ( lightdir, normal ) ), 0.001 );
 
             /* sample the shadow map to get the shadow constant */
             shadow_constant = texture ( light_system.shadow_maps_2d, vec4 ( fragpos_light_proj.xy, light_system.dirlights_size + i, fragpos_light_proj.z ) );
@@ -289,11 +312,10 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         base_color += light_system.spotlights [ i ].ambient_color * ambient_color; 
 
         /* add diffuse component */
-        base_color += diffuse_constant * spotlight_constant * shadow_constant * attenuation * light_system.spotlights [ i ].diffuse_color * diffuse_color;
+        base_color += compute_diffuse_constant ( lightdir, normal ) * spotlight_constant * shadow_constant * attenuation * light_system.spotlights [ i ].diffuse_color * diffuse_color;
 
         /* add specular component */
-        //base_color += pow ( specular_constant, shininess ) * shininess_strength * spotlight_constant * shadow_constant * attenuation * light_system.spotlights [ i ].specular_color * specular_color;
-        base_color += pow ( max ( dot ( normal, normalize ( viewdir + lightdir ) ), 0.0 ), shininess ) * shininess_strength * spotlight_constant * shadow_constant * attenuation * light_system.spotlights [ i ].specular_color * specular_color;
+        base_color += compute_specular_constant ( viewdir, lightdir, normal, shininess ) * shininess_strength * spotlight_constant * shadow_constant * attenuation * light_system.spotlights [ i ].specular_color * specular_color;
     }
 
     /* return the base color */

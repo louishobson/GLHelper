@@ -100,14 +100,15 @@ vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ M
  * transparency_cutoff: if the transparency is less than this value, return true
  *
  * return: boolean, true if has alpha < transparency_cutoff
+ *
+ * prototype: bool evaluate_stack_transparency ( texture_stack_struct stack, vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ], float transparency_cutoff )
  */
-bool evaluate_stack_transparency ( const texture_stack_struct stack, const vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ], const float transparency_cutoff )
-{
+#define evaluate_stack_transparency( stack, texcoords, transparency_cutoff ) \
+    ( stack.base_color.a < transparency_cutoff || ( stack.stack_size != 0 && texture ( stack.textures, vec3 ( texcoords [ stack.levels [ 0 ].uvwsrc ].xy, 0 ) ).a < transparency_cutoff ) )
     /* if base transparency < 1.0, return true
      * if has no textures, return false
-     * if has texture, return true if alpha is less than 1.0 */
-    return ( stack.base_color.a < transparency_cutoff || ( stack.stack_size != 0 && texture ( stack.textures, vec3 ( texcoords [ stack.levels [ 0 ].uvwsrc ].xy, 0 ) ).a < transparency_cutoff ) );
-}
+     * if has texture, return true if alpha is less than 1.0
+     */
 
 /* evaluate_normal
  *
@@ -118,12 +119,11 @@ bool evaluate_stack_transparency ( const texture_stack_struct stack, const vec3 
  * tbn_matrix: the TBN matrix to use to transform the normal, if map is present
  *
  * return: the new normal, or the original if no map is present
+ *
+ * prototype: vec3 evaluate_normal ( texture_stack_struct stack, vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ], mat3 tbn_matrix )
  */
-vec3 evaluate_normal ( const texture_stack_struct stack, const vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ], const mat3 tbn_matrix )
-{
-    /* if no normal map, return origninal normal */
-    if ( stack.stack_size == 0 ) return tbn_matrix [ 2 ];
-
-    /* else sample the map and return the transformed normal */
-    return tbn_matrix * normalize ( ( evaluate_stack ( stack, texcoords ).xyz * 2.0 - 1.0 ) );
-}
+#define evaluate_normal( stack, texcoords, tbn_matrix ) \
+    ( stack.stack_size == 0 ? tbn_matrix [ 2 ] : tbn_matrix * normalize ( ( evaluate_stack ( stack, texcoords ).xyz * 2.0 - 1.0 ) ) )
+    /* if no normal, return original normal
+     * else sample the map and return the transformed normal
+     */
