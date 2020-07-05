@@ -8,11 +8,8 @@
 
 /* INPUTS AND OUTPUTS */
 
-/* vertices, texture coords and normal */
+/* input vertex position and texture coords */
 layout ( location = 0 ) in vec3 in_pos;
-layout ( location = 1 ) in vec3 in_normal;
-layout ( location = 2 ) in vec3 in_tangent;
-layout ( location = 3 ) in vec4 in_vcolor;
 layout ( location = 4 ) in vec3 in_texcoords [ MAX_TEXTURE_STACK_SIZE ];
 
 /* output texcoords */
