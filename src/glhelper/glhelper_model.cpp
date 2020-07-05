@@ -130,15 +130,19 @@ void glh::model::model::cache_material_uniforms ( core::struct_uniform& material
             material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "stack_size" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_uniform ( "stack_size" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_uniform ( "stack_size" ),
+            material_uni.get_struct_uniform ( "normal_stack" ).get_uniform ( "stack_size" ),
             material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "base_color" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_uniform ( "base_color" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_uniform ( "base_color" ),
+            material_uni.get_struct_uniform ( "normal_stack" ).get_uniform ( "base_color" ),
             material_uni.get_struct_uniform ( "ambient_stack" ).get_struct_array_uniform ( "levels" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_struct_array_uniform ( "levels" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_struct_array_uniform ( "levels" ),
+            material_uni.get_struct_uniform ( "normal_stack" ).get_struct_array_uniform ( "levels" ),
             material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "textures" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_uniform ( "textures" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_uniform ( "textures" ),
+            material_uni.get_struct_uniform ( "normal_stack" ).get_uniform ( "textures" ),
             material_uni.get_uniform ( "blending_mode" ),
             material_uni.get_uniform ( "shininess" ),
             material_uni.get_uniform ( "shininess_strength" ),
@@ -204,22 +208,22 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
     float temp_float;
     int temp_int;
 
-
-
-    /* set up texture stacks */
-    add_texture_stack ( _material.ambient_stack, aimaterial, aiTextureType_AMBIENT, AI_MATKEY_COLOR_AMBIENT, model_import_flags & import_flags::GLH_AMBIENT_SRGBA );
-    add_texture_stack ( _material.diffuse_stack, aimaterial, aiTextureType_DIFFUSE, AI_MATKEY_COLOR_DIFFUSE, model_import_flags & import_flags::GLH_DIFFUSE_SRGBA );
-    add_texture_stack ( _material.specular_stack, aimaterial, aiTextureType_SPECULAR, AI_MATKEY_COLOR_SPECULAR, model_import_flags & import_flags::GLH_SPECULAR_SRGBA );
-
-
+    /* get base colors and set up texture stacks */
+    add_texture_stack ( _material.ambient_stack, aimaterial, aiTextureType_AMBIENT, 
+        ( aimaterial.Get ( AI_MATKEY_COLOR_AMBIENT, temp_color ) == aiReturn_SUCCESS ? cast_vector ( temp_color ) : math::fvec3 { 0.0 } ), model_import_flags & import_flags::GLH_AMBIENT_SRGBA );
+    add_texture_stack ( _material.diffuse_stack, aimaterial, aiTextureType_DIFFUSE, 
+        ( aimaterial.Get ( AI_MATKEY_COLOR_DIFFUSE, temp_color ) == aiReturn_SUCCESS ? cast_vector ( temp_color ) : math::fvec3 { 0.0 } ), model_import_flags & import_flags::GLH_DIFFUSE_SRGBA );
+    add_texture_stack ( _material.specular_stack, aimaterial, aiTextureType_SPECULAR, 
+        ( aimaterial.Get ( AI_MATKEY_COLOR_SPECULAR, temp_color ) == aiReturn_SUCCESS ? cast_vector ( temp_color ) : math::fvec3 { 0.0 } ), model_import_flags & import_flags::GLH_SPECULAR_SRGBA );
+    add_texture_stack ( _material.normal_stack, aimaterial, aiTextureType_NORMALS, math::fvec3 { 0.0 }, false );
 
     /* get the blend mode */
     if ( aimaterial.Get ( AI_MATKEY_BLEND_FUNC, temp_int ) == aiReturn_SUCCESS )
     _material.blending_mode = temp_int; else _material.blending_mode = 0;
 
     /* get the shininess properties */
-    if ( aimaterial.Get ( AI_MATKEY_SHININESS, temp_float ) == aiReturn_SUCCESS )
-    _material.shininess = temp_float; else _material.shininess = 0.0;
+    if ( aimaterial.Get ( AI_MATKEY_SHININESS, temp_float ) == aiReturn_SUCCESS && temp_float >= 1.0 )
+    _material.shininess = temp_float; else _material.shininess = 1.0;
     if ( aimaterial.Get ( AI_MATKEY_SHININESS_STRENGTH, temp_float ) == aiReturn_SUCCESS )
     _material.shininess_strength = temp_float; else _material.shininess_strength = 1.0;
 
@@ -238,8 +242,6 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
     /* set definitely opaque flag */
     _material.definitely_opaque = is_definitely_opaque ( _material );
 
-
-
     /* return the material */
     return _material;
 }
@@ -253,12 +255,12 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
  * _texture_stack: the texture stack to configure
  * aimaterial: the material to get the texture stack from
  * aitexturetype: the type of texture to add
- * base_color/__bgtype/__bgidx: the AI_MATKEY macro for the base color
+ * base_color: base color of the texture, as recieved by assimp
  * use_srgb: true if colors should be gamma corrected
  * 
  * return: the texture_stack just added
  */
-glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack& _texture_stack, const aiMaterial& aimaterial, const aiTextureType aitexturetype, const char * base_color, const unsigned int __bgtype, const unsigned int __bgidx, const bool use_srgb )
+glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack& _texture_stack, const aiMaterial& aimaterial, const aiTextureType aitexturetype, const math::fvec3 base_color, const bool use_srgb )
 {
     /* temportary get storage */
     aiColor3D temp_color;
@@ -266,16 +268,11 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
     int temp_int;
     aiString temp_string;
 
-
-
-    /* get the base color */
-    if ( aimaterial.Get ( base_color, __bgtype, __bgidx, temp_color ) == aiReturn_SUCCESS )
-    _texture_stack.base_color = math::fvec4 { cast_vector ( temp_color ) }; else _texture_stack.base_color = math::fvec4 { 0.0 };
+    /* set the base color */
+    _texture_stack.base_color = math::fvec4 { base_color };
 
     /* apply sRGBA transformation to base color */
     if ( use_srgb ) _texture_stack.base_color = math::pow ( _texture_stack.base_color, math::fvec4 { 2.2 } );
-
-
 
     /* get the stack size */
     _texture_stack.stack_size = aimaterial.GetTextureCount ( aitexturetype );
@@ -297,11 +294,6 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
         _texture_stack.levels.at ( i ).blend_operation = temp_int; else _texture_stack.levels.at ( i ).blend_operation = 0;
         if ( i == 0 && ( _texture_stack.base_color == math::fvec4 { 0.0 } || _texture_stack.base_color == math::fvec4 { 1.0 } ) && ( _texture_stack.levels.at ( 0 ).blend_operation <= 1 ) )
             { _texture_stack.base_color = math::fvec4 { 1.0 }; _texture_stack.levels.at ( 0 ).blend_operation = 0; }
-        if ( i == 1 && ( _texture_stack.base_color == math::fvec4 { 0.0 } || _texture_stack.base_color == math::fvec4 { 1.0 } ) && _texture_stack.levels.at ( 1 ).blend_operation <= 1 && _texture_stack.levels.at ( 1 ).blend_operation != _texture_stack.levels.at ( 0 ).blend_operation )
-        {
-            if ( _texture_stack.levels.at ( 1 ).blend_operation == 0 ) { _texture_stack.base_color = math::fvec4 { 1.0 }; _texture_stack.levels.at ( 0 ).blend_operation = 0; }
-            else { _texture_stack.base_color = math::fvec4 { 0.0 }; _texture_stack.levels.at ( 0 ).blend_operation = 1; }
-        }
         if ( aimaterial.Get ( AI_MATKEY_TEXBLEND ( aitexturetype, i ), temp_float ) == aiReturn_SUCCESS ) 
         _texture_stack.levels.at ( i ).blend_strength = temp_float; else _texture_stack.levels.at ( i ).blend_strength = 1.0;
 
@@ -856,6 +848,7 @@ void glh::model::model::apply_material ( const material& _material ) const
     apply_texture_stack ( _material.ambient_stack, cached_material_uniforms->ambient_stack_size_uni, cached_material_uniforms->ambient_stack_base_color_uni, cached_material_uniforms->ambient_stack_levels_uni, cached_material_uniforms->ambient_stack_textures_uni );
     apply_texture_stack ( _material.diffuse_stack, cached_material_uniforms->diffuse_stack_size_uni, cached_material_uniforms->diffuse_stack_base_color_uni, cached_material_uniforms->diffuse_stack_levels_uni,cached_material_uniforms->diffuse_stack_textures_uni );
     apply_texture_stack ( _material.specular_stack, cached_material_uniforms->specular_stack_size_uni, cached_material_uniforms->specular_stack_base_color_uni, cached_material_uniforms->specular_stack_levels_uni, cached_material_uniforms->specular_stack_textures_uni );
+    apply_texture_stack ( _material.normal_stack, cached_material_uniforms->normal_stack_size_uni, cached_material_uniforms->normal_stack_base_color_uni, cached_material_uniforms->normal_stack_levels_uni, cached_material_uniforms->normal_stack_textures_uni );
 
     /* set blending mode */
     cached_material_uniforms->blending_mode_uni.set_int ( _material.blending_mode );

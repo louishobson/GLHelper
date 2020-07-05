@@ -51,6 +51,9 @@ void main ()
     vec4 diffuse = ambient;
     vec4 specular = evaluate_stack ( material.specular_stack, vs_out.texcoords );
 
+    /* evaluate new normal */
+    vec3 normal = evaluate_normal ( material.normal_stack, vs_out.texcoords, vs_out.tbn_matrix );
+
     /* discard if opaque/transparent */
     switch ( transparent_mode )
     {
@@ -63,7 +66,7 @@ void main ()
     /* calculate lighting color */
     fragcolor = vec4
     (
-        compute_lighting ( ambient.xyz, diffuse.xyz, specular.xyz, material.shininess, material.shininess_strength, vs_out.fragpos, camera.viewpos, vs_out.tbn_matrix [ 2 ], light_system ),
+        compute_lighting ( ambient.xyz, diffuse.xyz, specular.xyz, material.shininess, material.shininess_strength, vs_out.fragpos, camera.viewpos, normal, light_system ),
         diffuse.a * material.opacity
     );
 }
