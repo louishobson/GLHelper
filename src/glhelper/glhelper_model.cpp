@@ -486,10 +486,10 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
 
 
     /* buffer vertex data */
-    _mesh.vertex_data.buffer_data ( _mesh.vertices.begin (), _mesh.vertices.end () );
+    _mesh.vertex_data.buffer_storage ( _mesh.vertices.begin (), _mesh.vertices.end () );
 
     /* buffer index data */
-    _mesh.index_data.buffer_data ( _mesh.faces.begin (), _mesh.faces.end () );
+    _mesh.index_data.buffer_storage ( _mesh.faces.begin (), _mesh.faces.end () );
 
     /* configure the vao */
     _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 0 * sizeof ( GLfloat ));
