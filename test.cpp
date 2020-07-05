@@ -161,19 +161,19 @@ int main ()
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        true, true, 0.005
+        false, true, 0.005
     );
 
     /* add spotlights */
     light_system.add_spotlight
     (
         glh::math::vec3 ( 30, 40, 20 ), glh::math::vec3 ( -30, -40, -20 ),
-        glh::math::rad ( 25 ), glh::math::rad ( 40 ), 1.0, 0.0, 0.0,
+        glh::math::rad ( 30 ), glh::math::rad ( 50 ), 1.0, 0.0, 0.0,
         glh::math::vec3 { 0.4 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        false, true, 0.005
+        true, true, 0.005
     );
 
 
