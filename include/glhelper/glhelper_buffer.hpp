@@ -190,13 +190,30 @@ public:
 
 
 
+    /* buffer_storage with pointer
+     *
+     * size: the size of the data in bytes
+     * data: pointer to the data (defaults to NULL)
+     * flags: special storage flags (defaults to GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT)
+     */
+    void buffer_storage ( const unsigned size, const void * data = NULL, const GLbitfield flags = GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT );
+
+    /* buffer_storage with iterators
+     *
+     * first/last: iterators for the data (ie. from begin and end)
+     * flags: special storage flags (defaults to GL_DYNAMIC_STORAGE_BIT), GL_MAP_READ_BIT and GL_MAP_WRITE_BIT are forced to be present
+     */
+    template<class It> void buffer_storage ( It first, It last, const GLbitfield flags = GL_DYNAMIC_STORAGE_BIT );
+
+
+
     /* buffer_data with pointer
      *
      * size: size of data in bytes
      * data: pointer to data (defaults to NULL)
      * usage: the storage method for the data (defaults to static draw)
      */
-    void buffer_data ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW );
+    void buffer_data ( const unsigned size, const void * data = NULL, const GLenum usage = GL_STATIC_DRAW );
 
     /* buffer_data with iterators
      *
@@ -211,7 +228,7 @@ public:
      * size: size of the data in bytes
      * data: pointer to data
      */
-    void buffer_sub_data ( const GLintptr offset, const GLsizeiptr size, const GLvoid * data );
+    void buffer_sub_data ( const unsigned offset, const unsigned size, const void * data );
 
     /* buffer_sub_data with iterators
      *
@@ -229,7 +246,7 @@ public:
      * read/write_offset: the offsets for reading and writing
      * size: the number of bytes to copy
      */
-    void copy_sub_data ( const buffer& read_buff, const GLintptr read_offset, const GLintptr write_offset, const GLsizeiptr size );
+    void copy_sub_data ( const buffer& read_buff, const unsigned read_offset, const unsigned write_offset, const unsigned size );
 
     /* clear_data
      *
@@ -255,7 +272,7 @@ public:
      * 
      * return: the map to the buffer, or NULL on failure
      */
-    GLvoid * map_buffer () const;
+    void * map_buffer () const;
 
     /* unmap_buffer
      *
@@ -285,7 +302,7 @@ public:
      *
      * return the capacity of the buffer in bytes
      */
-    const GLsizeiptr& get_capacity () const { return capacity; }
+    const unsigned& get_capacity () const { return capacity; }
 
 
 
@@ -293,17 +310,17 @@ private:
 
     /* NON-STATIC MEMBERS */
 
-    /* GLsizeiptr capacity
+    /* unsigned capacity
      *
      * the number of bytes allocated to the buffer
      */
-    GLsizeiptr capacity;
+    unsigned capacity;
 
-    /* GLvoid * map_ptr
+    /* void * map_ptr
      *
      * pointer to the current map to the buffer (NULL for no map)
      */
-    mutable GLvoid * map_ptr;
+    mutable void * map_ptr;
 
     /* unsigned map_id
      *
@@ -311,6 +328,18 @@ private:
      * this ensures that outdated iterators know when they are outdated
      */
     mutable unsigned map_id;
+
+    /* is_immutable
+     *
+     * true if the buffer has been set by buffer_storage, and is now immutable
+     */
+    bool is_immutable;
+
+    /* immutable_flags
+     *
+     * flags set when the buffer was set up as immutable
+     */
+    GLbitfield immutable_flags;
 
 
 
@@ -340,7 +369,7 @@ public:
     /* zero-parameter constructor */
     vbo () { bind (); }
 
-    /* construct and immediately buffer data
+    /* construct and immediately buffer data with pointer
      *
      * generates a buffer and immediately buffers data
      * 
@@ -348,8 +377,18 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    vbo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
+    vbo ( const unsigned size, const void * data = NULL, const GLenum usage = GL_STATIC_DRAW )
         { bind (); buffer_data ( size, data, usage ); }
+
+    /* construct and immediately buffer data with iterators
+     *
+     * generates a buffer and immediately buffers data
+     * 
+     * first/last: iterators for the data (ie. from begin and end)
+     * usage: the storage method for the data
+     */
+    template<class It> vbo ( It first, It last, const GLenum usage = GL_STATIC_DRAW )
+        { bind (); buffer_data ( first, last, usage ); }
 
     /* deleted copy constructor */
     vbo ( const vbo& other ) = delete;
@@ -397,7 +436,7 @@ public:
     /* zero-parameter constructor */
     ebo () { bind (); }
 
-    /* construct and immediately buffer data
+    /* construct and immediately buffer data with pointer
      *
      * generates a buffer and immediately buffers data
      * 
@@ -405,8 +444,18 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    ebo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW )
+    ebo ( const unsigned size, const void * data = NULL, const GLenum usage = GL_STATIC_DRAW )
         { bind (); buffer_data ( size, data, usage ); }
+
+    /* construct and immediately buffer data with iterators
+     *
+     * generates a buffer and immediately buffers data
+     * 
+     * first/last: iterators for the data (ie. from begin and end)
+     * usage: the storage method for the data
+     */
+    template<class It> ebo ( It first, It last, const GLenum usage = GL_STATIC_DRAW )
+        { bind (); buffer_data ( first, last, usage ); }
 
     /* deleted copy constructor */
     ebo ( const ebo& other ) = delete;
@@ -454,7 +503,7 @@ public:
     /* zero-parameter constructor */
     ubo ();
 
-    /* construct and immediately buffer data
+    /* construct and immediately buffer data with pointer
      *
      * generates a buffer and immediately buffers data
      * 
@@ -462,7 +511,16 @@ public:
      * data: pointer to data
      * usage: the storage method for the data
      */
-    ubo ( const GLsizeiptr size, const GLvoid * data = NULL, const GLenum usage = GL_STATIC_DRAW );
+    ubo ( const unsigned size, const void * data = NULL, const GLenum usage = GL_STATIC_DRAW );
+
+    /* construct and immediately buffer data with iterators
+     *
+     * generates a buffer and immediately buffers data
+     * 
+     * first/last: iterators for the data (ie. from begin and end)
+     * usage: the storage method for the data
+     */
+    template<class It> ubo ( It first, It last, const GLenum usage = GL_STATIC_DRAW );
 
     /* deleted copy constructor */
     ubo ( const ubo& other ) = delete;
@@ -571,7 +629,7 @@ public:
      * stride: offset between consecutive vertices in bytes
      * offset: the offset from the start of the vertex data in bytes
      */
-    void set_vertex_attrib ( const GLuint attrib, const vbo& buff, const GLint size, const GLenum type, const GLboolean norm, const GLsizei stride, const GLsizeiptr offset );
+    void set_vertex_attrib ( const unsigned attrib, const vbo& buff, const int size, const GLenum type, const bool norm, const unsigned stride, const unsigned offset );
 
     /* enable_vertex_attrib
      *
@@ -579,7 +637,7 @@ public:
      * 
      * attrib: the attribute to configure (>=0)
      */
-    void enable_vertex_attrib ( const GLuint attrib );
+    void enable_vertex_attrib ( const unsigned attrib );
 
     /* disable_vertex_attrib
      *
@@ -587,7 +645,7 @@ public:
      * 
      * attrib: the attribute to configure (>=0)
      */
-    void disable_vertex_attrib ( const GLuint attrib );
+    void disable_vertex_attrib ( const unsigned attrib );
 
     /* bind_ebo
      *
@@ -625,11 +683,11 @@ private:
     /* struct to represent a vertex attribute */
     struct vertex_attrib
     {
-        GLint size;
+        int size;
         GLenum type;
         GLenum norm;
-        GLsizei stride;
-        GLsizeiptr offset;
+        unsigned stride;
+        unsigned offset;
         const_object_pointer<vbo> buff;
         bool enabled;
     };
@@ -677,12 +735,33 @@ public:
 
 /* BUFFER IMPLEMENTATION */
 
+/* buffer_storage with iterators
+ *
+ * first/last: iterators for the data (ie. from begin and end)
+ * flags: special storage flags (defaults to GL_DYNAMIC_STORAGE_BIT), GL_MAP_READ_BIT and GL_MAP_WRITE_BIT are forced to be present
+ */
+template<class It> inline void glh::core::buffer::buffer_storage ( It first, It last, const GLbitfield flags )
+{
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::buffer_exception { "attempted to modify an immutable buffer" };
+
+    /* set immutable flags */
+    is_immutable = true; immutable_flags = flags | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
+
+    /* set data and change capacity */
+    glNamedBufferStorage ( id, std::distance ( first, last ) * sizeof ( typename std::iterator_traits<It>::value_type ), NULL, immutable_flags );
+    capacity = std::distance ( first, last ) * sizeof ( typename std::iterator_traits<It>::value_type );
+
+    /* copy data */
+    std::copy ( first, last, reinterpret_cast<typename std::iterator_traits<It>::pointer> ( map_buffer () ) );
+}
+
 /* buffer_data with iterators
  *
  * first/last: iterators for the data (ie. from begin and end)
  * usage: the storage method for the data (defaults to static draw)
  */
-template<class It> void glh::core::buffer::buffer_data ( It first, It last, const GLenum usage )
+template<class It> inline void glh::core::buffer::buffer_data ( It first, It last, const GLenum usage )
 {
     /* resize data */
     buffer_data ( std::distance ( first, last ) * sizeof ( typename std::iterator_traits<It>::value_type ), NULL, usage );
@@ -696,7 +775,7 @@ template<class It> void glh::core::buffer::buffer_data ( It first, It last, cons
  * first/last: iterators for the data (ie. from begin and end)
  * offset: index of buffer to write the elements
  */
-template<class It> void glh::core::buffer::buffer_sub_data ( It first, It last, const unsigned offset )
+template<class It> inline void glh::core::buffer::buffer_sub_data ( It first, It last, const unsigned offset )
 {
     /* check will fit capacity */
     if ( ( ( last - first ) + offset ) * sizeof ( typename std::iterator_traits<It>::value_type ) > capacity )
@@ -710,17 +789,40 @@ template<class It> void glh::core::buffer::buffer_sub_data ( It first, It last, 
  *
  * return a reference to a value of type T at offset i
  */
-template<class T> T& glh::core::buffer::at ( const unsigned i )
+template<class T> inline T& glh::core::buffer::at ( const unsigned i )
 {
     /* check i is in range, then return */
     if ( ( i + 1 ) * sizeof ( T ) > capacity ) throw exception::buffer_exception { "attempted to get reference to out of range object in buffer" };
     return * reinterpret_cast<T *> ( map_buffer () ) + i;
 }
-template<class T> const T& glh::core::buffer::at ( const unsigned i ) const
+template<class T> inline const T& glh::core::buffer::at ( const unsigned i ) const
 {
     /* check i is in range, then return */
     if ( ( i + 1 ) * sizeof ( T ) > capacity ) throw exception::buffer_exception { "attempted to get reference to out of range object in buffer" };
     return * reinterpret_cast<const T *> ( map_buffer () ) + i;
+}
+
+
+
+/* UBO IMPLEMENTATION */
+
+/* construct and immediately buffer data with iterators
+ * 
+ * generates a buffer and immediately buffers data
+ * 
+ * first/last: iterators for the data (ie. from begin and end)
+ * usage: the storage method for the data
+ */
+template<class It> inline glh::core::ubo::ubo ( It first, It last, const GLenum usage )
+{
+    /* bind to set buffer type */
+    bind (); 
+    
+    /* get buffer offset alignment */
+    glGetIntegerv ( GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &uniform_buffer_offset_alignment ); 
+
+    /* buffer data */
+    buffer_data ( first, last, usage );
 }
 
 

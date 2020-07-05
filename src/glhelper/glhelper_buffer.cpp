@@ -29,6 +29,7 @@ glh::core::buffer::buffer ()
     : capacity { 0 }
     , map_ptr { NULL }
     , map_id { 0 }
+    , is_immutable { false }
 { 
     /* generate object */
     glGenBuffers ( 1, &id );
@@ -91,6 +92,27 @@ bool glh::core::buffer::unbind_copy_write () const
 
 
 
+/* buffer_storage with pointer
+ *
+ * size: the size of the data in bytes
+ * data: pointer to the data (defaults to NULL)
+ * flags: special storage flags (defaults to GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT)
+ */
+void glh::core::buffer::buffer_storage ( const unsigned size, const void * data, const GLbitfield flags )
+{
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::buffer_exception { "attempted to modify an immutable buffer" };
+
+    /* set immutable flags */
+    is_immutable = true; immutable_flags = flags;
+
+    /* set data and change capacity */
+    glNamedBufferStorage ( id, size, data, immutable_flags );
+    capacity = size;
+}
+
+
+
 /* buffer_data
  *
  * buffer data into the buffer
@@ -99,8 +121,11 @@ bool glh::core::buffer::unbind_copy_write () const
  * data: pointer to data
  * usage: the storage method for the data (defaults to static draw)
  */
-void glh::core::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data, const GLenum usage ) 
+void glh::core::buffer::buffer_data ( const unsigned size, const void * data, const GLenum usage ) 
 {
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::buffer_exception { "attempted to modify an immutable buffer" };
+
     /* unmap */
     unmap_buffer ();
 
@@ -117,8 +142,11 @@ void glh::core::buffer::buffer_data ( const GLsizeiptr size, const GLvoid * data
  * size: size of the data in bytes
  * data: pointer to data
  */
-void glh::core::buffer::buffer_sub_data ( const GLintptr offset, const GLsizeiptr size, const GLvoid * data = NULL )
+void glh::core::buffer::buffer_sub_data ( const unsigned offset, const unsigned size, const void * data = NULL )
 {
+    /* throw if immutable */
+    if ( is_immutable && ~immutable_flags & GL_DYNAMIC_STORAGE_BIT ) throw exception::buffer_exception { "attempted to modify an immutable buffer" };
+
     /* unmap */
     unmap_buffer ();
 
@@ -141,7 +169,7 @@ void glh::core::buffer::buffer_sub_data ( const GLintptr offset, const GLsizeipt
  * read/write_offset: the offsets for reading and writing
  * size: the number of bytes to copy
  */
-void glh::core::buffer::copy_sub_data ( const buffer& read_buff, const GLintptr read_offset, const GLintptr write_offset, const GLsizeiptr size )
+void glh::core::buffer::copy_sub_data ( const buffer& read_buff, const unsigned read_offset, const unsigned write_offset, const unsigned size )
 {
     /* unmap */
     unmap_buffer ();
@@ -177,10 +205,14 @@ void glh::core::buffer::clear_data ()
  * 
  * return: the map to the buffer, or NULL on failure
  */
-GLvoid * glh::core::buffer::map_buffer () const
+void * glh::core::buffer::map_buffer () const
 {
     /* if already mapped, return that */
     if ( map_ptr ) return map_ptr;
+
+    /* else throw if immutable storage and correct flags are not set */
+    if ( is_immutable && ( ~immutable_flags & GL_DYNAMIC_STORAGE_BIT || ~immutable_flags & GL_MAP_READ_BIT || ~immutable_flags & GL_MAP_WRITE_BIT ) )
+        throw exception::buffer_exception { "cannot map immutable buffer without GL_DYNAMIC_STORAGE_BIT, GL_MAP_READ_BIT and GL_MAP_WRITE_BIT flags set" };
 
     /* else generate the map */
     map_ptr = glMapNamedBuffer ( id, GL_READ_WRITE );
@@ -311,7 +343,7 @@ glh::core::ubo::ubo ()
  * data: pointer to data
  * usage: the storage method for the data
  */
-glh::core::ubo::ubo ( const GLsizeiptr size, const GLvoid * data, const GLenum usage )
+glh::core::ubo::ubo ( const unsigned size, const void * data, const GLenum usage )
 {
     /* bind to set buffer type */
     bind (); 
@@ -437,7 +469,7 @@ bool glh::core::vao::unbind () const
  * stride: offset between consecutive vertices in bytes
  * offset: the offset from the start of the vertex data in bytes
  */
-void glh::core::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, const GLint size, const GLenum type, const GLboolean norm, const GLsizei stride, const GLsizeiptr offset )
+void glh::core::vao::set_vertex_attrib ( const unsigned attrib, const vbo& buff, const int size, const GLenum type, const bool norm, const unsigned stride, const unsigned offset )
 {
     /* bind vao */
     const bool vao_binding_change = bind ();
@@ -445,7 +477,7 @@ void glh::core::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, c
     const bool vbo_binding_change = buff.bind ();
 
     /* set attribute pointer */
-    glVertexAttribPointer ( attrib, size, type, norm, stride, reinterpret_cast<GLvoid *> ( offset ) );
+    glVertexAttribPointer ( attrib, size, type, norm, stride, reinterpret_cast<void *> ( offset ) );
     /* enable attribute */
     glEnableVertexAttribArray ( attrib );
 
@@ -465,7 +497,7 @@ void glh::core::vao::set_vertex_attrib ( const GLuint attrib, const vbo& buff, c
  * 
  * attrib: the attribute to configure (>=0)
  */
-void glh::core::vao::enable_vertex_attrib ( const GLuint attrib )
+void glh::core::vao::enable_vertex_attrib ( const unsigned attrib )
 {
     /* bind vao, enable, unbind */
     const bool binding_change = bind ();
@@ -480,7 +512,7 @@ void glh::core::vao::enable_vertex_attrib ( const GLuint attrib )
  * 
  * attrib: the attribute to configure (>=0)
  */
-void glh::core::vao::disable_vertex_attrib ( const GLuint attrib )
+void glh::core::vao::disable_vertex_attrib ( const unsigned attrib )
 {
     /* bind vao, disable, unbind */
     const bool binding_change = bind ();
