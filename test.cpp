@@ -161,8 +161,8 @@ int main ()
     light_system.add_dirlight
     (
         glh::math::vec3 { 1.0, 0.0, 0.0 },
-        glh::math::vec3 { 0.6 },
-        glh::math::vec3 { 1.0 }, 
+        glh::math::vec3 { 1.0 },
+        glh::math::vec3 { 1.5 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
         true, true, 0.035
@@ -202,7 +202,7 @@ int main ()
     glh::core::renderer::enable_multisample ();
     glh::core::renderer::enable_blend ();
     glh::core::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
+    glh::core::renderer::enable_framebuffer_srgb ();
 
 
 
