@@ -14,7 +14,7 @@ layout ( triangles ) in;
 /* input texcoords */
 in VS_OUT
 {
-    vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ];
+    vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ];
 } vs_out [ 3 ];
 
 /* output triangle strip */
@@ -23,7 +23,7 @@ layout ( triangle_strip, max_vertices = 30 ) out;
 /* output texcoords and depth */
 out GS_OUT
 {
-    vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ];
+    vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ];
     float depth;
 } gs_out;
 

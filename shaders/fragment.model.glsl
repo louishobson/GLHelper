@@ -14,7 +14,7 @@ in VS_OUT
     vec3 fragpos;
     mat3 tbn_matrix;
     vec4 vcolor;
-    vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ];
+    vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ];
 } vs_out;
 
 /* output color */

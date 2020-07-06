@@ -119,7 +119,7 @@
  * 1 : vec3    : normal
  * 2 : vec3    : tangent
  * 3 : vec4    : vertex color
- * 4 : vec3[x] : UV channels of texture coordinates
+ * 4 : vec2[x] : UV channels of texture coordinates
  * 
  * the number of UV channels is defined by GLH_MODEL_MAX_TEXTURE_STACK_SIZE
  * 
@@ -303,7 +303,7 @@ struct glh::model::vertex
     math::fvec4 vcolor;
 
     /* multiple uv channels of texture coords */
-    std::array<math::fvec3, GLH_MODEL_MAX_TEXTURE_STACK_SIZE> texcoords;
+    std::array<math::fvec2, GLH_MODEL_MAX_TEXTURE_STACK_SIZE> texcoords;
 };
 
 

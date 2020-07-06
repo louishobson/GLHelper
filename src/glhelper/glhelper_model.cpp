@@ -451,7 +451,7 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
         /* transform them if pretransform is set */
         if ( model_import_flags & import_flags::GLH_PRETRANSFORM_VERTICES )
         {
-            _mesh.vertices.at ( i ).position = math::vec3 ( pretransform_matrix * math::vec4 ( _mesh.vertices.at ( i ).position, 1.0 ) );
+            _mesh.vertices.at ( i ).position = math::fvec3 ( pretransform_matrix * math::fvec4 ( _mesh.vertices.at ( i ).position, 1.0 ) );
             _mesh.vertices.at ( i ).normal = pretransform_normal_matrix * _mesh.vertices.at ( i ).normal;
             _mesh.vertices.at ( i ).tangent = pretransform_normal_matrix * _mesh.vertices.at ( i ).tangent;
         }
@@ -469,7 +469,7 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
 
         /* set uv channel coords */
         for ( unsigned j = 0; j < _mesh.num_uv_channels; ++j )
-            _mesh.vertices.at ( i ).texcoords.at ( j ) = cast_vector ( aimesh.mTextureCoords [ j ][ i ] );
+            _mesh.vertices.at ( i ).texcoords.at ( j ) = math::fvec2 ( cast_vector ( aimesh.mTextureCoords [ j ][ i ] ) );
     }
 
     /* add material reference */
@@ -495,7 +495,7 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
     _mesh.array_object.set_vertex_attrib ( 2, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 6 * sizeof ( GLfloat ) );
     _mesh.array_object.set_vertex_attrib ( 3, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 9 * sizeof ( GLfloat ) );
     for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
-        _mesh.array_object.set_vertex_attrib ( 4 + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 13 + i * 3 ) * sizeof ( GLfloat ) );
+        _mesh.array_object.set_vertex_attrib ( 4 + i, _mesh.vertex_data, 2, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 13 + i * 2 ) * sizeof ( GLfloat ) );
     _mesh.array_object.bind_ebo ( _mesh.index_data );
 
 
@@ -678,7 +678,7 @@ float glh::model::model::mesh_furthest_distance ( const mesh& _mesh, const math:
     for ( const vertex& _vertex: _mesh.vertices )
     {
         /* transform the vertex and find the modulus from the point */
-        const float distance = modulus ( point - math::vec3 { transform * math::fvec4 { _vertex.position, 1.0 } } );
+        const float distance = modulus ( point - math::fvec3 { transform * math::fvec4 { _vertex.position, 1.0 } } );
 
         /* compare against furthest distance */
         if ( distance > furthest_distance ) furthest_distance = distance;

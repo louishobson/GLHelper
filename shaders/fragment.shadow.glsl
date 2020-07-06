@@ -11,7 +11,7 @@
 /* input texcoords and depth */
 in GS_OUT
 {
-    vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ];
+    vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ];
     float depth;
 } gs_out;
 

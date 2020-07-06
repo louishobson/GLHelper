@@ -62,7 +62,7 @@ struct material_struct
  *
  * return: the overall color of the fragment of the stack
  */
-vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ] )
+vec4 evaluate_stack ( const texture_stack_struct stack, const vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ] )
 {
     /* set stack color to base color */
     vec4 stack_color = stack.base_color;
@@ -71,7 +71,7 @@ vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ M
     for ( int i = 0; i < stack.stack_size; ++i )
     {
         /* get the level color from the texture multiplied by the stength */
-        const vec4 level_color = texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ].xy, i ) ) * stack.levels [ i ].blend_strength;
+        const vec4 level_color = texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength;
 
         /* add to the stack through the appropriate operation */
         switch ( stack.levels [ i ].blend_operation )
@@ -101,10 +101,10 @@ vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ M
  *
  * return: boolean, true if has alpha < transparency_cutoff
  *
- * prototype: bool evaluate_stack_transparency ( texture_stack_struct stack, vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ], float transparency_cutoff )
+ * prototype: bool evaluate_stack_transparency ( texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ], float transparency_cutoff )
  */
 #define evaluate_stack_transparency( stack, texcoords, transparency_cutoff ) \
-    ( stack.base_color.a < transparency_cutoff || ( stack.stack_size != 0 && texture ( stack.textures, vec3 ( texcoords [ stack.levels [ 0 ].uvwsrc ].xy, 0 ) ).a < transparency_cutoff ) )
+    ( stack.base_color.a < transparency_cutoff || ( stack.stack_size != 0 && texture ( stack.textures, vec3 ( texcoords [ stack.levels [ 0 ].uvwsrc ], 0 ) ).a < transparency_cutoff ) )
     /* if base transparency < 1.0, return true
      * if has no textures, return false
      * if has texture, return true if alpha is less than 1.0
@@ -120,7 +120,7 @@ vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ M
  *
  * return: the new normal, or the original if no map is present
  *
- * prototype: vec3 evaluate_normal ( texture_stack_struct stack, vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ], mat3 tbn_matrix )
+ * prototype: vec3 evaluate_normal ( texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ], mat3 tbn_matrix )
  */
 #define evaluate_normal( stack, texcoords, tbn_matrix ) \
     ( stack.stack_size == 0 ? tbn_matrix [ 2 ] : tbn_matrix * normalize ( ( evaluate_stack ( stack, texcoords ).xyz * 2.0 - 1.0 ) ) )
