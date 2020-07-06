@@ -161,11 +161,11 @@ int main ()
     light_system.add_dirlight
     (
         glh::math::vec3 { 1.0, 0.0, 0.0 },
-        glh::math::vec3 { 1.0 },
-        glh::math::vec3 { 1.5 }, 
+        glh::math::vec3 { 0.8 },
+        glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        true, true, 0.035
+        true, true, 0.0 //0.035
     );
 
     /* add point light */
