@@ -26,6 +26,7 @@
  * REFLECT3D: reflection specifically in 3d space
  * PERSPECTIVE: generate a perspective projection matrix based on the position and size of near and far planes
  * PERSPECTIVE_FOV: generate a perspective projection matrix based on an fov angle
+ * ORTHOGRAPHIC: generate an orthographic projection matrix
  * CAMERA: generate a view matrix based on a camera position and unit axis
  * LOOK_AT: generate a view matrix based on a camera position, focus point and world up unit vector
  * LOOK_ALONG: generate a view matrix based on a camera position, direction of viewing and world up unit vector
