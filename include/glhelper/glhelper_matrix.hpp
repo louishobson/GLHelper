@@ -151,7 +151,7 @@ namespace glh
          * raise a matrix to a power
          * a negative power uses the inverse as the base
          */
-        template<unsigned M, class T> glh::math::matrix<M, M, T> pow ( const glh::math::matrix<M, M, T>& base, const int exp );
+        template<unsigned M, class T> matrix<M, M, T> pow ( const matrix<M, M, T>& base, const int exp );
     
     }
 

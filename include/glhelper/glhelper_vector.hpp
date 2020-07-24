@@ -161,8 +161,8 @@ namespace glh
          *
          * raise a vector to a power
          */
-        template<unsigned M, class T> vector<M, T> pow ( const vector<M, T>& lhs, const T& rhs );
-        template<unsigned M, class T> vector<M, T> pow ( const vector<M, T>& lhs, const vector<M, T>& rhs ); 
+        template<unsigned M, class T0, class T1> vector<M, meta::pat_t<T0, T1>> pow ( const vector<M, T0>& lhs, const T1& rhs );
+        template<unsigned M, class T0, class T1> vector<M, meta::pat_t<T0, T1>> pow ( const vector<M, T0>& lhs, const vector<M, T1>& rhs );
 
         /* any_perpandicular
          *
@@ -614,10 +614,10 @@ template<unsigned M, class T0, class T1> inline glh::meta::pat_t<T0, T1> glh::ma
  *
  * raise a vector to a power
  */
-template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::pow ( const vector<M, T>& lhs, const T& rhs )
+template<unsigned M, class T0, class T1> inline glh::math::vector<M, glh::meta::pat_t<T0, T1>> glh::math::pow ( const vector<M, T0>& lhs, const T1& rhs )
 {
     /* create new vector */
-    vector<M, T> result;
+    vector<M, meta::pat_t<T0, T1>> result;
 
     /* raise each component to the same power */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = std::pow ( lhs.at ( i ), rhs );
@@ -625,10 +625,10 @@ template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::pow ( co
     /* return the result */
     return result;
 }
-template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::pow ( const vector<M, T>& lhs, const vector<M, T>& rhs )
+template<unsigned M, class T0, class T1> inline glh::math::vector<M, glh::meta::pat_t<T0, T1>> glh::math::pow ( const vector<M, T0>& lhs, const vector<M, T1>& rhs )
 {
     /* create new vector */
-    vector<M, T> result;
+    vector<M, meta::pat_t<T0, T1>> result;
 
     /* raise each component to the corresponding powers of rhs */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = std::pow ( lhs.at ( i ), rhs.at ( i ) );
