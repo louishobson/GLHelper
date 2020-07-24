@@ -38,3 +38,6 @@
 /* include glhelper_transform.hpp */
 #include <glhelper/glhelper_transform.hpp>
 
+/* include glhelper_function.hpp */
+#include <glhelper/glhelper_function.hpp>
+
