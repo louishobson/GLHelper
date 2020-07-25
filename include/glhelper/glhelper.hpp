@@ -65,3 +65,6 @@
 
 /* include glhelper_region.hpp */
 #include <glhelper/glhelper_region.hpp>
+
+/* include glhelper_function.hpp */
+#include <glhelper/glhelper_function.hpp>
