@@ -130,19 +130,27 @@ void glh::model::model::cache_material_uniforms ( core::struct_uniform& material
             material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "stack_size" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_uniform ( "stack_size" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_uniform ( "stack_size" ),
+            material_uni.get_struct_uniform ( "emission_stack" ).get_uniform ( "stack_size" ),
             material_uni.get_struct_uniform ( "normal_stack" ).get_uniform ( "stack_size" ),
+
             material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "base_color" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_uniform ( "base_color" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_uniform ( "base_color" ),
+            material_uni.get_struct_uniform ( "emission_stack" ).get_uniform ( "base_color" ),
             material_uni.get_struct_uniform ( "normal_stack" ).get_uniform ( "base_color" ),
+            
             material_uni.get_struct_uniform ( "ambient_stack" ).get_struct_array_uniform ( "levels" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_struct_array_uniform ( "levels" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_struct_array_uniform ( "levels" ),
+            material_uni.get_struct_uniform ( "emission_stack" ).get_struct_array_uniform ( "levels" ),
             material_uni.get_struct_uniform ( "normal_stack" ).get_struct_array_uniform ( "levels" ),
+
             material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "textures" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_uniform ( "textures" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_uniform ( "textures" ),
+            material_uni.get_struct_uniform ( "emission_stack" ).get_uniform ( "textures" ),
             material_uni.get_struct_uniform ( "normal_stack" ).get_uniform ( "textures" ),
+
             material_uni.get_uniform ( "blending_mode" ),
             material_uni.get_uniform ( "shininess" ),
             material_uni.get_uniform ( "shininess_strength" ),
@@ -215,7 +223,9 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
         ( aimaterial.Get ( AI_MATKEY_COLOR_DIFFUSE, temp_color ) == aiReturn_SUCCESS ? cast_vector ( temp_color ) : math::fvec3 { 0.0 } ), model_import_flags & import_flags::GLH_DIFFUSE_SRGBA );
     add_texture_stack ( _material.specular_stack, aimaterial, aiTextureType_SPECULAR, 
         ( aimaterial.Get ( AI_MATKEY_COLOR_SPECULAR, temp_color ) == aiReturn_SUCCESS ? cast_vector ( temp_color ) : math::fvec3 { 0.0 } ), model_import_flags & import_flags::GLH_SPECULAR_SRGBA );
-    add_texture_stack ( _material.normal_stack, aimaterial, aiTextureType_NORMALS, math::fvec3 { 0.0 }, false );
+    add_texture_stack ( _material.emission_stack, aimaterial, aiTextureType_EMISSIVE, 
+        ( aimaterial.Get ( AI_MATKEY_COLOR_EMISSIVE, temp_color ) == aiReturn_SUCCESS ? cast_vector ( temp_color ) : math::fvec3 { 0.0 } ) );
+    add_texture_stack ( _material.normal_stack, aimaterial, aiTextureType_NORMALS, math::fvec3 { 0.0 } );
 
     /* get the blend mode */
     if ( aimaterial.Get ( AI_MATKEY_BLEND_FUNC, temp_int ) == aiReturn_SUCCESS )
@@ -848,6 +858,7 @@ void glh::model::model::apply_material ( const material& _material ) const
     apply_texture_stack ( _material.ambient_stack, cached_material_uniforms->ambient_stack_size_uni, cached_material_uniforms->ambient_stack_base_color_uni, cached_material_uniforms->ambient_stack_levels_uni, cached_material_uniforms->ambient_stack_textures_uni );
     apply_texture_stack ( _material.diffuse_stack, cached_material_uniforms->diffuse_stack_size_uni, cached_material_uniforms->diffuse_stack_base_color_uni, cached_material_uniforms->diffuse_stack_levels_uni,cached_material_uniforms->diffuse_stack_textures_uni );
     apply_texture_stack ( _material.specular_stack, cached_material_uniforms->specular_stack_size_uni, cached_material_uniforms->specular_stack_base_color_uni, cached_material_uniforms->specular_stack_levels_uni, cached_material_uniforms->specular_stack_textures_uni );
+    apply_texture_stack ( _material.emission_stack, cached_material_uniforms->emission_stack_size_uni, cached_material_uniforms->emission_stack_base_color_uni, cached_material_uniforms->emission_stack_levels_uni, cached_material_uniforms->emission_stack_textures_uni );
     apply_texture_stack ( _material.normal_stack, cached_material_uniforms->normal_stack_size_uni, cached_material_uniforms->normal_stack_base_color_uni, cached_material_uniforms->normal_stack_levels_uni, cached_material_uniforms->normal_stack_textures_uni );
 
     /* set blending mode */

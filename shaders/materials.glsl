@@ -38,6 +38,7 @@ struct material_struct
     texture_stack_struct ambient_stack;
     texture_stack_struct diffuse_stack;
     texture_stack_struct specular_stack;
+    texture_stack_struct emission_stack;
     texture_stack_struct normal_stack;
 
     int blending_mode;
