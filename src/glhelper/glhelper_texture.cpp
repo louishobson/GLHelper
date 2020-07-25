@@ -346,6 +346,141 @@ unsigned glh::core::texture_base::bind_loop_index { 1 };
 
 
 
+/* TEXTURE1D IMPLEMENTATION */
+
+/* default bind/unbind the texture */
+bool glh::core::texture1d::bind () const
+{
+    /* if already bound, return false, else bind and return true */
+    if ( bound_texture_indices.at ( 0 ) == this ) return false;
+    glBindTexture ( GL_TEXTURE_1D, id );
+    bound_texture_indices.at ( 0 ) = const_cast<texture1d *> ( this );
+    return true;
+}
+bool glh::core::texture1d::unbind () const
+{
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_texture_indices.at ( 0 ) != this ) return false;
+    glBindTexture ( GL_TEXTURE_1D, 0 );
+    bound_texture_indices.at ( 0 ) = NULL;
+    return true;
+}
+
+
+
+/* tex_storage
+ *
+ * set up the texture using immutable storage
+ * 
+ * _width: the width of the texture
+ * _internal_format: the internal format of the texture
+ * mipmap_levels: the number of mipmap levels to allocate (defaults to 0, which will allocate the maximum)
+ */
+void glh::core::texture1d::tex_storage ( const unsigned _width, const GLenum _internal_format, const unsigned mipmap_levels )
+{
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable texture1d" };
+
+    /* assert that all size parameters are more than 0 */
+    if ( _width == 0 )
+        throw exception::texture_exception { "cannot call tex_storage on texture1d with any size parameter as 0" };
+
+    /* set the parameters */
+    width = _width;
+    internal_format = _internal_format;
+    is_immutable = true;
+
+    /* set the storage */
+    glTextureStorage1D ( id, ( mipmap_levels > 0 ? mipmap_levels : std::log2 ( width ) + 1 ), internal_format, width );
+}
+
+/* tex_image
+ *
+ * set up the texture based on provided parameters
+ * 
+ * _width: the width of the texture
+ * _internal_format: the internal format of the texture
+ * format/type: the format and component type of the input data for the texture (defaults to GL_RGBA and GL_UNSIGNED_BYTE)
+ * data: the actual data to put into the texture (defaults to NULL)
+ */
+void glh::core::texture1d::tex_image ( const unsigned _width, const GLenum _internal_format, const GLenum format, const GLenum type, const void * data )
+{
+    /* throw if immutable */
+    if ( is_immutable ) throw exception::texture_exception { "attempted to modify an immutable texture1d" };
+
+    /* set the parameters */
+    width = _width;
+    internal_format = _internal_format;
+
+    /* call glTexImage2D */
+    bind ();
+    glTexImage1D ( GL_TEXTURE_1D, 0, internal_format, width, 0, format, type, data );
+}
+
+/* tex_sub_image
+ *
+ * substitiute data into the texture
+ * changes are made to mipmap level 0, so remember to regenerate mipmaps if necessary
+ * 
+ * x_offset: the x offset to begin substitution
+ * _width: the width of the area to substitute
+ * format/type: the format and component type of the input data
+ * data: the data to substitute
+ */
+void glh::core::texture1d::tex_sub_image ( const unsigned x_offset, const unsigned _width, const GLenum format, const GLenum type, const void * data )
+{
+    /* check offsets and dimensions */
+    if ( x_offset + _width > width )
+        throw exception::texture_exception { "attempted to call tex_sub_image on texture1d with offsets and dimensions which are out of range" };
+
+    /* call glTesSubImage2D */
+    bind ();
+    glTexSubImage1D ( GL_TEXTURE_1D, 0, x_offset, _width, format, type, data );
+}
+
+
+
+/* BUFFER_TEXTURE IMPLEMENTATION */
+
+/* default bind/unbind the texture */
+bool glh::core::buffer_texture::bind () const
+{
+    /* if already bound, return false, else bind and return true */
+    if ( bound_texture_indices.at ( 0 ) == this ) return false;
+    glBindTexture ( GL_TEXTURE_BUFFER, id );
+    bound_texture_indices.at ( 0 ) = const_cast<buffer_texture *> ( this );
+    return true;
+}
+bool glh::core::buffer_texture::unbind () const
+{
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_texture_indices.at ( 0 ) != this ) return false;
+    glBindTexture ( GL_TEXTURE_BUFFER, 0 );
+    bound_texture_indices.at ( 0 ) = NULL;
+    return true;
+}
+
+
+
+/* tex_buffer
+ *
+ * associates a buffer with the texture
+ * 
+ * buff: the new buffer to associate
+ * _internal_format: the internal format of the buffer
+ */
+void glh::core::buffer_texture::tex_buffer ( const buffer& buff, const GLenum _internal_format )
+{
+    /* set the parameters */
+    assoc_buffer = buff;
+    internal_format = _internal_format;
+
+    /* associate the buffer */
+    glTextureBuffer ( id, internal_format, buff.internal_id () );
+}
+
+
+
 /* TEXTURE2D IMPLEMENTATION */
 
 /* default bind/unbind the texture */

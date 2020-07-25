@@ -90,6 +90,9 @@
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
+/* include glhelper_buffer.hpp */
+#include <glhelper/glhelper_buffer.hpp>
+
 /* include math */
 #include <glhelper/glhelper_math.hpp>
 
@@ -117,6 +120,18 @@ namespace glh
          * base class for all textures
          */
         class texture_base;
+
+        /* class texture1d : texture_base
+         *
+         * represents a 1D texture
+         */
+        class texture1d;
+
+        /* class buffer_texture : texture_base
+         *
+         * wraps a buffer object in a 1D texture
+         */
+        class buffer_texture;
 
         /* class texture2d : texture_base
          *
@@ -147,7 +162,6 @@ namespace glh
          * represents a cubemap array texture
          */
         class cubemap_array;
-
     }
 
     namespace exception
@@ -405,6 +419,193 @@ protected:
      * the next unit to bind the texture to in the bind loop
      */
     static unsigned bind_loop_index;
+
+};
+
+
+
+/* TEXTURE1D DEFINITION */
+
+/* class texture1d : texture_base
+*
+* represents a 1D texture
+*/
+class glh::core::texture1d : public texture_base
+{
+public:
+
+    /* tex_image constructor
+     *
+     * see tex_image for details
+     */
+    texture1d ( const unsigned _width, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL )
+        : is_immutable { false }
+        { tex_image ( _width, _internal_format, format, type, data ); }
+
+
+    /* zero-parameter constructor */
+    texture1d ()
+        : width { 0 }
+        , internal_format { GL_NONE }
+        , is_immutable { false }
+    { bind (); }
+
+    /* deleted copy constructor */
+    texture1d ( const texture1d& other ) = delete;
+
+    /* default move copy constructor */
+    texture1d ( texture1d&& other ) = default;
+
+    /* deleted assignment operator */
+    texture1d& operator= ( const texture1d& other ) = delete;
+
+    /* default destructor */
+    ~texture1d () = default;
+
+
+
+    /* default bind/unbind the texture */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_texture_indices.at ( 0 ) == this; }
+
+
+
+    /* tex_storage
+     *
+     * set up the texture using immutable storage
+     * 
+     * _width: the width of the texture
+     * _internal_format: the internal format of the texture
+     * mipmap_levels: the number of mipmap levels to allocate (defaults to 0, which will allocate the maximum)
+     */
+    void tex_storage ( const unsigned _width, const GLenum _internal_format, const unsigned mipmap_levels = 0 );
+
+    /* tex_image
+     *
+     * set up the texture based on provided parameters
+     * 
+     * _width: the width of the texture
+     * _internal_format: the internal format of the texture
+     * format/type: the format and component type of the input data for the texture (defaults to GL_RGBA and GL_UNSIGNED_BYTE)
+     * data: the actual data to put into the texture (defaults to NULL)
+     */
+    void tex_image ( const unsigned _width, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL );
+
+    /* tex_sub_image
+     *
+     * substitiute data into the texture
+     * changes are made to mipmap level 0, so remember to regenerate mipmaps if necessary
+     * 
+     * x_offset: the x offset to begin substitution
+     * _width: the width of the area to substitute
+     * format/type: the format and component type of the input data
+     * data: the data to substitute
+     */
+    void tex_sub_image ( const unsigned x_offset, const unsigned _width, const GLenum format, const GLenum type, const void * data );
+    
+
+
+    /* get_width
+     *
+     * get the width of the texture
+     */
+    const unsigned& get_width () const { return width; }
+
+    /* get_internal_format
+     *
+     * get the internal format of the texture
+     */
+    const GLenum& get_internal_format () const { return internal_format; }
+
+private:
+
+    /* width
+     *
+     * the width of the texture
+     */
+    unsigned width;
+
+    /* internal_format
+     * 
+     * the format of the data stored in the texture
+     */
+    GLenum internal_format;
+
+    /* is_immutable
+     *
+     * true if the texture has been set by tex_storage, and is now immutable
+     */
+    bool is_immutable;
+
+};
+
+
+
+/* BUFFER_TEXTURE DEFINITION */
+
+/* class buffer_texture : texture_base
+ *
+ * wraps a buffer object in a 1D texture
+ */
+class glh::core::buffer_texture : public texture_base
+{
+public:
+
+    /* zero-parameter constructor */
+    buffer_texture () 
+        : assoc_buffer { NULL }
+        , internal_format { GL_NONE }
+    { bind (); }
+
+
+
+    /* default bind/unbind the texture */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_texture_indices.at ( 0 ) == this; }
+
+
+
+    /* tex_buffer
+     *
+     * associates a buffer with the texture
+     * 
+     * buff: the new buffer to associate
+     * _internal_format: the internal format of the buffer
+     */
+    void tex_buffer ( const buffer& buff, const GLenum _internal_format );
+
+
+
+    /* get_size
+     *
+     * gets the size of the texture (i.e. the buffer)
+     */
+    unsigned get_size () const { return ( assoc_buffer ? assoc_buffer->get_size () : 0 ); }
+
+    /* get_internal_format
+     *
+     * gets the internal format of the texture
+     */
+    const GLenum& get_internal_format () const { return internal_format; }
+
+    /* get_assoc_buffer
+     *
+     * get the buffer associated with the texture
+     */
+    const const_object_pointer<buffer>& get_assoc_buffer () const { return assoc_buffer; }
+
+private:
+
+    /* the currently associated buffer */
+    const_object_pointer<buffer> assoc_buffer;
+
+    /* internal_format
+     * 
+     * the format of the data stored in the texture
+     */
+    GLenum internal_format;
 
 };
 
