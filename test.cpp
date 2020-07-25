@@ -55,7 +55,7 @@ int main ()
     glDebugMessageCallback( MessageCallback, 0 );
 
 
-
+    
     /* SET UP PROGRAMS */
 
     /* create model shader program */
