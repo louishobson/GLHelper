@@ -54,7 +54,7 @@ int main ()
     glEnable              ( GL_DEBUG_OUTPUT );
     glDebugMessageCallback( MessageCallback, 0 );
 
-
+    glh::function::glsl_function f;
     
     /* SET UP PROGRAMS */
 

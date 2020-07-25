@@ -93,8 +93,8 @@
 /* include glhelper_buffer.hpp */
 #include <glhelper/glhelper_buffer.hpp>
 
-/* include math */
-#include <glhelper/glhelper_math.hpp>
+/* include glhelper_vector.hpp */
+#include <glhelper/glhelper_vector.hpp>
 
 /* indlude stb_image.h without implementation */
 #include <stb/stb_image.h>

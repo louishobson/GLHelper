@@ -184,8 +184,11 @@
 /* include glhelper_render.hpp */
 #include <glhelper/glhelper_render.hpp>
 
-/* include glhelper_math.hpp */
-#include <glhelper/glhelper_math.hpp>
+/* include glhelper_vector.hpp */
+#include <glhelper/glhelper_vector.hpp>
+
+/* include glhelper_matrix.hpp */
+#include <glhelper/glhelper_matrix.hpp>
 
 /* include glhelper_region.hpp */
 #include <glhelper/glhelper_region.hpp>

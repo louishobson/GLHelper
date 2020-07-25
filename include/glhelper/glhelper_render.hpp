@@ -35,8 +35,8 @@
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
-/* include glhelper_math.hpp */
-#include <glhelper/glhelper_math.hpp>
+/* include glhelper_vector.hpp */
+#include <glhelper/glhelper_vector.hpp>
 
 /* include glhelper_buffer.hpp */
 #include <glhelper/glhelper_buffer.hpp>
