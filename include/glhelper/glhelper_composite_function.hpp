@@ -546,9 +546,9 @@ template<class Fg> struct glh::meta::composite_fingerprint_info
         /* change Ts to const references */
         typedef std::tuple<const Ts&...> param_cref_types;
         /* use as parameters to generic function, with Rt for this node as the return type */
-        typedef math::generic_function<Rt, Ts...> generic_type;
+        typedef function::generic_function<Rt, Ts...> generic_type;
         /* same as above, except also include the whole fingerprint to create a composite function */
-        typedef math::composite_function<Rt, Fg, Ts...> composite_type;
+        typedef function::composite_function<Rt, Fg, Ts...> composite_type;
     };
 
     /* __create_from_func_types
@@ -605,7 +605,7 @@ template<class Rt, unsigned ...Ps, class ...Nds> struct glh::meta::composite_fin
          * the return type is the return type for this node (ItRt)
          * the parameters are found by getting the return types from the parameter indices of this node (ItPs)
          */
-        typedef std::tuple<math::generic_function<Rt, typename nth_element_t<Ps - 1, Nds...>::return_type...>, Ts...> type;
+        typedef std::tuple<function::generic_function<Rt, typename nth_element_t<Ps - 1, Nds...>::return_type...>, Ts...> type;
     };
 
     /* get fingerprint info of next node */
