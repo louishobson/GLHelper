@@ -54,7 +54,8 @@ int main ()
     glEnable              ( GL_DEBUG_OUTPUT );
     glDebugMessageCallback( MessageCallback, 0 );
 
-    glh::function::glsl_function f;
+    glh::function::gaussian_function<double, double> g { 1, 0, 1 };
+    glh::function::glsl_function<1> f { g, 80, -4.0, 4.0 };
     
     /* SET UP PROGRAMS */
 
