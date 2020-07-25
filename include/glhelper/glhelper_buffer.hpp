@@ -298,11 +298,11 @@ public:
 
 
 
-    /* get_capacity
+    /* get_size
      *
      * return the capacity of the buffer in bytes
      */
-    const unsigned& get_capacity () const { return capacity; }
+    const unsigned& get_size () const { return capacity; }
 
 
 

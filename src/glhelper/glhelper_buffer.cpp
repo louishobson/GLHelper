@@ -175,7 +175,7 @@ void glh::core::buffer::copy_sub_data ( const buffer& read_buff, const unsigned 
     unmap_buffer ();
 
     /* check offsets */
-    if ( read_offset + size > read_buff.get_capacity () || write_offset + size > capacity )
+    if ( read_offset + size > read_buff.get_size () || write_offset + size > capacity )
     throw exception::buffer_exception { "attempted to perform copy buffer sub data operation with incompatible paramaters for buffer capacities" };
 
     /* copy sub data */
