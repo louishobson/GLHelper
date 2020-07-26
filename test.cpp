@@ -42,8 +42,8 @@ int main ()
 {
     /* CREATE WINDOW */
 
-    /* create a window with 4xMSAA */
-    glh::glfw::window window { "Test Window", 600, 400, 4 };
+    /* create a window */
+    glh::glfw::window window { "Test Window", 600, 400 };
 
     /* disable mouse */
     window.set_input_mode ( GLFW_CURSOR, GLFW_CURSOR_DISABLED );
@@ -193,9 +193,39 @@ int main ()
 
 
 
+    /* SET UP FRAMEBUFFERS */
+
+    /* create main and emission color textures */
+    glh::core::texture2d_multisample main_color_texture;
+    glh::core::texture2d_multisample emission_color_texture_alpha;
+    glh::core::texture2d_multisample emission_color_texture_beta;
+
+    main_color_texture.tex_storage ( 1920, 1080, 4, GL_RGBA8 ); 
+    emission_color_texture_alpha.tex_storage ( 1920, 1080, 4, GL_RGBA8 );
+    emission_color_texture_beta.tex_storage ( 1920, 1080, 4, GL_RGBA8 );
+
+    /* create the main depth attachment */
+    glh::core::rbo main_depth_attachment { 1920, 1080, GL_DEPTH_COMPONENT, 4 };
+
+    /* create main framebuffer and attach buffers  */
+    glh::core::fbo main_fbo;
+    main_fbo.attach_texture ( main_color_texture, GL_COLOR_ATTACHMENT0 );
+    main_fbo.attach_texture ( emission_color_texture_beta, GL_COLOR_ATTACHMENT1 );
+    main_fbo.attach_rbo ( main_depth_attachment, GL_DEPTH_ATTACHMENT );
+    main_fbo.draw_buffers ( GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 );
+    main_fbo.read_buffer ( GL_COLOR_ATTACHMENT0 );
+
+    /* create flipflop framebuffers and attach buffers */
+    glh::core::fbo flip_flop_fbo_alpha;
+    glh::core::fbo flip_flop_fbo_beta;
+    flip_flop_fbo_alpha.attach_texture ( emission_color_texture_alpha, GL_COLOR_ATTACHMENT0 );
+    flip_flop_fbo_beta.attach_texture ( emission_color_texture_beta, GL_COLOR_ATTACHMENT0 );
+
+
+
     /* SET UP RENDERER */
 
-    glh::core::renderer::set_clear_color ( glh::math::vec4 { 0.0, 0.5, 1.0, 1.0 } );
+    glh::core::renderer::set_clear_color ( glh::math::vec4 { 0.0, 0.0, 0.0, 1.0 } );
     glh::core::renderer::enable_depth_test ();
     glh::core::renderer::enable_face_culling ();
     glh::core::renderer::set_cull_face ( GL_BACK );
@@ -299,10 +329,10 @@ int main ()
 
 
 
-        /* render models to the default framebuffer */
+        /* render models to the main framebuffer */
 
-        /* bind the default framebuffer and resize the viewport */
-        window.bind_framebuffer ();
+        /* bind the main framebuffer and resize the viewport */
+        main_fbo.bind ();
         glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );        
 
         /* use the model program */
@@ -329,6 +359,12 @@ int main ()
         //island.render ( glh::model::render_flags::GLH_TRANSPARENT_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
         box.render ( glh::model::render_flags::GLH_TRANSPARENT_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
         
+
+
+        /* blit from main framebuffer to default framebuffer */
+        window.bind_framebuffer ();
+        main_fbo.blit_copy_to_default ( 0, 0, dimensions.width, dimensions.height, 0, 0, dimensions.width, dimensions.height, GL_COLOR_BUFFER_BIT, GL_LINEAR );
+
 
 
         /* swap buffers */
