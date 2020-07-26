@@ -261,16 +261,28 @@ public:
 
     /* blit_copy
      *
-     * copy a region FROM ANOTHER FBO INTO THIS FBO
+     * copy a region FROM THIS FBO INTO ANOTHER FBO
      * 
      * other: the other fbo to copy from
-     * srcx0, srcy0, srcx1, srcy1: the x and y positions in the other fbo to read from
-     * dstx0, dsty0, dstx1, dsty1: the x and y positions in this fbo to write to
+     * srcx0, srcy0, srcx1, srcy1: the x and y positions in this fbo to read from
+     * dstx0, dsty0, dstx1, dsty1: the x and y positions in the other fbo to write to
      * copy_mask: mask for which buffers to copy
      * filter: the interpolation settings for any stretches applied
      */
-    void blit_copy ( const fbo& other, const unsigned srcx0, const unsigned srcy0, const unsigned srcx1, const unsigned srcy1, 
-                     const unsigned dstx0, const unsigned dsty0, const unsigned dstx1, const unsigned dsty1, const GLbitfield copy_mask, const GLenum filter );
+    void blit_copy ( fbo& other, const unsigned srcx0, const unsigned srcy0, const unsigned srcx1, const unsigned srcy1, 
+                     const unsigned dstx0, const unsigned dsty0, const unsigned dstx1, const unsigned dsty1, const GLbitfield copy_mask, const GLenum filter ) const;
+
+    /* blit_copy_to_default
+     *
+     * copy a region FROM THIS FBO INTO THE DEFAULT FBO
+     * 
+     * srcx0, srcy0, srcx1, srcy1: the x and y positions in this fbo to read from
+     * dstx0, dsty0, dstx1, dsty1: the x and y positions in the default fbo to write to
+     * copy_mask: mask for which buffers to copy
+     * filter: the interpolation settings for any stretches applied
+     */
+    void blit_copy_to_default ( const unsigned srcx0, const unsigned srcy0, const unsigned srcx1, const unsigned srcy1, 
+                                const unsigned dstx0, const unsigned dsty0, const unsigned dstx1, const unsigned dsty1, const GLbitfield copy_mask, const GLenum filter ) const;
 
 
 
@@ -295,7 +307,7 @@ private:
 template<class ...Ts> void glh::core::fbo::draw_buffers ( const Ts... buffs )
 {
     /* create array of buffs */
-    std::array<const GLenum, sizeof...( Ts )> buff_array { buffs... };
+    std::array<GLenum, sizeof...( Ts )> buff_array { static_cast<GLenum> ( buffs )... };
 
     /* bind, set options, unbind */
     const bool binding_change = bind_draw ();
