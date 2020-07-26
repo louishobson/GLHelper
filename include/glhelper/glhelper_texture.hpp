@@ -121,6 +121,13 @@ namespace glh
          */
         class texture_base;
 
+        /* class texture_multisample_base : texture_base
+         *
+         * base class for multisample textures
+         * causes certain option-setting methods to throw
+         */
+        class texture_multisample_base;
+
         /* class texture1d : texture_base
          *
          * represents a 1D texture
@@ -145,7 +152,7 @@ namespace glh
          */
         class texture2d_array;
 
-        /* class texture2d_multisample : texture_base
+        /* class texture2d_multisample : texture_multisample_base
          *
          * represents a multisample 2d texture
          */
@@ -173,6 +180,36 @@ namespace glh
         class texture_exception;
     }
 }
+
+
+
+/* TEXTURE_EXCEPTION DEFINITION */
+
+/* class texture_exception : exception
+ *
+ * for exceptions related to textures
+ */
+class glh::exception::texture_exception : public exception
+{
+public:
+
+    /* full constructor
+     *
+     * __what: description of the exception
+     */
+    explicit texture_exception ( const std::string& __what )
+        : exception { __what }
+    {}
+
+    /* default zero-parameter constructor
+     *
+     * construct texture_exception with no descrption
+     */
+    texture_exception () = default;
+
+    /* default everything else and inherits what () function */
+
+};
 
 
 
@@ -371,35 +408,37 @@ public:
      *
      * set the texture filtering parameters of magnified/minified texture
      */
-    void set_mag_filter ( const GLenum opt );
-    void set_min_filter ( const GLenum opt );
+    virtual void set_mag_filter ( const GLenum opt );
+    virtual void set_min_filter ( const GLenum opt );
 
     /* set_(s/t/r)_wrap
      *
      * set the wrapping options for each coordinate axis, or all at once
      */
-    void set_s_wrap ( const GLenum opt );
-    void set_t_wrap ( const GLenum opt );
-    void set_r_wrap ( const GLenum opt );
-    void set_wrap ( const GLenum opt );
+    virtual void set_s_wrap ( const GLenum opt );
+    virtual void set_t_wrap ( const GLenum opt );
+    virtual void set_r_wrap ( const GLenum opt );
+    virtual void set_wrap ( const GLenum opt );
 
     /* set_border_color
      *
      * set the color of the boarder, such that the texture can be clamped to the edge with a specific color
      */
-    void set_border_color ( const math::fvec4& color );
+    virtual void set_border_color ( const math::fvec4& color );
 
     /* set_compare_mode
      *
      * set the compare mode for the texture (GL_TEXTURE_COMPARE_MODE)
      */
-    void set_compare_mode ( const GLenum opt );
+    virtual void set_compare_mode ( const GLenum opt );
 
     /* set_compare_func
      *
      * set the comparison function for the texture
      */
-    void set_compare_func ( const GLenum opt );
+    virtual void set_compare_func ( const GLenum opt );
+
+
 
     /* generate_mipmap
      *
@@ -420,6 +459,80 @@ protected:
      */
     static unsigned bind_loop_index;
 
+};
+
+
+
+/* TEXTURE_MULTISAMPLE_BASE DEFINITION */
+
+/* class texture_multisample_base : texture_base
+ *
+ * base class for multisample textures
+ * causes certain option-setting methods to throw
+ */
+class glh::core::texture_multisample_base : public texture_base
+{
+public:
+
+    /* default zero-parameter constructor */
+    texture_multisample_base () = default;
+    
+    /* deleted copy constructor */
+    texture_multisample_base ( const texture_multisample_base& other ) = delete;
+
+    /* default move constructor */
+    texture_multisample_base ( texture_multisample_base&& other ) = default;
+
+    /* deleted copy constructor */
+    texture_multisample_base& operator= ( const texture_multisample_base& other ) = delete;
+
+    /* virtual default destructor */
+    virtual ~texture_multisample_base () = default;
+
+
+
+    /* set_mag/min_filter
+     * 
+     * set the texture filtering parameters of magnified/minified texture
+     */
+    virtual void set_mag_filter ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_mag_filter)" }; }
+    virtual void set_min_filter ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_min_filter)" }; }
+
+    /* set_(s/t/r)_wrap
+     *
+     * set the wrapping options for each coordinate axis, or all at once
+     */
+    virtual void set_s_wrap ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_s_wrap)" }; }
+    virtual void set_t_wrap ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_t_wrap)" }; }
+    virtual void set_r_wrap ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_r_wrap)" }; }
+    virtual void set_wrap ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_wrap)" }; }
+
+    /* set_border_color
+     *
+     * set the color of the boarder, such that the texture can be clamped to the edge with a specific color
+     */
+    virtual void set_border_color ( const math::fvec4& color )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_border_color)" }; }
+
+    /* set_compare_mode
+     *
+     * set the compare mode for the texture (GL_TEXTURE_COMPARE_MODE)
+     */
+    virtual void set_compare_mode ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_compare_mode)" }; }
+
+    /* set_compare_func
+     *
+     * set the comparison function for the texture
+     */
+    virtual void set_compare_func ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_compare_func)" }; }
 };
 
 
@@ -911,11 +1024,11 @@ private:
 
 /* TEXTURE2D_MULTISAMPLE DEFINITION */
 
-/* class texture2d_multisample : texture_base
+/* class texture2d_multisample : texture_multisample_base
  *
  * representsb a multisample 2D texture
  */
-class glh::core::texture2d_multisample : public texture_base
+class glh::core::texture2d_multisample : public texture_multisample_base
 {
 public:
 
@@ -963,7 +1076,7 @@ public:
      * _internal_format: the internal format of the texture
      * _fixed_sample_locations: whether to use fixed sample locations (defaults to true)
      */
-    void tex_storage ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations );
+    void tex_storage ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations = GL_TRUE );
 
     /* tex_image
      *
@@ -1338,36 +1451,6 @@ private:
      * true if the texture has been set by tex_storage, and is now immutable
      */
     bool is_immutable;
-
-};
-
-
-
-/* TEXTURE_EXCEPTION DEFINITION */
-
-/* class texture_exception : exception
- *
- * for exceptions related to textures
- */
-class glh::exception::texture_exception : public exception
-{
-public:
-
-    /* full constructor
-     *
-     * __what: description of the exception
-     */
-    explicit texture_exception ( const std::string& __what )
-        : exception { __what }
-    {}
-
-    /* default zero-parameter constructor
-     *
-     * construct texture_exception with no descrption
-     */
-    texture_exception () = default;
-
-    /* default everything else and inherits what () function */
 
 };
 
