@@ -58,8 +58,11 @@
  * 
  * struct function_struct_nD
  * {
- *     samplerBuffer outputs;
+ *     samplernD outputs;
  *     
+ *     float domain_lower;
+ *     float domain_upper;
+ * 
  *     float domain_multiplier;
  *     float domain_translation;
  * }
@@ -67,7 +70,8 @@
  * where 1 <= n <= 3
  * 
  * outputs: a sampler for the outputs of the function
- * domain_mult/domain_trans: together form a linear transformations, such that:
+ * domain_lower/upper: the lowest and highest values of the domain
+ * domain_mult/trans: together form a linear transformations, such that:
  *     the lower bound of the domain will transform to the integer 0
  *     the upper bound of the domain will transform to the integer 1
  * 
@@ -467,8 +471,8 @@ public:
     template<class Rt, class P0,
         std::enable_if_t<std::conjunction<std::is_convertible<Rt, float>, std::is_convertible<P0, float>>::value>...
     > glsl_function ( const generic_function<Rt, P0>& func, const unsigned resolution, const double domain_lower, const double domain_higher )
-        : last_resolution { 0 }
-        , last_output_internal_format { GL_NONE }
+        : resolution { 0 }
+        , output_internal_format { GL_NONE }
     { reset_function ( func, resolution, domain_lower, domain_higher ); }
 
     /* deleted zero-parameter constructor */
@@ -498,13 +502,13 @@ public:
     /* when a scalar is returned */
     template<class Rt, class P0,
         std::enable_if_t<std::conjunction<std::is_convertible<Rt, float>, std::is_convertible<P0, float>>::value>...
-    > void reset_function ( const generic_function<Rt, P0>& func, const unsigned resolution, const double domain_lower, const double domain_higher );
+    > void reset_function ( const generic_function<Rt, P0>& func, const unsigned _resolution, const double _domain_lower, const double _domain_upper );
 
     /* when a vector is returned */
     template<unsigned M, class T, class P0,
         std::enable_if_t<( M >= 1 ) && ( M <= 4 )>...,
         std::enable_if_t<std::conjunction<std::is_convertible<T, float>, std::is_convertible<P0, float>>::value>...
-    > void reset_function ( const generic_function<math::vector<M, T>, P0>& func, const unsigned resolution, const double domain_lower, const double domain_higher );
+    > void reset_function ( const generic_function<math::vector<M, T>, P0>& func, const unsigned _resolution, const double _domain_lower, const double _domain_upper );
 
 
 
@@ -528,13 +532,18 @@ private:
     /* buffer texture for transfering the outputs to shaders */
     core::texture1d output_tex;
 
-    /* domain muliplier and translation */
-    unsigned domain_multiplier;
-    unsigned domain_translation;
+    /* lower and upper values of the domain */
+    double domain_lower;
+    double domain_upper;
 
-    /* the settings of the last cached function */
-    unsigned last_resolution;
-    GLenum last_output_internal_format;
+    /* domain muliplier and translation */
+    double domain_multiplier;
+    double domain_translation;
+
+    /* the settings of the cached function */
+    unsigned resolution;
+    GLenum output_internal_format;
+    GLenum output_format;
 
 
 
@@ -543,6 +552,8 @@ private:
     {
         core::struct_uniform& function_uni;
         core::uniform& outputs_uni;
+        core::uniform& domain_lower_uni;
+        core::uniform& domain_upper_uni;
         core::uniform& domain_multiplier_uni;
         core::uniform& domain_translation_uni;
     };
@@ -649,6 +660,8 @@ inline void glh::function::glsl_function<1>::cache_uniforms ( core::struct_unifo
         {
             function_uni,
             function_uni.get_uniform ( "outputs" ),
+            function_uni.get_uniform ( "domain_lower" ),
+            function_uni.get_uniform ( "domain_upper" ),
             function_uni.get_uniform ( "domain_multiplier" ),
             function_uni.get_uniform ( "domain_translation" )
         } );
@@ -666,6 +679,8 @@ inline void glh::function::glsl_function<1>::apply () const
 
     /* set the values */
     cached_uniforms->outputs_uni.set_int ( output_tex.bind_loop () );
+    cached_uniforms->domain_lower_uni.set_float ( domain_lower );
+    cached_uniforms->domain_upper_uni.set_float ( domain_upper );
     cached_uniforms->domain_multiplier_uni.set_float ( domain_multiplier );
     cached_uniforms->domain_translation_uni.set_float ( domain_translation );
 }
@@ -683,26 +698,32 @@ void glh::function::glsl_function<1>::apply ( core::struct_uniform& function_uni
 /* when a scalar is returned */
 template<class Rt, class P0,
     std::enable_if_t<std::conjunction<std::is_convertible<Rt, float>, std::is_convertible<P0, float>>::value>...
-> inline void glh::function::glsl_function<1>::reset_function ( const generic_function<Rt, P0>& func, const unsigned resolution, const double domain_lower, const double domain_higher )
+> inline void glh::function::glsl_function<1>::reset_function ( const generic_function<Rt, P0>& func, const unsigned _resolution, const double _domain_lower, const double _domain_upper )
 {
     /* reformat the texture if necessary */
-    if ( resolution != last_resolution || last_output_internal_format != GL_R16F )
+    if ( resolution != _resolution || output_internal_format != GL_R32F )
     {
-        output_tex.tex_image ( resolution * sizeof ( GLfloat ), GL_R16F, GL_RED, GL_FLOAT );
-        last_resolution = resolution; last_output_internal_format = GL_R16F;
+        resolution = _resolution; output_internal_format = GL_R32F;
+        output_tex.tex_image ( resolution, GL_R32F, GL_RED, GL_FLOAT );
+        output_tex.set_mag_filter ( GL_LINEAR ); output_tex.set_min_filter ( GL_LINEAR );
+        output_tex.set_wrap ( GL_CLAMP_TO_EDGE );
     }
+
+    /* set domain lower and upper */
+    domain_lower = _domain_lower;
+    domain_upper = _domain_upper;
 
     /* set the domain transformation
      * this linear transformation causes [domain_lower-domain_higher]->[0-1]
      */
-    domain_multiplier = 1.0 / ( domain_higher - domain_lower );
+    domain_multiplier = 1.0 / ( domain_upper - domain_lower );
     domain_translation = -( domain_lower * domain_multiplier );
     
     /* create temporary domain transformation
      * this linear transformation causes [0-resolution]->[domain_lower-domain_higher]
      */
-    double temp_domain_multiplier = ( domain_higher - domain_lower ) / resolution;
-    double temp_domain_translation = domain_lower;
+    const double temp_domain_multiplier = ( domain_upper - domain_lower ) / resolution;
+    const double temp_domain_translation = domain_lower;
 
     /* allocate memory for the raw outputs */
     GLfloat * raw_outputs = new GLfloat [ resolution ];
@@ -712,7 +733,7 @@ template<class Rt, class P0,
         raw_outputs [ i ] = func ( ( i * temp_domain_multiplier ) + temp_domain_translation );        
     
     /* substitute the raw output into the texture */
-    output_tex.tex_sub_image ( 0.0, resolution * sizeof ( GLfloat ), GL_RED, GL_FLOAT, raw_outputs );
+    output_tex.tex_sub_image ( 0, resolution, GL_RED, GL_FLOAT, raw_outputs );
 
     /* delete the allocated memory */
     delete[] raw_outputs;
@@ -722,29 +743,33 @@ template<class Rt, class P0,
 template<unsigned M, class T, class P0,
     std::enable_if_t<( M >= 1 ) && ( M <= 4 )>...,
     std::enable_if_t<std::conjunction<std::is_convertible<T, float>, std::is_convertible<P0, float>>::value>...
-> inline void glh::function::glsl_function<1>::reset_function ( const generic_function<math::vector<M, T>, P0>& func, const unsigned resolution, const double domain_lower, const double domain_higher )
+> inline void glh::function::glsl_function<1>::reset_function ( const generic_function<math::vector<M, T>, P0>& func, const unsigned _resolution, const double _domain_lower, const double _domain_upper )
 {
     /* get the output format from the value of M */
-    const GLenum output_internal_format = ( M == 1 ? GL_R16F : ( M == 2 ? GL_RG16F : ( M == 3 ? GL_RGB16F : GL_RGBA16F ) ) );
-    const GLenum output_format = ( M == 1 ? GL_RED : ( M == 2 ? GL_RG : ( M == 3 ? GL_RGB : GL_RGBA ) ) );
+    const GLenum _output_internal_format = ( M == 1 ? GL_R32F : ( M == 2 ? GL_RG32F : ( M == 3 ? GL_RGB32F : GL_RGBA32F ) ) );
+    const GLenum _output_format = ( M == 1 ? GL_RED : ( M == 2 ? GL_RG : ( M == 3 ? GL_RGB : GL_RGBA ) ) );
 
     /* reformat the texture if necessary */
-    if ( resolution != last_resolution || last_output_internal_format != output_internal_format )
+    if ( resolution != _resolution || output_internal_format != _output_internal_format )
     {
-        output_tex.tex_image ( resolution * M * sizeof ( GLfloat ), output_internal_format, output_format, GL_FLOAT );
-        last_resolution = resolution; last_output_internal_format = output_internal_format;
+        resolution = _resolution; output_internal_format = _output_internal_format; output_format = _output_format;
+        output_tex.tex_image ( resolution, output_internal_format, output_format, GL_FLOAT );
     }
+
+    /* set domain lower and upper */
+    domain_lower = _domain_lower;
+    domain_upper = _domain_upper;
 
     /* set the domain transformation
      * this linear transformation causes [domain_lower-domain_higher]->[0-1]
      */
-    domain_multiplier = 1.0 / ( domain_higher - domain_lower );
+    domain_multiplier = 1.0 / ( domain_upper - domain_lower );
     domain_translation = -( domain_lower * domain_multiplier );
     
     /* create temporary domain transformation
      * this linear transformation causes [0-resolution]->[domain_lower-domain_higher]
      */
-    double temp_domain_multiplier = ( domain_higher - domain_lower ) / resolution;
+    double temp_domain_multiplier = ( domain_upper - domain_lower ) / resolution;
     double temp_domain_translation = domain_lower;
 
     /* allocate memory for the raw outputs */
@@ -755,7 +780,7 @@ template<unsigned M, class T, class P0,
         raw_outputs [ i ] = math::fvector<M> { func ( ( i * temp_domain_multiplier ) + temp_domain_translation ) };        
     
     /* substitute the raw output into the texture */
-    output_tex.tex_sub_image ( 0.0, resolution * M * sizeof ( GLfloat ), output_format, GL_FLOAT, raw_outputs );
+    output_tex.tex_sub_image ( 0.0, resolution, output_format, GL_FLOAT, raw_outputs );
 
     /* delete the allocated memory */
     delete[] raw_outputs;
