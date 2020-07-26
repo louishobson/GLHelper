@@ -17,8 +17,11 @@ in VS_OUT
     vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ];
 } vs_out;
 
-/* output color */
-out vec4 fragcolor;
+/* main output color */
+layout ( location = 0 ) out vec4 main_fragcolor;
+
+/* the emission output color */
+layout ( location = 1 ) out vec4 emission_color;
 
 
 
@@ -50,6 +53,7 @@ void main ()
     vec4 ambient = evaluate_stack ( material.diffuse_stack, vs_out.texcoords );
     vec4 diffuse = ambient;
     vec4 specular = evaluate_stack ( material.specular_stack, vs_out.texcoords );
+    vec4 emission = evaluate_stack ( material.emission_stack, vs_out.texcoords );
 
     /* evaluate new normal */
     vec3 normal = evaluate_normal ( material.normal_stack, vs_out.texcoords, vs_out.tbn_matrix );
@@ -63,10 +67,13 @@ void main ()
         default: break;
     }
 
-    /* calculate lighting color */
-    fragcolor = vec4
+    /* main output color */
+    main_fragcolor = vec4
     (
         compute_lighting ( ambient.xyz, diffuse.xyz, specular.xyz, material.shininess, material.shininess_strength, vs_out.fragpos, camera.viewpos, normal, light_system ),
         diffuse.a * material.opacity
     );
+
+    /* emission output color */
+    emission_color = emission;
 }
