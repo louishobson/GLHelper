@@ -753,7 +753,7 @@ template<class It> inline void glh::core::buffer::buffer_storage ( It first, It 
     capacity = std::distance ( first, last ) * sizeof ( typename std::iterator_traits<It>::value_type );
 
     /* copy data */
-    std::copy ( first, last, reinterpret_cast<typename std::iterator_traits<It>::pointer> ( map_buffer () ) );
+    std::copy ( first, last, reinterpret_cast<typename std::iterator_traits<It>::value_type *> ( map_buffer () ) );
 }
 
 /* buffer_data with iterators
@@ -767,7 +767,7 @@ template<class It> inline void glh::core::buffer::buffer_data ( It first, It las
     buffer_data ( std::distance ( first, last ) * sizeof ( typename std::iterator_traits<It>::value_type ), NULL, usage );
 
     /* copy data */
-    std::copy ( first, last, reinterpret_cast<typename std::iterator_traits<It>::pointer> ( map_buffer () ) );
+    std::copy ( first, last, reinterpret_cast<typename std::iterator_traits<It>::value_type *> ( map_buffer () ) );
 }
 
 /* buffer_sub_data with iterators
@@ -782,7 +782,7 @@ template<class It> inline void glh::core::buffer::buffer_sub_data ( It first, It
     throw exception::buffer_exception { "attempted to perform buffer sub data operation with incompatible paramaters for buffer capacity" };
 
     /* purely copy using iterators */
-    std::copy ( first, last, reinterpret_cast<typename std::iterator_traits<It>::pointer> ( map_buffer () ) + offset );    
+    std::copy ( first, last, reinterpret_cast<typename std::iterator_traits<It>::value_type *> ( map_buffer () ) + offset );    
 }
 
 /* at
