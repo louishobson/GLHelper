@@ -38,6 +38,16 @@ MessageCallback( GLenum source,
             type, severity, message );
 }
 
+
+
+/* MODEL_SWITCH
+ *
+ * defines which model is rendered
+ */
+#define MODEL_SWITCH island
+
+
+
 int main ()
 {
     /* CREATE WINDOW */
@@ -71,6 +81,12 @@ int main ()
     glh::core::program shadow_program { shadow_vshader, shadow_gshader, shadow_fshader };
     shadow_program.compile_and_link ();
 
+    /* create bloom and post-process shader programs */
+    glh::core::vshader simple_vshader { "shaders/vertex.simple.glsl" };
+    glh::core::fshader bloom_fshader { "shaders/function.glsl", "shaders/fragment.bloom.glsl" };
+    glh::core::program bloom_program { simple_vshader, bloom_fshader };
+    bloom_program.compile_and_link ();
+
     /* extract uniforms out of model program */
     auto& model_camera_uni = model_program.get_struct_uniform ( "camera" );
     auto& model_light_system_uni = model_program.get_struct_uniform ( "light_system" );
@@ -81,6 +97,12 @@ int main ()
     auto& shadow_light_system_uni = shadow_program.get_struct_uniform ( "light_system" );
     auto& shadow_material_uni = shadow_program.get_struct_uniform ( "material" );
     auto& shadow_shadow_mode_uni = shadow_program.get_uniform ( "shadow_mode" );
+
+    /* extract uniforms out of bloom program */
+    auto& bloom_texture_uni = bloom_program.get_uniform ( "bloom_texture" );
+    auto& bloom_bloom_mode_uni = bloom_program.get_uniform ( "bloom_mode" );
+    auto& bloom_function_uni = bloom_program.get_struct_uniform ( "bloom_function" );
+    auto& bloom_radius_uni = bloom_program.get_uniform ( "bloom_radius" );
 
 
 
@@ -124,7 +146,7 @@ int main ()
     const glh::math::mat4 island_matrix =
     glh::math::enlarge3d
     (
-        glh::math::identity<4, GLdouble> (),
+        glh::math::identity<4, double> (),
         0.1
     );
     glh::model::model island { "assets/island", "scene.gltf", 
@@ -139,7 +161,7 @@ int main ()
     const glh::math::mat4 box_matrix =
     glh::math::enlarge3d
     (
-        glh::math::identity<4, GLdouble> (),
+        glh::math::identity<4, double> (),
         15.0
     );
     glh::model::model box { "assets/box", "scene.gltf", 
@@ -155,7 +177,7 @@ int main ()
     /* SET UP LIGHT SYSTEM */
 
     /* create light system */
-    glh::lighting::light_system light_system { 4096 };
+    glh::lighting::light_system light_system { 2048 };
 
     /* add directional light */
     light_system.add_dirlight
@@ -165,18 +187,18 @@ int main ()
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        true, true, 0.0 //0.035
+        false, true, 0.0 //0.035
     );
 
     /* add point light */
     light_system.add_pointlight
     (
         glh::math::vec3 ( 30, 40, 20 ), 1.0, 0.0, 0.0,
-        glh::math::vec3 { 0.6 },
+        glh::math::vec3 { 0.4 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        false, true, 0.005
+        true, true, 0.005
     );
 
     /* add spotlights */
@@ -195,43 +217,77 @@ int main ()
 
     /* SET UP FRAMEBUFFERS */
 
+    /* define the number of samples */
+    const unsigned num_samples = 4;
+
     /* create main and emission color textures */
     glh::core::texture2d_multisample main_color_texture;
-    glh::core::texture2d_multisample emission_color_texture_alpha;
-    glh::core::texture2d_multisample emission_color_texture_beta;
+    glh::core::texture2d_multisample emission_color_texture;
 
-    main_color_texture.tex_storage ( 1920, 1080, 4, GL_RGBA8 ); 
-    emission_color_texture_alpha.tex_storage ( 1920, 1080, 4, GL_RGBA8 );
-    emission_color_texture_beta.tex_storage ( 1920, 1080, 4, GL_RGBA8 );
+    main_color_texture.tex_storage ( 1920, 1080, num_samples, GL_RGBA8 ); 
+    emission_color_texture.tex_storage ( 1920, 1080, num_samples, GL_RGBA8 );
 
     /* create the main depth attachment */
-    glh::core::rbo main_depth_attachment { 1920, 1080, GL_DEPTH_COMPONENT, 4 };
+    glh::core::rbo main_depth_attachment { 1920, 1080, GL_DEPTH_COMPONENT, num_samples };
 
-    /* create main framebuffer and attach buffers  */
+    /* create main framebuffer and attach buffers */
     glh::core::fbo main_fbo;
     main_fbo.attach_texture ( main_color_texture, GL_COLOR_ATTACHMENT0 );
-    main_fbo.attach_texture ( emission_color_texture_beta, GL_COLOR_ATTACHMENT1 );
+    main_fbo.attach_texture ( emission_color_texture, GL_COLOR_ATTACHMENT1 );
     main_fbo.attach_rbo ( main_depth_attachment, GL_DEPTH_ATTACHMENT );
     main_fbo.draw_buffers ( GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 );
-    main_fbo.read_buffer ( GL_COLOR_ATTACHMENT0 );
 
-    /* create flipflop framebuffers and attach buffers */
-    glh::core::fbo flip_flop_fbo_alpha;
-    glh::core::fbo flip_flop_fbo_beta;
-    flip_flop_fbo_alpha.attach_texture ( emission_color_texture_alpha, GL_COLOR_ATTACHMENT0 );
-    flip_flop_fbo_beta.attach_texture ( emission_color_texture_beta, GL_COLOR_ATTACHMENT0 );
+    /* create ping-pong textures */
+    glh::core::texture2d ping_pong_texture_alpha;
+    glh::core::texture2d ping_pong_texture_beta;
+    ping_pong_texture_alpha.tex_storage ( 1920, 1080, GL_RGB8 );
+    ping_pong_texture_beta.tex_storage ( 1920, 1080, GL_RGB8 );
+    ping_pong_texture_alpha.set_min_filter ( GL_LINEAR ); ping_pong_texture_alpha.set_mag_filter ( GL_LINEAR );
+    ping_pong_texture_beta.set_min_filter ( GL_LINEAR ); ping_pong_texture_beta.set_mag_filter ( GL_LINEAR );
+    ping_pong_texture_alpha.set_wrap ( GL_CLAMP_TO_EDGE );
+    ping_pong_texture_beta.set_wrap ( GL_CLAMP_TO_EDGE );
+
+    /* create ping-pong framebuffers and attach buffers */
+    glh::core::fbo ping_pong_fbo_alpha;
+    glh::core::fbo ping_pong_fbo_beta;
+    ping_pong_fbo_alpha.attach_texture ( ping_pong_texture_alpha, GL_COLOR_ATTACHMENT0 );
+    ping_pong_fbo_beta.attach_texture ( ping_pong_texture_beta, GL_COLOR_ATTACHMENT0 );
+
+
+
+    /* CREATE QUAD VAO */
+    
+    /* quad vbo */
+    glh::core::vbo quad_vbo;
+    quad_vbo.buffer_storage ( glh::vertices::square_vertex_data.begin (), glh::vertices::square_vertex_data.end () );
+
+    /* quad vao */
+    glh::core::vao quad_vao;
+    quad_vao.set_vertex_attrib ( 0, quad_vbo, 3, GL_FLOAT, GL_FALSE, 3 * sizeof ( GLfloat ), 0 );
+
+
+
+    /* SET UP BLOOM FUNCTION */
+
+    /* create the bloom function */
+    const double bloom_func_rms = 1.5;
+    const double bloom_func_coef = 1.00 / ( std::sqrt ( 2.0 ) * std::sqrt ( 2.0 * std::acos ( 0.0 ) ) * bloom_func_rms );
+    glh::function::gaussian_function<double, double> bloom_func { bloom_func_coef, 0.0, bloom_func_rms };
+    glh::function::glsl_function<1> glsl_bloom_func { bloom_func, 1024, -5.0, 5.0 };
+    glsl_bloom_func.cache_uniforms ( bloom_function_uni );
+
+    /* set parameters for bloom */
+    const unsigned bloom_radius = 5.0;
+    const unsigned bloom_iterations = 5.0;
 
 
 
     /* SET UP RENDERER */
 
     glh::core::renderer::set_clear_color ( glh::math::vec4 { 0.0, 0.0, 0.0, 1.0 } );
-    glh::core::renderer::enable_depth_test ();
     glh::core::renderer::enable_face_culling ();
     glh::core::renderer::set_cull_face ( GL_BACK );
     glh::core::renderer::enable_multisample ();
-    glh::core::renderer::enable_blend ();
-    glh::core::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
     glh::core::renderer::enable_framebuffer_srgb ();
 
 
@@ -300,6 +356,8 @@ int main ()
 
         /* prepare for rendering  */
         glh::core::renderer::disable_blend ();
+        glh::core::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+        glh::core::renderer::enable_depth_test ();
         glh::core::renderer::set_depth_mask ( GL_TRUE );
         glh::core::renderer::viewport ( 0, 0, light_system.get_shadow_map_width (), light_system.get_shadow_map_width () );
 
@@ -307,33 +365,29 @@ int main ()
         if ( light_system.requires_2d_shadow_mapping () )
         {
             light_system.bind_shadow_maps_2d_fbo ();
-            glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
             shadow_shadow_mode_uni.set_int ( 0 );
-            //island.cache_material_uniforms ( shadow_material_uni );
-            //island.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
-            box.cache_material_uniforms ( shadow_material_uni );
-            box.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+            glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
+            MODEL_SWITCH.cache_material_uniforms ( shadow_material_uni );
+            MODEL_SWITCH.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
         }
 
         /* create cube shadow maps */
         if ( light_system.requires_cube_shadow_mapping () )
         {
             light_system.bind_shadow_maps_cube_fbo ();
-            glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
             shadow_shadow_mode_uni.set_int ( 1 );
-            //island.cache_material_uniforms ( shadow_material_uni );
-            //island.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
-            box.cache_material_uniforms ( shadow_material_uni );
-            box.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+            glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
+            MODEL_SWITCH.cache_material_uniforms ( shadow_material_uni );
+            MODEL_SWITCH.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
         }
 
 
 
-        /* render models to the main framebuffer */
+        /* RENDER MODELS TO THE MAIN FRAMEBUFFER */
 
         /* bind the main framebuffer and resize the viewport */
         main_fbo.bind ();
-        glh::core::renderer::viewport ( 0, 0, dimensions.width, dimensions.height );        
+        glh::core::renderer::viewport ( 0, 0, 1920, 1080 );        
 
         /* use the model program */
         model_program.use ();
@@ -347,25 +401,75 @@ int main ()
         glh::core::renderer::disable_blend ();
         glh::core::renderer::set_depth_mask ( GL_TRUE );
         glh::core::renderer::clear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-        //island.cache_material_uniforms ( model_material_uni );
-        //island.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
-        box.cache_material_uniforms ( model_material_uni );
-        box.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+        MODEL_SWITCH.cache_material_uniforms ( model_material_uni );
+        MODEL_SWITCH.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
        
         /* render transparent */
         model_transparent_mode_uni.set_int ( 1 );
         glh::core::renderer::enable_blend ();
         glh::core::renderer::set_depth_mask ( GL_FALSE );
-        //island.render ( glh::model::render_flags::GLH_TRANSPARENT_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
-        box.render ( glh::model::render_flags::GLH_TRANSPARENT_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
-        
+        MODEL_SWITCH.render ( glh::model::render_flags::GLH_TRANSPARENT_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
 
 
-        /* blit from main framebuffer to default framebuffer */
-        window.bind_framebuffer ();
-        main_fbo.blit_copy_to_default ( 0, 0, dimensions.width, dimensions.height, 0, 0, dimensions.width, dimensions.height, GL_COLOR_BUFFER_BIT, GL_LINEAR );
+
+        /* APPLY BLOOM */
+
+        /* blit emission color texture into beta pingpong fbo */
+        main_fbo.read_buffer ( GL_COLOR_ATTACHMENT1 );
+        main_fbo.blit_copy ( ping_pong_fbo_beta, 0, 0, 1920, 1080, 0, 0, 1920, 1080, GL_COLOR_BUFFER_BIT, GL_LINEAR );
+
+        /* use bloom program */
+        bloom_program.use ();
+
+        /* apply uniforms */
+        glsl_bloom_func.apply ();
+        bloom_radius_uni.set_int ( bloom_radius );        
+
+        /* prepare for rendering */
+        glh::core::renderer::disable_blend ();
+        glh::core::renderer::disable_depth_test ();
+        glh::core::renderer::disable_face_culling ();
+
+        /* bloom loop */
+        for ( unsigned i = 0; i < bloom_iterations; ++i )
+        {
+            /* bind alpha fbo, set remaining uniforms and render */
+            ping_pong_fbo_alpha.bind ();
+            bloom_texture_uni.set_int ( ping_pong_texture_beta.bind_loop () );
+            bloom_bloom_mode_uni.set_int ( 0 );
+            glh::core::renderer::draw_arrays ( quad_vao, GL_TRIANGLE_STRIP, 0, 4 );
+
+            /* if not the final iteration, render to beta */
+            if ( i != bloom_iterations - 1 )
+            {
+                /* bind alpha fbo, set remaining uniforms and render */
+                ping_pong_fbo_beta.bind ();
+                bloom_texture_uni.set_int ( ping_pong_texture_alpha.bind_loop () );
+                bloom_bloom_mode_uni.set_int ( 1 );
+                glh::core::renderer::draw_arrays ( quad_vao, GL_TRIANGLE_STRIP, 0, 4 );
+            } else
+            /* else blend to default framebuffer */
+            {
+                /* bind default framebuffer, enable additive blending and clear it */
+                window.bind_framebuffer ();
+                glh::core::renderer::enable_blend ();
+                glh::core::renderer::blend_func ( GL_ONE, GL_ONE );
+                glh::core::renderer::clear ( GL_COLOR_BUFFER_BIT );
+
+                /* blit the main color fbo into the default fbo */
+                main_fbo.read_buffer ( GL_COLOR_ATTACHMENT0 );
+                main_fbo.blit_copy_to_default ( 0, 0, 1920, 1080, 0, 0, 1920, 1080, GL_COLOR_BUFFER_BIT, GL_LINEAR );
+
+                /* render into the default framebuffer */
+                bloom_texture_uni.set_int ( ping_pong_texture_alpha.bind_loop () );
+                bloom_bloom_mode_uni.set_int ( 1 );
+                glh::core::renderer::draw_arrays ( quad_vao, GL_TRIANGLE_STRIP, 0, 4 );
+            }
+        }
 
 
+
+        /* REFRESH THE SCREEN */
 
         /* swap buffers */
         window.swap_buffers ();
