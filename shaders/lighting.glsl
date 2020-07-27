@@ -218,8 +218,8 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         base_color += compute_diffuse_constant ( -light_system.dirlights [ i ].direction, normal ) * shadow_constant * light_system.dirlights [ i ].diffuse_color * diffuse_color;
 
         /* add specular component */
-        //base_color += compute_specular_constant ( viewdir, -light_system.dirlights [ i ].direction, normal, shininess ) * shininess_strength * shadow_constant * light_system.dirlights [ i ].specular_color * specular_color;
-        base_color += compute_specular_constant ( viewdir, -light_system.dirlights [ i ].direction, normal, 128 ) * shadow_constant * light_system.dirlights [ i ].specular_color * ( diffuse_color + vec3 ( 0.2, 0.2, 0.2 ) );
+        base_color += compute_specular_constant ( viewdir, -light_system.dirlights [ i ].direction, normal, shininess ) * shininess_strength * shadow_constant * light_system.dirlights [ i ].specular_color * specular_color;
+        //base_color += compute_specular_constant ( viewdir, -light_system.dirlights [ i ].direction, normal, 128 ) * shadow_constant * light_system.dirlights [ i ].specular_color * ( diffuse_color + vec3 ( 0.2, 0.2, 0.2 ) );
     }
 
     /* iterate through point lighting */
