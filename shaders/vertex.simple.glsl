@@ -8,15 +8,12 @@
 
  /* INPUTS AND OUTPUTS */
 
-/* input vertex position, normal and texture coords */
+/* input vertex position */
 layout ( location = 0 ) in vec3 in_pos;
-layout ( location = 1 ) in vec3 in_normal;
-layout ( location = 2 ) in vec2 in_texcoords;
 
-/* output fragpos */
+/* output texcoords */
 out VS_OUT
 {
-    vec3 fragpos;
     vec2 texcoords;
 } vs_out;
 
@@ -28,11 +25,10 @@ out VS_OUT
 void main ()
 {
     /* set gl_Position to in_pos */
-    gl_Position = in_pos;
+    gl_Position = vec4 ( in_pos, 1.0 );
 
-    /* set fragpos to in_pos and texcoords to in_texcoords */
-    vs_out.fragpos = in_pos;
-    vs_out.texcoords = in_texcoords;
+    /* set texcoords to in_pos.xy * 0.5 + 0.5  */
+    vs_out.texcoords = in_pos.xy * 0.5 + 0.5;
 }
 
 
