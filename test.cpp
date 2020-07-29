@@ -198,7 +198,7 @@ int main ()
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        true, true, 0.005
+        false, true, 0.005
     );
 
     /* add spotlights */
@@ -210,7 +210,8 @@ int main ()
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        false, true, 0.005
+        true, true, 0.007,
+        16, 0.001
     );
 
 
@@ -270,15 +271,15 @@ int main ()
     /* SET UP BLOOM FUNCTION */
 
     /* create the bloom function */
-    const double bloom_func_rms = 1.5;
+    const double bloom_func_rms = 0.75;
     const double bloom_func_coef = 1.00 / ( std::sqrt ( 2.0 ) * std::sqrt ( 2.0 * std::acos ( 0.0 ) ) * bloom_func_rms );
     glh::function::gaussian_function<double, double> bloom_func { bloom_func_coef, 0.0, bloom_func_rms };
     glh::function::glsl_function<1> glsl_bloom_func { bloom_func, 1024, -5.0, 5.0 };
     glsl_bloom_func.cache_uniforms ( bloom_function_uni );
 
     /* set parameters for bloom */
-    const unsigned bloom_radius = 5.0;
-    const unsigned bloom_iterations = 5.0;
+    const unsigned bloom_radius = 4;
+    const unsigned bloom_iterations = 5;
 
 
 
@@ -428,7 +429,6 @@ int main ()
         /* prepare for rendering */
         glh::core::renderer::disable_blend ();
         glh::core::renderer::disable_depth_test ();
-        glh::core::renderer::disable_face_culling ();
 
         /* bloom loop */
         for ( unsigned i = 0; i < bloom_iterations; ++i )
