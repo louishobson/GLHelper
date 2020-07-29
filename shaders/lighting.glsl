@@ -33,6 +33,10 @@ struct dirlight_struct
     
     float shadow_bias;
     float shadow_depth_range_mult;
+
+    int pcf_samples;
+    float pcf_radius;
+    mat2 pcf_rotation;
 };
 struct pointlight_struct
 {
@@ -53,6 +57,10 @@ struct pointlight_struct
     
     float shadow_bias;
     float shadow_depth_range_mult;
+
+    int pcf_samples;
+    float pcf_radius;
+    mat2 pcf_rotation;
 };
 struct spotlight_struct
 {
@@ -76,6 +84,10 @@ struct spotlight_struct
     
     float shadow_bias;
     float shadow_depth_range_mult;
+
+    int pcf_samples;
+    float pcf_radius;
+    mat2 pcf_rotation;
 };
 
 /* structure for storing multiple collections of lights */
@@ -207,8 +219,30 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
              * the closer the surface is to perpandicular to the light, the less bias */
             fragpos_light_proj.z -= max ( light_system.dirlights [ i ].shadow_bias * ( 1.0 - compute_diffuse_constant ( -light_system.dirlights [ i ].direction, normal ) ), 0.001 );
 
-            /* sample the shadow map to get the shadow constant */
-            shadow_constant = texture ( light_system.shadow_maps_2d, vec4 ( fragpos_light_proj.xy, i, fragpos_light_proj.z ) );
+            /* switch depending on if pcf samples are enabled */
+            if ( light_system.dirlights [ i ].pcf_samples == 0 )
+            {
+                /* sample the shadow map to get the shadow constant */
+                shadow_constant = texture ( light_system.shadow_maps_2d, vec4 ( fragpos_light_proj.xy, i, fragpos_light_proj.z ) );
+            } else
+            {
+                /* set the initial sample offset */
+                vec2 pcf_sample_offset = vec2 ( light_system.dirlights [ i ].pcf_radius, 0.0 );
+
+                /* loop through pcf samples */
+                shadow_constant = 0.0;
+                for ( int j = 0; j < light_system.dirlights [ i ].pcf_samples; ++j )
+                {
+                    /* sample shadow map and rotate offset */
+                    shadow_constant += texture ( light_system.shadow_maps_2d, vec4 ( fragpos_light_proj.xy + pcf_sample_offset, i, fragpos_light_proj.z ) );
+                    pcf_sample_offset = light_system.dirlights [ i ].pcf_rotation * pcf_sample_offset;
+                    shadow_constant += texture ( light_system.shadow_maps_2d, vec4 ( fragpos_light_proj.xy + pcf_sample_offset * 0.5, i, fragpos_light_proj.z ) );
+                    pcf_sample_offset = light_system.dirlights [ i ].pcf_rotation * pcf_sample_offset;
+                }
+
+                /* divide shadow_constant by the number of pcf samples taken */
+                shadow_constant /= light_system.dirlights [ i ].pcf_samples;
+            }
         }
 
         /* add ambient component */
@@ -241,13 +275,20 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
         float shadow_constant = 1.0;
         if ( light_system.pointlights [ i ].shadow_mapping_enabled )
         {
-            /* sample the shadow map to get the shadow constant */
-            shadow_constant = texture 
-            ( 
-                light_system.shadow_maps_cube, vec4 ( -lightdir, i ), 
-                lightdist * light_system.pointlights [ i ].shadow_depth_range_mult -
-                    max ( light_system.pointlights [ i ].shadow_bias * ( 1.0 - compute_diffuse_constant ( lightdir, normal ) ), 0.001 )
-            );
+            /* switch depending on if pcf samples are enabled */
+            if ( light_system.pointlights [ i ].pcf_samples == 0 )
+            {
+                /* sample the shadow map to get the shadow constant */
+                shadow_constant = texture 
+                ( 
+                    light_system.shadow_maps_cube, vec4 ( -lightdir, i ), 
+                    lightdist * light_system.pointlights [ i ].shadow_depth_range_mult -
+                        max ( light_system.pointlights [ i ].shadow_bias * ( 1.0 - compute_diffuse_constant ( lightdir, normal ) ), 0.001 )
+                );
+            } else
+            {
+                /* set the initial sample offset */
+            }
         }
 
         /* add ambient component */
@@ -298,8 +339,30 @@ vec3 compute_lighting ( const vec3 ambient_color, const vec3 diffuse_color, cons
             fragpos_light_proj.z = lightdist * light_system.spotlights [ i ].shadow_depth_range_mult -
                 max ( light_system.spotlights [ i ].shadow_bias * ( 1.0 - compute_diffuse_constant ( lightdir, normal ) ), 0.001 );
 
-            /* sample the shadow map to get the shadow constant */
-            shadow_constant = texture ( light_system.shadow_maps_2d, vec4 ( fragpos_light_proj.xy, light_system.dirlights_size + i, fragpos_light_proj.z ) );
+            /* switch depending on if pcf samples are enabled */
+            if ( light_system.spotlights [ i ].pcf_samples == 0 )
+            {
+                /* sample the shadow map to get the shadow constant */
+                shadow_constant = texture ( light_system.shadow_maps_2d, vec4 ( fragpos_light_proj.xy, light_system.dirlights_size + i, fragpos_light_proj.z ) );
+            } else
+            {
+                /* set the initial sample offset */
+                vec2 pcf_sample_offset = vec2 ( light_system.spotlights [ i ].pcf_radius, 0.0 );
+
+                /* loop through pcf samples */
+                shadow_constant = 0.0;
+                for ( int j = 0; j < light_system.spotlights [ i ].pcf_samples; j += 2 )
+                {
+                    /* sample shadow map and rotate offset */
+                    shadow_constant += texture ( light_system.shadow_maps_2d, vec4 ( fragpos_light_proj.xy + pcf_sample_offset, light_system.dirlights_size + i, fragpos_light_proj.z ) );
+                    pcf_sample_offset = light_system.spotlights [ i ].pcf_rotation * pcf_sample_offset;
+                    shadow_constant += texture ( light_system.shadow_maps_2d, vec4 ( fragpos_light_proj.xy + pcf_sample_offset * 0.5, light_system.dirlights_size + i, fragpos_light_proj.z ) );
+                    pcf_sample_offset = light_system.spotlights [ i ].pcf_rotation * pcf_sample_offset;
+                }
+
+                /* divide shadow_constant by the number of pcf samples taken */
+                shadow_constant /= light_system.spotlights [ i ].pcf_samples;
+            }
         }
 
         /* add ambient component */
