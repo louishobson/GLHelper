@@ -60,6 +60,9 @@ void glh::lighting::dirlight::apply () const
     cached_uniforms->shadow_mapping_enabled_uni.set_int ( shadow_mapping_enabled );
     cached_uniforms->shadow_trans_uni.set_matrix ( shadow_camera.get_view_proj () );
     cached_uniforms->shadow_bias_uni.set_float ( shadow_bias );
+    cached_uniforms->pcf_samples_uni.set_int ( pcf_samples );
+    cached_uniforms->pcf_radius_uni.set_float ( pcf_radius );
+    cached_uniforms->pcf_rotation_uni.set_matrix ( pcf_rotation );
 }
 
 /* cache_uniforms
@@ -83,7 +86,10 @@ void glh::lighting::dirlight::cache_uniforms ( core::struct_uniform& light_uni )
             light_uni.get_uniform ( "enabled" ),
             light_uni.get_uniform ( "shadow_mapping_enabled" ),
             light_uni.get_uniform ( "shadow_trans" ),
-            light_uni.get_uniform ( "shadow_bias" )
+            light_uni.get_uniform ( "shadow_bias" ),
+            light_uni.get_uniform ( "pcf_samples" ),
+            light_uni.get_uniform ( "pcf_radius" ),
+            light_uni.get_uniform ( "pcf_rotation" )
         } );
     }
 }
@@ -132,6 +138,9 @@ void glh::lighting::pointlight::apply () const
     cached_uniforms->shadow_mapping_enabled_uni.set_int ( shadow_mapping_enabled );
     cached_uniforms->shadow_bias_uni.set_float ( shadow_bias );
     cached_uniforms->shadow_depth_range_mult_uni.set_float ( 1.0 / ( shadow_camera.get_far () * std::sqrt ( 2.0 ) ) );
+    cached_uniforms->pcf_samples_uni.set_int ( pcf_samples );
+    cached_uniforms->pcf_radius_uni.set_float ( pcf_radius );
+    cached_uniforms->pcf_rotation_uni.set_matrix ( pcf_rotation );
 
     /* set the shadow cube matrices */
     cached_uniforms->shadow_trans_uni.at ( 0 ).set_matrix 
@@ -173,7 +182,10 @@ void glh::lighting::pointlight::cache_uniforms ( core::struct_uniform& light_uni
             light_uni.get_uniform ( "shadow_mapping_enabled" ),
             light_uni.get_uniform_array_uniform ( "shadow_trans" ),
             light_uni.get_uniform ( "shadow_bias" ),
-            light_uni.get_uniform ( "shadow_depth_range_mult" )
+            light_uni.get_uniform ( "shadow_depth_range_mult" ),
+            light_uni.get_uniform ( "pcf_samples" ),
+            light_uni.get_uniform ( "pcf_radius" ),
+            light_uni.get_uniform ( "pcf_rotation" )            
         } );
     }
 }
@@ -228,6 +240,9 @@ void glh::lighting::spotlight::apply () const
     cached_uniforms->shadow_trans_uni.set_matrix ( shadow_camera.get_view_proj () );
     cached_uniforms->shadow_bias_uni.set_float ( shadow_bias );
     cached_uniforms->shadow_depth_range_mult_uni.set_float ( 1.0 / ( shadow_camera.get_far () * std::sqrt ( 2.0 ) ) );
+    cached_uniforms->pcf_samples_uni.set_int ( pcf_samples );
+    cached_uniforms->pcf_radius_uni.set_float ( pcf_radius );
+    cached_uniforms->pcf_rotation_uni.set_matrix ( pcf_rotation );
 }
 
 /* cache_uniforms
@@ -258,7 +273,10 @@ void glh::lighting::spotlight::cache_uniforms ( core::struct_uniform& light_uni 
             light_uni.get_uniform ( "shadow_mapping_enabled" ),
             light_uni.get_uniform ( "shadow_trans" ),
             light_uni.get_uniform ( "shadow_bias" ),
-            light_uni.get_uniform ( "shadow_depth_range_mult" )
+            light_uni.get_uniform ( "shadow_depth_range_mult" ),
+            light_uni.get_uniform ( "pcf_samples" ),
+            light_uni.get_uniform ( "pcf_radius" ),
+            light_uni.get_uniform ( "pcf_rotation" )
         } );
     }
 }

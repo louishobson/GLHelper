@@ -40,6 +40,10 @@
  *     mat4 shadow_trans;
  * 
  *     float shadow_bias;
+ * 
+ *     float pcf_samples;
+ *     float pcf_radius;
+ *     mat2 pcf_rotation;
  * };
  * 
  * struct pointlight_struct
@@ -61,6 +65,10 @@
  * 
  *     float shadow_bias;
  *     float shadow_depth_range_mult;
+ * 
+ *     int pcf_samples;
+ *     float pcf_radius;
+ *     mat2 pcf_rotation;
  * };
  * 
  * struct light_struct
@@ -86,6 +94,10 @@
  * 
  *     float shadow_bias;
  *     float shadow_depth_range_mult;
+ * 
+ *     int pcf_samples;
+ *     float pcf_radius;
+ *     mat2 pcf_rotation;
  * };
  * 
  * these GLSL structures contain attributes for different light types
@@ -102,9 +114,9 @@
  * shadow_trans: the transformation(s) used for shadow mapping (all types)
  * shadow_bias: the bias to apply when sampling from the shadow map
  * shadow_depth_range_mult: reciprocal the side length of the perspective frustum (only point and spot lights)
- * 
- * the first two structures could potentially be completely ommited and just spotlight structs used, since the members of the other classes
- * are subsets of the members of the spotlight class. In this case, unused members will just not be set
+ * pcf_samples: the number of pcf samples to take (all types)
+ * pcf_radius: the radius of pcf samples (all types)
+ * pcf_rotation: an anticlockwise rotation by 360/pcf_samples degrees (all types)
  * 
  * 
  * 
@@ -267,11 +279,14 @@ public:
     dirlight ( const math::vec3& _direction
              , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
              , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
-             , const bool _enabled = true, const bool _shadow_mapping_enabled = true, const double _shadow_bias = 0.0 )
+             , const bool _enabled = true, const bool _shadow_mapping_enabled = true, const double _shadow_bias = 0.0
+             , const unsigned _pcf_samples = 0, const double _pcf_radius = 0.0 )
         : direction { math::normalize ( _direction ) }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
         , shadow_region { _shadow_region }
         , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }, shadow_bias { _shadow_bias }
+        , pcf_samples { _pcf_samples }, pcf_radius { _pcf_radius }
+        , pcf_rotation { math::rotate ( math::identity<2> (), glh::math::pi ( 2.0 ) / _pcf_samples, 0, 1 ) }
         , shadow_camera { math::vec3 { 0.0 }, _direction, math::any_perpandicular ( _direction ), math::vec3 { 0.0 }, math::vec3 { 0.0 } }
         , shadow_camera_change { true }
     {}
@@ -285,6 +300,7 @@ public:
         , ambient_color { other.ambient_color }, diffuse_color { other.diffuse_color }, specular_color { other.specular_color }
         , shadow_region { other.shadow_region }
         , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }, shadow_bias { other.shadow_bias }
+        , pcf_samples { other.pcf_samples }, pcf_radius { other.pcf_radius }, pcf_rotation { other.pcf_rotation }
         , shadow_camera { other.shadow_camera }, shadow_camera_change { other.shadow_camera_change }
     {}
 
@@ -297,6 +313,7 @@ public:
         ; ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color
         ; shadow_region = other.shadow_region
         ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled; shadow_bias = other.shadow_bias
+        ; pcf_samples = other.pcf_samples; pcf_radius = other.pcf_radius; pcf_rotation = other.pcf_rotation
         ; shadow_camera = other.shadow_camera; shadow_camera_change = other.shadow_camera_change
     ; return * this; }
 
@@ -379,6 +396,17 @@ public:
     const double& get_shadow_bias () const { return shadow_bias; }
     void set_shadow_bias ( const double _shadow_bias ) { shadow_bias = _shadow_bias; }
 
+    /* get/set_pcf_samples/radius
+     *
+     * get/set the pcf sample count and radius
+     */
+    const unsigned& get_pcf_samples () const { return pcf_samples; }
+    void set_pcf_samples ( const unsigned _pcf_samples ) 
+        { pcf_samples = _pcf_samples; pcf_rotation = math::rotate ( math::identity<2> (), glh::math::pi ( 2.0 ) / _pcf_samples, 0, 1 ); }
+    const double& get_pcf_radius () const { return pcf_radius; }
+    void set_pcf_radius ( const double _pcf_radius ) { pcf_radius = _pcf_radius; }
+
+
 
 
 private:
@@ -400,6 +428,13 @@ private:
     /* the current shadow bias */
     double shadow_bias;
 
+    /* the pcf sample count and radius */
+    unsigned pcf_samples;
+    double pcf_radius;
+
+    /* pcf rotation matrix */
+    math::mat2 pcf_rotation;
+
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
@@ -412,6 +447,9 @@ private:
         core::uniform& shadow_mapping_enabled_uni;
         core::uniform& shadow_trans_uni;
         core::uniform& shadow_bias_uni;
+        core::uniform& pcf_samples_uni;
+        core::uniform& pcf_radius_uni;
+        core::uniform& pcf_rotation_uni;
     };
 
     /* cached uniforms */
@@ -448,10 +486,13 @@ public:
                , const double _att_const, const double _att_linear, const double _att_quad
                , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
                , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
-               , const bool _enabled = true, const bool _shadow_mapping_enabled = true, const double _shadow_bias = 0.0 )
+               , const bool _enabled = true, const bool _shadow_mapping_enabled = true, const double _shadow_bias = 0.0
+               , const unsigned _pcf_samples = 0, const double _pcf_radius = 0.0 )
         : position { _position }, att_const { _att_const }, att_linear { _att_linear }, att_quad { _att_quad }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
         , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }, shadow_bias { _shadow_bias }
+        , pcf_samples { _pcf_samples }, pcf_radius { _pcf_radius }
+        , pcf_rotation { math::rotate ( math::identity<2> (), glh::math::pi ( 2.0 ) / _pcf_samples, 0, 1 ) }
         , shadow_camera { _position, math::vec3 { 0.0, 0.0, -1.0 }, math::vec3 { 0.0, 1.0, 0.0 }, math::rad ( 90.0 ), 1.0, 0.1, 0.1 }
         , shadow_region { _shadow_region }
     , shadow_camera_change { true }
@@ -467,6 +508,7 @@ public:
         , ambient_color { other.ambient_color }, diffuse_color { other.diffuse_color }, specular_color { other.specular_color }
         , shadow_region { other.shadow_region }
         , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }, shadow_bias { other.shadow_bias }
+        , pcf_samples { other.pcf_samples }, pcf_radius { other.pcf_radius }, pcf_rotation { other.pcf_rotation }
         , shadow_camera { other.shadow_camera }, shadow_camera_change { other.shadow_camera_change }
     {}
 
@@ -480,6 +522,7 @@ public:
         ; ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color
         ; shadow_region = other.shadow_region
         ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled; shadow_bias = other.shadow_bias
+        ; pcf_samples = other.pcf_samples; pcf_radius = other.pcf_radius; pcf_rotation = other.pcf_rotation
         ; shadow_camera = other.shadow_camera; shadow_camera_change = other.shadow_camera_change
     ; return * this; }
 
@@ -574,6 +617,16 @@ public:
     const double& get_shadow_bias () const { return shadow_bias; }
     void set_shadow_bias ( const double _shadow_bias ) { shadow_bias = _shadow_bias; }
 
+    /* get/set_pcf_samples/radius
+     *
+     * get/set the pcf sample count and radius
+     */
+    const unsigned& get_pcf_samples () const { return pcf_samples; }
+    void set_pcf_samples ( const unsigned _pcf_samples ) 
+        { pcf_samples = _pcf_samples; pcf_rotation = math::rotate ( math::identity<2> (), glh::math::pi ( 2.0 ) / _pcf_samples, 0, 1 ); }
+    const double& get_pcf_radius () const { return pcf_radius; }
+    void set_pcf_radius ( const double _pcf_radius ) { pcf_radius = _pcf_radius; }
+
 
 
 private:
@@ -600,6 +653,13 @@ private:
     /* the current shadow bias */
     double shadow_bias;
 
+    /* the pcf sample count and radius */
+    unsigned pcf_samples;
+    double pcf_radius;
+
+    /* pcf rotation matrix */
+    math::mat2 pcf_rotation;
+
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
@@ -616,6 +676,9 @@ private:
         core::uniform_array_uniform& shadow_trans_uni;
         core::uniform& shadow_bias_uni;
         core::uniform& shadow_depth_range_mult_uni;
+        core::uniform& pcf_samples_uni;
+        core::uniform& pcf_radius_uni;
+        core::uniform& pcf_rotation_uni;
     };
 
     /* cached uniforms */
@@ -652,11 +715,14 @@ public:
               , const double _inner_cone, const double _outer_cone, const double _att_const, const double _att_linear, const double _att_quad
               , const math::vec3& _ambient_color, const math::vec3& _diffuse_color, const math::vec3& _specular_color
               , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
-              , const bool _enabled = true, const bool _shadow_mapping_enabled = true, const double _shadow_bias = 0.0 )
+              , const bool _enabled = true, const bool _shadow_mapping_enabled = true, const double _shadow_bias = 0.0
+              , const unsigned _pcf_samples = 0, const double _pcf_radius = 0.0 )
         : position { _position }, direction { math::normalize ( _direction ) }
         , inner_cone { _inner_cone }, outer_cone { _outer_cone }, att_const { _att_const }, att_linear { _att_linear }, att_quad { _att_quad }
         , ambient_color { _ambient_color }, diffuse_color { _diffuse_color }, specular_color { _specular_color }
         , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }, shadow_bias { _shadow_bias }
+        , pcf_samples { _pcf_samples }, pcf_radius { _pcf_radius }
+        , pcf_rotation { math::rotate ( math::identity<2> (), glh::math::pi ( 2.0 ) / _pcf_samples, 0, 1 ) }
         , shadow_camera { _position, _direction, math::any_perpandicular ( _direction ), _outer_cone, 1.0, 0.1, 0.1 }
         , shadow_region { _shadow_region }
         , shadow_camera_change { true }
@@ -672,6 +738,7 @@ public:
         , ambient_color { other.ambient_color }, diffuse_color { other.diffuse_color }, specular_color { other.specular_color }
         , shadow_region { other.shadow_region }
         , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }, shadow_bias { other.shadow_bias }
+        , pcf_samples { other.pcf_samples }, pcf_radius { other.pcf_radius }, pcf_rotation { other.pcf_rotation }
         , shadow_camera { other.shadow_camera }, shadow_camera_change { other.shadow_camera_change }
     {}
 
@@ -685,6 +752,7 @@ public:
         ; ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color
         ; shadow_region = other.shadow_region
         ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled; shadow_bias = other.shadow_bias
+        ; pcf_samples = other.pcf_samples; pcf_radius = other.pcf_radius; pcf_rotation = other.pcf_rotation
         ; shadow_camera = other.shadow_camera; shadow_camera_change = other.shadow_camera_change
     ; return * this; }
 
@@ -792,6 +860,16 @@ public:
     const double& get_shadow_bias () const { return shadow_bias; }
     void set_shadow_bias ( const double _shadow_bias ) { shadow_bias = _shadow_bias; }
 
+    /* get/set_pcf_samples/radius
+     *
+     * get/set the pcf sample count and radius
+     */
+    const unsigned& get_pcf_samples () const { return pcf_samples; }
+    void set_pcf_samples ( const unsigned _pcf_samples ) 
+        { pcf_samples = _pcf_samples; pcf_rotation = math::rotate ( math::identity<2> (), glh::math::pi ( 2.0 ) / _pcf_samples, 0, 1 ); }
+    const double& get_pcf_radius () const { return pcf_radius; }
+    void set_pcf_radius ( const double _pcf_radius ) { pcf_radius = _pcf_radius; }
+
 
 
 private:
@@ -825,6 +903,13 @@ private:
     /* the current shadow bias */
     double shadow_bias;
 
+    /* the pcf sample count and radius */
+    unsigned pcf_samples;
+    double pcf_radius;
+
+    /* pcf rotation matrix */
+    math::mat2 pcf_rotation;
+
     /* struct for cached uniforms */
     struct cached_uniforms_struct
     {
@@ -844,6 +929,9 @@ private:
         core::uniform& shadow_trans_uni;
         core::uniform& shadow_bias_uni;
         core::uniform& shadow_depth_range_mult_uni;
+        core::uniform& pcf_samples_uni;
+        core::uniform& pcf_radius_uni;
+        core::uniform& pcf_rotation_uni;
     };
 
     /* cached uniforms */
@@ -899,20 +987,23 @@ public:
     void add_dirlight ( const math::vec3& direction
                       , const math::vec3& ambient_color, const math::vec3& diffuse_color, const math::vec3& specular_color
                       , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
-                      , const bool enabled = true, const bool shadow_mapping_enabled = true, const double shadow_bias = 0.0 )
-        { dirlights.emplace_back ( direction, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled, shadow_bias ); }
+                      , const bool enabled = true, const bool shadow_mapping_enabled = true, const double shadow_bias = 0.0
+                      , const unsigned pcf_samples = 0, const double pcf_radius = 0.0 )
+        { dirlights.emplace_back ( direction, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled, shadow_bias, pcf_samples, pcf_radius ); }
     void add_pointlight ( const math::vec3& position
                         , const double att_const, const double att_linear, const double att_quad
                         , const math::vec3& ambient_color, const math::vec3& diffuse_color, const math::vec3& specular_color
                         , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
-                        , const bool enabled = true, const bool shadow_mapping_enabled = true, const double shadow_bias = 0.0 )
-        { pointlights.emplace_back ( position, att_const, att_linear, att_quad, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled, shadow_bias ); }
+                        , const bool enabled = true, const bool shadow_mapping_enabled = true, const double shadow_bias = 0.0
+                        , const unsigned pcf_samples = 0, const double pcf_radius = 0.0 )
+        { pointlights.emplace_back ( position, att_const, att_linear, att_quad, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled, shadow_bias, pcf_samples, pcf_radius ); }
     void add_spotlight ( const math::vec3& position, const math::vec3& direction
                        , const double inner_cone, const double outer_cone, const double att_const, const double att_linear, const double att_quad
                        , const math::vec3& ambient_color, const math::vec3& diffuse_color, const math::vec3& specular_color
                        , const region::spherical_region<>& _shadow_region = region::spherical_region<> { math::vec3 { 0.0 }, 0.0 }
-                       , const bool enabled = true, const bool shadow_mapping_enabled = true, const double shadow_bias = 0.0 )
-        { spotlights.emplace_back ( position, direction, inner_cone, outer_cone, att_const, att_linear, att_quad, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled, shadow_bias ); }
+                       , const bool enabled = true, const bool shadow_mapping_enabled = true, const double shadow_bias = 0.0
+                       , const unsigned pcf_samples = 0, const double pcf_radius = 0.0 )
+        { spotlights.emplace_back ( position, direction, inner_cone, outer_cone, att_const, att_linear, att_quad, ambient_color, diffuse_color, specular_color, _shadow_region, enabled, shadow_mapping_enabled, shadow_bias, pcf_samples, pcf_radius ); }
 
 
 
