@@ -61,8 +61,6 @@
  *     bool enabled;
  *     bool shadow_mapping_enabled;
  * 
- *     mat4 shadow_trans [ 6 ];
- * 
  *     float shadow_bias;
  *     float shadow_depth_range_mult;
  * 
@@ -111,7 +109,7 @@
  * ambient/diffuse/specular_color: the colors of the different components of light produced (all types)
  * enabled: whether the light is 'turned on' (all types)
  * shadow_mapping_enabled: whether the light should be shadow mapped (all types)
- * shadow_trans: the transformation(s) used for shadow mapping (all types)
+ * shadow_trans: the transformation matrix used for shadow mapping (only directional and spot lights)
  * shadow_bias: the bias to apply when sampling from the shadow map
  * shadow_depth_range_mult: reciprocal the side length of the perspective frustum (only point and spot lights)
  * pcf_samples: the number of pcf samples to take (all types)
@@ -140,8 +138,7 @@
  *     int spotlights_size;
  *     light_struct spotlights_size [ MAX_NUM_LIGHTS ];
  * 
- *     sampler2DArrayShadow shadow_maps_2d; 
- *     samplerCubeArrayShadow shadow_maps_cube;
+ *     sampler2DArrayShadow shadow_maps;
  * };
  * 
  * this structure holds multiple arrays of lights
@@ -150,7 +147,7 @@
  * dirlights(_size): array of directional lights and its size
  * pointlights(_size): array of collection of point lights and its size
  * spotlights(_size): collection of spotlights and its size
- * shadow_maps_2d/cube: samplers for 2d and cube shadow maps
+ * shadow_maps: sampler for shadow maps
  * 
  */
 
@@ -493,9 +490,7 @@ public:
         , enabled { _enabled }, shadow_mapping_enabled { _shadow_mapping_enabled }, shadow_bias { _shadow_bias }
         , pcf_samples { _pcf_samples }, pcf_radius { _pcf_radius }
         , pcf_rotation { math::rotate ( math::identity<2> (), glh::math::pi ( 2.0 ) / _pcf_samples, 0, 1 ) }
-        , shadow_camera { _position, math::vec3 { 0.0, 0.0, -1.0 }, math::vec3 { 0.0, 1.0, 0.0 }, math::rad ( 90.0 ), 1.0, 0.1, 0.1 }
         , shadow_region { _shadow_region }
-    , shadow_camera_change { true }
     {}
 
     /* default zero-parameter constructor */
@@ -509,7 +504,6 @@ public:
         , shadow_region { other.shadow_region }
         , enabled { other.enabled }, shadow_mapping_enabled { other.shadow_mapping_enabled }, shadow_bias { other.shadow_bias }
         , pcf_samples { other.pcf_samples }, pcf_radius { other.pcf_radius }, pcf_rotation { other.pcf_rotation }
-        , shadow_camera { other.shadow_camera }, shadow_camera_change { other.shadow_camera_change }
     {}
 
     /* default move constructor */
@@ -522,8 +516,6 @@ public:
         ; ambient_color = other.ambient_color; diffuse_color = other.diffuse_color; specular_color = other.specular_color
         ; shadow_region = other.shadow_region
         ; enabled = other.enabled; shadow_mapping_enabled = other.shadow_mapping_enabled; shadow_bias = other.shadow_bias
-        ; pcf_samples = other.pcf_samples; pcf_radius = other.pcf_radius; pcf_rotation = other.pcf_rotation
-        ; shadow_camera = other.shadow_camera; shadow_camera_change = other.shadow_camera_change
     ; return * this; }
 
     /* default move assignment operator */
@@ -559,7 +551,7 @@ public:
      * get/set the position of the light
      */
     const math::vec3& get_position () const { return position; }
-    void set_position ( const math::vec3& _position ) { position = _position; shadow_camera_change = true; }
+    void set_position ( const math::vec3& _position ) { position = _position; }
 
     /* get/set_att_const/linear/quad
      *
@@ -591,7 +583,7 @@ public:
      * get/set the region the light should cast shadows over
      */
     const region::spherical_region<>& get_shadow_region () const { return shadow_region; }
-    void set_shadow_region ( const region::spherical_region<>& _shadow_region ) { shadow_region = _shadow_region; shadow_camera_change = true; }
+    void set_shadow_region ( const region::spherical_region<>& _shadow_region ) { shadow_region = _shadow_region; }
 
     /* enable/disable/is_enabled
      *
@@ -673,7 +665,6 @@ private:
         core::uniform& specular_color_uni;
         core::uniform& enabled_uni;
         core::uniform& shadow_mapping_enabled_uni;
-        core::uniform_array_uniform& shadow_trans_uni;
         core::uniform& shadow_bias_uni;
         core::uniform& shadow_depth_range_mult_uni;
         core::uniform& pcf_samples_uni;
@@ -684,14 +675,8 @@ private:
     /* cached uniforms */
     std::unique_ptr<cached_uniforms_struct> cached_uniforms;
 
-    /* the camera for the shadow map */
-    mutable camera::camera_perspective_movement shadow_camera;
-
     /* the last shadow region used */
     region::spherical_region<> shadow_region;
-
-    /* true if the shadow camera must be updated */
-    mutable bool shadow_camera_change; 
 
 };
 
@@ -1065,22 +1050,20 @@ public:
 
 
 
-    /* bind_shadow_maps_2d/cube_fbo
+    /* bind_shadow_maps_fbo
      *
-     * 2d: reallocates the 2d texture array to size max ( dirlights + spotlights, 1 ), then binds the 2d shadow map fbo
-     * cube: reallocates the cubemap array to size max ( pointlights, 1 ) * 6, then binds the cube shadow map fbo
+     * reallocates the 2d texture array to size max ( dirlights + pointlights * 2 + spotlights, 1 ), then binds the shadow map fbo
+     * also resizes the viewport to the size of the shadow map
      */
-    void bind_shadow_maps_2d_fbo () const;
-    void bind_shadow_maps_cube_fbo () const;
+    void bind_shadow_maps_fbo () const;
 
 
 
-    /* requires_2d/cube_shadow_mapping
+    /* requires_shadow_mapping
      *
-     * true if there are lights which require 2d or cube shadow mapping respectively
+     * true if there are lights which require shadow mapping
      */
-    bool requires_2d_shadow_mapping () const;
-    bool requires_cube_shadow_mapping () const;
+    bool requires_shadow_mapping () const;
 
 
 
@@ -1099,13 +1082,11 @@ private:
     std::vector<pointlight> pointlights;
     std::vector<spotlight> spotlights;
 
-    /* texture2d and cubemap array for shadow maps */
-    mutable core::texture2d_array shadow_maps_2d;
-    mutable core::cubemap_array shadow_maps_cube;
+    /* texture2d array for shadow maps */
+    mutable core::texture2d_array shadow_maps;
 
-    /* framebuffers for shadow mapping */
-    core::fbo shadow_maps_2d_fbo;
-    core::fbo shadow_maps_cube_fbo;
+    /* framebuffer for shadow mapping */
+    core::fbo shadow_maps_fbo;
 
     /* the size of the shadow maps */
     const unsigned shadow_map_width;
@@ -1120,8 +1101,7 @@ private:
         core::struct_array_uniform& pointlights_uni;
         core::uniform& spotlights_size_uni;
         core::struct_array_uniform& spotlights_uni;
-        core::uniform& shadow_maps_2d_uni;
-        core::uniform& shadow_maps_cube_uni;
+        core::uniform& shadow_maps_uni;
     };
 
     /* cached uniforms */
