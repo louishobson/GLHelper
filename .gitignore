@@ -16,6 +16,9 @@ test
 assets/*
 assets
 
+# Specific fukes
+._shader.comp.failure.glsl
+
 # User-specific files
 *.rsuser
 *.suo
