@@ -319,27 +319,32 @@ public:
      *
      * get the dimensions of the window
      * 
+     * get_window_pos: set to true if position information is required
+     * 
      * return: dimensions_t containing dimensions info
      */
-    dimensions_t get_dimensions () const;
+    dimensions_t get_dimensions ( const bool get_window_pos = false ) const;
 
     /* get_key
      *
      * test to see if a key was pressed
      * 
      * key: the GLFW code for the key
+     * get_scancode: set to true if the scancode is required
      * 
      * return: keyinfo_t containing info on the key
      */
-    keyinfo_t get_key ( const int key ) const;
+    keyinfo_t get_key ( const int key, const bool get_scancode = false ) const;
 
     /* get_mouseinfo
      *
      * get info about the mouse position and its change
      * 
+     * get_fractions: set to true if fraction movement relative to window size is required
+     * 
      * return: mouseinfo_t containing mouse info
      */
-    mouseinfo_t get_mouseinfo () const;
+    mouseinfo_t get_mouseinfo ( const bool get_fractions = false ) const;
 
     /* get_timeinfo
      *

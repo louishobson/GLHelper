@@ -163,18 +163,23 @@ void glh::glfw::window::set_should_close ()
  *
  * get the dimensions of the window
  * 
+ * get_window_pos: set to true if position information is required
+ * 
  * return: dimensions_t containing dimensions info
  */
-glh::glfw::window::dimensions_t glh::glfw::window::get_dimensions () const
+glh::glfw::window::dimensions_t glh::glfw::window::get_dimensions ( const bool get_window_pos ) const
 {
     /* generate dimension info */
     dimensions_t dimensions;
-    glfwGetWindowPos ( winptr, &dimensions.xpos, &dimensions.ypos );
     glfwGetWindowSize ( winptr, &dimensions.width, &dimensions.height );
-    dimensions.deltaxpos = dimensions.xpos - prev_dimensions.xpos;
-    dimensions.deltaypos = dimensions.ypos - prev_dimensions.ypos;
     dimensions.deltawidth = dimensions.width - prev_dimensions.width;
     dimensions.deltaheight = dimensions.height - prev_dimensions.height;
+    if ( get_window_pos )
+    {
+        glfwGetWindowPos ( winptr, &dimensions.xpos, &dimensions.ypos );
+        dimensions.deltaxpos = dimensions.xpos - prev_dimensions.xpos;
+        dimensions.deltaypos = dimensions.ypos - prev_dimensions.ypos;
+    }
 
     /* set prev_dimensions */
     prev_dimensions = dimensions;
@@ -191,12 +196,12 @@ glh::glfw::window::dimensions_t glh::glfw::window::get_dimensions () const
  * 
  * return: GLFW_TRUE/FALSE for if the key has been pressed since last poll
  */
-glh::glfw::window::keyinfo_t glh::glfw::window::get_key ( const int key ) const
+glh::glfw::window::keyinfo_t glh::glfw::window::get_key ( const int key, const bool get_scancode ) const
 {
     /* generate the keyinfo */
     keyinfo_t keyinfo;
     keyinfo.key = key;
-    keyinfo.scancode = glfwGetKeyScancode ( key );
+    if ( get_scancode ) keyinfo.scancode = glfwGetKeyScancode ( key );
     keyinfo.action = glfwGetKey ( winptr, key );
     keyinfo.mods = 0;
 
@@ -208,9 +213,11 @@ glh::glfw::window::keyinfo_t glh::glfw::window::get_key ( const int key ) const
  *
  * get info about the mouse position and its change
  * 
+ * get_fractions: set to true if fraction movement relative to window size is required
+ * 
  * return: mouseinfo_t containing mouse info
  */
-glh::glfw::window::mouseinfo_t glh::glfw::window::get_mouseinfo () const
+glh::glfw::window::mouseinfo_t glh::glfw::window::get_mouseinfo ( const bool get_frations ) const
 {
     /* generate raw mouseinfo */
     mouseinfo_t mouseinfo;
@@ -218,14 +225,14 @@ glh::glfw::window::mouseinfo_t glh::glfw::window::get_mouseinfo () const
     mouseinfo.deltaxpos = mouseinfo.xpos - prev_mouseinfo.xpos;
     mouseinfo.deltaypos = mouseinfo.ypos - prev_mouseinfo.ypos;
 
-    /* get the viewport dimensions */
-    dimensions_t dimensions = get_dimensions ();
-
     /* set fractions in mouse info */
-    mouseinfo.xfrac = mouseinfo.xpos / dimensions.width;
-    mouseinfo.yfrac = mouseinfo.ypos / dimensions.height;
-    mouseinfo.deltaxfrac = mouseinfo.deltaxpos / dimensions.width;
-    mouseinfo.deltayfrac = mouseinfo.deltaypos / dimensions.height;
+    if ( get_frations )
+    {
+        mouseinfo.xfrac = mouseinfo.xpos / prev_dimensions.width;
+        mouseinfo.yfrac = mouseinfo.ypos / prev_dimensions.height;
+        mouseinfo.deltaxfrac = mouseinfo.deltaxpos / prev_dimensions.width;
+        mouseinfo.deltayfrac = mouseinfo.deltaypos / prev_dimensions.height;
+    }
 
     /* set previous mouseinfo */
     prev_mouseinfo = mouseinfo;
