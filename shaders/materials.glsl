@@ -91,6 +91,44 @@ vec4 evaluate_stack ( const texture_stack_struct stack, const vec2 texcoords [ M
     return stack_color;
 }
 
+/* evaluate_stack_macro
+ *
+ * evaluate multiple stacked texture, but in macro form
+ *
+ * stack_color: the name of an modifiable vec4 lvalue which will be used to store the result
+ * stack: the stack to evaluate
+ * texcoords: array of texture coords for the fragment
+ *
+ * prototype:
+ *
+ * void evaluate_stack_macro ( out vec4 stack_color, texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ] )
+ */
+#define evaluate_stack_macro( stack_color, stack, texcoords ) \
+{ \
+    /* set the output color to the base color of the stack */ \
+    stack_color = stack.base_color; \
+    \
+    /* loop through the stack */ \
+    for ( int i = 0; i < stack.stack_size; ++i ) \
+    { \
+        /* get the level color from the texture multiplied by the stength */ \
+        const vec4 level_color = texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength; \
+        \
+        /* add to the stack through the appropriate operation */ \
+        switch ( stack.levels [ i ].blend_operation ) \
+        { \
+            case 0: stack_color *= level_color; break; \
+            case 1: stack_color += level_color; break; \
+            case 2: stack_color -= level_color; break; \
+            case 3: stack_color /= level_color; break; \
+            case 4: stack_color = ( stack_color + level_color ) - ( stack_color * level_color ); break; \
+            case 5: stack_color = stack_color + ( level_color - 0.5 ); break; \
+            default: stack_color *= level_color; break; \
+        } \
+    } \
+}
+
+
 /* evaluate_stack_transparency
  *
  * useful for when shadow mapping
@@ -128,3 +166,27 @@ vec4 evaluate_stack ( const texture_stack_struct stack, const vec2 texcoords [ M
     /* if no normal, return original normal
      * else sample the map and return the transformed normal
      */
+
+/* evaluate_normal_macro
+ *
+ * macro version of evaluate_normal
+ *
+ * normal: a modifiable lvalue for the output normal
+ * stack: the normal stack
+ * texcoords: array of texture coords for the fragment
+ * tbn_matrix: the TBN matrix to use to transform the normal, if map is present
+ * 
+ * prototype:
+ *
+ * void evaluate_normal_macro ( out vec3 normal, texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ], mat3 tbn_matrix )
+ */
+#define evaluate_normal_macro( normal, stack, texcoords, tbn_matrix ) \
+{ \
+    /* if the size of the stack is greater than zero, sample the stack, and transform the output to its vector form
+     * then use the tbn matrix to transform the normal to tangent space
+     */ \
+    if ( stack.stack_size > 0 ) { vec4 stack_eval_; evaluate_stack_macro ( stack_eval_, stack, texcoords ); normal = tbn_matrix * normalize ( stack_eval_.xyz * 2.0 - 1.0 ); } \
+    /* otherwise just return the original normal, extracted from the tbn matrix */ \
+    else normal = tbn_matrix [ 2 ]; \
+}
+
