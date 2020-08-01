@@ -21,17 +21,17 @@
 
 /* square_vertex_data
  * square_vertex_normal_data
- * square_vertec_normal_texpos_data
+ * square_vertex_normal_texcoord_data
  * 
  * arrays containing vertex (+ normal (+ texcoord)) data for a square
- * all sides are length 1, z component is 0.0 for all vertices, normals point along +z axis
+ * all sides are length 2, z component is 0.0 for all vertices, normals point along +z axis
  */
 const std::array<GLfloat, 3 * 4 * 1> glh::vertices::square_vertex_data
 {
     /* position */ 
-     1.0,  1.0,  0.0,
     -1.0,  1.0,  0.0,
     -1.0, -1.0,  0.0,
+     1.0,  1.0,  0.0,
      1.0, -1.0,  0.0
 };
 const std::array<GLfloat, 6 * 4 * 1> glh::vertices::square_vertex_normal_data
@@ -42,7 +42,7 @@ const std::array<GLfloat, 6 * 4 * 1> glh::vertices::square_vertex_normal_data
     -1.0, -1.0,  0.0,    0.0,  0.0,  1.0,
      1.0, -1.0,  0.0,    0.0,  0.0,  1.0
 };
-const std::array<GLfloat, 9 * 4 * 1> glh::vertices::square_vertex_normal_texcoord_data
+const std::array<GLfloat, 8 * 4 * 1> glh::vertices::square_vertex_normal_texcoord_data
 {
     /* position          normal              texcoords */
      1.0,  1.0,  0.0,    0.0,  0.0,  1.0,    1.0, 1.0,
