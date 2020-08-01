@@ -131,7 +131,7 @@ int main ()
      * light rotation sensitivity
      */
     const double movement_sensitivity = 10.0;
-    const double mouse_sensitivity = glh::math::rad ( 120.0 );
+    const double mouse_sensitivity = glh::math::rad ( 0.1 );
     const double fov_sensitivity = glh::math::rad ( 15.0 );
     const double gamepad_cutoff_sensitivity = 0.2;
     const double gamepad_look_sensitivity = glh::math::rad ( 120.0 );
@@ -195,12 +195,12 @@ int main ()
     (
         glh::math::vec3 ( 30, 40, 20 ), 1.0, 0.0, 0.0,
         //glh::math::vec3 ( 20, 0, 20 ), 1.0, 0.0, 0.0,
-        glh::math::vec3 { 0.2 },
+        glh::math::vec3 { 0.1 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
         true, true, 0.003,
-        20, 0.0005
+        16, 0.0005
     );
 
     /* add spotlights */
@@ -302,24 +302,22 @@ int main ()
 
     for ( unsigned frame = 0; !window.should_close (); ++frame )
     {
+        /* GET START TIME */
+        const auto timestamp_start = std::chrono::system_clock::now ();
+
         /* GET PROPERTIES */
 
         /* get window properties */
-        auto dimensions = window.get_dimensions ();
         auto timeinfo = window.get_timeinfo ();
         auto mouseinfo = window.get_mouseinfo ();
         auto gamepadinfo = window.get_gamepadinfo ( GLFW_JOYSTICK_1 );
 
-        /* print framerate every 10th frame */
-        if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
+        /* set timestamp */
+        const auto timestamp_window_properties = std::chrono::system_clock::now ();
 
 
 
         /* MOVE CAMERAS AND LIGHTS */
-
-        /* apply aspect change to camera */
-        if ( dimensions.deltaheight || dimensions.deltawidth || frame % 15 == 0 )
-            camera.set_aspect ( ( double ) dimensions.width / dimensions.height );
 
         /* get movement keys and apply changes to camera */
         if ( window.get_key ( GLFW_KEY_W ).action == GLFW_PRESS ) camera.move ( glh::math::vec3 { 0.0, 0.0, -movement_sensitivity * timeinfo.delta } );
@@ -340,8 +338,8 @@ int main ()
             camera.pitch ( -gamepad_look_sensitivity * gamepadinfo.axis_rh_y * timeinfo.delta );
 
         /* get mouse movement and apply changes to camera */
-        camera.yaw ( -mouse_sensitivity * mouseinfo.deltaxfrac );
-        camera.pitch ( -mouse_sensitivity * mouseinfo.deltayfrac );
+        camera.yaw ( -mouse_sensitivity * mouseinfo.deltaxpos );
+        camera.pitch ( -mouse_sensitivity * mouseinfo.deltaypos );
 
         /* zoom keys */
         if ( window.get_key ( GLFW_KEY_Q ).action == GLFW_PRESS ) camera.set_fov ( camera.get_fov () + ( fov_sensitivity * timeinfo.delta ) );
@@ -349,6 +347,9 @@ int main ()
         
         /* rotate light */
         light_system.pointlight_at ( 0 ).set_position ( glh::math::rotate3d ( light_system.pointlight_at ( 0 ).get_position (), light_rotation_sensitivity * timeinfo.delta, glh::math::vec3 { 0.0, 1.0, 0.0 } ) );        
+
+        /* set timestamp */
+        const auto timestamp_movement = std::chrono::system_clock::now ();
 
 
 
@@ -375,6 +376,9 @@ int main ()
             MODEL_SWITCH.cache_material_uniforms ( shadow_material_uni );
             MODEL_SWITCH.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
         }
+
+        /* set timestamp */
+        const auto timestamp_shadow_maps = std::chrono::system_clock::now ();
 
 
 
@@ -404,6 +408,9 @@ int main ()
         glh::core::renderer::enable_blend ();
         glh::core::renderer::set_depth_mask ( GL_FALSE );
         MODEL_SWITCH.render ( glh::model::render_flags::GLH_TRANSPARENT_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+
+        /* set timestamp */
+        const auto timestamp_main_render = std::chrono::system_clock::now ();
 
 
 
@@ -460,6 +467,35 @@ int main ()
                 glh::core::renderer::draw_arrays ( quad_vao, GL_TRIANGLE_STRIP, 0, 4 );
             }
         }
+
+        /* set timestamp */
+        const auto timestamp_bloom = std::chrono::system_clock::now ();
+
+        
+
+        /* OUTPUT TIMESTAMP INFO */
+
+        /* get overall time */
+        const std::chrono::duration<double> overall_time = timestamp_bloom - timestamp_start;
+        
+        /* get individual sections as fractions */
+        const double fraction_window_properties = std::chrono::duration<double> { timestamp_window_properties - timestamp_start } / overall_time;
+        const double fraction_movement = std::chrono::duration<double> { timestamp_movement - timestamp_window_properties } / overall_time;
+        const double fraction_shadow_maps = std::chrono::duration<double> { timestamp_shadow_maps - timestamp_movement } / overall_time;
+        const double fraction_main_render = std::chrono::duration<double> { timestamp_main_render - timestamp_shadow_maps } / overall_time;
+        const double fraction_bloom = std::chrono::duration<double> { timestamp_bloom - timestamp_main_render } / overall_time;
+
+        /* output the fractions as percentages every 10th frame */
+        if ( frame % 5 == 0 ) \
+        std::cout << "% window properties : " << fraction_window_properties * 100.0 << std::endl \
+                  << "% movement          : " << fraction_movement * 100.0 << std::endl \
+                  << "% shadow maps       : " << fraction_shadow_maps * 100.0 << std::endl \
+                  << "% main render       : " << fraction_main_render * 100.0 << std::endl \
+                  << "% bloom             : " << fraction_bloom * 100.0 << std::endl \
+                  << "\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A";
+        
+        /* print framerate every 10th frame */
+        //if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
 
 
 
