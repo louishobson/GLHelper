@@ -96,7 +96,6 @@ int main ()
     /* extract uniforms out of model program */
     auto& shadow_light_system_uni = shadow_program.get_struct_uniform ( "light_system" );
     auto& shadow_material_uni = shadow_program.get_struct_uniform ( "material" );
-    auto& shadow_shadow_mode_uni = shadow_program.get_uniform ( "shadow_mode" );
 
     /* extract uniforms out of bloom program */
     auto& bloom_texture_uni = bloom_program.get_uniform ( "bloom_texture" );
@@ -177,41 +176,44 @@ int main ()
     /* SET UP LIGHT SYSTEM */
 
     /* create light system */
-    glh::lighting::light_system light_system { 2048 };
+    glh::lighting::light_system light_system { 4096 };
 
     /* add directional light */
     light_system.add_dirlight
     (
-        glh::math::vec3 { 1.0, 0.0, 0.0 },
+        glh::math::vec3 { 1.0, -0.5, 0.0 },
         glh::math::vec3 { 0.8 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        false, true, 0.0 //0.035
+        false, true, 0.007, //0.035
+        16, 0.001
     );
 
     /* add point light */
     light_system.add_pointlight
     (
         glh::math::vec3 ( 30, 40, 20 ), 1.0, 0.0, 0.0,
-        glh::math::vec3 { 0.4 },
+        //glh::math::vec3 ( 20, 0, 20 ), 1.0, 0.0, 0.0,
+        glh::math::vec3 { 0.2 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        false, true, 0.005
+        true, true, 0.003,
+        20, 0.0005
     );
 
     /* add spotlights */
     light_system.add_spotlight
     (
-        glh::math::vec3 ( 30, 40, 20 ), glh::math::vec3 ( -30, -40, -20 ),
+        glh::math::vec3 ( 30, 50, 20 ), -glh::math::vec3 ( 30, 50, 20 ),
         glh::math::rad ( 30 ), glh::math::rad ( 50 ), 1.0, 0.0, 0.0,
         glh::math::vec3 { 0.6 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         island.model_region (),
-        true, true, 0.007,
-        16, 0.001
+        false, true, 0.007,
+        16, 0.0005
     );
 
 
@@ -270,16 +272,19 @@ int main ()
 
     /* SET UP BLOOM FUNCTION */
 
-    /* create the bloom function */
-    const double bloom_func_rms = 0.75;
-    const double bloom_func_coef = 1.00 / ( std::sqrt ( 2.0 ) * std::sqrt ( 2.0 * std::acos ( 0.0 ) ) * bloom_func_rms );
+    /* create the bloom function
+     * the coeficient is such that the area underneath the bell curve will always be one for the rms supplied
+     * this will ensure that the emission map does not get brighter as it is blurred by the function
+     */
+    const double bloom_func_rms = 1.0;
+    const double bloom_func_coef = 1.00 / ( std::sqrt ( glh::math::pi ( 2.0 ) ) * bloom_func_rms );
     glh::function::gaussian_function<double, double> bloom_func { bloom_func_coef, 0.0, bloom_func_rms };
     glh::function::glsl_function<1> glsl_bloom_func { bloom_func, 1024, -5.0, 5.0 };
     glsl_bloom_func.cache_uniforms ( bloom_function_uni );
 
     /* set parameters for bloom */
-    const unsigned bloom_radius = 4;
-    const unsigned bloom_iterations = 5;
+    const unsigned bloom_radius = 3;
+    const unsigned bloom_iterations = 1;
 
 
 
@@ -362,21 +367,10 @@ int main ()
         glh::core::renderer::set_depth_mask ( GL_TRUE );
         glh::core::renderer::viewport ( 0, 0, light_system.get_shadow_map_width (), light_system.get_shadow_map_width () );
 
-        /* create 2d shadow maps */
-        if ( light_system.requires_2d_shadow_mapping () )
+        /* create shadow maps */
+        if ( light_system.requires_shadow_mapping () )
         {
-            light_system.bind_shadow_maps_2d_fbo ();
-            shadow_shadow_mode_uni.set_int ( 0 );
-            glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
-            MODEL_SWITCH.cache_material_uniforms ( shadow_material_uni );
-            MODEL_SWITCH.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
-        }
-
-        /* create cube shadow maps */
-        if ( light_system.requires_cube_shadow_mapping () )
-        {
-            light_system.bind_shadow_maps_cube_fbo ();
-            shadow_shadow_mode_uni.set_int ( 1 );
+            light_system.bind_shadow_maps_fbo ();
             glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
             MODEL_SWITCH.cache_material_uniforms ( shadow_material_uni );
             MODEL_SWITCH.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
