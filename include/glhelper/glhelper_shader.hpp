@@ -122,6 +122,12 @@
  */
 #define GLH_SHADER_LOG_SIZE 512
 
+/* GLH_SHADER_LOG_FILE
+ *
+ * path to a file to store the source of a shader after compilation failure
+ */
+#define GLH_SHADER_LOG_FILE "._shader.comp.failure.glsl"
+
 
 
 /* NAMESPACE DECLARATIONS */

@@ -105,7 +105,12 @@ void glh::core::shader::compile ()
         glGetShaderInfoLog ( id, GLH_SHADER_LOG_SIZE, NULL, comp_log );
 
         /* print log info to stderr */
-        std::cerr << comp_log;
+        std::cerr << "\nSHADER TRACEBACK:\n\n" << comp_log;
+
+        /* write into file */
+        std::ofstream log_file { GLH_SHADER_LOG_FILE, std::ios::out };
+        log_file << source;
+        log_file.close ();
 
         /* throw */
         throw exception::shader_exception { "shader compilation failed" };
