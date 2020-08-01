@@ -18,7 +18,7 @@ in VS_OUT
 } vs_out [ 3 ];
 
 /* output triangle strip */
-layout ( triangle_strip, max_vertices = 18 ) out;
+layout ( triangle_strip, max_vertices = 6 ) out;
 
 /* output texcoords and depth */
 out GS_OUT
@@ -80,23 +80,20 @@ void main ()
         cached_positions [ 0 ] = gl_in [ 0 ].gl_Position.xyz - light_system.pointlights [ i ].position;
         gs_out.depth = cached_depths.x = length ( cached_positions [ 0 ] ) * light_system.pointlights [ i ].shadow_depth_range_mult;
         cached_positions [ 0 ] = normalize ( cached_positions [ 0 ] );
-        gl_Position.xy = cached_positions [ 0 ].xy / ( 1.0 + cached_positions [ 0 ].z ); 
-        gl_Position.z = cached_positions [ 0 ].z * 1.9 - 0.95; gl_Position.w = 1.0; gs_out.texcoords = vs_out [ 0 ].texcoords; 
-        EmitVertex ();
+        gl_Position = vec4 ( cached_positions [ 0 ].xy / ( 1.0 + cached_positions [ 0 ].z ), cached_positions [ 0 ].z * 1.9 - 0.95, 1.0 ); 
+        gs_out.texcoords = vs_out [ 0 ].texcoords; EmitVertex ();
 
         cached_positions [ 1 ] = gl_in [ 1 ].gl_Position.xyz - light_system.pointlights [ i ].position;
         gs_out.depth = cached_depths.y = length ( cached_positions [ 1 ] ) * light_system.pointlights [ i ].shadow_depth_range_mult;
         cached_positions [ 1 ] = normalize ( cached_positions [ 1 ] ); 
-        gl_Position.xy = cached_positions [ 1 ].xy / ( 1.0 + cached_positions [ 1 ].z ); 
-        gl_Position.z = cached_positions [ 1 ].z * 1.9 - 0.95; gl_Position.w = 1.0; gs_out.texcoords = vs_out [ 1 ].texcoords; 
-        EmitVertex ();
+        gl_Position = vec4 ( cached_positions [ 1 ].xy / ( 1.0 + cached_positions [ 1 ].z ), cached_positions [ 1 ].z * 1.9 - 0.95, 1.0 ); 
+        gs_out.texcoords = vs_out [ 1 ].texcoords; EmitVertex ();
 
         cached_positions [ 2 ] = gl_in [ 2 ].gl_Position.xyz - light_system.pointlights [ i ].position;
         gs_out.depth = cached_depths.z = length ( cached_positions [ 2 ] ) * light_system.pointlights [ i ].shadow_depth_range_mult;
         cached_positions [ 2 ] = normalize ( cached_positions [ 2 ] ); 
-        gl_Position.xy = cached_positions [ 2 ].xy / ( 1.0 + cached_positions [ 2 ].z ); 
-        gl_Position.z = cached_positions [ 2 ].z * 1.9 - 0.95; gl_Position.w = 1.0; gs_out.texcoords = vs_out [ 2 ].texcoords; 
-        EmitVertex ();
+        gl_Position = vec4 ( cached_positions [ 2 ].xy / ( 1.0 + cached_positions [ 2 ].z ), cached_positions [ 2 ].z * 1.9 - 0.95, 1.0 ); 
+        gs_out.texcoords = vs_out [ 2 ].texcoords; EmitVertex ();
         
         EndPrimitive ();
         
@@ -108,19 +105,16 @@ void main ()
          * the z component of the output position is scaled differently, so that any z component more than 0.0 will be culled
          */
         gs_out.depth = cached_depths.x;
-        gl_Position.xy = cached_positions [ 0 ].xy / ( 1.0 - cached_positions [ 0 ].z );
-        gl_Position.z = cached_positions [ 0 ].z * 1.9 + 0.95; gl_Position.w = 1.0; gs_out.texcoords = vs_out [ 0 ].texcoords;
-        EmitVertex ();
+        gl_Position = vec4 ( cached_positions [ 0 ].xy / ( 1.0 - cached_positions [ 0 ].z ), cached_positions [ 0 ].z * 1.9 + 0.95, 1.0 );
+        gs_out.texcoords = vs_out [ 0 ].texcoords; EmitVertex ();
         
         gs_out.depth = cached_depths.y;
-        gl_Position.xy = cached_positions [ 1 ].xy / ( 1.0 - cached_positions [ 1 ].z );
-        gl_Position.z = cached_positions [ 1 ].z * 1.9 + 0.95; gl_Position.w = 1.0; gs_out.texcoords = vs_out [ 1 ].texcoords;
-        EmitVertex ();
+        gl_Position = vec4 ( cached_positions [ 1 ].xy / ( 1.0 - cached_positions [ 1 ].z ), cached_positions [ 1 ].z * 1.9 + 0.95, 1.0 );
+        gs_out.texcoords = vs_out [ 1 ].texcoords; EmitVertex ();
 
         gs_out.depth = cached_depths.z;
-        gl_Position.xy = cached_positions [ 2 ].xy / ( 1.0 - cached_positions [ 2 ].z );
-        gl_Position.z = cached_positions [ 2 ].z * 1.9 + 0.95; gl_Position.w = 1.0; gs_out.texcoords = vs_out [ 2 ].texcoords;
-        EmitVertex ();
+        gl_Position = vec4 ( cached_positions [ 2 ].xy / ( 1.0 - cached_positions [ 2 ].z ), cached_positions [ 2 ].z * 1.9 + 0.95, 1.0 );
+        gs_out.texcoords = vs_out [ 2 ].texcoords; EmitVertex ();
 
         EndPrimitive ();
     }
