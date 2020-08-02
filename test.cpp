@@ -200,7 +200,7 @@ int main ()
         glh::math::vec3 { 1.0 },
         island.model_region (),
         true, true, 0.003,
-        24, 2.5 / 4096.0
+        12, 2.0 / 4096.0
     );
 
     /* add spotlights */
