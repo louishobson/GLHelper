@@ -202,7 +202,7 @@ struct light_system_struct
     const vec3 viewdir = normalize ( viewpos - fragpos ); \
     \
     /* iterate through directional lighting */ \
-    for ( uint i = 0; i < light_system.dirlights_size; ++i ) \
+    for ( int i = 0; i < light_system.dirlights_size; ++i ) \
     { \
         /* continue if disabled */ \
         if ( !light_system.dirlights [ i ].enabled ) continue; \
@@ -258,7 +258,7 @@ struct light_system_struct
     } \
     \
     /* iterate through point lighting */ \
-    for ( uint i = 0; i < light_system.pointlights_size; ++i ) \
+    for ( int i = 0; i < light_system.pointlights_size; ++i ) \
     { \
         /* continue if disabled */ \
         if ( !light_system.pointlights [ i ].enabled ) continue; \
@@ -299,9 +299,9 @@ struct light_system_struct
                 shadow_constant = 0.0; \
                 for ( int j = 0; j < light_system.pointlights [ i ].pcf_samples; j += 2 ) \
                 { \
-                    /* sample shadow map with the full radius and rotate */ \
+                    /* sample the shadow map using the radius and rotate */ \
                     shadow_constant += texture ( light_system.shadow_maps, \
-                        vec4 ( fragpos_light_proj.xy + pcf_sample_offset, fragpos_light_proj.zw ) ); \
+                        vec4 ( fragpos_light_proj.xy + pcf_sample_offset * 1.0, fragpos_light_proj.zw ) ); \
                     pcf_sample_offset = light_system.pointlights [ i ].pcf_rotation * pcf_sample_offset; \
                     \
                     /* sample the shadow map with half the radius and rotate */ \
@@ -326,7 +326,7 @@ struct light_system_struct
     } \
     \
     /* iterate through spot lighting */ \
-    for ( uint i = 0; i < light_system.spotlights_size; ++i ) \
+    for ( int i = 0; i < light_system.spotlights_size; ++i ) \
     { \
         /* continue if disabled */ \
         if ( !light_system.spotlights [ i ].enabled ) continue; \
