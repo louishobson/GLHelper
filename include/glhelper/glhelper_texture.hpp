@@ -311,6 +311,12 @@ public:
      */
     double get_aspect () const { return static_cast<double> ( width ) / height; }
 
+    /* is_definitely_opaque
+     *
+     * returns definitely_opaque
+     */
+    bool is_definitely_opaque () const { return definitely_opaque; }
+
 
 
 private:
@@ -325,6 +331,9 @@ private:
 
     /* whether the image has been vertically flipped */
     bool v_flip;
+
+    /* whether the image is completely opaque */
+    bool definitely_opaque;
 
     /* the type of image_data */
     using image_data_type = std::unique_ptr<void, std::function<void ( void * )>>;
@@ -750,7 +759,7 @@ public:
     texture2d ()
         : width { 0 }, height { 0 }
         , internal_format { GL_NONE }
-        , has_alpha_component { false }
+        , definitely_opaque { true }
         , is_immutable { false }
     { bind (); }
 
@@ -839,11 +848,11 @@ public:
      */
     const GLenum& get_internal_format () const { return internal_format; }
 
-    /* has_alpha
+    /* is_definitely_opaque
      *
-     * returns has_alpha_component
+     * returns definitely_opaque
      */
-    bool has_alpha () const { return has_alpha_component; }
+    bool is_definitely_opaque () const { return definitely_opaque; }
 
 
 
@@ -862,11 +871,11 @@ private:
      */
     GLenum internal_format;
 
-    /* has_alpha_component
+    /* definitely_opaque
      *
-     * always true, unless created from an imported image without alpha components
+     * always false, unless imported from an image which was specified as opaque
      */
-    bool has_alpha_component;
+    bool definitely_opaque;
 
     /* is_immutable
      *

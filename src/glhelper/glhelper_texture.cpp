@@ -42,6 +42,19 @@ glh::core::image::image ( const std::string& _path, const bool _v_flip )
 
     /* flip vertically if necessary */
     if ( v_flip ) stbi__vertical_flip ( image_data.get (), width, height, 4 );
+
+    /* set definitely_opaque to true initially
+     * then loop through the image data, and set to false if any alpha component is less than 1
+     */
+    definitely_opaque = true;
+    for ( unsigned i = 0; i < width * height; ++i )
+    {
+        if ( reinterpret_cast<unsigned char *> ( image_data.get () ) [ ( i * 4 ) + 3 ] != 255 )
+        { 
+            definitely_opaque = false; 
+            break; 
+        }
+    }
 }
 
 /* zero-parameter constructor */
@@ -50,6 +63,7 @@ glh::core::image::image ()
     , path { "" }
     , height { 0 }
     , channels { 0 }
+    , definitely_opaque { true }
     , v_flip { false }
     , image_data { nullptr }
 {}    
@@ -63,6 +77,7 @@ glh::core::image::image ( const image& other )
     , width { other.width }
     , height { other.height }
     , channels { other.channels }
+    , definitely_opaque { other.definitely_opaque }
     , v_flip { other.v_flip }
     , image_data { std::malloc ( width * height * 4 ), [] ( void * ptr ) { if ( ptr ) std::free ( ptr ); } }
 {
@@ -78,6 +93,7 @@ glh::core::image& glh::core::image::operator= ( const image& other )
     width = other.width; 
     height = other.height;
     channels = other.channels;
+    definitely_opaque = other.definitely_opaque;
     v_flip = other.v_flip;
     
     /* allocate new memory for image_data, then transfer it */
@@ -551,7 +567,7 @@ void glh::core::texture2d::tex_image ( const unsigned _width, const unsigned _he
     /* set the parameters */
     width = _width; height = _height;
     internal_format = _internal_format;
-    has_alpha_component = true;
+    definitely_opaque = false;
 
     /* call glTexImage2D */
     bind ();
@@ -565,7 +581,7 @@ void glh::core::texture2d::tex_image ( const image& _image, const bool use_srgb 
     /* set the paraameters */
     width = _image.get_width (); height = _image.get_height ();
     internal_format = ( use_srgb ? GL_SRGB_ALPHA : GL_RGBA );
-    has_alpha_component = _image.has_alpha ();
+    definitely_opaque = _image.is_definitely_opaque ();
 
     /* call glTexImage2D */
     bind ();
@@ -595,7 +611,7 @@ void glh::core::texture2d::tex_sub_image ( const unsigned x_offset, const unsign
         throw exception::texture_exception { "attempted to call tex_sub_image on texture2d with offsets and dimensions which are out of range" };
 
     /* now could have an alpha component */
-    has_alpha_component = true;
+    definitely_opaque = false;
 
     /* call glTesSubImage2D */
     bind ();
@@ -607,9 +623,9 @@ void glh::core::texture2d::tex_sub_image ( const unsigned x_offset, const unsign
     if ( x_offset + _image.get_width () > width || y_offset + _image.get_height () > height )
         throw exception::texture_exception { "attempted to call tex_sub_image on texture2d with offsets and dimensions which are out of range" };
 
-    /* change has_alpha_component */
-    if ( !has_alpha_component ) has_alpha_component = _image.has_alpha (); else
-    if ( x_offset == 0 && y_offset == 0 && _image.get_width () == width && _image.get_height () == height ) has_alpha_component = _image.has_alpha ();
+    /* change definitely_opaque */
+    if ( definitely_opaque ) definitely_opaque = _image.is_definitely_opaque (); else
+    if ( x_offset == 0 && y_offset == 0 && _image.get_width () == width && _image.get_height () == height ) definitely_opaque = _image.is_definitely_opaque ();
 
     /* call glTesSubImage2D */
     bind ();
