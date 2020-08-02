@@ -352,8 +352,8 @@ struct glh::model::texture_stack_level
     unsigned stack_width;
     unsigned stack_height;
     
-    /* true if stack has an alpha component */
-    bool stack_has_alpha;
+    /* true if stack is definitely opaque */
+    bool definitely_opaque;
 
     /* wrapping modes */
     int wrapping_u;

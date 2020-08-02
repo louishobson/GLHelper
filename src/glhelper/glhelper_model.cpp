@@ -279,7 +279,7 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
     aiString temp_string;
 
     /* set the base color */
-    _texture_stack.base_color = math::fvec4 { base_color };
+    _texture_stack.base_color = math::fvec4 { base_color, 0.0 };
 
     /* apply sRGBA transformation to base color */
     if ( use_srgb ) _texture_stack.base_color = math::pow ( _texture_stack.base_color, math::fvec4 { 2.2 } );
@@ -288,8 +288,8 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
     _texture_stack.stack_size = aimaterial.GetTextureCount ( aitexturetype );
     _texture_stack.stack_width = 0; _texture_stack.stack_height = 0;
 
-    /* set has_alpha to false */
-    _texture_stack.stack_has_alpha = false;
+    /* set definitely_opaque to true */
+    _texture_stack.definitely_opaque = true;
 
     /* if stack size is 0, return immediately */
     if ( _texture_stack.stack_size == 0 ) return _texture_stack;
@@ -338,8 +338,8 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
         } else if ( _texture_stack.stack_width != images.at ( _texture_stack.levels.at ( i ).image_index ).get_width () || _texture_stack.stack_height != images.at ( _texture_stack.levels.at ( i ).image_index ).get_height () )
             throw exception::model_exception { "image dimensions are not consistent between texture stack levels" }; 
 
-        /* change has_alpha if necessary */
-        _texture_stack.stack_has_alpha |= images.at ( _texture_stack.levels.at ( i ).image_index ).has_alpha ();
+        /* change definitely_opaque if necessary */
+        _texture_stack.definitely_opaque &= images.at ( _texture_stack.levels.at ( i ).image_index ).is_definitely_opaque ();
     }
 
 
@@ -409,10 +409,10 @@ bool glh::model::model::is_definitely_opaque ( const material& _material )
     /* if opacity != 1.0, return false */
     if ( _material.opacity != 1.0 ) return false;
 
-    /* return false if any texture stack has an alpha component */
-    if ( _material.ambient_stack.stack_has_alpha ) return false;
-    if ( _material.diffuse_stack.stack_has_alpha ) return false;
-    if ( _material.specular_stack.stack_has_alpha ) return false;
+    /* return false if any texture stack is not definitely opaque */
+    if ( !_material.ambient_stack.definitely_opaque ) return false;
+    if ( !_material.diffuse_stack.definitely_opaque ) return false;
+    //if ( !_material.specular_stack.definitely_opaque ) return false;
 
     /* otherwise the material is definitely opaque */
     return true;
