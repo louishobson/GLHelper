@@ -200,7 +200,7 @@ int main ()
         glh::math::vec3 { 1.0 },
         island.model_region (),
         true, true, 0.003,
-        16, 0.0005
+        24, 2.5 / 4096.0
     );
 
     /* add spotlights */
@@ -243,8 +243,8 @@ int main ()
     /* create ping-pong textures */
     glh::core::texture2d ping_pong_texture_alpha;
     glh::core::texture2d ping_pong_texture_beta;
-    ping_pong_texture_alpha.tex_storage ( 1920, 1080, GL_RGB8 );
-    ping_pong_texture_beta.tex_storage ( 1920, 1080, GL_RGB8 );
+    ping_pong_texture_alpha.tex_storage ( 1920, 1080, GL_RGBA8 );
+    ping_pong_texture_beta.tex_storage ( 1920, 1080, GL_RGBA8 );
     ping_pong_texture_alpha.set_min_filter ( GL_LINEAR ); ping_pong_texture_alpha.set_mag_filter ( GL_LINEAR );
     ping_pong_texture_beta.set_min_filter ( GL_LINEAR ); ping_pong_texture_beta.set_mag_filter ( GL_LINEAR );
     ping_pong_texture_alpha.set_wrap ( GL_CLAMP_TO_EDGE );
@@ -486,7 +486,7 @@ int main ()
         const double fraction_bloom = std::chrono::duration<double> { timestamp_bloom - timestamp_main_render } / overall_time;
 
         /* output the fractions as percentages every 10th frame */
-        if ( frame % 5 == 0 ) \
+        //if ( frame % 5 == 0 ) \
         std::cout << "% window properties : " << fraction_window_properties * 100.0 << std::endl \
                   << "% movement          : " << fraction_movement * 100.0 << std::endl \
                   << "% shadow maps       : " << fraction_shadow_maps * 100.0 << std::endl \
@@ -495,7 +495,7 @@ int main ()
                   << "\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A";
         
         /* print framerate every 10th frame */
-        //if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
+        if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
 
 
 
