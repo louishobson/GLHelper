@@ -18,7 +18,6 @@
  * CLASS GLH::CORE::IMAGE
  * 
  * imports a 2d image from an external file
- * the format will always be 4 channel RGBA, each component an unsigned byte
  * 
  * 
  * 
@@ -228,9 +227,10 @@ public:
      * construct from path to import
      * 
      * _path: the path to the image
+     * _channels: the number of channels to force the image to have
      * _v_flip: flag as to whether the image should be vertically flipped
      */
-    explicit image ( const std::string& _path, const bool _v_flip = false );
+    explicit image ( const std::string& _path, const unsigned _channels = 4, const bool _v_flip = false );
 
     /* zero-parameter constructor */
     image ();
@@ -260,18 +260,6 @@ public:
 
 
 
-    /* resize
-     *
-     * resize the image using linear interpolation
-     * 
-     * new_width/height: the new width and height of the image
-     * 
-     * return: the new interpolated image
-     */
-    void resize ( const unsigned new_width, const unsigned new_height );
-
-
-
     /* get_ptr
      *
      * get a pointer to the image data
@@ -285,13 +273,19 @@ public:
      */
     const std::string& get_path () const { return path; }
 
-    /* get_width/height/channels
+    /* get_channels
+     *
+     * gets the number of channels of the image
+     */
+    unsigned get_channels () const { return channels; }
+
+    /* get_width/height/orig_channels
      *
      * get the width/height/no. of channels of the image
      */
     unsigned get_width () const { return width; }
     unsigned get_height () const { return height; }
-    unsigned get_channels () const { return channels; }
+    unsigned get_orig_channels () const { return orig_channels; }
 
     /* is_vertically_flipped
      *
@@ -324,10 +318,13 @@ private:
     /* path to the image */
     std::string path;
 
+    /* the forced number of channels */
+    unsigned channels;
+
     /* width, height and original number of channels of the image */
     int width;
     int height;
-    int channels;
+    int orig_channels;
 
     /* whether the image has been vertically flipped */
     bool v_flip;
@@ -467,6 +464,20 @@ protected:
      * the next unit to bind the texture to in the bind loop
      */
     static unsigned bind_loop_index;
+
+
+
+    /* channels_to_internal_format
+     *
+     * change a number of channels to an internal format
+     */
+    GLenum channels_to_internal_format ( const unsigned channels, const bool use_srgb = false ) const;
+
+    /* channels_to_format
+     *
+     * change a number of channels to a format format
+     */
+    GLenum channels_to_format ( const unsigned channels, const bool use_srgb = false ) const;
 
 };
 
