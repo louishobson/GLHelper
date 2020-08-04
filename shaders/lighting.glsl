@@ -355,14 +355,16 @@ struct light_system_struct
              * by multiplying by shadow_depth_range_mult, the depth will be in range [0-1]
              * also take into account the angle of the surface to the light's position
              */ \
-            fragpos_light_proj.xyz = vec3 ( ( fragpos_light_proj.xy / fragpos_light_proj.w ) * 0.5 + 0.5, lightdist * light_system.spotlights [ i ].shadow_depth_range_mult - \
-                max ( light_system.spotlights [ i ].shadow_bias * ( 1.0 - compute_diffuse_constant ( lightdir, normal ) ), 0.001 ) ); \
+            fragpos_light_proj = vec4 ( ( fragpos_light_proj.xy / fragpos_light_proj.w ) * 0.5 + 0.5, \
+                light_system.dirlights_size + light_system.pointlights_size * 2 + i, \
+                lightdist * light_system.spotlights [ i ].shadow_depth_range_mult \
+                - max ( light_system.spotlights [ i ].shadow_bias * ( 1.0 - compute_diffuse_constant ( lightdir, normal ) ), 0.001 ) ); \
             \
             /* switch depending on if pcf samples are enabled */ \
             if ( light_system.spotlights [ i ].pcf_samples == 0 ) \
             { \
                 /* sample the shadow map to get the shadow constant */ \
-                shadow_constant = texture ( light_system.shadow_maps, vec4 ( fragpos_light_proj.xy, light_system.dirlights_size + light_system.pointlights_size * 2 + i, fragpos_light_proj.z ) ); \
+                shadow_constant = texture ( light_system.shadow_maps, fragpos_light_proj ); \
             } else \
             { \
                 /* set the initial sample offset */ \
@@ -374,12 +376,12 @@ struct light_system_struct
                 { \
                     /* sample shadow map with the full radius and rotate */ \
                     shadow_constant += texture ( light_system.shadow_maps, \
-                        vec4 ( fragpos_light_proj.xy + pcf_sample_offset, light_system.dirlights_size + light_system.pointlights_size * 2 + i, fragpos_light_proj.z ) ); \
+                        vec4 ( fragpos_light_proj.xy + pcf_sample_offset, fragpos_light_proj.zw ) ); \
                     pcf_sample_offset = light_system.spotlights [ i ].pcf_rotation * pcf_sample_offset; \
                     \
                     /* sample the shadow map with half the radius and rotate */ \
                     shadow_constant += texture ( light_system.shadow_maps, \
-                        vec4 ( fragpos_light_proj.xy + pcf_sample_offset * 0.5, light_system.dirlights_size + light_system.pointlights_size * 2 + i, fragpos_light_proj.z ) ); \
+                        vec4 ( fragpos_light_proj.xy + pcf_sample_offset * 0.5, fragpos_light_proj.zw ) ); \
                     pcf_sample_offset = light_system.spotlights [ i ].pcf_rotation * pcf_sample_offset; \
                 } \
                 \
@@ -389,7 +391,7 @@ struct light_system_struct
         } \
         \
         /* add ambient component */ \
-        final_color += light_system.spotlights [ i ].ambient_color * ambient_light; \
+        final_color += attenuation * light_system.spotlights [ i ].ambient_color * ambient_light; \
         \
         /* add diffuse component */ \
         final_color += compute_diffuse_constant ( lightdir, normal ) * spotlight_constant * shadow_constant * attenuation * light_system.spotlights [ i ].diffuse_color * diffuse_light; \
