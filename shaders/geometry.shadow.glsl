@@ -18,7 +18,7 @@ in VS_OUT
 } vs_out [ 3 ];
 
 /* output triangle strip */
-layout ( triangle_strip, max_vertices = 6 ) out;
+layout ( triangle_strip, max_vertices = 9 ) out;
 
 /* output texcoords and depth */
 out GS_OUT
