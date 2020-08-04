@@ -387,7 +387,7 @@ unsigned glh::model::model::add_image ( const std::string& filepath )
     /* otherwise add new image
      * GLH_FLIP_V_TEXTURES no longer actually flips the texture because that's slow
      * it purely forces the assimp post process flag to flip the uv coords */
-    //images.emplace_back ( filepath, model_import_flags & import_flags::GLH_FLIP_V_TEXTURES );
+    //images.emplace_back ( filepath, 4, model_import_flags & import_flags::GLH_FLIP_V_TEXTURES );
     images.emplace_back ( filepath );
 
     /* return the size of images - 1 */
@@ -404,20 +404,20 @@ unsigned glh::model::model::add_image ( const std::string& filepath )
  * 
  * return: boolean for if is definitely opaque
  */
-bool glh::model::model::is_definitely_opaque ( const material& _material )
+bool glh::model::model::is_definitely_opaque ( const material& _material ) const
 {
     /* if opacity != 1.0, return false */
     if ( _material.opacity != 1.0 ) return false;
 
     /* return false if any texture stack is not definitely opaque */
-    if ( !_material.ambient_stack.definitely_opaque ) return false;
+    //if ( !_material.ambient_stack.definitely_opaque ) return false;
     if ( !_material.diffuse_stack.definitely_opaque ) return false;
     //if ( !_material.specular_stack.definitely_opaque ) return false;
 
     /* otherwise the material is definitely opaque */
     return true;
 }
-bool glh::model::model::is_definitely_opaque ( const mesh& _mesh )
+bool glh::model::model::is_definitely_opaque ( const mesh& _mesh ) const
 {
     /* if material is not definitely opaque, return */
     if ( !_mesh.properties->definitely_opaque ) return false;
@@ -428,6 +428,7 @@ bool glh::model::model::is_definitely_opaque ( const mesh& _mesh )
     /* otherwise the mesh is definitely opaque */
     return true; 
 }
+
 
 
 
@@ -516,6 +517,11 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
     if ( !( model_import_flags & import_flags::GLH_CONFIGURE_REGIONS_ACCURATE && model_import_flags & import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION ) )
         if ( model_import_flags & ( import_flags::GLH_CONFIGURE_REGIONS_FAST | import_flags::GLH_CONFIGURE_REGIONS_ACCEPTABLE | import_flags::GLH_CONFIGURE_REGIONS_ACCURATE ) ) 
             configure_mesh_region ( _mesh );
+
+
+
+    /* set definitely opaque */
+    _mesh.definitely_opaque = is_definitely_opaque ( _mesh );
 
 
 

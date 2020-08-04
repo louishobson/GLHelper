@@ -582,7 +582,6 @@ struct glh::model::import_flags
 
 
     /* flip textures vertically
-     *
      * if set, all imported textures will be flipped vertically
      */
     static const unsigned GLH_FLIP_V_TEXTURES = 0x0100;
@@ -901,8 +900,8 @@ private:
      * 
      * return: boolean for if is definitely opaque
      */
-    bool is_definitely_opaque ( const material& _material );
-    bool is_definitely_opaque ( const mesh& _mesh );
+    bool is_definitely_opaque ( const material& _material ) const;
+    bool is_definitely_opaque ( const mesh& _mesh ) const;
 
     /* add_mesh
      *
