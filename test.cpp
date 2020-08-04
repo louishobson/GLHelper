@@ -185,21 +185,21 @@ int main ()
         glh::math::vec3 { 0.8 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
-        island.model_region (),
-        false, true, 0.007, //0.035
+        MODEL_SWITCH.model_region (),
+        true, true, 0.007, //0.035
         16, 0.001
     );
 
     /* add point light */
     light_system.add_pointlight
     (
-        glh::math::vec3 ( 30, 40, 20 ), 1.0, 0.0, 0.0,
+        glh::math::vec3 ( 30, 40, 20 ), 1.0, 0.007, 0.0002,
         //glh::math::vec3 ( 20, 0, 20 ), 1.0, 0.0, 0.0,
         glh::math::vec3 { 0.1 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
-        island.model_region (),
-        true, true, 0.003,
+        MODEL_SWITCH.model_region (),
+        false, true, 0.003,
         16, 2.0 / 4096.0
     );
 
@@ -207,13 +207,13 @@ int main ()
     light_system.add_spotlight
     (
         glh::math::vec3 ( 30, 50, 20 ), -glh::math::vec3 ( 30, 50, 20 ),
-        glh::math::rad ( 30 ), glh::math::rad ( 50 ), 1.0, 0.0, 0.0,
-        glh::math::vec3 { 0.6 },
+        glh::math::rad ( 30 ), glh::math::rad ( 50 ), 1.0, 0.007, 0.0002,
+        glh::math::vec3 { 0.05 },
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
-        island.model_region (),
-        false, true, 0.007,
-        16, 0.0005
+        MODEL_SWITCH.model_region (),
+        false, true, 0.003,
+        16, 2.0 / 4096.0
     );
 
 
