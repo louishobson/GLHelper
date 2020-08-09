@@ -98,6 +98,10 @@
 /* indlude stb_image.h without implementation */
 #include <stb/stb_image.h>
 
+/* indlude stb_image_write.h without implementation */
+#include <stb/stb_image_write.h>
+
+
 
 
 /* NAMESPACE DECLARATIONS */
@@ -407,6 +411,19 @@ public:
      * return the previous binding of the loop
      */
     unsigned bind_loop_previous () const;
+
+
+
+    /* get_tex_image
+     *
+     * extract the data in a texture
+     * 
+     * level: the mipmap level to sample
+     * format/type: the format and type to recieve the texture in
+     * buffsize: the size of the buffer to dump the texture in
+     * buff: pointer to the buffer to recieve the texture
+     */
+    void get_tex_image ( const unsigned level, const GLenum format, const GLenum type, const unsigned buffsize, void * buff ) const;
 
 
 

@@ -21,6 +21,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
+/* indlude stb_image_write.h with implementation */
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb/stb_image_write.h>
+
 
 
 /* IMAGE IMPLEMENTATION */
@@ -54,10 +58,11 @@ glh::core::image::image ( const std::string& _path, const unsigned _channels, co
     if ( channels == 0 ) channels = orig_channels;
 
     /* set definitely_opaque to true initially
-     * then loop through the image data, and set to false if any alpha component is less than 1
+     * then, if channels == 4, loop through the image data, and set to false if any alpha component does not equal 255 or 0
+     * 0 counts as opaque since it translates to 'non-existent', hence does not require any blending
      */
     definitely_opaque = true;
-    for ( unsigned i = 0; i < width * height; ++i )
+    if ( channels == 4 ) for ( unsigned i = 0; i < width * height; ++i )
     {
         if ( reinterpret_cast<unsigned char *> ( image_data.get () ) [ ( i * channels ) + 3 ] != 255 &&
              reinterpret_cast<unsigned char *> ( image_data.get () ) [ ( i * channels ) + 3 ] != 0 )
@@ -231,6 +236,23 @@ unsigned glh::core::texture_base::bind_loop_previous () const
     /* if is 1, return 31, else return next index - 1 */
     if ( bind_loop_index == 1 ) return 79;
     else return bind_loop_index - 1;
+}
+
+
+
+/* get_tex_image
+ *
+ * extract the data in a texture
+ * 
+ * level: the mipmap level to sample
+ * format/type: the format and type to recieve the texture in
+ * buffsize: the size of the buffer to dump the texture in
+ * buff: pointer to the buffer to recieve the texture
+ */
+void glh::core::texture_base::get_tex_image ( const unsigned level, const GLenum format, const GLenum type, const unsigned buffsize, void * buff ) const
+{
+    /* get the texture data */
+    glGetTextureImage ( id, level, format, type, buffsize, buff );
 }
 
 
