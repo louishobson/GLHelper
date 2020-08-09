@@ -100,7 +100,7 @@ void main ()
      * this value can, however, be no larger than one since the triangle formes by positions is already at its maximum size
      * this is then multipled by two, since positions must be mapped to range [0-2]
      */
-    scale = 2.0 * min ( 1.0, sqrt ( max_texcoords_area / length ( cross ( vec3 ( positions [ 1 ] - positions [ 0 ], 0.0 ), vec3 ( positions [ 2 ] - positions [ 0 ], 0.0 ) ) ) ) );
+    scale = 2.0 * clamp ( sqrt ( max_texcoords_area / length ( cross ( vec3 ( positions [ 1 ] - positions [ 0 ], 0.0 ), vec3 ( positions [ 2 ] - positions [ 0 ], 0.0 ) ) ) ), 0.1, 1.0 );
 
     /* emit vertices */
     gl_Position = vec4 ( clamp ( positions [ 0 ] * scale - 1.0, -1.0, 1.0 ), 0.0, 1.0 ); gs_out.vcolor = vs_out [ 0 ].vcolor; gs_out.texcoords = vs_out [ 0 ].texcoords; gl_PrimitiveID = gl_PrimitiveIDIn; EmitVertex ();
