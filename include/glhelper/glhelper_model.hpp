@@ -193,6 +193,9 @@
 /* include glhelper_region.hpp */
 #include <glhelper/glhelper_region.hpp>
 
+/* include glhelper_framebuffer.hpp */
+#include <glhelper/glhelper_framebuffer.hpp>
+
 
 
 /* NAMESPACE DECLARATIONS */
@@ -450,6 +453,18 @@ struct glh::model::mesh
 
     /* the number of faces the mesh contains */
     unsigned num_faces;
+    unsigned num_opaque_faces;
+    unsigned num_transparent_faces;
+
+    /* the indices that the index data for the faces start in the ebo */
+    unsigned start_of_faces;
+    unsigned start_of_opaque_faces;
+    unsigned start_of_transparent_faces;
+
+    /* the indices that the index data for the faces start in the global ebo */
+    unsigned global_start_of_faces;
+    unsigned global_start_of_opaque_faces;
+    unsigned global_start_of_transparent_faces;
 
     /* the vertices the mesh consists of */
     std::vector<vertex> vertices;
@@ -462,6 +477,8 @@ struct glh::model::mesh
 
     /* an array of faces */
     std::vector<face> faces;
+    std::vector<face> opaque_faces;
+    std::vector<face> transparent_faces;
     
 
 
@@ -480,7 +497,7 @@ struct glh::model::mesh
     /* the ebo the indices of the faces are exported to */
     core::ebo index_data;
 
-    /* the vao controlling the vbo and the ebo */
+    /* the vao controlling the vbos and the ebo */
     core::vao array_object;
 
 
@@ -569,13 +586,14 @@ struct glh::model::import_flags
 
     /* configure regions accurately
      * this will override fast and acceptable region configuration
-     * this may take considerably longer
+     * this may take considerably longer than the other regions options, however
      */
     static const unsigned GLH_CONFIGURE_REGIONS_ACCURATE = 0x0040;
 
     /* configure only root node region
      * this only applies when accurate regions are being used
      * no mesh or lower level nodes will have their regions calculated, just the root node
+     * this is generally a good idea when using accurate regions
      */
     static const unsigned GLH_CONFIGURE_ONLY_ROOT_NODE_REGION = 0x0080;
 
@@ -593,6 +611,24 @@ struct glh::model::import_flags
      * the Assimp post-process option aiProcess_PreTransformVertices will be force-enabled
      */
     static const unsigned GLH_PRETRANSFORM_VERTICES = 0x0200;
+
+
+
+    /* split meshes by alpha values
+     * this quite expensive flag will split all meshes into three sets of index data
+     * the first will be be the index data for all the faces,
+     * the second will will contain opaque faces and the third transparent
+     * this changes how the opaque and transparent rendering modes function
+     */
+    static const unsigned GLH_SPLIT_MESHES_BY_ALPHA_VALUES = 0x0400;
+
+    /* ignore vertex colors when alpha testing
+     */
+    static const unsigned GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING = 0x0800;
+
+    /* ignore texture color when alpha testing
+     */
+    static const unsigned GLH_IGNORE_TEXTURE_COLOR_WHEN_ALPHA_TESTING = 0x1000;
     
 
 
@@ -620,21 +656,27 @@ struct glh::model::render_flags
     /* dummy value */
     static const unsigned GLH_NONE = 0x00;
 
-    /* transparent mode 
-     * meshes which are flagged as definitely opaque will not be drawn
-     * this is useful for doing a separate opaque and transparent rendering calls
+    /* opaque mode
+     * if GLH_SPLIT_MESHES_BY_ALPHA_VALUES is set, only the opaque meshes will be rendered
+     * otherwise all meshes are rendered
      */
-    static const unsigned GLH_TRANSPARENT_MODE = 0x01;
+    static const unsigned GLH_OPAQUE_MODE = 0x01;
+
+    /* transparent mode 
+     * if GLH_SPLIT_MESHES_BY_ALPHA_VALUES is set, only the trabsparent meshes will be rendered
+     * otherwise, meshes which are flagged as definitely opaque will not be rendered
+     */
+    static const unsigned GLH_TRANSPARENT_MODE = 0x02;
 
     /* no matierials
-     * no material-associated uniforms are set, and do not have to be cached
+     * material-associated uniforms are not set and do not have to be cached
      */
-    static const unsigned GLH_NO_MATERIAL = 0x02;
+    static const unsigned GLH_NO_MATERIAL = 0x04;
 
     /* no model matrix
      * the uniform does not have to be cached
      */
-    static const unsigned GLH_NO_MODEL_MATRIX = 0x04;
+    static const unsigned GLH_NO_MODEL_MATRIX = 0x08;
 
 };
 
@@ -730,7 +772,7 @@ private:
     const std::string entry;
 
     /* import flags */
-    const unsigned model_import_flags;
+    unsigned model_import_flags;
 
     /* the post processing steps used to import the model */
     unsigned pps;
@@ -755,6 +797,14 @@ private:
 
     /* root node */
     node root_node;
+
+
+
+    /* shaders and programs for alpha testing */
+    core::vshader alpha_test_vshader;
+    core::gshader alpha_test_gshader;
+    core::fshader alpha_test_fshader;
+    core::program alpha_test_program;
 
 
 
@@ -924,7 +974,23 @@ private:
      * 
      * return: the face just added
      */
-    face& add_face ( face& _face, mesh& _mesh, const aiFace& aiface );
+    face& add_face ( face& _face, const mesh& _mesh, const aiFace& aiface );
+
+    /* configure_mesh_vao
+     *
+     * configure a mesh' vao
+     * 
+     * _mesh: the mesh to configure
+     */
+    void configure_mesh_vao ( mesh& _mesh );
+
+    /* split_mesh
+     *
+     * split a mesh into opaque and transparent faces
+     * 
+     * _mesh: the mesh to split
+     */
+    void split_mesh ( mesh& _mesh );
 
     /* add_node
      *
