@@ -244,6 +244,24 @@ void glh::core::fbo::read_buffer ( const GLenum buff )
 
 
 
+/* set_default_dimensions
+ *
+ * sets the default width, height and layers of a framebuffer with no color attachment
+ * this causes rasterisation to occur based on these dimensions
+ * 
+ * width/height: the default width and height
+ * layers: default layers of a framebuffer (defaults to 0)
+ */
+void glh::core::fbo::set_default_dimensions ( const unsigned width, const unsigned height, const unsigned layers )
+{
+    /* set options */
+    glad_glNamedFramebufferParameteri ( id, GL_FRAMEBUFFER_DEFAULT_WIDTH, width );
+    glad_glNamedFramebufferParameteri ( id, GL_FRAMEBUFFER_DEFAULT_HEIGHT, height );
+    glad_glNamedFramebufferParameteri ( id, GL_FRAMEBUFFER_DEFAULT_LAYERS, layers );
+}
+
+
+
 /* blit_copy
  *
  * copy a region FROM THIS FBO INTO ANOTHER FBO

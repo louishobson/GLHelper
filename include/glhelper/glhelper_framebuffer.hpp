@@ -259,6 +259,18 @@ public:
 
 
 
+    /* set_default_dimensions
+     *
+     * sets the default width, height and layers of a framebuffer with no color attachment
+     * this causes rasterisation to occur based on these dimensions
+     * 
+     * width/height: the default width and height
+     * layers: default layers of a framebuffer (defaults to 0)
+     */
+    void set_default_dimensions ( const unsigned width, const unsigned height, const unsigned layers = 0 ); 
+
+
+
     /* blit_copy
      *
      * copy a region FROM THIS FBO INTO ANOTHER FBO
