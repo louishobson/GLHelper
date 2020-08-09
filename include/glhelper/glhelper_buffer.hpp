@@ -98,6 +98,12 @@ namespace glh
          */
         class ubo;
 
+        /* class ssbo : buffer
+         *
+         * shader storage buffer object
+         */
+        class ssbo;
+
         /* class vao : object
          *
          * vertex array object
@@ -243,16 +249,21 @@ public:
      * a call to buffer_data is required to first resize this buffer to the capacity required
      *
      * read_buff: the buffer to read from
-     * read/write_offset: the offsets for reading and writing
      * size: the number of bytes to copy
+     * read/write_offset: the offsets for reading and writing
      */
-    void copy_sub_data ( const buffer& read_buff, const unsigned read_offset, const unsigned write_offset, const unsigned size );
+    void copy_sub_data ( const buffer& read_buff, const unsigned size, const unsigned read_offset = 0, const unsigned write_offset = 0 );
 
     /* clear_data
      *
-     * clear the data from the buffer
+     * clear the data from the buffer with a certain value
+     * 
+     * internal_format: the format of the data within the buffer
+     * format: the format of the data being put into the buffer
+     * type: the type of the data being put into the buffer
+     * data: the data to be copied into the buffer
      */
-    void clear_data ();
+    void clear_data ( const GLenum internal_format, const GLenum format, const GLenum type, const void * data );
 
 
 
@@ -288,14 +299,6 @@ public:
      */
     bool is_buffer_mapped () const { return map_ptr; }
 
-    /* assert_not_is_buffer_mapped
-     *
-     * throws if the buffer is mapped
-     * 
-     * operationL the operation being performed
-     */
-    void assert_not_is_buffer_mapped ( const std::string& operation ) const;
-
 
 
     /* get_size
@@ -321,13 +324,6 @@ private:
      * pointer to the current map to the buffer (NULL for no map)
      */
     mutable void * map_ptr;
-
-    /* unsigned map_id
-     *
-     * the map id, which is incremented every time the buffer_data is called
-     * this ensures that outdated iterators know when they are outdated
-     */
-    mutable unsigned map_id;
 
     /* is_immutable
      *
@@ -367,7 +363,7 @@ class glh::core::vbo : public buffer
 public:
 
     /* zero-parameter constructor */
-    vbo () { bind (); }
+    vbo () { bind (); unbind (); }
 
     /* construct and immediately buffer data with pointer
      *
@@ -378,7 +374,7 @@ public:
      * usage: the storage method for the data
      */
     vbo ( const unsigned size, const void * data = NULL, const GLenum usage = GL_STATIC_DRAW )
-        { bind (); buffer_data ( size, data, usage ); }
+        { bind (); unbind (); buffer_data ( size, data, usage ); }
 
     /* construct and immediately buffer data with iterators
      *
@@ -388,7 +384,7 @@ public:
      * usage: the storage method for the data
      */
     template<class It> vbo ( It first, It last, const GLenum usage = GL_STATIC_DRAW )
-        { bind (); buffer_data ( first, last, usage ); }
+        { bind (); unbind (); buffer_data ( first, last, usage ); }
 
     /* deleted copy constructor */
     vbo ( const vbo& other ) = delete;
@@ -434,7 +430,7 @@ class glh::core::ebo : public buffer
 public:
 
     /* zero-parameter constructor */
-    ebo () { bind (); }
+    ebo () { bind (); unbind (); }
 
     /* construct and immediately buffer data with pointer
      *
@@ -445,7 +441,7 @@ public:
      * usage: the storage method for the data
      */
     ebo ( const unsigned size, const void * data = NULL, const GLenum usage = GL_STATIC_DRAW )
-        { bind (); buffer_data ( size, data, usage ); }
+        { bind (); unbind (); buffer_data ( size, data, usage ); }
 
     /* construct and immediately buffer data with iterators
      *
@@ -455,7 +451,7 @@ public:
      * usage: the storage method for the data
      */
     template<class It> ebo ( It first, It last, const GLenum usage = GL_STATIC_DRAW )
-        { bind (); buffer_data ( first, last, usage ); }
+        { bind (); unbind (); buffer_data ( first, last, usage ); }
 
     /* deleted copy constructor */
     ebo ( const ebo& other ) = delete;
@@ -552,7 +548,7 @@ public:
     /* get bound ubo and bound ubo index */
     static const object_pointer<ubo>& get_bound_ubo () { return bound_ubo; }
     static object_pointer<ubo> get_bound_ubo_index ( const unsigned index ) 
-        { return ( bound_ubo_indices.size () > index ?bound_ubo_indices.at ( index ) : object_pointer<ubo> { NULL } ); }
+        { return ( bound_ubo_indices.size () > index ? bound_ubo_indices.at ( index ) : object_pointer<ubo> { NULL } ); }
 
 
 
@@ -571,6 +567,88 @@ private:
      * constant defined by the implementation for uniform alignment in ubos
      */
     int uniform_buffer_offset_alignment;
+
+};
+
+
+
+/* SSBO DEFINITION */
+
+/* class ssbo : buffer
+ *
+ * shader storage buffer object
+ */
+class glh::core::ssbo : public buffer
+{
+public:
+
+    /* zero-parameter constructor */
+    ssbo () { bind (); unbind (); }
+
+    /* construct and immediately buffer data with pointer
+     *
+     * generates a buffer and immediately buffers data
+     * 
+     * size: size of data in bytes
+     * data: pointer to data
+     * usage: the storage method for the data
+     */
+    ssbo ( const unsigned size, const void * data = NULL, const GLenum usage = GL_STATIC_DRAW )
+        { bind (); unbind (); buffer_data ( size, data, usage ); }
+
+    /* construct and immediately buffer data with iterators
+     *
+     * generates a buffer and immediately buffers data
+     * 
+     * first/last: iterators for the data (ie. from begin and end)
+     * usage: the storage method for the data
+     */
+    template<class It> ssbo ( It first, It last, const GLenum usage = GL_STATIC_DRAW )
+        { bind (); unbind (); buffer_data ( first, last, usage ); }
+
+    /* deleted copy constructor */
+    ssbo ( const ssbo& other ) = delete;
+
+    /* default move constructor */
+    ssbo ( ssbo&& other ) = default;
+
+    /* deleted copy assignment operator */
+    ssbo& operator= ( const ssbo& other ) = delete;
+
+    /* default destructor */
+    ~ssbo () = default;
+
+
+
+    /* default bind/unbind the ssbo */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_ssbo == this; }
+
+    /* bind the ubo to an index */
+    bool bind ( const unsigned index ) const;
+    bool unbind ( const unsigned index ) const;
+    bool is_bound ( const unsigned index ) const { return bound_ssbo_indices.size () > index && bound_ssbo_indices.at ( index ) == this; }
+
+    /* unbind from all bind points */
+    bool unbind_all () const;
+
+    /* get bound ubo and bound ubo index */
+    static const object_pointer<ssbo>& get_bound_ubo () { return bound_ssbo; }
+    static object_pointer<ssbo> get_bound_ubo_index ( const unsigned index ) 
+        { return ( bound_ssbo_indices.size () > index ? bound_ssbo_indices.at ( index ) : object_pointer<ssbo> { NULL } ); }
+
+
+
+private:
+
+    /* bound_ssbo
+     * bound_ssbo_indices
+     *
+     * bound ssbo and index-bound objects
+     */
+    static object_pointer<ssbo> bound_ssbo;
+    static std::vector<object_pointer<ssbo>> bound_ssbo_indices;
 
 };
 
@@ -657,46 +735,10 @@ public:
 
 
 
-    /* prepare_arrays
-     * 
-     * prepare for drawing from vertex arrays, not using an ebo
-     * will not bind the vao, however
-     * will throw if fails to prepare
-     */
-    void prepare_arrays () const;
-
-    /* prepare_elements
-     *
-     * prepare for drawing using an ebo
-     * will not bind the vao, however
-     * will throw if fails to prepare
-     */
-    void prepare_elements () const;
-
-
-
 private:
 
     /* the currently bound vao */
     static object_pointer<vao> bound_vao;
-
-    /* struct to represent a vertex attribute */
-    struct vertex_attrib
-    {
-        int size;
-        GLenum type;
-        GLenum norm;
-        unsigned stride;
-        unsigned offset;
-        const_object_pointer<vbo> buff;
-        bool enabled;
-    };
-
-    /* array of vertex attributes */
-    std::vector<vertex_attrib> vertex_attribs;
-
-    /* bound ebo */
-    const_object_pointer<ebo> bound_ebo;
 
 };
 
@@ -754,6 +796,9 @@ template<class It> inline void glh::core::buffer::buffer_storage ( It first, It 
 
     /* copy data */
     std::copy ( first, last, reinterpret_cast<typename std::iterator_traits<It>::value_type *> ( map_buffer () ) );
+
+    /* unmap the buffer */
+    unmap_buffer ();
 }
 
 /* buffer_data with iterators
@@ -768,6 +813,9 @@ template<class It> inline void glh::core::buffer::buffer_data ( It first, It las
 
     /* copy data */
     std::copy ( first, last, reinterpret_cast<typename std::iterator_traits<It>::value_type *> ( map_buffer () ) );
+
+    /* unmap the buffer */
+    unmap_buffer ();    
 }
 
 /* buffer_sub_data with iterators
@@ -778,11 +826,14 @@ template<class It> inline void glh::core::buffer::buffer_data ( It first, It las
 template<class It> inline void glh::core::buffer::buffer_sub_data ( It first, It last, const unsigned offset )
 {
     /* check will fit capacity */
-    if ( ( ( last - first ) + offset ) * sizeof ( typename std::iterator_traits<It>::value_type ) > capacity )
+    if ( ( std::distance ( first, last ) + offset ) * sizeof ( typename std::iterator_traits<It>::value_type ) > capacity )
     throw exception::buffer_exception { "attempted to perform buffer sub data operation with incompatible paramaters for buffer capacity" };
 
     /* purely copy using iterators */
     std::copy ( first, last, reinterpret_cast<typename std::iterator_traits<It>::value_type *> ( map_buffer () ) + offset );    
+
+    /* unmap the buffer */
+    unmap_buffer ();
 }
 
 /* at
@@ -793,13 +844,13 @@ template<class T> inline T& glh::core::buffer::at ( const unsigned i )
 {
     /* check i is in range, then return */
     if ( ( i + 1 ) * sizeof ( T ) > capacity ) throw exception::buffer_exception { "attempted to get reference to out of range object in buffer" };
-    return * reinterpret_cast<T *> ( map_buffer () ) + i;
+    return * ( reinterpret_cast<T *> ( map_buffer () ) + i );
 }
 template<class T> inline const T& glh::core::buffer::at ( const unsigned i ) const
 {
     /* check i is in range, then return */
     if ( ( i + 1 ) * sizeof ( T ) > capacity ) throw exception::buffer_exception { "attempted to get reference to out of range object in buffer" };
-    return * reinterpret_cast<const T *> ( map_buffer () ) + i;
+    return * ( reinterpret_cast<const T *> ( map_buffer () ) + i );
 }
 
 
