@@ -483,6 +483,9 @@ glh::core::vao::vao ()
 {
     /* generate the vao */
     glGenVertexArrays ( 1, &id );
+
+    /* bind and unbind */
+    bind (); unbind ();
 }
 
 /* default bind/unbind the vao */
@@ -520,20 +523,14 @@ bool glh::core::vao::unbind () const
  */
 void glh::core::vao::set_vertex_attrib ( const unsigned attrib, const vbo& buff, const int size, const GLenum type, const bool norm, const unsigned stride, const unsigned offset )
 {
-    /* bind vao */
-    const bool vao_binding_change = bind ();
-    /* bind vbo */
-    const bool vbo_binding_change = buff.bind ();
+    /* set the format */
+    glVertexArrayAttribFormat ( id, attrib, size, type, norm, 0 );
 
-    /* set attribute pointer */
-    glVertexAttribPointer ( attrib, size, type, norm, stride, reinterpret_cast<void *> ( offset ) );
+    /* set set the buffer */
+    glVertexArrayVertexBuffer ( id, attrib, buff.internal_id (), offset, stride );
+    
     /* enable attribute */
-    glEnableVertexAttribArray ( attrib );
-
-    /* unbind vao */
-    if ( vao_binding_change ) unbind ();
-    /* unbind vbo */
-    if ( vbo_binding_change ) buff.unbind ();
+    glEnableVertexArrayAttrib ( id, attrib );
 }
 
 /* enable_vertex_attrib
@@ -544,10 +541,8 @@ void glh::core::vao::set_vertex_attrib ( const unsigned attrib, const vbo& buff,
  */
 void glh::core::vao::enable_vertex_attrib ( const unsigned attrib )
 {
-    /* bind vao, enable, unbind */
-    const bool binding_change = bind ();
-    glEnableVertexAttribArray ( attrib );
-    if ( binding_change ) unbind ();
+    /* enable the attrib */
+    glEnableVertexArrayAttrib ( id, attrib );
 }
 
 /* disable_vertex_attrib
@@ -558,10 +553,8 @@ void glh::core::vao::enable_vertex_attrib ( const unsigned attrib )
  */
 void glh::core::vao::disable_vertex_attrib ( const unsigned attrib )
 {
-    /* bind vao, disable, unbind */
-    const bool binding_change = bind ();
-    glDisableVertexAttribArray ( attrib );
-    if ( binding_change ) unbind ();
+    /* disable the attrib */
+    glDisableVertexArrayAttrib ( id, attrib );
 }
 
 /* bind_ebo
@@ -572,13 +565,8 @@ void glh::core::vao::disable_vertex_attrib ( const unsigned attrib )
  */
 void glh::core::vao::bind_ebo ( const ebo& buff )
 {
-    /* bind vao, then ebo */
-    const bool vao_binding_change = bind ();
-    const bool ebo_binding_change = buff.bind ();
-
-    /* unbind vao, then ebo */
-    if ( vao_binding_change ) unbind ();
-    if ( ebo_binding_change ) buff.unbind ();
+    /* bind the ebo */
+    glVertexArrayElementBuffer ( id, buff.internal_id () );
 }
 
 

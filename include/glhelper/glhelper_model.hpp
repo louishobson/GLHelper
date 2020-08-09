@@ -196,6 +196,9 @@
 /* include glhelper_framebuffer.hpp */
 #include <glhelper/glhelper_framebuffer.hpp>
 
+/* include glhelper_sync.hpp */
+#include <glhelper/glhelper_sync.hpp>
+
 
 
 /* NAMESPACE DECLARATIONS */
@@ -498,7 +501,7 @@ struct glh::model::mesh
     core::ebo index_data;
 
     /* the vao controlling the vbos and the ebo */
-    core::vao array_object;
+    core::vao vertex_arrays;
 
 
 
@@ -629,6 +632,13 @@ struct glh::model::import_flags
     /* ignore texture color when alpha testing
      */
     static const unsigned GLH_IGNORE_TEXTURE_COLOR_WHEN_ALPHA_TESTING = 0x1000;
+
+
+
+    /* configure global vertex arrays
+     * rather than storing vertex arrays on a per-mesh basis, generate global vertex arrays for the entire mesh
+     */
+    static const unsigned GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS = 0x2000;
     
 
 
@@ -677,6 +687,12 @@ struct glh::model::render_flags
      * the uniform does not have to be cached
      */
     static const unsigned GLH_NO_MODEL_MATRIX = 0x08;
+
+    /* leave global vertex arrays bound
+     * this can be useful if the model will be rendered multiple times in a row
+     * naturally it is only relevant if the model was import with global vertex arrays being configured
+     */
+    static const unsigned GLH_LEAVE_GLOBAL_VERTEX_ARRAYS_BOUND = 0x10;
 
 };
 
@@ -797,6 +813,13 @@ private:
 
     /* root node */
     node root_node;
+
+
+
+    /* global vertex buffer, element buffer and vertex arrays */
+    core::vbo global_vertex_data;
+    core::ebo global_index_data;
+    core::vao global_vertex_arrays;
 
 
 
@@ -976,14 +999,6 @@ private:
      */
     face& add_face ( face& _face, const mesh& _mesh, const aiFace& aiface );
 
-    /* configure_mesh_vao
-     *
-     * configure a mesh' vao
-     * 
-     * _mesh: the mesh to configure
-     */
-    void configure_mesh_vao ( mesh& _mesh );
-
     /* split_mesh
      *
      * split a mesh into opaque and transparent faces
@@ -991,6 +1006,12 @@ private:
      * _mesh: the mesh to split
      */
     void split_mesh ( mesh& _mesh );
+
+    /* configure_global_vertex_arrays
+     *
+     * configures the global vertex arrays
+     */
+    void configure_global_vertex_arrays ();
 
     /* add_node
      *

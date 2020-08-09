@@ -49,6 +49,19 @@ glh::model::model::model ( const std::string& _directory, const std::string& _en
     if ( model_import_flags & import_flags::GLH_FLIP_V_TEXTURES ) pps |= aiProcess_FlipUVs;
     if ( model_import_flags & import_flags::GLH_PRETRANSFORM_VERTICES ) pps |= aiProcess_PreTransformVertices;
 
+    /* throw if both GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING and GLH_IGNORE_TEXTURE_COLOR_WHEN_ALPHA_TESTING are set */
+    if ( model_import_flags & import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING && model_import_flags & import_flags::GLH_IGNORE_TEXTURE_COLOR_WHEN_ALPHA_TESTING )
+        throw exception::model_exception { "cannot import model with both GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING and GLH_IGNORE_TEXTURE_COLOR_WHEN_ALPHA_TESTING options set" };
+
+    /* if alpha testing is requested, initialise the program and shaders */
+    if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES )
+    {
+        alpha_test_vshader.include_files ( { "shaders/materials.glsl", "shaders/vertex.alpha_test.glsl" } );
+        alpha_test_gshader.include_files ( { "shaders/materials.glsl", "shaders/geometry.alpha_test.glsl" } );
+        alpha_test_fshader.include_files ( { "shaders/materials.glsl", "shaders/fragment.alpha_test.glsl" } );
+        alpha_test_program.compile_and_link ();
+    }
+
     /* create the importer */
     Assimp::Importer importer;
 
@@ -90,8 +103,21 @@ void glh::model::model::render ( const math::mat4& transform, const unsigned fla
     /* cache the render flags */
     model_render_flags = flags;
 
-    /* render the root node */
-    render_node ( root_node, transform );
+    /* if imported with global vertex arrays configured... */
+    if ( model_import_flags & import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS )
+    {
+        /* bind global vertex arrays */
+        global_vertex_arrays.bind ();
+
+        /* render the root node */
+        render_node ( root_node, transform );
+
+        /* only unbind if GLH_LEAVE_GLOBAL_VERTEX_ARRAYS_BOUND is unset */
+        if ( ~model_render_flags & render_flags::GLH_LEAVE_GLOBAL_VERTEX_ARRAYS_BOUND ) global_vertex_arrays.unbind ();
+    } 
+    /* else just render root node normally */
+    else render_node ( root_node, transform );
+
 }
 void glh::model::model::render ( const unsigned flags )
 {
@@ -188,24 +214,19 @@ void glh::model::model::process_scene ( const aiScene& aiscene )
     for ( unsigned i = 0; i < aiscene.mNumMaterials; ++i )
         add_material ( materials.at ( i ), * aiscene.mMaterials [ i ] );
 
-    /* now add the meshes */
+    /* now loop through the meshes */
     meshes.resize ( aiscene.mNumMeshes );
     for ( unsigned i = 0; i < aiscene.mNumMeshes; ++i )
+    {   
+        /* add the mesh */
         add_mesh ( meshes.at ( i ), * aiscene.mMeshes [ i ] );
 
-    /* if required to split meshes... */
-    if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES )
-    {
-        /* initialise the alpha testing program */
-        alpha_test_vshader.include_files ( { "shaders/materials.glsl", "shaders/vertex.alpha_test.glsl" } );
-        alpha_test_gshader.include_files ( { "shaders/materials.glsl", "shaders/geometry.alpha_test.glsl" } );
-        alpha_test_fshader.include_files ( { "shaders/materials.glsl", "shaders/fragment.alpha_test.glsl" } );
-        alpha_test_program.compile_and_link ();
-
-        /* split the meshes */
-        for ( unsigned i = 0; i < aiscene.mNumMeshes; ++i )
-            split_mesh ( meshes.at ( i ) );
+        /* if required to split the meshes, also split it */
+        if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES ) split_mesh ( meshes.at ( i ) );
     }
+
+    /* configure global vertex arrays if necessary */
+    if ( model_import_flags & import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS ) configure_global_vertex_arrays ();
 
     /* now recursively process all of the nodes */
     root_node.parent = NULL;
@@ -566,7 +587,13 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
     else _mesh.index_data.buffer_storage ( _mesh.faces.begin (), _mesh.faces.end () );
 
     /* configure the vao */
-    configure_mesh_vao ( _mesh );
+    _mesh.vertex_arrays.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 0 * sizeof ( GLfloat ) );
+    _mesh.vertex_arrays.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 3 * sizeof ( GLfloat ) );
+    _mesh.vertex_arrays.set_vertex_attrib ( 2, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 6 * sizeof ( GLfloat ) );
+    _mesh.vertex_arrays.set_vertex_attrib ( 3, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 9 * sizeof ( GLfloat ) );
+    for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
+        _mesh.vertex_arrays.set_vertex_attrib ( 4 + i, _mesh.vertex_data, 2, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 13 + i * 2 ) * sizeof ( GLfloat ) );
+    _mesh.vertex_arrays.bind_ebo ( _mesh.index_data );
 
 
 
@@ -598,25 +625,6 @@ glh::model::face& glh::model::model::add_face ( face& _face, const mesh& _mesh, 
 
     /* return face */
     return _face;
-}
-
-
-
-/* configure_mesh_vao
- *
- * configure a mesh' vao
- * 
- * _mesh: the mesh to configure
- */
-void glh::model::model::configure_mesh_vao ( mesh& _mesh )
-{
-    _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 0 * sizeof ( GLfloat ) );
-    _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 3 * sizeof ( GLfloat ) );
-    _mesh.array_object.set_vertex_attrib ( 2, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 6 * sizeof ( GLfloat ) );
-    _mesh.array_object.set_vertex_attrib ( 3, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 9 * sizeof ( GLfloat ) );
-    for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
-        _mesh.array_object.set_vertex_attrib ( 4 + i, _mesh.vertex_data, 2, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 13 + i * 2 ) * sizeof ( GLfloat ) );
-    _mesh.array_object.bind_ebo ( _mesh.index_data );
 }
 
 
@@ -677,13 +685,20 @@ void glh::model::model::split_mesh ( mesh& _mesh )
         core::renderer::disable_depth_test ();
         core::renderer::disable_face_culling ();
         
-        /* render the mesh */
+        /* render the mesh
+         * set the render flags to none
+         * if GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS is set in import flags, temorarily remove it
+         */
         model_render_flags = render_flags::GLH_NONE;
-        render_mesh ( _mesh );
-
-        GLsync s = glFenceSync ( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
-        glClientWaitSync ( s, 0, GL_TIMEOUT_IGNORED );
-        glDeleteSync ( s );
+        if ( model_import_flags & import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS )
+        {
+            model_import_flags &= ~import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS;
+            render_mesh ( _mesh );
+            model_import_flags |= import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS;
+        } else render_mesh ( _mesh );
+        
+        /* wait for the draw command above to finish */
+        glh::core::sync::finish_queue ();
 
         /* set texture stacks to use interpolation again */
         _mesh.properties->diffuse_stack.textures.set_mag_filter ( GL_LINEAR );
@@ -694,8 +709,6 @@ void glh::model::model::split_mesh ( mesh& _mesh )
         {
             /* get the results of the alpha testing */
             const unsigned alpha_test_fb = alpha_test_ssbo.at<unsigned> ( i / 8 ) >> ( ( i % 8 ) * 4 );
-
-            //std::cout << std::bitset<4> ( alpha_test_fb ) << std::endl;
 
             /* add to opaque mesh set if necessary */
             if ( ( ~model_import_flags & import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING && alpha_test_fb & 0x1 ) ||
@@ -729,13 +742,89 @@ void glh::model::model::split_mesh ( mesh& _mesh )
 
         /* now buffer in the subdata, also setting the offsets for the types of face */
         _mesh.index_data.buffer_sub_data ( _mesh.faces.begin (), _mesh.faces.end (), 0 );
+
         _mesh.start_of_opaque_faces        = _mesh.num_faces * sizeof ( face );
         _mesh.global_start_of_opaque_faces = _mesh.num_faces * sizeof ( face );
         _mesh.index_data.buffer_sub_data ( _mesh.opaque_faces.begin (), _mesh.opaque_faces.end (), _mesh.num_faces );
+
         _mesh.start_of_transparent_faces        = _mesh.start_of_opaque_faces + _mesh.num_opaque_faces * sizeof ( face );     
         _mesh.global_start_of_transparent_faces = _mesh.start_of_opaque_faces + _mesh.num_opaque_faces * sizeof ( face );
         _mesh.index_data.buffer_sub_data ( _mesh.transparent_faces.begin (), _mesh.transparent_faces.end (), _mesh.num_faces + _mesh.num_opaque_faces );  
     }
+}
+
+
+
+/* configure_global_vertex_arrays
+ *
+ * configures the global vertex arrays
+ */
+void glh::model::model::configure_global_vertex_arrays ()
+{
+    /* collect the sizes of the buffers from each mesh
+     * while doing so, change the global_start_of_..._faces values based on the running value of global_index_data_size
+     */
+    unsigned global_vertex_data_size = 0;
+    unsigned global_index_data_size = 0;
+    for ( mesh& _mesh: meshes )
+    {
+        _mesh.global_start_of_faces             += global_index_data_size;
+        _mesh.global_start_of_opaque_faces      += global_index_data_size;
+        _mesh.global_start_of_transparent_faces += global_index_data_size;
+        global_vertex_data_size += _mesh.vertex_data.get_size ();
+        global_index_data_size  += _mesh.index_data.get_size ();
+    }
+
+    /* resize the buffers */
+    global_vertex_data.buffer_storage ( global_vertex_data_size );
+    global_index_data.buffer_storage ( global_index_data_size );
+
+    /* reset the sizes of the buffers to zero, ready to loop through the meshes again
+     * the second loop will copy the vertex and index data into the global buffers
+     */
+    global_vertex_data_size = 0;
+    global_index_data_size = 0;
+    for ( mesh& _mesh: meshes )
+    {
+        /* copy the vertex and index data */
+        global_vertex_data.copy_sub_data ( _mesh.vertex_data, _mesh.vertex_data.get_size (), 0, global_vertex_data_size );
+        global_index_data.copy_sub_data ( _mesh.index_data, _mesh.index_data.get_size (), 0, global_index_data_size );
+
+        /* increase the size values */
+        global_vertex_data_size += _mesh.vertex_data.get_size ();
+        global_index_data_size  += _mesh.index_data.get_size ();
+    }
+    
+    /* wait for the copy commands above to finish */
+    glh::core::sync::finish_queue ();
+
+    /* reset the sizes of the buffers back to zero for the final time, ready for the third loop of the mehses
+     * thid will modify the index data to the correct offsets in the global vertex data
+     */
+    global_vertex_data_size = 0;
+    global_index_data_size = 0;
+    for ( mesh& _mesh: meshes )
+    {
+        /* increase the values of the index data */
+        for ( unsigned i = global_index_data_size; i < global_index_data_size + _mesh.index_data.get_size (); i += sizeof ( unsigned ) )
+            global_index_data.at<unsigned> ( i / sizeof ( unsigned ) ) += global_vertex_data_size / sizeof ( vertex );
+
+        /* increase the size values */
+        global_vertex_data_size += _mesh.vertex_data.get_size ();
+        global_index_data_size  += _mesh.index_data.get_size ();
+    }
+
+    /* finally unmap the global index data */
+    global_index_data.unmap_buffer ();
+
+    /* configure the vertex arrays */
+    global_vertex_arrays.set_vertex_attrib ( 0, global_vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 0 * sizeof ( GLfloat ) );
+    global_vertex_arrays.set_vertex_attrib ( 1, global_vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 3 * sizeof ( GLfloat ) );
+    global_vertex_arrays.set_vertex_attrib ( 2, global_vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 6 * sizeof ( GLfloat ) );
+    global_vertex_arrays.set_vertex_attrib ( 3, global_vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 9 * sizeof ( GLfloat ) );
+    for ( unsigned i = 0; i < GLH_MODEL_MAX_TEXTURE_STACK_SIZE; ++i )
+        global_vertex_arrays.set_vertex_attrib ( 4 + i, global_vertex_data, 2, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 13 + i * 2 ) * sizeof ( GLfloat ) );
+    global_vertex_arrays.bind_ebo ( global_index_data );
 }
 
 
@@ -1039,13 +1128,23 @@ void glh::model::model::render_mesh ( const mesh& _mesh ) const
     if ( ~model_render_flags & render_flags::GLH_NO_MATERIAL ) apply_material ( * _mesh.properties );
 
     /* draw elements */
-    _mesh.array_object.bind ();
-    if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES && model_render_flags & render_flags::GLH_OPAQUE_MODE ) 
-        core::renderer::draw_elements ( GL_TRIANGLES, _mesh.num_opaque_faces * 3, GL_UNSIGNED_INT, _mesh.start_of_opaque_faces ); else
-    if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES && model_render_flags & render_flags::GLH_TRANSPARENT_MODE ) 
-        core::renderer::draw_elements ( GL_TRIANGLES, _mesh.num_transparent_faces * 3, GL_UNSIGNED_INT, _mesh.start_of_transparent_faces );
-    else core::renderer::draw_elements ( GL_TRIANGLES, _mesh.num_faces * 3, GL_UNSIGNED_INT, _mesh.start_of_faces );
-    _mesh.array_object.unbind ();
+    if ( model_import_flags & import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS )
+    {
+        if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES && model_render_flags & render_flags::GLH_OPAQUE_MODE ) 
+            core::renderer::draw_elements ( GL_TRIANGLES, _mesh.num_opaque_faces * 3, GL_UNSIGNED_INT, _mesh.global_start_of_opaque_faces ); else
+        if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES && model_render_flags & render_flags::GLH_TRANSPARENT_MODE ) 
+            core::renderer::draw_elements ( GL_TRIANGLES, _mesh.num_transparent_faces * 3, GL_UNSIGNED_INT, _mesh.global_start_of_transparent_faces );
+        else core::renderer::draw_elements ( GL_TRIANGLES, _mesh.num_faces * 3, GL_UNSIGNED_INT, _mesh.global_start_of_faces );
+    } else
+    {
+        _mesh.vertex_arrays.bind ();
+        if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES && model_render_flags & render_flags::GLH_OPAQUE_MODE ) 
+            core::renderer::draw_elements ( GL_TRIANGLES, _mesh.num_opaque_faces * 3, GL_UNSIGNED_INT, _mesh.start_of_opaque_faces ); else
+        if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES && model_render_flags & render_flags::GLH_TRANSPARENT_MODE ) 
+            core::renderer::draw_elements ( GL_TRIANGLES, _mesh.num_transparent_faces * 3, GL_UNSIGNED_INT, _mesh.start_of_transparent_faces );
+        else core::renderer::draw_elements ( GL_TRIANGLES, _mesh.num_faces * 3, GL_UNSIGNED_INT, _mesh.start_of_faces );
+        _mesh.vertex_arrays.unbind ();
+    }
 
     /* re-enable face culling if was previously disabled */
     if ( culling_active ) core::renderer::enable_face_culling ();
