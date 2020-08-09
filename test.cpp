@@ -154,7 +154,8 @@ int main ()
         glh::model::import_flags::GLH_FLIP_V_TEXTURES |
         glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
         glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
-        glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING,
+        glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
+        glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS,
         island_matrix
     };
 
@@ -171,7 +172,8 @@ int main ()
         glh::model::import_flags::GLH_FLIP_V_TEXTURES |
         glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
         glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
-        glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING,
+        glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
+        glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS,
         box_matrix
     };
 
@@ -378,7 +380,7 @@ int main ()
             light_system.bind_shadow_maps_fbo ();
             glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
             MODEL_SWITCH.cache_material_uniforms ( shadow_material_uni );
-            MODEL_SWITCH.render ( glh::model::render_flags::GLH_OPAQUE_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+            MODEL_SWITCH.render ( glh::model::render_flags::GLH_LEAVE_GLOBAL_VERTEX_ARRAYS_BOUND | glh::model::render_flags::GLH_OPAQUE_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
         }
 
         /* set timestamp */
@@ -405,7 +407,7 @@ int main ()
         glh::core::renderer::set_depth_mask ( GL_TRUE );
         glh::core::renderer::clear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
         MODEL_SWITCH.cache_material_uniforms ( model_material_uni );
-        MODEL_SWITCH.render ( glh::model::render_flags::GLH_OPAQUE_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+        MODEL_SWITCH.render ( glh::model::render_flags::GLH_LEAVE_GLOBAL_VERTEX_ARRAYS_BOUND | glh::model::render_flags::GLH_OPAQUE_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
        
         /* render transparent */
         model_transparent_mode_uni.set_int ( 1 );
@@ -492,7 +494,7 @@ int main ()
         const double fraction_bloom = std::chrono::duration<double> { timestamp_bloom - timestamp_main_render } / overall_time;
 
         /* output the fractions as percentages every 10th frame */
-        if ( frame % 5 == 0 ) \
+        //if ( frame % 5 == 0 ) \
         std::cout << "% window properties : " << fraction_window_properties * 100.0 << std::endl \
                   << "% movement          : " << fraction_movement * 100.0 << std::endl \
                   << "% shadow maps       : " << fraction_shadow_maps * 100.0 << std::endl \
@@ -501,7 +503,7 @@ int main ()
                   << "\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A";
         
         /* print framerate every 10th frame */
-        //if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
+        if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
 
 
 
