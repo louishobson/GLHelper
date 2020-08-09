@@ -152,7 +152,9 @@ int main ()
         glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
         glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
         glh::model::import_flags::GLH_FLIP_V_TEXTURES |
-        glh::model::import_flags::GLH_PRETRANSFORM_VERTICES,
+        glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
+        glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
+        glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING,
         island_matrix
     };
 
@@ -167,7 +169,9 @@ int main ()
         glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
         glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
         glh::model::import_flags::GLH_FLIP_V_TEXTURES |
-        glh::model::import_flags::GLH_PRETRANSFORM_VERTICES,
+        glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
+        glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
+        glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING,
         box_matrix
     };
 
@@ -186,7 +190,7 @@ int main ()
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         MODEL_SWITCH.model_region (),
-        true, true, 0.007, //0.035
+        false, true, 0.007, //0.035
         16, 0.001
     );
 
@@ -199,7 +203,7 @@ int main ()
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         MODEL_SWITCH.model_region (),
-        false, true, 0.003,
+        true, true, 0.003,
         16, 2.0 / 4096.0
     );
 
@@ -374,7 +378,7 @@ int main ()
             light_system.bind_shadow_maps_fbo ();
             glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
             MODEL_SWITCH.cache_material_uniforms ( shadow_material_uni );
-            MODEL_SWITCH.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+            MODEL_SWITCH.render ( glh::model::render_flags::GLH_OPAQUE_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
         }
 
         /* set timestamp */
@@ -401,7 +405,7 @@ int main ()
         glh::core::renderer::set_depth_mask ( GL_TRUE );
         glh::core::renderer::clear ( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
         MODEL_SWITCH.cache_material_uniforms ( model_material_uni );
-        MODEL_SWITCH.render ( glh::model::render_flags::GLH_NO_MODEL_MATRIX );
+        MODEL_SWITCH.render ( glh::model::render_flags::GLH_OPAQUE_MODE | glh::model::render_flags::GLH_NO_MODEL_MATRIX );
        
         /* render transparent */
         model_transparent_mode_uni.set_int ( 1 );
@@ -432,13 +436,14 @@ int main ()
         glh::core::renderer::disable_depth_test ();
 
         /* bloom loop */
+        quad_vao.bind ();
         for ( unsigned i = 0; i < bloom_iterations; ++i )
         {
             /* bind alpha fbo, set remaining uniforms and render */
             ping_pong_fbo_alpha.bind ();
             bloom_texture_uni.set_int ( ping_pong_texture_beta.bind_loop () );
             bloom_bloom_mode_uni.set_int ( 0 );
-            glh::core::renderer::draw_arrays ( quad_vao, GL_TRIANGLE_STRIP, 0, 4 );
+            glh::core::renderer::draw_arrays ( GL_TRIANGLE_STRIP, 0, 4 );
 
             /* if not the final iteration, render to beta */
             if ( i != bloom_iterations - 1 )
@@ -447,7 +452,7 @@ int main ()
                 ping_pong_fbo_beta.bind ();
                 bloom_texture_uni.set_int ( ping_pong_texture_alpha.bind_loop () );
                 bloom_bloom_mode_uni.set_int ( 1 );
-                glh::core::renderer::draw_arrays ( quad_vao, GL_TRIANGLE_STRIP, 0, 4 );
+                glh::core::renderer::draw_arrays ( GL_TRIANGLE_STRIP, 0, 4 );
             } else
             /* else blend to default framebuffer */
             {
@@ -464,9 +469,10 @@ int main ()
                 /* render into the default framebuffer */
                 bloom_texture_uni.set_int ( ping_pong_texture_alpha.bind_loop () );
                 bloom_bloom_mode_uni.set_int ( 1 );
-                glh::core::renderer::draw_arrays ( quad_vao, GL_TRIANGLE_STRIP, 0, 4 );
+                glh::core::renderer::draw_arrays ( GL_TRIANGLE_STRIP, 0, 4 );
             }
         }
+        quad_vao.unbind ();
 
         /* set timestamp */
         const auto timestamp_bloom = std::chrono::system_clock::now ();
@@ -486,7 +492,7 @@ int main ()
         const double fraction_bloom = std::chrono::duration<double> { timestamp_bloom - timestamp_main_render } / overall_time;
 
         /* output the fractions as percentages every 10th frame */
-        //if ( frame % 5 == 0 ) \
+        if ( frame % 5 == 0 ) \
         std::cout << "% window properties : " << fraction_window_properties * 100.0 << std::endl \
                   << "% movement          : " << fraction_movement * 100.0 << std::endl \
                   << "% shadow maps       : " << fraction_shadow_maps * 100.0 << std::endl \
@@ -495,7 +501,7 @@ int main ()
                   << "\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A";
         
         /* print framerate every 10th frame */
-        if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
+        //if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
 
 
 
