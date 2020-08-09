@@ -53,11 +53,14 @@ void main ()
     vec4 diffuse; evaluate_stack_macro ( diffuse, material.diffuse_stack, vs_out.texcoords );
     vec4 specular; evaluate_stack_macro ( specular, material.specular_stack, vs_out.texcoords );
 
+    /* discard if opacity is less than 0.02 */
+    if ( diffuse.a * material.opacity <= 0.02 ) discard;
+
     /* discard if opaque/transparent depending on transparent_mode */
     switch ( transparent_mode )
     {
         case 0: break;
-        case 1: if ( diffuse.a * material.opacity >= 1.0 ) discard; break;
+        case 1: if ( diffuse.a * material.opacity > 0.98 ) discard; break;
         case 2: if ( diffuse.a * material.opacity < 0.98 ) discard; break;
         default: break;
     }
