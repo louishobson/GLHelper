@@ -91,13 +91,12 @@ public:
      * draw vertices straight from a vbo (via a vao)
      * all ebo data is ignored
      * 
-     * _vao: the vao to draw from
      * mode: the primative to render
      * start_index: the start index of the buffered data
      * count: number of vertices to draw
      * instances: number of instances to draw (defaults to 1)
      */
-    static void draw_arrays ( const vao& _vao, const GLenum mode, const GLint start_index, const GLsizei count, const unsigned instances = 1 );
+    static void draw_arrays ( const GLenum mode, const GLint start_index, const GLsizei count, const unsigned instances = 1 );
 
 
 
@@ -105,14 +104,13 @@ public:
      *
      * draw vertices from an ebo (via a vao)
      * 
-     * _vao: the vao to draw from
      * mode: the primative to render
      * count: number of vertices to draw
      * type: the type of the data in the ebo
      * start_index: the start index of the elements
      * instances: number of instances to draw (defaults to 1)
      */
-    static void draw_elements ( const vao& _vao, const GLenum mode, const GLint count, const GLenum type, const GLsizeiptr start_index, const unsigned instances = 1 );
+    static void draw_elements ( const GLenum mode, const GLsizei count, const GLenum type, const GLsizeiptr start_index, const unsigned instances = 1 );
 
 
 
