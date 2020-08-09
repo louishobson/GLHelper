@@ -37,8 +37,11 @@
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
-/* include glhelper_math.hpp */
-#include <glhelper/glhelper_math.hpp>
+/* include glhelper_vector.hpp */
+#include <glhelper/glhelper_vector.hpp>
+
+/* include glhelper_matrix.hpp */
+#include <glhelper/glhelper_matrix.hpp>
 
 
 
@@ -84,7 +87,7 @@ namespace glh
          *
          * combine two regions to create a region which encompasses both of them
          */
-        template<unsigned M, class T0, class T1> uniform_region<M, meta::pat_t<T0, T1>> combine ( const uniform_region<M, T0>& lhs, const uniform_region<M, T1>& rhs );
+        template<unsigned M, class T0, class T1> uniform_region<M, std::common_type_t<T0, T1>> combine ( const uniform_region<M, T0>& lhs, const uniform_region<M, T1>& rhs );
     }
 }
 
@@ -101,8 +104,8 @@ template<unsigned M, class T0, class T1> bool operator!= ( const glh::region::un
  *
  * calculates a new region based on a transformation matrix
  */
-template<unsigned M, class T0, class T1> glh::region::uniform_region<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::matrix<M, M, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs );
-template<unsigned M, class T0, class T1> glh::region::uniform_region<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::matrix<M + 1, M + 1, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs );
+template<unsigned M, class T0, class T1> glh::region::uniform_region<M, std::common_type_t<T0, T1>> operator* ( const glh::math::matrix<M, M, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs );
+template<unsigned M, class T0, class T1> glh::region::uniform_region<M, std::common_type_t<T0, T1>> operator* ( const glh::math::matrix<M + 1, M + 1, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs );
 
 
 
@@ -204,7 +207,7 @@ template<unsigned M, class T0, class T1> inline bool glh::region::is_overlapping
  *
  * combine two regions to create a region which encompasses both of them
  */
-template<unsigned M, class T0, class T1> inline glh::region::uniform_region<M, glh::meta::pat_t<T0, T1>> glh::region::combine ( const uniform_region<M, T0>& lhs, const uniform_region<M, T1>& rhs )
+template<unsigned M, class T0, class T1> inline glh::region::uniform_region<M, std::common_type_t<T0, T1>> glh::region::combine ( const uniform_region<M, T0>& lhs, const uniform_region<M, T1>& rhs )
 {
     /* if either is contained within the other, return the encompassing region */
     if ( is_contained ( lhs, rhs ) ) return rhs;
@@ -218,7 +221,7 @@ template<unsigned M, class T0, class T1> inline glh::region::uniform_region<M, g
     const auto norm_difference = math::normalize ( difference );
 
     /* create the new region and return it */
-    return uniform_region<M, meta::pat_t<T0, T1>>
+    return uniform_region<M, std::common_type_t<T0, T1>>
     {
         lhs.centre - ( norm_difference * lhs.radius ) + ( ( ( lhs.radius + distance + rhs.radius ) / 2.0 ) * norm_difference ),
         ( lhs.radius + distance + rhs.radius ) / 2.0
@@ -248,29 +251,29 @@ template<unsigned M, class T0, class T1> inline bool operator!= ( const glh::reg
  *
  * calculates a new region based on a transformation matrix
  */
-template<unsigned M, class T0, class T1> inline glh::region::uniform_region<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::matrix<M, M, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs )
+template<unsigned M, class T0, class T1> inline glh::region::uniform_region<M, std::common_type_t<T0, T1>> operator* ( const glh::math::matrix<M, M, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs )
 {
     /* get the stretch of each axis */
-    std::array<glh::meta::pat_t<T0, T1>, M> stretches;
+    std::array<std::common_type_t<T0, T1>, M> stretches;
     for ( unsigned i = 0; i < M; ++i ) stretches.at ( i ) = glh::math::modulus ( glh::math::promote_vector<M, T0, T1> ( glh::math::column_vector ( lhs, i ) ) );
 
     /* apply the transformation to the centre of the region and alter the radius by the maximum stretch */
-    return glh::region::uniform_region<M, glh::meta::pat_t<T0, T1>> 
+    return glh::region::uniform_region<M, std::common_type_t<T0, T1>> 
     {
         lhs * rhs.centre,
         ( * std::max_element ( stretches.begin (), stretches.end () ) ) * rhs.radius
     };
 }
-template<unsigned M, class T0, class T1> inline glh::region::uniform_region<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::matrix<M + 1, M + 1, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs )
+template<unsigned M, class T0, class T1> inline glh::region::uniform_region<M, std::common_type_t<T0, T1>> operator* ( const glh::math::matrix<M + 1, M + 1, T0>& lhs, const glh::region::uniform_region<M, T1>& rhs )
 {
     /* get the stretch of each axis */
-    std::array<glh::meta::pat_t<T0, T1>, M> stretches;
+    std::array<std::common_type_t<T0, T1>, M> stretches;
     for ( unsigned i = 0; i < M; ++i ) stretches.at ( i ) = glh::math::modulus ( glh::math::promote_vector<M, T0, T1> ( glh::math::vector<M, T0> { glh::math::column_vector ( lhs, i ) } ) );
 
     /* apply the transformation to the centre of the region and alter the radius by the maximum stretch */
-    return glh::region::uniform_region<M, glh::meta::pat_t<T0, T1>> 
+    return glh::region::uniform_region<M, std::common_type_t<T0, T1>> 
     {
-        glh::math::vector<M, glh::meta::pat_t<T0, T1>> { lhs * glh::math::vector<M + 1, T1> { rhs.centre, 1 } },
+        glh::math::vector<M, std::common_type_t<T0, T1>> { lhs * glh::math::vector<M + 1, T1> { rhs.centre, 1 } },
         ( * std::max_element ( stretches.begin (), stretches.end () ) ) * rhs.radius
     };
 }

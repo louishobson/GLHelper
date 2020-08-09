@@ -4,11 +4,11 @@
 
 # gcc setup
 CC=g++
-CFLAGS=-std=c++17 -Iinclude -fpic -g -O
+CFLAGS=-std=c++17 -Iinclude -fpic -g -O2
 
 # g++ setup
 CPP=g++
-CPPFLAGS=-std=c++17 -Iinclude -fpic -g -O
+CPPFLAGS=-std=c++17 -Iinclude -fpic -g -O2
 
 # ar setup
 AR=ar

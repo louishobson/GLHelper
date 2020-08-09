@@ -13,7 +13,7 @@ layout ( location = 0 ) in vec3 in_pos;
 layout ( location = 1 ) in vec3 in_normal;
 layout ( location = 2 ) in vec3 in_tangent;
 layout ( location = 3 ) in vec4 in_vcolor;
-layout ( location = 4 ) in vec3 in_texcoords [ MAX_TEXTURE_STACK_SIZE ];
+layout ( location = 4 ) in vec2 in_texcoords [ MAX_TEXTURE_STACK_SIZE ];
 
 /* output fragpos, tbn_matrix, vcolor and texcoords */
 out VS_OUT
@@ -21,7 +21,7 @@ out VS_OUT
     vec3 fragpos;
     mat3 tbn_matrix;
     vec4 vcolor;
-    vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ];
+    vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ];
 } vs_out;
 
 

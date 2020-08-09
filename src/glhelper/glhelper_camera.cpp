@@ -409,6 +409,13 @@ glh::math::mat4 glh::camera::camera_orthographic::create_proj () const
 
 
 
+/* CAMERA_NOPROJECT IMPLEMENTATION */
+
+/* identity matrix */
+const glh::math::mat4 glh::camera::camera_noproject::identity = glh::math::identity<4> ();
+
+
+
 /* MIRROR_CAMERA IMPLEMENTATION */
 
 /* create_view

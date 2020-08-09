@@ -99,8 +99,14 @@
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
-/* include glhelper_math.hpp */
-#include <glhelper/glhelper_math.hpp>
+/* include glhelper_vector.hpp */
+#include <glhelper/glhelper_vector.hpp>
+
+/* include glhelper_matrix.hpp */
+#include <glhelper/glhelper_matrix.hpp>
+
+/* include glhelper_transform.hpp */
+#include <glhelper/glhelper_transform.hpp>
 
 /* include glhelper_shader.hpp */
 #include <glhelper/glhelper_shader.hpp>
@@ -140,6 +146,12 @@ namespace glh
          */
         class camera_orthographic;
 
+        /* class camera_noproject : camera_base
+         *
+         * camera using no projection
+         */
+        class camera_noproject;
+
 
 
         /* class camera_perspective_movement : camera_movement, camera_perspective
@@ -153,6 +165,12 @@ namespace glh
          * camera with movement functionality and an orthographic projection matrix
          */
         class camera_orthographic_movement;
+
+        /* class camera_noproject_movement : camera_movement, camera_noproject
+         *
+         * camera with movement functionality and no projection matrix
+         */
+        class camera_noproject_movement;
 
 
 
@@ -594,6 +612,37 @@ protected:
 
 
 
+/* CAMERA_NOPROJECT DEFINITION */
+
+/* class camera_noproject : camera_base
+ *
+ * camera using no projection
+ */
+class glh::camera::camera_noproject : public virtual camera_base
+{
+public:
+
+    /* default everything */
+    camera_noproject () = default;
+    camera_noproject ( const camera_noproject& other ) = default;
+    camera_noproject& operator= ( const camera_noproject& other ) = default;
+    ~camera_noproject () = default;
+
+private:
+
+    /* create_proj
+     *
+     * create the projection matrix
+     */
+    math::mat4 create_proj () const final { return identity; }
+
+    /* identity matrix */
+    static const math::mat4 identity;
+
+};
+
+
+
 
 /* CAMERA_PERSPECTIVE_MOVEMENT DEFINITION */
 
@@ -663,6 +712,39 @@ public:
 
 };
 
+
+
+/* CAMERA_NOPROJECT_MOVEMENT */
+
+/* class camera_noproject_movement : camera_movement, camera_noproject
+ *
+ * camera with movement functionality and no projection matrix
+ */
+class glh::camera::camera_noproject_movement : public camera_movement, public camera_noproject
+{
+public:
+
+    /* full constructor
+     *
+     * construct based on parameters of movement and perspective cameras
+     */
+    camera_noproject_movement ( const math::vec3& _position, const math::vec3& _direction, const math::vec3& _world_y )
+        : camera_movement { _position, _direction, _world_y }
+    {}
+
+    /* default zero-parameter constructor */
+    camera_noproject_movement () = default;
+
+    /* default copy constructor */
+    camera_noproject_movement ( const camera_noproject_movement& other ) = default;
+
+    /* default copy assignment operator */
+    camera_noproject_movement& operator= ( const camera_noproject_movement& other ) = default;
+
+    /* default destructor */
+    ~camera_noproject_movement () = default;
+
+};
 
 
 

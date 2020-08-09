@@ -10,12 +10,12 @@
 
 /* input vertex position and texture coords */
 layout ( location = 0 ) in vec3 in_pos;
-layout ( location = 4 ) in vec3 in_texcoords [ MAX_TEXTURE_STACK_SIZE ];
+layout ( location = 4 ) in vec2 in_texcoords [ MAX_TEXTURE_STACK_SIZE ];
 
 /* output texcoords */
 out VS_OUT
 {
-    vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ];
+    vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ];
 } vs_out;
 
 

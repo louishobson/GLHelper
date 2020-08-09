@@ -119,7 +119,7 @@
  * 1 : vec3    : normal
  * 2 : vec3    : tangent
  * 3 : vec4    : vertex color
- * 4 : vec3[x] : UV channels of texture coordinates
+ * 4 : vec2[x] : UV channels of texture coordinates
  * 
  * the number of UV channels is defined by GLH_MODEL_MAX_TEXTURE_STACK_SIZE
  * 
@@ -184,11 +184,17 @@
 /* include glhelper_render.hpp */
 #include <glhelper/glhelper_render.hpp>
 
-/* include glhelper_math.hpp */
-#include <glhelper/glhelper_math.hpp>
+/* include glhelper_vector.hpp */
+#include <glhelper/glhelper_vector.hpp>
+
+/* include glhelper_matrix.hpp */
+#include <glhelper/glhelper_matrix.hpp>
 
 /* include glhelper_region.hpp */
 #include <glhelper/glhelper_region.hpp>
+
+/* include glhelper_framebuffer.hpp */
+#include <glhelper/glhelper_framebuffer.hpp>
 
 
 
@@ -303,7 +309,7 @@ struct glh::model::vertex
     math::fvec4 vcolor;
 
     /* multiple uv channels of texture coords */
-    std::array<math::fvec3, GLH_MODEL_MAX_TEXTURE_STACK_SIZE> texcoords;
+    std::array<math::fvec2, GLH_MODEL_MAX_TEXTURE_STACK_SIZE> texcoords;
 };
 
 
@@ -349,8 +355,8 @@ struct glh::model::texture_stack_level
     unsigned stack_width;
     unsigned stack_height;
     
-    /* true if stack has an alpha component */
-    bool stack_has_alpha;
+    /* true if stack is definitely opaque */
+    bool definitely_opaque;
 
     /* wrapping modes */
     int wrapping_u;
@@ -377,6 +383,7 @@ struct glh::model::material
     texture_stack ambient_stack;
     texture_stack diffuse_stack;
     texture_stack specular_stack;
+    texture_stack emission_stack;
     texture_stack normal_stack;
 
     /* blend mode
@@ -446,6 +453,18 @@ struct glh::model::mesh
 
     /* the number of faces the mesh contains */
     unsigned num_faces;
+    unsigned num_opaque_faces;
+    unsigned num_transparent_faces;
+
+    /* the indices that the index data for the faces start in the ebo */
+    unsigned start_of_faces;
+    unsigned start_of_opaque_faces;
+    unsigned start_of_transparent_faces;
+
+    /* the indices that the index data for the faces start in the global ebo */
+    unsigned global_start_of_faces;
+    unsigned global_start_of_opaque_faces;
+    unsigned global_start_of_transparent_faces;
 
     /* the vertices the mesh consists of */
     std::vector<vertex> vertices;
@@ -458,6 +477,8 @@ struct glh::model::mesh
 
     /* an array of faces */
     std::vector<face> faces;
+    std::vector<face> opaque_faces;
+    std::vector<face> transparent_faces;
     
 
 
@@ -476,7 +497,7 @@ struct glh::model::mesh
     /* the ebo the indices of the faces are exported to */
     core::ebo index_data;
 
-    /* the vao controlling the vbo and the ebo */
+    /* the vao controlling the vbos and the ebo */
     core::vao array_object;
 
 
@@ -565,20 +586,20 @@ struct glh::model::import_flags
 
     /* configure regions accurately
      * this will override fast and acceptable region configuration
-     * this may take considerably longer
+     * this may take considerably longer than the other regions options, however
      */
     static const unsigned GLH_CONFIGURE_REGIONS_ACCURATE = 0x0040;
 
     /* configure only root node region
      * this only applies when accurate regions are being used
      * no mesh or lower level nodes will have their regions calculated, just the root node
+     * this is generally a good idea when using accurate regions
      */
     static const unsigned GLH_CONFIGURE_ONLY_ROOT_NODE_REGION = 0x0080;
 
 
 
     /* flip textures vertically
-     *
      * if set, all imported textures will be flipped vertically
      */
     static const unsigned GLH_FLIP_V_TEXTURES = 0x0100;
@@ -590,6 +611,24 @@ struct glh::model::import_flags
      * the Assimp post-process option aiProcess_PreTransformVertices will be force-enabled
      */
     static const unsigned GLH_PRETRANSFORM_VERTICES = 0x0200;
+
+
+
+    /* split meshes by alpha values
+     * this quite expensive flag will split all meshes into three sets of index data
+     * the first will be be the index data for all the faces,
+     * the second will will contain opaque faces and the third transparent
+     * this changes how the opaque and transparent rendering modes function
+     */
+    static const unsigned GLH_SPLIT_MESHES_BY_ALPHA_VALUES = 0x0400;
+
+    /* ignore vertex colors when alpha testing
+     */
+    static const unsigned GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING = 0x0800;
+
+    /* ignore texture color when alpha testing
+     */
+    static const unsigned GLH_IGNORE_TEXTURE_COLOR_WHEN_ALPHA_TESTING = 0x1000;
     
 
 
@@ -617,21 +656,27 @@ struct glh::model::render_flags
     /* dummy value */
     static const unsigned GLH_NONE = 0x00;
 
-    /* transparent mode 
-     * meshes which are flagged as definitely opaque will not be drawn
-     * this is useful for doing a separate opaque and transparent rendering calls
+    /* opaque mode
+     * if GLH_SPLIT_MESHES_BY_ALPHA_VALUES is set, only the opaque meshes will be rendered
+     * otherwise all meshes are rendered
      */
-    static const unsigned GLH_TRANSPARENT_MODE = 0x01;
+    static const unsigned GLH_OPAQUE_MODE = 0x01;
+
+    /* transparent mode 
+     * if GLH_SPLIT_MESHES_BY_ALPHA_VALUES is set, only the trabsparent meshes will be rendered
+     * otherwise, meshes which are flagged as definitely opaque will not be rendered
+     */
+    static const unsigned GLH_TRANSPARENT_MODE = 0x02;
 
     /* no matierials
-     * no material-associated uniforms are set, and do not have to be cached
+     * material-associated uniforms are not set and do not have to be cached
      */
-    static const unsigned GLH_NO_MATERIAL = 0x02;
+    static const unsigned GLH_NO_MATERIAL = 0x04;
 
     /* no model matrix
      * the uniform does not have to be cached
      */
-    static const unsigned GLH_NO_MODEL_MATRIX = 0x04;
+    static const unsigned GLH_NO_MODEL_MATRIX = 0x08;
 
 };
 
@@ -727,7 +772,7 @@ private:
     const std::string entry;
 
     /* import flags */
-    const unsigned model_import_flags;
+    unsigned model_import_flags;
 
     /* the post processing steps used to import the model */
     unsigned pps;
@@ -755,26 +800,43 @@ private:
 
 
 
+    /* shaders and programs for alpha testing */
+    core::vshader alpha_test_vshader;
+    core::gshader alpha_test_gshader;
+    core::fshader alpha_test_fshader;
+    core::program alpha_test_program;
+
+
+
     /* struct for cached material uniforms */
     struct cached_material_uniforms_struct
     {
         core::struct_uniform& material_uni;
+
         core::uniform& ambient_stack_size_uni;
         core::uniform& diffuse_stack_size_uni;
         core::uniform& specular_stack_size_uni;
+        core::uniform& emission_stack_size_uni;
         core::uniform& normal_stack_size_uni;
+
         core::uniform& ambient_stack_base_color_uni;
         core::uniform& diffuse_stack_base_color_uni;
         core::uniform& specular_stack_base_color_uni;
+        core::uniform& emission_stack_base_color_uni;
         core::uniform& normal_stack_base_color_uni;
+
         core::struct_array_uniform& ambient_stack_levels_uni; 
         core::struct_array_uniform& diffuse_stack_levels_uni; 
         core::struct_array_uniform& specular_stack_levels_uni;
+        core::struct_array_uniform& emission_stack_levels_uni;
         core::struct_array_uniform& normal_stack_levels_uni;
+
         core::uniform& ambient_stack_textures_uni;
         core::uniform& diffuse_stack_textures_uni;
         core::uniform& specular_stack_textures_uni;
+        core::uniform& emission_stack_textures_uni;
         core::uniform& normal_stack_textures_uni;
+
         core::uniform& blending_mode_uni;
         core::uniform& shininess_uni;
         core::uniform& shininess_strength_uni;
@@ -868,7 +930,7 @@ private:
      * 
      * return: the texture_stack just added
      */
-    texture_stack& add_texture_stack ( texture_stack& _texture_stack, const aiMaterial& aimaterial, const aiTextureType aitexturetype, const math::fvec3 base_color, const bool use_srgb );
+    texture_stack& add_texture_stack ( texture_stack& _texture_stack, const aiMaterial& aimaterial, const aiTextureType aitexturetype, const math::fvec3 base_color, const bool use_srgb = false );
 
     /* add_image
      *
@@ -888,8 +950,8 @@ private:
      * 
      * return: boolean for if is definitely opaque
      */
-    bool is_definitely_opaque ( const material& _material );
-    bool is_definitely_opaque ( const mesh& _mesh );
+    bool is_definitely_opaque ( const material& _material ) const;
+    bool is_definitely_opaque ( const mesh& _mesh ) const;
 
     /* add_mesh
      *
@@ -912,7 +974,23 @@ private:
      * 
      * return: the face just added
      */
-    face& add_face ( face& _face, mesh& _mesh, const aiFace& aiface );
+    face& add_face ( face& _face, const mesh& _mesh, const aiFace& aiface );
+
+    /* configure_mesh_vao
+     *
+     * configure a mesh' vao
+     * 
+     * _mesh: the mesh to configure
+     */
+    void configure_mesh_vao ( mesh& _mesh );
+
+    /* split_mesh
+     *
+     * split a mesh into opaque and transparent faces
+     * 
+     * _mesh: the mesh to split
+     */
+    void split_mesh ( mesh& _mesh );
 
     /* add_node
      *

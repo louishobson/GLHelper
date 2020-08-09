@@ -38,6 +38,7 @@ struct material_struct
     texture_stack_struct ambient_stack;
     texture_stack_struct diffuse_stack;
     texture_stack_struct specular_stack;
+    texture_stack_struct emission_stack;
     texture_stack_struct normal_stack;
 
     int blending_mode;
@@ -53,42 +54,46 @@ struct material_struct
 
 /* FUNCTIONS */
 
-/* evaluate_stack
+/* evaluate_stack_macro
  *
- * evaluate multiple stacked textures
+ * evaluate multiple stacked texture, but in macro form
  *
+ * stack_color: the name of an modifiable vec4 lvalue which will be used to store the result
  * stack: the stack to evaluate
  * texcoords: array of texture coords for the fragment
  *
- * return: the overall color of the fragment of the stack
+ * prototype:
+ *
+ * void evaluate_stack_macro ( out vec4 stack_color, texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ] )
  */
-vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ] )
-{
-    /* set stack color to base color */
-    vec4 stack_color = stack.base_color;
-
-    /* loop through the stack */
-    for ( int i = 0; i < stack.stack_size; ++i )
-    {
-        /* get the level color from the texture multiplied by the stength */
-        const vec4 level_color = texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ].xy, i ) ) * stack.levels [ i ].blend_strength;
-
-        /* add to the stack through the appropriate operation */
-        switch ( stack.levels [ i ].blend_operation )
-        {
-            case 0: stack_color *= level_color; break;
-            case 1: stack_color += level_color; break;
-            case 2: stack_color -= level_color; break;
-            case 3: stack_color /= level_color; break;
-            case 4: stack_color = ( stack_color + level_color ) - ( stack_color * level_color ); break;
-            case 5: stack_color = stack_color + ( level_color - 0.5 ); break;
-            default: stack_color *= level_color; break;
-        }
-    }
-
-    /* return the stack color */
-    return stack_color;
+#define evaluate_stack_macro( stack_color, stack, texcoords ) \
+{ \
+    /* set the output color to the base color of the stack */ \
+    stack_color = stack.base_color; \
+    \
+    /* loop through the stack */ \
+    for ( int i = 0; i < stack.stack_size; ++i ) \
+    { \
+        /* add to the stack through the appropriate operation 
+         * the expression 'texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength'
+         * is equal to the sampled value from the current texture
+         * for case 4, this is stored into a temporary variable, since the equation requires its use more than once
+         */ \
+        switch ( stack.levels [ i ].blend_operation ) \
+        { \
+            case 0: stack_color *= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength; break; \
+            case 1: stack_color += texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength; break; \
+            case 2: stack_color -= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength; break; \
+            case 3: stack_color /= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength; break; \
+            case 4: \
+                const vec4 level_color = texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength; \
+                stack_color = ( stack_color + level_color ) - ( stack_color * level_color ); break; \
+            case 5: stack_color += texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength - 0.5; break; \
+            default: stack_color *= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength; break; \
+        } \
+    } \
 }
+
 
 /* evaluate_stack_transparency
  *
@@ -100,30 +105,36 @@ vec4 evaluate_stack ( const texture_stack_struct stack, const vec3 texcoords [ M
  * transparency_cutoff: if the transparency is less than this value, return true
  *
  * return: boolean, true if has alpha < transparency_cutoff
+ *
+ * prototype: bool evaluate_stack_transparency ( texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ], float transparency_cutoff )
  */
-bool evaluate_stack_transparency ( const texture_stack_struct stack, const vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ], const float transparency_cutoff )
-{
+#define evaluate_stack_transparency( stack, texcoords, transparency_cutoff ) \
+    ( stack.base_color.a < transparency_cutoff || ( stack.stack_size != 0 && texture ( stack.textures, vec3 ( texcoords [ stack.levels [ 0 ].uvwsrc ], 0 ) ).a < transparency_cutoff ) )
     /* if base transparency < 1.0, return true
      * if has no textures, return false
-     * if has texture, return true if alpha is less than 1.0 */
-    return ( stack.base_color.a < transparency_cutoff || ( stack.stack_size != 0 && texture ( stack.textures, vec3 ( texcoords [ stack.levels [ 0 ].uvwsrc ].xy, 0 ) ).a < transparency_cutoff ) );
-}
+     * if has texture, return true if alpha is less than 1.0
+     */
 
-/* evaluate_normal
+/* evaluate_normal_macro
  *
- * calculate the new normal from a normal map, doing nothing if one is not present
+ * macro version of evaluate_normal
  *
+ * normal: a modifiable lvalue for the output normal
  * stack: the normal stack
  * texcoords: array of texture coords for the fragment
  * tbn_matrix: the TBN matrix to use to transform the normal, if map is present
+ * 
+ * prototype:
  *
- * return: the new normal, or the original if no map is present
+ * void evaluate_normal_macro ( out vec3 normal, texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ], mat3 tbn_matrix )
  */
-vec3 evaluate_normal ( const texture_stack_struct stack, const vec3 texcoords [ MAX_TEXTURE_STACK_SIZE ], const mat3 tbn_matrix )
-{
-    /* if no normal map, return origninal normal */
-    if ( stack.stack_size == 0 ) return tbn_matrix [ 2 ];
-
-    /* else sample the map and return the transformed normal */
-    return tbn_matrix * normalize ( ( evaluate_stack ( stack, texcoords ).xyz * 2.0 - 1.0 ) );
+#define evaluate_normal_macro( normal, stack, texcoords, tbn_matrix ) \
+{ \
+    /* if the size of the stack is greater than zero, sample the stack, and transform the output to its vector form
+     * then use the tbn matrix to transform the normal to tangent space
+     */ \
+    if ( stack.stack_size > 0 ) { vec4 stack_eval_; evaluate_stack_macro ( stack_eval_, stack, texcoords ); normal = tbn_matrix * normalize ( stack_eval_.xyz * 2.0 - 1.0 ); } \
+    /* otherwise just return the original normal, extracted from the tbn matrix */ \
+    else normal = tbn_matrix [ 2 ]; \
 }
+

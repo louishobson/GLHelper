@@ -28,7 +28,6 @@
 glh::core::buffer::buffer ()
     : capacity { 0 }
     , map_ptr { NULL }
-    , map_id { 0 }
     , is_immutable { false }
 { 
     /* generate object */
@@ -166,16 +165,17 @@ void glh::core::buffer::buffer_sub_data ( const unsigned offset, const unsigned 
  * a call to buffer_data is required to first resize this buffer to the capacity required
  *
  * read_buff: the buffer to read from
- * read/write_offset: the offsets for reading and writing
  * size: the number of bytes to copy
+ * read/write_offset: the offsets for reading and writing
  */
-void glh::core::buffer::copy_sub_data ( const buffer& read_buff, const unsigned read_offset, const unsigned write_offset, const unsigned size )
+void glh::core::buffer::copy_sub_data ( const buffer& read_buff, const unsigned size, const unsigned read_offset, const unsigned write_offset )
 {
     /* unmap */
     unmap_buffer ();
+    read_buff.unmap_buffer ();
 
     /* check offsets */
-    if ( read_offset + size > read_buff.get_capacity () || write_offset + size > capacity )
+    if ( read_offset + size > read_buff.get_size () || write_offset + size > capacity )
     throw exception::buffer_exception { "attempted to perform copy buffer sub data operation with incompatible paramaters for buffer capacities" };
 
     /* copy sub data */
@@ -186,15 +186,20 @@ void glh::core::buffer::copy_sub_data ( const buffer& read_buff, const unsigned 
 
 /* clear_data
  *
- * clear the data from the buffer
+ * clear the data from the buffer with a certain value
+ * 
+ * internal_format: the format of the data within the buffer
+ * format: the format of the data being put into the buffer
+ * type: the type of the data being put into the buffer
+ * data: the data to be copied into the buffer
  */
-void glh::core::buffer::clear_data ()
+void glh::core::buffer::clear_data ( const GLenum internal_format, const GLenum format, const GLenum type, const void * data )
 {
-    /* unmap */
+    /* unmap the buffer */
     unmap_buffer ();
 
-    /* empty buffer data */
-    glNamedBufferData ( id, 0, NULL, GL_STATIC_DRAW );
+    /* clear data */
+    glClearNamedBufferData ( id, internal_format, format, type, data );
 }
 
 
@@ -233,29 +238,8 @@ void glh::core::buffer::unmap_buffer () const
     /* otherwise destroy the map */
     glUnmapNamedBuffer ( id );
 
-    /* increment map id */
-    ++map_id;
-
     /* set to NULL */
     map_ptr = NULL;
-}
-
-
-
-/* assert_not_is_buffer_mapped
- *
- * throws if the buffer is mapped
- * 
- * operationL the operation being performed
- */
-void glh::core::buffer::assert_not_is_buffer_mapped ( const std::string& operation ) const
-{
-    /* throw if is mapped */
-    if ( is_buffer_mapped () )
-    {
-        if ( operation.size () > 0 ) throw exception::buffer_exception { "attempted to perform " + operation + " operation while buffer is mapped" };
-        else throw exception::buffer_exception { "attempted to perform operation while buffer is mapped" };
-    }
 }
 
 
@@ -329,7 +313,7 @@ glh::core::object_pointer<glh::core::ebo> glh::core::ebo::bound_ebo {};
 glh::core::ubo::ubo () 
 {
     /* bind to set buffer type */
-    bind (); 
+    bind (); unbind ();
     
     /* get buffer offset alignment */
     glGetIntegerv ( GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &uniform_buffer_offset_alignment ); 
@@ -346,7 +330,7 @@ glh::core::ubo::ubo ()
 glh::core::ubo::ubo ( const unsigned size, const void * data, const GLenum usage )
 {
     /* bind to set buffer type */
-    bind (); 
+    bind (); unbind ();
     
     /* get buffer offset alignment */
     glGetIntegerv ( GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &uniform_buffer_offset_alignment ); 
@@ -422,15 +406,80 @@ std::vector<glh::core::object_pointer<glh::core::ubo>> glh::core::ubo::bound_ubo
 
 
 
+/* SSBO IMPLEMENTATION */
+
+/* default bind/unbind the ssbo */
+bool glh::core::ssbo::bind () const
+{
+    /* if already bound, return false, else bind and return true */
+    if ( bound_ssbo == this ) return false;
+    glBindBuffer ( GL_SHADER_STORAGE_BUFFER, id );
+    bound_ssbo = const_cast<ssbo *> ( this );
+    return true;
+}
+bool glh::core::ssbo::unbind () const
+{
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_ssbo != this ) return false;
+    glBindBuffer ( GL_SHADER_STORAGE_BUFFER, 0 );
+    bound_ssbo = NULL;
+    return true;
+}
+
+/* bind the ssbo to an index */
+bool glh::core::ssbo::bind ( const unsigned index ) const
+{
+    /* if already bound, return false, else bind and return true */
+    if ( bound_ssbo_indices.size () > index && bound_ssbo_indices.at ( index ) == this ) return true;
+    if ( bound_ssbo_indices.size () <= index ) bound_ssbo_indices.resize ( index + 1 );
+    glBindBufferBase ( GL_SHADER_STORAGE_BUFFER, index, id );
+    bound_ssbo_indices.at ( index ) = const_cast<ssbo *> ( this );
+    return true;
+}
+bool glh::core::ssbo::unbind ( const unsigned index ) const
+{
+    /* if not bound, return false, else unbind and return true */
+    if ( bound_ssbo_indices.size () <= index || bound_ssbo_indices.at ( index ) != this ) return true;
+    glBindBufferBase ( GL_SHADER_STORAGE_BUFFER, index, id );
+    bound_ssbo_indices.at ( index ) = NULL;
+    return true;
+}
+
+/* unbind from all bind points */
+bool glh::core::ssbo::unbind_all () const
+{
+    /* record binding change */
+    bool binding_change = false;
+
+    /* default unbind, unbind read and write, and then unbind from all indices */
+    binding_change |= unbind_copy_read ();
+    binding_change |= unbind_copy_write ();
+    binding_change |= unbind ();
+    for ( unsigned i = 0; i < bound_ssbo_indices.size (); ++i ) binding_change |= unbind ( i );
+
+    /* return binding_change */
+    return binding_change;
+}
+
+
+
+/* bound_ssbo
+ * bound_ssbo_indices
+ *
+ * bound ssbo and index-bound objects
+ */
+glh::core::object_pointer<glh::core::ssbo> glh::core::ssbo::bound_ssbo {};
+std::vector<glh::core::object_pointer<glh::core::ssbo>> glh::core::ssbo::bound_ssbo_indices {};
+
+
+
 /* VAO IMPLEMENTATION */
 
 /* constructor
  *
- * creates a vertex array object without any vbo or ebo bound
+ * creates a vertex array object
  */
 glh::core::vao::vao ()
-    : vertex_attribs { 8, { 0, GL_NONE, GL_NONE, 0, 0, {}, false } }
-    , bound_ebo {}
 {
     /* generate the vao */
     glGenVertexArrays ( 1, &id );
@@ -481,10 +530,6 @@ void glh::core::vao::set_vertex_attrib ( const unsigned attrib, const vbo& buff,
     /* enable attribute */
     glEnableVertexAttribArray ( attrib );
 
-    /* add the attribute to vertex_attribs */
-    if ( attrib >= vertex_attribs.size () ) vertex_attribs.resize ( attrib + 1, { 0, GL_NONE, GL_NONE, 0, 0, {}, false } );
-    vertex_attribs.at ( attrib ) = { size, type, norm, stride, offset, buff, true };
-
     /* unbind vao */
     if ( vao_binding_change ) unbind ();
     /* unbind vbo */
@@ -502,7 +547,6 @@ void glh::core::vao::enable_vertex_attrib ( const unsigned attrib )
     /* bind vao, enable, unbind */
     const bool binding_change = bind ();
     glEnableVertexAttribArray ( attrib );
-    vertex_attribs.at ( attrib ).enabled = true;
     if ( binding_change ) unbind ();
 }
 
@@ -517,7 +561,6 @@ void glh::core::vao::disable_vertex_attrib ( const unsigned attrib )
     /* bind vao, disable, unbind */
     const bool binding_change = bind ();
     glDisableVertexAttribArray ( attrib );
-    vertex_attribs.at ( attrib ).enabled = false;
     if ( binding_change ) unbind ();
 }
 
@@ -533,54 +576,9 @@ void glh::core::vao::bind_ebo ( const ebo& buff )
     const bool vao_binding_change = bind ();
     const bool ebo_binding_change = buff.bind ();
 
-    /* set the ebo */
-    bound_ebo = buff;
-
     /* unbind vao, then ebo */
     if ( vao_binding_change ) unbind ();
     if ( ebo_binding_change ) buff.unbind ();
-}
-
-
-
-/* prepare_arrays
- * 
- * prepare for drawing from vertex arrays, not using an ebo
- * will not bind the vao, however
- * will throw if fails to prepare
- */
-void glh::core::vao::prepare_arrays () const
-{
-    /* throw if invalid object */
-    if ( !is_object_valid () ) throw exception::buffer_exception { "failed to prepare vao arrays: vao is an invalid object" };
-
-    /* loop through enabled vertex attributes and check buffers are valid */
-    for ( const auto& att: vertex_attribs )
-    {
-        if ( att.enabled ) 
-        {
-            /* assert is valid */
-            if ( !att.buff ) throw exception::buffer_exception { "failed to prepare vao arrays: vbo is invalid" };
-            /* assure that buffer is not mapped */
-            att.buff->unmap_buffer ();
-        }
-    }
-}
-
-/* prepare_elements
- *
- * prepare for drawing using an ebo
- * will not bind the vao, however
- * will throw if fails to prepare
- */
-void glh::core::vao::prepare_elements () const
-{
-    /* prepare arrays */
-    prepare_arrays ();
-
-    /* assert that ebo is valid and that it is not mapped */
-    if ( !bound_ebo ) throw exception::buffer_exception { "failed to prepare vao elements: ebo is invalid" };
-    bound_ebo->unmap_buffer ();
 }
 
 

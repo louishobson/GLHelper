@@ -37,6 +37,7 @@ glh::model::model::model ( const std::string& _directory, const std::string& _en
     , pps { aiProcessPreset_TargetRealtime_MaxQuality }
     , pretransform_matrix { _pretransform_matrix }
     , pretransform_normal_matrix { math::normal ( _pretransform_matrix ) }
+    , alpha_test_program { alpha_test_vshader, alpha_test_gshader, alpha_test_fshader }
 {
     /* add debone and optimise graph */
     pps |= aiProcess_Debone | aiProcess_OptimizeGraph;
@@ -130,19 +131,27 @@ void glh::model::model::cache_material_uniforms ( core::struct_uniform& material
             material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "stack_size" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_uniform ( "stack_size" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_uniform ( "stack_size" ),
+            material_uni.get_struct_uniform ( "emission_stack" ).get_uniform ( "stack_size" ),
             material_uni.get_struct_uniform ( "normal_stack" ).get_uniform ( "stack_size" ),
+
             material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "base_color" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_uniform ( "base_color" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_uniform ( "base_color" ),
+            material_uni.get_struct_uniform ( "emission_stack" ).get_uniform ( "base_color" ),
             material_uni.get_struct_uniform ( "normal_stack" ).get_uniform ( "base_color" ),
+            
             material_uni.get_struct_uniform ( "ambient_stack" ).get_struct_array_uniform ( "levels" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_struct_array_uniform ( "levels" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_struct_array_uniform ( "levels" ),
+            material_uni.get_struct_uniform ( "emission_stack" ).get_struct_array_uniform ( "levels" ),
             material_uni.get_struct_uniform ( "normal_stack" ).get_struct_array_uniform ( "levels" ),
+
             material_uni.get_struct_uniform ( "ambient_stack" ).get_uniform ( "textures" ),
             material_uni.get_struct_uniform ( "diffuse_stack" ).get_uniform ( "textures" ),
             material_uni.get_struct_uniform ( "specular_stack" ).get_uniform ( "textures" ),
+            material_uni.get_struct_uniform ( "emission_stack" ).get_uniform ( "textures" ),
             material_uni.get_struct_uniform ( "normal_stack" ).get_uniform ( "textures" ),
+
             material_uni.get_uniform ( "blending_mode" ),
             material_uni.get_uniform ( "shininess" ),
             material_uni.get_uniform ( "shininess_strength" ),
@@ -184,6 +193,20 @@ void glh::model::model::process_scene ( const aiScene& aiscene )
     for ( unsigned i = 0; i < aiscene.mNumMeshes; ++i )
         add_mesh ( meshes.at ( i ), * aiscene.mMeshes [ i ] );
 
+    /* if required to split meshes... */
+    if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES )
+    {
+        /* initialise the alpha testing program */
+        alpha_test_vshader.include_files ( { "shaders/materials.glsl", "shaders/vertex.alpha_test.glsl" } );
+        alpha_test_gshader.include_files ( { "shaders/materials.glsl", "shaders/geometry.alpha_test.glsl" } );
+        alpha_test_fshader.include_files ( { "shaders/materials.glsl", "shaders/fragment.alpha_test.glsl" } );
+        alpha_test_program.compile_and_link ();
+
+        /* split the meshes */
+        for ( unsigned i = 0; i < aiscene.mNumMeshes; ++i )
+            split_mesh ( meshes.at ( i ) );
+    }
+
     /* now recursively process all of the nodes */
     root_node.parent = NULL;
     add_node ( root_node, * aiscene.mRootNode );
@@ -215,7 +238,9 @@ glh::model::material& glh::model::model::add_material ( material& _material, con
         ( aimaterial.Get ( AI_MATKEY_COLOR_DIFFUSE, temp_color ) == aiReturn_SUCCESS ? cast_vector ( temp_color ) : math::fvec3 { 0.0 } ), model_import_flags & import_flags::GLH_DIFFUSE_SRGBA );
     add_texture_stack ( _material.specular_stack, aimaterial, aiTextureType_SPECULAR, 
         ( aimaterial.Get ( AI_MATKEY_COLOR_SPECULAR, temp_color ) == aiReturn_SUCCESS ? cast_vector ( temp_color ) : math::fvec3 { 0.0 } ), model_import_flags & import_flags::GLH_SPECULAR_SRGBA );
-    add_texture_stack ( _material.normal_stack, aimaterial, aiTextureType_NORMALS, math::fvec3 { 0.0 }, false );
+    add_texture_stack ( _material.emission_stack, aimaterial, aiTextureType_EMISSIVE, 
+        ( aimaterial.Get ( AI_MATKEY_COLOR_EMISSIVE, temp_color ) == aiReturn_SUCCESS ? cast_vector ( temp_color ) : math::fvec3 { 0.0 } ) );
+    add_texture_stack ( _material.normal_stack, aimaterial, aiTextureType_NORMALS, math::fvec3 { 0.0 } );
 
     /* get the blend mode */
     if ( aimaterial.Get ( AI_MATKEY_BLEND_FUNC, temp_int ) == aiReturn_SUCCESS )
@@ -268,21 +293,28 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
     int temp_int;
     aiString temp_string;
 
+    /* assume is definitely opaque */
+
+
     /* set the base color */
-    _texture_stack.base_color = math::fvec4 { base_color };
+    _texture_stack.base_color = math::fvec4 { base_color, 0.0 };
 
     /* apply sRGBA transformation to base color */
     if ( use_srgb ) _texture_stack.base_color = math::pow ( _texture_stack.base_color, math::fvec4 { 2.2 } );
+
+    /* assume is definitely opaque */
+    _texture_stack.definitely_opaque = true;
 
     /* get the stack size */
     _texture_stack.stack_size = aimaterial.GetTextureCount ( aitexturetype );
     _texture_stack.stack_width = 0; _texture_stack.stack_height = 0;
 
-    /* set has_alpha to false */
-    _texture_stack.stack_has_alpha = false;
-
-    /* if stack size is 0, return immediately */
-    if ( _texture_stack.stack_size == 0 ) return _texture_stack;
+    /* if stack size is 0, set base color's alpha to 1.0 and return immediately */
+    if ( _texture_stack.stack_size == 0 )
+    {
+        _texture_stack.base_color.at ( 3 ) = 1.0;
+        return _texture_stack;
+    }
 
 
 
@@ -293,7 +325,7 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
         if ( aimaterial.Get ( AI_MATKEY_TEXOP ( aitexturetype, i ), temp_int ) == aiReturn_SUCCESS )
         _texture_stack.levels.at ( i ).blend_operation = temp_int; else _texture_stack.levels.at ( i ).blend_operation = 0;
         if ( i == 0 && ( _texture_stack.base_color == math::fvec4 { 0.0 } || _texture_stack.base_color == math::fvec4 { 1.0 } ) && ( _texture_stack.levels.at ( 0 ).blend_operation <= 1 ) )
-            { _texture_stack.base_color = math::fvec4 { 1.0 }; _texture_stack.levels.at ( 0 ).blend_operation = 0; }
+            { _texture_stack.base_color = math::fvec4 { 0.0 }; _texture_stack.levels.at ( 0 ).blend_operation = 1; }
         if ( aimaterial.Get ( AI_MATKEY_TEXBLEND ( aitexturetype, i ), temp_float ) == aiReturn_SUCCESS ) 
         _texture_stack.levels.at ( i ).blend_strength = temp_float; else _texture_stack.levels.at ( i ).blend_strength = 1.0;
 
@@ -308,13 +340,12 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
         if ( i == 0 ) _texture_stack.wrapping_v = temp_int; else if ( temp_int != _texture_stack.wrapping_v )
             throw exception::model_exception { "wrapping modes are not consistent between texture stack levels" }; 
         
-        /* set uvwsrc */
+        /* set uvwsrc, assuming the value of i if there is no explicit value
+         * when importing meshes, if it turns out that a mesh only has one uv channel, the uvsrc of all the stacks of its material will be set to 0
+         * long story short, the uvsrc may change when importing meshes
+         */
         if ( aimaterial.Get ( AI_MATKEY_UVWSRC ( aitexturetype, i ), temp_int ) == aiReturn_SUCCESS )
-        _texture_stack.levels.at ( i ).uvwsrc = temp_int; else _texture_stack.levels.at ( i ).uvwsrc = 0;
-
-        /* check that the uv channel is actually possible */
-        if ( _texture_stack.levels.at ( i ).uvwsrc >= GLH_MODEL_MAX_TEXTURE_STACK_SIZE )
-            throw exception::model_exception { "level of texture stack requires UV channel greater than the maximum (which is" + std::to_string ( GLH_MODEL_MAX_TEXTURE_STACK_SIZE ) + ")" };
+        _texture_stack.levels.at ( i ).uvwsrc = temp_int; else _texture_stack.levels.at ( i ).uvwsrc = i;
 
         /* set the image index by importing the image */
         aimaterial.GetTexture ( aitexturetype, i, &temp_string );
@@ -328,11 +359,11 @@ glh::model::texture_stack& glh::model::model::add_texture_stack ( texture_stack&
         } else if ( _texture_stack.stack_width != images.at ( _texture_stack.levels.at ( i ).image_index ).get_width () || _texture_stack.stack_height != images.at ( _texture_stack.levels.at ( i ).image_index ).get_height () )
             throw exception::model_exception { "image dimensions are not consistent between texture stack levels" }; 
 
-        /* change has_alpha if necessary */
-        _texture_stack.stack_has_alpha |= images.at ( _texture_stack.levels.at ( i ).image_index ).has_alpha ();
+        /* if image is not definitely opaque, neither is the stack */
+        _texture_stack.definitely_opaque &= images.at ( _texture_stack.levels.at ( i ).image_index ).is_definitely_opaque ();
     }
 
-
+    
 
     /* resize the texture array */
     _texture_stack.textures.tex_storage ( _texture_stack.stack_width, _texture_stack.stack_height, _texture_stack.stack_size, ( use_srgb ? GL_SRGB8_ALPHA8 : GL_RGBA8 ) );
@@ -377,7 +408,7 @@ unsigned glh::model::model::add_image ( const std::string& filepath )
     /* otherwise add new image
      * GLH_FLIP_V_TEXTURES no longer actually flips the texture because that's slow
      * it purely forces the assimp post process flag to flip the uv coords */
-    //images.emplace_back ( filepath, model_import_flags & import_flags::GLH_FLIP_V_TEXTURES );
+    //images.emplace_back ( filepath, 4, model_import_flags & import_flags::GLH_FLIP_V_TEXTURES );
     images.emplace_back ( filepath );
 
     /* return the size of images - 1 */
@@ -394,30 +425,31 @@ unsigned glh::model::model::add_image ( const std::string& filepath )
  * 
  * return: boolean for if is definitely opaque
  */
-bool glh::model::model::is_definitely_opaque ( const material& _material )
+bool glh::model::model::is_definitely_opaque ( const material& _material ) const
 {
     /* if opacity != 1.0, return false */
     if ( _material.opacity != 1.0 ) return false;
 
-    /* return false if any texture stack has an alpha component */
-    if ( _material.ambient_stack.stack_has_alpha ) return false;
-    if ( _material.diffuse_stack.stack_has_alpha ) return false;
-    if ( _material.specular_stack.stack_has_alpha ) return false;
+    /* return false if diffuse texture stack is not definitely opaque, and true if it is */
+    return _material.diffuse_stack.definitely_opaque;
+}
+bool glh::model::model::is_definitely_opaque ( const mesh& _mesh ) const
+{
+    /* if texture color should be used in determining opacity, then
+     * if if material is not definitely opaque, return false 
+     */
+    if ( ~model_import_flags & import_flags::GLH_IGNORE_TEXTURE_COLOR_WHEN_ALPHA_TESTING && !_mesh.properties->definitely_opaque ) return false;
 
-    /* otherwise the material is definitely opaque */
+    /* if vertex color should be used in determining opacity, then
+     * loop through all vertex colors and check that alpha components are all 1.0
+     */
+    if ( ~model_import_flags & import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING ) 
+        for ( unsigned i = 0; i < _mesh.vertices.size (); ++i ) if ( _mesh.vertices.at ( i ).vcolor.at ( 3 ) < 1.0 ) return false;
+
+    /* otherwise return true */
     return true;
 }
-bool glh::model::model::is_definitely_opaque ( const mesh& _mesh )
-{
-    /* if material is not definitely opaque, return */
-    if ( !_mesh.properties->definitely_opaque ) return false;
 
-    /* loop through all vertices and vertex colors and check that alpha components are all 1 */
-    for ( unsigned i = 0; i < _mesh.vertices.size (); ++i ) if ( _mesh.vertices.at ( i ).vcolor.at ( 3 ) < 1.0 ) return false;
-
-    /* otherwise the mesh is definitely opaque */
-    return true; 
-}
 
 
 
@@ -451,7 +483,7 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
         /* transform them if pretransform is set */
         if ( model_import_flags & import_flags::GLH_PRETRANSFORM_VERTICES )
         {
-            _mesh.vertices.at ( i ).position = math::vec3 ( pretransform_matrix * math::vec4 ( _mesh.vertices.at ( i ).position, 1.0 ) );
+            _mesh.vertices.at ( i ).position = math::fvec3 ( pretransform_matrix * math::fvec4 ( _mesh.vertices.at ( i ).position, 1.0 ) );
             _mesh.vertices.at ( i ).normal = pretransform_normal_matrix * _mesh.vertices.at ( i ).normal;
             _mesh.vertices.at ( i ).tangent = pretransform_normal_matrix * _mesh.vertices.at ( i ).tangent;
         }
@@ -469,36 +501,50 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
 
         /* set uv channel coords */
         for ( unsigned j = 0; j < _mesh.num_uv_channels; ++j )
-            _mesh.vertices.at ( i ).texcoords.at ( j ) = cast_vector ( aimesh.mTextureCoords [ j ][ i ] );
+            _mesh.vertices.at ( i ).texcoords.at ( j ) = math::fvec2 ( cast_vector ( aimesh.mTextureCoords [ j ][ i ] ) );
     }
 
     /* add material reference */
     _mesh.properties_index = aimesh.mMaterialIndex;
     _mesh.properties = &materials.at ( _mesh.properties_index );
 
+    /* if there is only one set of texture coords, set all uvsrc's to 0 */
+    if ( _mesh.num_uv_channels == 1 )
+    {
+        for ( unsigned i = 0; i < _mesh.properties->ambient_stack.stack_size;  ++i ) _mesh.properties->ambient_stack.levels.at ( i ).uvwsrc  = 0;
+        for ( unsigned i = 0; i < _mesh.properties->diffuse_stack.stack_size;  ++i ) _mesh.properties->diffuse_stack.levels.at ( i ).uvwsrc  = 0;
+        for ( unsigned i = 0; i < _mesh.properties->specular_stack.stack_size; ++i ) _mesh.properties->specular_stack.levels.at ( i ).uvwsrc = 0;
+        for ( unsigned i = 0; i < _mesh.properties->emission_stack.stack_size; ++i ) _mesh.properties->emission_stack.levels.at ( i ).uvwsrc = 0;
+        for ( unsigned i = 0; i < _mesh.properties->normal_stack.stack_size;   ++i ) _mesh.properties->normal_stack.levels.at ( i ).uvwsrc   = 0;
+    } else
+    /* else check for out of bounds uvsrc */
+    {
+        bool out_of_bounds_uvsrc = false;
+        for ( unsigned i = 0; i < _mesh.properties->ambient_stack.stack_size;  ++i ) out_of_bounds_uvsrc |= _mesh.properties->ambient_stack.levels.at ( i ).uvwsrc  >= _mesh.num_uv_channels;
+        for ( unsigned i = 0; i < _mesh.properties->diffuse_stack.stack_size;  ++i ) out_of_bounds_uvsrc |= _mesh.properties->diffuse_stack.levels.at ( i ).uvwsrc  >= _mesh.num_uv_channels;
+        for ( unsigned i = 0; i < _mesh.properties->specular_stack.stack_size; ++i ) out_of_bounds_uvsrc |= _mesh.properties->specular_stack.levels.at ( i ).uvwsrc >= _mesh.num_uv_channels;
+        for ( unsigned i = 0; i < _mesh.properties->emission_stack.stack_size; ++i ) out_of_bounds_uvsrc |= _mesh.properties->emission_stack.levels.at ( i ).uvwsrc >= _mesh.num_uv_channels;
+        for ( unsigned i = 0; i < _mesh.properties->normal_stack.stack_size;   ++i ) out_of_bounds_uvsrc |= _mesh.properties->normal_stack.levels.at ( i ).uvwsrc   >= _mesh.num_uv_channels;
+        if ( out_of_bounds_uvsrc ) throw exception::model_exception { "uvsrc is out of bounds" };
+    }
+
     /* add faces */
-    _mesh.num_faces = aimesh.mNumFaces;
+    _mesh.num_faces             = aimesh.mNumFaces;
+    _mesh.num_opaque_faces      = 0;
+    _mesh.num_transparent_faces = 0;
     _mesh.faces.resize ( _mesh.num_faces );
     for ( unsigned i = 0; i < aimesh.mNumFaces; ++i ) add_face ( _mesh.faces.at ( i ), _mesh, aimesh.mFaces [ i ] );
 
+    /* set face indices to default */
+    _mesh.start_of_faces                    = 0;
+    _mesh.start_of_opaque_faces             = 0;
+    _mesh.start_of_transparent_faces        = 0;
+    _mesh.global_start_of_faces             = 0;
+    _mesh.global_start_of_opaque_faces      = 0;
+    _mesh.global_start_of_transparent_faces = 0;
 
-
-    /* buffer vertex data */
-    _mesh.vertex_data.buffer_storage ( _mesh.vertices.begin (), _mesh.vertices.end () );
-
-    /* buffer index data */
-    _mesh.index_data.buffer_storage ( _mesh.faces.begin (), _mesh.faces.end () );
-
-    /* configure the vao */
-    _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 0 * sizeof ( GLfloat ));
-    _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 3 * sizeof ( GLfloat ) );
-    _mesh.array_object.set_vertex_attrib ( 2, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 6 * sizeof ( GLfloat ) );
-    _mesh.array_object.set_vertex_attrib ( 3, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 9 * sizeof ( GLfloat ) );
-    for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
-        _mesh.array_object.set_vertex_attrib ( 4 + i, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 13 + i * 3 ) * sizeof ( GLfloat ) );
-    _mesh.array_object.bind_ebo ( _mesh.index_data );
-
-
+    /* set definitely opaque */
+    _mesh.definitely_opaque = is_definitely_opaque ( _mesh );
 
     /* if GLH_CONFIGURE_REGIONS_ACCURATE and GLH_CONFIGURE_ONLY_ROOT_NODE_REGION is set, don't configure meshes
      * else if any mesh configuration flag is set, configure meshes
@@ -506,6 +552,21 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
     if ( !( model_import_flags & import_flags::GLH_CONFIGURE_REGIONS_ACCURATE && model_import_flags & import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION ) )
         if ( model_import_flags & ( import_flags::GLH_CONFIGURE_REGIONS_FAST | import_flags::GLH_CONFIGURE_REGIONS_ACCEPTABLE | import_flags::GLH_CONFIGURE_REGIONS_ACCURATE ) ) 
             configure_mesh_region ( _mesh );
+
+
+
+    /* buffer vertex data */
+    _mesh.vertex_data.buffer_storage ( _mesh.vertices.begin (), _mesh.vertices.end () );
+
+    /* buffer index data 
+     * don't use immutable storage if the meshes will be split
+     */
+    if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES )
+        _mesh.index_data.buffer_data ( _mesh.faces.begin (), _mesh.faces.end () );
+    else _mesh.index_data.buffer_storage ( _mesh.faces.begin (), _mesh.faces.end () );
+
+    /* configure the vao */
+    configure_mesh_vao ( _mesh );
 
 
 
@@ -525,7 +586,7 @@ glh::model::mesh& glh::model::model::add_mesh ( mesh& _mesh, const aiMesh& aimes
  * 
  * return: the face just added
  */
-glh::model::face& glh::model::model::add_face ( face& _face, mesh& _mesh, const aiFace& aiface )
+glh::model::face& glh::model::model::add_face ( face& _face, const mesh& _mesh, const aiFace& aiface )
 {
     /* assert that there are 3 indices */
     if ( aiface.mNumIndices != 3 ) throw exception::model_exception { "face has not been triangulated" };
@@ -537,6 +598,144 @@ glh::model::face& glh::model::model::add_face ( face& _face, mesh& _mesh, const 
 
     /* return face */
     return _face;
+}
+
+
+
+/* configure_mesh_vao
+ *
+ * configure a mesh' vao
+ * 
+ * _mesh: the mesh to configure
+ */
+void glh::model::model::configure_mesh_vao ( mesh& _mesh )
+{
+    _mesh.array_object.set_vertex_attrib ( 0, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 0 * sizeof ( GLfloat ) );
+    _mesh.array_object.set_vertex_attrib ( 1, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 3 * sizeof ( GLfloat ) );
+    _mesh.array_object.set_vertex_attrib ( 2, _mesh.vertex_data, 3, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 6 * sizeof ( GLfloat ) );
+    _mesh.array_object.set_vertex_attrib ( 3, _mesh.vertex_data, 4, GL_FLOAT, GL_FALSE, sizeof ( vertex ), 9 * sizeof ( GLfloat ) );
+    for ( unsigned i = 0; i < _mesh.num_uv_channels; ++i )
+        _mesh.array_object.set_vertex_attrib ( 4 + i, _mesh.vertex_data, 2, GL_FLOAT, GL_FALSE, sizeof ( vertex ), ( 13 + i * 2 ) * sizeof ( GLfloat ) );
+    _mesh.array_object.bind_ebo ( _mesh.index_data );
+}
+
+
+
+/* split_mesh
+ *
+ * split a mesh into opaque and transparent faces
+ * 
+ * _mesh: the mesh to split
+ */
+void glh::model::model::split_mesh ( mesh& _mesh )
+{
+    /* if mesh is definitely opaque, set the number of opaque faces to be the same as the number of faces
+     * since the index is already zero, this will cause the same vertices to be used by general faces as well as opaque faces
+     */
+    if ( _mesh.definitely_opaque ) _mesh.num_opaque_faces = _mesh.num_faces; else
+
+    /* else if the material has an opacity of less than 1.0, set the number of transparent faces to be the same as the number of faces
+     * since the index is already zero, this will cause the same vertices to be used by general faces as well as transparent faces
+     */
+    if ( _mesh.properties->opacity < 1.0 ) _mesh.num_transparent_faces = _mesh.num_faces; else
+  
+    /* else apply alpha testing on each face */
+    {
+        /* get ssbo size
+         * there are two faces per byte, hence the division by two, and the size must be a multiple of 32
+         */
+        unsigned alpha_test_ssbo_size = std::ceil ( _mesh.num_faces / 2.0 );
+        if ( alpha_test_ssbo_size % 32 != 0 ) alpha_test_ssbo_size += 32 - ( alpha_test_ssbo_size % 32 );
+
+        /* create ssbo */
+        core::ssbo alpha_test_ssbo;
+        alpha_test_ssbo.buffer_storage ( alpha_test_ssbo_size, NULL, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT );
+        const unsigned zero = 0;
+        alpha_test_ssbo.clear_data ( GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT, &zero );
+        alpha_test_ssbo.bind ( 0 );
+
+        /* create fbo */
+        core::fbo alpha_test_fbo;
+        alpha_test_fbo.draw_buffer ( GL_NONE );
+        alpha_test_fbo.read_buffer ( GL_NONE );
+        alpha_test_fbo.set_default_dimensions ( _mesh.properties->diffuse_stack.stack_width, _mesh.properties->diffuse_stack.stack_height );
+        alpha_test_fbo.bind ();
+
+        /* temporarily set diffuse texture stack to not use interpolation */
+        _mesh.properties->diffuse_stack.textures.set_mag_filter ( GL_NEAREST );
+        _mesh.properties->diffuse_stack.textures.set_min_filter ( GL_NEAREST_MIPMAP_NEAREST );
+
+        /* use alpha test program */
+        alpha_test_program.use ();
+
+        /* cache the material uniform */
+        cache_material_uniforms ( alpha_test_program.get_struct_uniform ( "material" ) );
+
+        /* set viewport and disable some settings */
+        core::renderer::disable_multisample ();
+        core::renderer::viewport ( 0, 0, _mesh.properties->diffuse_stack.stack_width, _mesh.properties->diffuse_stack.stack_height );
+        core::renderer::disable_depth_test ();
+        core::renderer::disable_face_culling ();
+        
+        /* render the mesh */
+        model_render_flags = render_flags::GLH_NONE;
+        render_mesh ( _mesh );
+
+        GLsync s = glFenceSync ( GL_SYNC_GPU_COMMANDS_COMPLETE, 0 );
+        glClientWaitSync ( s, 0, GL_TIMEOUT_IGNORED );
+        glDeleteSync ( s );
+
+        /* set texture stacks to use interpolation again */
+        _mesh.properties->diffuse_stack.textures.set_mag_filter ( GL_LINEAR );
+        _mesh.properties->diffuse_stack.textures.set_min_filter ( GL_LINEAR_MIPMAP_LINEAR );
+        
+        /* now loop through the faces... */
+        for ( unsigned i = 0; i < _mesh.num_faces; ++i )
+        {
+            /* get the results of the alpha testing */
+            const unsigned alpha_test_fb = alpha_test_ssbo.at<unsigned> ( i / 8 ) >> ( ( i % 8 ) * 4 );
+
+            //std::cout << std::bitset<4> ( alpha_test_fb ) << std::endl;
+
+            /* add to opaque mesh set if necessary */
+            if ( ( ~model_import_flags & import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING && alpha_test_fb & 0x1 ) ||
+                 ( ~model_import_flags & import_flags::GLH_IGNORE_TEXTURE_COLOR_WHEN_ALPHA_TESTING && alpha_test_fb & 0x4 ) )
+            {
+                ++_mesh.num_opaque_faces;
+                _mesh.opaque_faces.push_back ( _mesh.faces.at ( i ) );
+            }
+
+            /* add to transparent mesh set if necessary */
+            if ( ( ~model_import_flags & import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING && alpha_test_fb & 0x2 ) ||
+                 ( ~model_import_flags & import_flags::GLH_IGNORE_TEXTURE_COLOR_WHEN_ALPHA_TESTING && alpha_test_fb & 0x8 ) )
+             {
+                ++_mesh.num_transparent_faces;
+                _mesh.transparent_faces.push_back ( _mesh.faces.at ( i ) );
+            }
+        }
+    }
+
+    /* change index buffer to use immutable storage
+     * if both the number of opaque and transparent faces are both either zero or the same as the max number of faces, then simply duplicate the index data from before
+     */
+    if ( ( _mesh.num_opaque_faces == 0 || _mesh.num_opaque_faces == _mesh.num_faces ) && ( _mesh.num_transparent_faces == 0 || _mesh.num_transparent_faces == _mesh.num_faces ) )
+        _mesh.index_data.buffer_storage ( _mesh.faces.begin (), _mesh.faces.end () );
+    else
+    
+    /* otherwise reformat the index data to contain the faces from alpha testing */
+    {
+        /* set the size of the buffer */
+        _mesh.index_data.buffer_storage ( ( _mesh.num_faces + _mesh.num_opaque_faces + _mesh.num_transparent_faces ) * sizeof ( face ) );
+
+        /* now buffer in the subdata, also setting the offsets for the types of face */
+        _mesh.index_data.buffer_sub_data ( _mesh.faces.begin (), _mesh.faces.end (), 0 );
+        _mesh.start_of_opaque_faces        = _mesh.num_faces * sizeof ( face );
+        _mesh.global_start_of_opaque_faces = _mesh.num_faces * sizeof ( face );
+        _mesh.index_data.buffer_sub_data ( _mesh.opaque_faces.begin (), _mesh.opaque_faces.end (), _mesh.num_faces );
+        _mesh.start_of_transparent_faces        = _mesh.start_of_opaque_faces + _mesh.num_opaque_faces * sizeof ( face );     
+        _mesh.global_start_of_transparent_faces = _mesh.start_of_opaque_faces + _mesh.num_opaque_faces * sizeof ( face );
+        _mesh.index_data.buffer_sub_data ( _mesh.transparent_faces.begin (), _mesh.transparent_faces.end (), _mesh.num_faces + _mesh.num_opaque_faces );  
+    }
 }
 
 
@@ -554,7 +753,7 @@ glh::model::node& glh::model::model::add_node ( node& _node, const aiNode& ainod
 {
     /* set all of the children first */
     _node.children.resize ( ainode.mNumChildren );
-    for ( unsigned i = 0; i < ainode.mNumChildren; ++i ) 
+    for ( unsigned i = 0; i < ainode.mNumChildren; ++i )
     {
         /* set parent of child node and then set it up fully */
         _node.children.at ( i ).parent = &_node;
@@ -678,7 +877,7 @@ float glh::model::model::mesh_furthest_distance ( const mesh& _mesh, const math:
     for ( const vertex& _vertex: _mesh.vertices )
     {
         /* transform the vertex and find the modulus from the point */
-        const float distance = modulus ( point - math::vec3 { transform * math::fvec4 { _vertex.position, 1.0 } } );
+        const float distance = modulus ( point - math::fvec3 { transform * math::fvec4 { _vertex.position, 1.0 } } );
 
         /* compare against furthest distance */
         if ( distance > furthest_distance ) furthest_distance = distance;
@@ -807,7 +1006,7 @@ void glh::model::model::render_node ( const node& _node, const math::fmat4& tran
     if ( ~model_render_flags & render_flags::GLH_NO_MODEL_MATRIX ) 
         cached_model_matrix_uniform->model_matrix_uni.set_matrix ( trans );
 
-    /* render all of the meshes */
+    /* render meshes */
     for ( const mesh * _mesh: _node.meshes ) render_mesh ( * _mesh );
 }
 
@@ -819,8 +1018,18 @@ void glh::model::model::render_node ( const node& _node, const math::fmat4& tran
  */
 void glh::model::model::render_mesh ( const mesh& _mesh ) const
 {
-    /* don't draw if transparent mode and mesh is definitely opaque */
-    if ( model_render_flags & render_flags::GLH_TRANSPARENT_MODE && _mesh.definitely_opaque ) return;
+    /* don't draw if contains no faces */
+    if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES )
+    {
+        if ( model_render_flags & render_flags::GLH_OPAQUE_MODE      ) { if ( _mesh.num_opaque_faces      == 0 ) return; } else
+        if ( model_render_flags & render_flags::GLH_TRANSPARENT_MODE ) { if ( _mesh.num_transparent_faces == 0 ) return; } else
+        if ( _mesh.num_faces == 0 ) return;
+    } else 
+    {
+        if ( model_render_flags & render_flags::GLH_OPAQUE_MODE      ) { if ( _mesh.properties->opacity < 1.0 ) return; } else
+        if ( model_render_flags & render_flags::GLH_TRANSPARENT_MODE ) { if ( _mesh.definitely_opaque         ) return; }
+        if ( _mesh.num_faces == 0 ) return;
+    }
 
     /* if face culling is on and material is two sided, disable face culling */
     const bool culling_active = core::renderer::face_culling_enabled ();
@@ -830,7 +1039,13 @@ void glh::model::model::render_mesh ( const mesh& _mesh ) const
     if ( ~model_render_flags & render_flags::GLH_NO_MATERIAL ) apply_material ( * _mesh.properties );
 
     /* draw elements */
-    core::renderer::draw_elements ( _mesh.array_object, GL_TRIANGLES, _mesh.faces.size () * 3, GL_UNSIGNED_INT, 0 );
+    _mesh.array_object.bind ();
+    if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES && model_render_flags & render_flags::GLH_OPAQUE_MODE ) 
+        core::renderer::draw_elements ( GL_TRIANGLES, _mesh.num_opaque_faces * 3, GL_UNSIGNED_INT, _mesh.start_of_opaque_faces ); else
+    if ( model_import_flags & import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES && model_render_flags & render_flags::GLH_TRANSPARENT_MODE ) 
+        core::renderer::draw_elements ( GL_TRIANGLES, _mesh.num_transparent_faces * 3, GL_UNSIGNED_INT, _mesh.start_of_transparent_faces );
+    else core::renderer::draw_elements ( GL_TRIANGLES, _mesh.num_faces * 3, GL_UNSIGNED_INT, _mesh.start_of_faces );
+    _mesh.array_object.unbind ();
 
     /* re-enable face culling if was previously disabled */
     if ( culling_active ) core::renderer::enable_face_culling ();
@@ -848,6 +1063,7 @@ void glh::model::model::apply_material ( const material& _material ) const
     apply_texture_stack ( _material.ambient_stack, cached_material_uniforms->ambient_stack_size_uni, cached_material_uniforms->ambient_stack_base_color_uni, cached_material_uniforms->ambient_stack_levels_uni, cached_material_uniforms->ambient_stack_textures_uni );
     apply_texture_stack ( _material.diffuse_stack, cached_material_uniforms->diffuse_stack_size_uni, cached_material_uniforms->diffuse_stack_base_color_uni, cached_material_uniforms->diffuse_stack_levels_uni,cached_material_uniforms->diffuse_stack_textures_uni );
     apply_texture_stack ( _material.specular_stack, cached_material_uniforms->specular_stack_size_uni, cached_material_uniforms->specular_stack_base_color_uni, cached_material_uniforms->specular_stack_levels_uni, cached_material_uniforms->specular_stack_textures_uni );
+    apply_texture_stack ( _material.emission_stack, cached_material_uniforms->emission_stack_size_uni, cached_material_uniforms->emission_stack_base_color_uni, cached_material_uniforms->emission_stack_levels_uni, cached_material_uniforms->emission_stack_textures_uni );
     apply_texture_stack ( _material.normal_stack, cached_material_uniforms->normal_stack_size_uni, cached_material_uniforms->normal_stack_base_color_uni, cached_material_uniforms->normal_stack_levels_uni, cached_material_uniforms->normal_stack_textures_uni );
 
     /* set blending mode */

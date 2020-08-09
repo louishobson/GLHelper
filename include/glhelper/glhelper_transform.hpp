@@ -26,6 +26,7 @@
  * REFLECT3D: reflection specifically in 3d space
  * PERSPECTIVE: generate a perspective projection matrix based on the position and size of near and far planes
  * PERSPECTIVE_FOV: generate a perspective projection matrix based on an fov angle
+ * ORTHOGRAPHIC: generate an orthographic projection matrix
  * CAMERA: generate a view matrix based on a camera position and unit axis
  * LOOK_AT: generate a view matrix based on a camera position, focus point and world up unit vector
  * LOOK_ALONG: generate a view matrix based on a camera position, direction of viewing and world up unit vector
@@ -368,7 +369,7 @@ namespace glh
  *
  * multiplication of a matrix before a vector
  */
-template<unsigned M, unsigned N, class T0, class T1> glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::vector<N, T1>& rhs );
+template<unsigned M, unsigned N, class T0, class T1> glh::math::vector<M, std::common_type_t<T0, T1>> operator* ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::vector<N, T1>& rhs );
 
 
 
@@ -1014,10 +1015,10 @@ template<class T> inline glh::math::matrix<3, 3, T> glh::math::normal ( const ma
  *
  * multiplication of a matrix before a vector
  */
-template<unsigned M, unsigned N, class T0, class T1> inline glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::vector<N, T1>& rhs )
+template<unsigned M, unsigned N, class T0, class T1> inline glh::math::vector<M, std::common_type_t<T0, T1>> operator* ( const glh::math::matrix<M, N, T0>& lhs, const glh::math::vector<N, T1>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M, glh::meta::pat_t<T0, T1>> result;
+    glh::math::vector<M, std::common_type_t<T0, T1>> result;
 
     /* iterate for each value in result, and then each value in a row of the matrix */
     for ( unsigned i = 0; i < M; ++i ) for ( unsigned j = 0; j < N; ++j )

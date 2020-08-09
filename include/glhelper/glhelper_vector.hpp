@@ -110,28 +110,28 @@ namespace glh
          *
          * promte a vector to the preferred type give another type
          */
-        template<unsigned M, class T0, class T1> std::conditional_t<std::is_same<T0, meta::pat_t<T0, T1>>::value, const vector<M, T0>&, vector<M, meta::pat_t<T0, T1>>> promote_vector ( const vector<M, T0>& lhs );
+        template<unsigned M, class T0, class T1> std::conditional_t<std::is_same<T0, std::common_type_t<T0, T1>>::value, const vector<M, T0>&, vector<M, std::common_type_t<T0, T1>>> promote_vector ( const vector<M, T0>& lhs );
 
         /* concatenate
          *
          * concatenate two vectors, two Ts or a combination into one vector
          */
-        template<unsigned M0, class T0, unsigned M1, class T1> vector<M0 + M1, meta::pat_t<T0, T1>> concatenate ( const vector<M0, T0>& lhs, const vector<M1, T1>& rhs );
-        template<unsigned M, class T0, class T1> vector<M + 1, meta::pat_t<T0, T1>> concatenate ( const vector<M, T0>& lhs, const T1& rhs );
-        template<unsigned M, class T0, class T1> vector<M + 1, meta::pat_t<T0, T1>> concatenate ( const T0& lhs, const vector<M, T1>& rhs );
-        template<class T0, class T1> vector<2, meta::pat_t<T0, T1>> concatenate ( const T0& lhs, const T1& rhs );
+        template<unsigned M0, class T0, unsigned M1, class T1> vector<M0 + M1, std::common_type_t<T0, T1>> concatenate ( const vector<M0, T0>& lhs, const vector<M1, T1>& rhs );
+        template<unsigned M, class T0, class T1> vector<M + 1, std::common_type_t<T0, T1>> concatenate ( const vector<M, T0>& lhs, const T1& rhs );
+        template<unsigned M, class T0, class T1> vector<M + 1, std::common_type_t<T0, T1>> concatenate ( const T0& lhs, const vector<M, T1>& rhs );
+        template<class T0, class T1> vector<2, std::common_type_t<T0, T1>> concatenate ( const T0& lhs, const T1& rhs );
 
         /* dot
          *
          * find the dot product of two vectors
          */
-        template<unsigned M, class T0, class T1> meta::pat_t<T0, T1> dot ( const vector<M, T0>& lhs, const vector<M, T1>& rhs );
+        template<unsigned M, class T0, class T1> std::common_type_t<T0, T1> dot ( const vector<M, T0>& lhs, const vector<M, T1>& rhs );
 
         /* cross
          *
          * find the cross product of a 3d vector
          */
-        template<class T0, class T1> vector<3, meta::pat_t<T0, T1>> cross ( const vector<3, T0>& lhs, const vector<3, T1>& rhs );
+        template<class T0, class T1> vector<3, std::common_type_t<T0, T1>> cross ( const vector<3, T0>& lhs, const vector<3, T1>& rhs );
 
         /* modulus
          *
@@ -155,14 +155,14 @@ namespace glh
          *
          * find the angle between two vectors
          */
-        template<unsigned M, class T0, class T1> meta::pat_t<T0, T1> angle ( const vector<M, T0>& lhs, const vector<M, T1>& rhs );
+        template<unsigned M, class T0, class T1> std::common_type_t<T0, T1> angle ( const vector<M, T0>& lhs, const vector<M, T1>& rhs );
 
         /* pow
          *
          * raise a vector to a power
          */
-        template<unsigned M, class T> vector<M, T> pow ( const vector<M, T>& lhs, const T& rhs );
-        template<unsigned M, class T> vector<M, T> pow ( const vector<M, T>& lhs, const vector<M, T>& rhs ); 
+        template<unsigned M, class T0, class T1> vector<M, std::common_type_t<T0, T1>> pow ( const vector<M, T0>& lhs, const T1& rhs );
+        template<unsigned M, class T0, class T1> vector<M, std::common_type_t<T0, T1>> pow ( const vector<M, T0>& lhs, const vector<M, T1>& rhs );
 
         /* any_perpandicular
          *
@@ -201,7 +201,7 @@ template<unsigned M, class T0, class T1> bool operator!= ( const glh::math::vect
  * vector + vector
  * vector += vector
  */
-template<unsigned M, class T0, class T1> glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator+ ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs );
+template<unsigned M, class T0, class T1> glh::math::vector<M, std::common_type_t<T0, T1>> operator+ ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs );
 template<unsigned M, class T0, class T1> glh::math::vector<M, T0>& operator+= ( glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs );
 
 /* operator-(=)
@@ -211,7 +211,7 @@ template<unsigned M, class T0, class T1> glh::math::vector<M, T0>& operator+= ( 
  * vector - vector
  * vector -= vector
  */
-template<unsigned M, class T0, class T1> glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator- ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs );
+template<unsigned M, class T0, class T1> glh::math::vector<M, std::common_type_t<T0, T1>> operator- ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs );
 template<unsigned M, class T0, class T1> glh::math::vector<M, T0>& operator-= ( glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs );
 
 /* operator*(=)
@@ -226,9 +226,9 @@ template<unsigned M, class T0, class T1> glh::math::vector<M, T0>& operator-= ( 
  * NOTE: vector multiplication finds the component wise product
  *       use the cross_product and dot_product functions for other multiplication types
  */
-template<unsigned M, class T0, class T1> glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs );
-template<unsigned M, class T0, class T1> glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::vector<M, T0>& lhs, const T1& rhs );
-template<unsigned M, class T0, class T1> glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator* ( const T0& lhs, const glh::math::vector<M, T1>& rhs );
+template<unsigned M, class T0, class T1> glh::math::vector<M, std::common_type_t<T0, T1>> operator* ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs );
+template<unsigned M, class T0, class T1> glh::math::vector<M, std::common_type_t<T0, T1>> operator* ( const glh::math::vector<M, T0>& lhs, const T1& rhs );
+template<unsigned M, class T0, class T1> glh::math::vector<M, std::common_type_t<T0, T1>> operator* ( const T0& lhs, const glh::math::vector<M, T1>& rhs );
 template<unsigned M, class T0, class T1> glh::math::vector<M, T0>& operator*= ( glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs );
 template<unsigned M, class T0, class T1> glh::math::vector<M, T0>& operator*= ( glh::math::vector<M, T0>& lhs, const T1& rhs );
 
@@ -243,8 +243,8 @@ template<unsigned M, class T0, class T1> glh::math::vector<M, T0>& operator*= ( 
  * 
  * NOTE: vector division finds the component wise dividend
  */
-template<unsigned M, class T0, class T1> glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator/ ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs );
-template<unsigned M, class T0, class T1> glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator/ ( const glh::math::vector<M, T0>& lhs, const T1& rhs );
+template<unsigned M, class T0, class T1> glh::math::vector<M, std::common_type_t<T0, T1>> operator/ ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs );
+template<unsigned M, class T0, class T1> glh::math::vector<M, std::common_type_t<T0, T1>> operator/ ( const glh::math::vector<M, T0>& lhs, const T1& rhs );
 template<unsigned M, class T0, class T1> glh::math::vector<M, T0>& operator/= ( glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs );
 template<unsigned M, class T0, class T1> glh::math::vector<M, T0>& operator/= ( glh::math::vector<M, T0>& lhs, const T1& rhs );
 
@@ -466,7 +466,7 @@ template<unsigned M, class T> inline const T& glh::math::vector<M, T>::at ( cons
  *
  * promte a vector to the preferred type give another type
  */
-template<unsigned M, class T0, class T1> inline std::conditional_t<std::is_same<T0, glh::meta::pat_t<T0, T1>>::value, const glh::math::vector<M, T0>&, glh::math::vector<M, glh::meta::pat_t<T0, T1>>> glh::math::promote_vector ( const vector<M, T0>& lhs )
+template<unsigned M, class T0, class T1> inline std::conditional_t<std::is_same<T0, std::common_type_t<T0, T1>>::value, const glh::math::vector<M, T0>&, glh::math::vector<M, std::common_type_t<T0, T1>>> glh::math::promote_vector ( const vector<M, T0>& lhs )
 {
     return lhs;
 }
@@ -475,10 +475,10 @@ template<unsigned M, class T0, class T1> inline std::conditional_t<std::is_same<
  *
  * concatenate two vectors, doubles or a combination into one vector
  */
-template<unsigned M0, class T0, unsigned M1, class T1> inline glh::math::vector<M0 + M1, glh::meta::pat_t<T0, T1>> glh::math::concatenate ( const vector<M0, T0>& lhs, const vector<M1, T1>& rhs )
+template<unsigned M0, class T0, unsigned M1, class T1> inline glh::math::vector<M0 + M1, std::common_type_t<T0, T1>> glh::math::concatenate ( const vector<M0, T0>& lhs, const vector<M1, T1>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M0 + M1, glh::meta::pat_t<T0, T1>> conc;
+    glh::math::vector<M0 + M1, std::common_type_t<T0, T1>> conc;
     
     /* loop for the vectors */
     unsigned conci = 0;
@@ -488,10 +488,10 @@ template<unsigned M0, class T0, unsigned M1, class T1> inline glh::math::vector<
     /* return new vector */
     return conc;
 }
-template<unsigned M, class T0, class T1> inline glh::math::vector<M + 1, glh::meta::pat_t<T0, T1>> glh::math::concatenate ( const vector<M, T0>& lhs, const T1& rhs )
+template<unsigned M, class T0, class T1> inline glh::math::vector<M + 1, std::common_type_t<T0, T1>> glh::math::concatenate ( const vector<M, T0>& lhs, const T1& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M + 1, glh::meta::pat_t<T0, T1>> conc;
+    glh::math::vector<M + 1, std::common_type_t<T0, T1>> conc;
 
     /* loop for the vector */
     unsigned conci = 0;
@@ -501,10 +501,10 @@ template<unsigned M, class T0, class T1> inline glh::math::vector<M + 1, glh::me
     /* return new vector */
     return conc;
 }
-template<unsigned M, class T0, class T1> inline glh::math::vector<M + 1, glh::meta::pat_t<T0, T1>> glh::math::concatenate ( const T0& lhs, const vector<M, T1>& rhs )
+template<unsigned M, class T0, class T1> inline glh::math::vector<M + 1, std::common_type_t<T0, T1>> glh::math::concatenate ( const T0& lhs, const vector<M, T1>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M + 1, glh::meta::pat_t<T0, T1>> conc;
+    glh::math::vector<M + 1, std::common_type_t<T0, T1>> conc;
 
     /* loop for the vector */
     unsigned conci  = 0;
@@ -514,10 +514,10 @@ template<unsigned M, class T0, class T1> inline glh::math::vector<M + 1, glh::me
     /* return new vector */
     return conc;
 }
-template<class T0, class T1> inline glh::math::vector<2, glh::meta::pat_t<T0, T1>> glh::math::concatenate ( const T0& lhs, const T1& rhs )
+template<class T0, class T1> inline glh::math::vector<2, std::common_type_t<T0, T1>> glh::math::concatenate ( const T0& lhs, const T1& rhs )
 {
     /* create the new vector */
-    glh::math::vector<2, glh::meta::pat_t<T0, T1>> conc;
+    glh::math::vector<2, std::common_type_t<T0, T1>> conc;
 
     /* set the values */
     conc.at ( 0 ) = lhs;
@@ -531,10 +531,10 @@ template<class T0, class T1> inline glh::math::vector<2, glh::meta::pat_t<T0, T1
  *
  * find the dot product of two vectors
  */
-template<unsigned M, class T0, class T1> inline glh::meta::pat_t<T0, T1> glh::math::dot ( const vector<M, T0>& lhs, const vector<M, T1>& rhs )
+template<unsigned M, class T0, class T1> inline std::common_type_t<T0, T1> glh::math::dot ( const vector<M, T0>& lhs, const vector<M, T1>& rhs )
 {
     /* store cross product */
-    glh::meta::pat_t<T0, T1> result = 0;
+    std::common_type_t<T0, T1> result = 0;
 
     /* loop to calculate */
     for ( unsigned i = 0; i < M; ++i ) result += ( lhs.at ( i ) * rhs.at ( i ) );
@@ -547,10 +547,10 @@ template<unsigned M, class T0, class T1> inline glh::meta::pat_t<T0, T1> glh::ma
  *
  * find the cross product of a 3d vector
  */
-template<class T0, class T1> inline glh::math::vector<3, glh::meta::pat_t<T0, T1>> glh::math::cross ( const vector<3, T0>& lhs, const vector<3, T1>& rhs )
+template<class T0, class T1> inline glh::math::vector<3, std::common_type_t<T0, T1>> glh::math::cross ( const vector<3, T0>& lhs, const vector<3, T1>& rhs )
 {
     /* return cross product */
-    return glh::math::vector<3, glh::meta::pat_t<T0, T1>> 
+    return glh::math::vector<3, std::common_type_t<T0, T1>> 
     { 
         ( lhs.at ( 1 ) * rhs.at ( 2 ) ) - ( lhs.at ( 2 ) * rhs.at ( 1 ) ),
         ( lhs.at ( 2 ) * rhs.at ( 0 ) ) - ( lhs.at ( 0 ) * rhs.at ( 2 ) ),
@@ -604,7 +604,7 @@ template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::normaliz
  *
  * find the angle between two vectors
  */
-template<unsigned M, class T0, class T1> inline glh::meta::pat_t<T0, T1> glh::math::angle ( const vector<M, T0>& lhs, const vector<M, T1>& rhs )
+template<unsigned M, class T0, class T1> inline std::common_type_t<T0, T1> glh::math::angle ( const vector<M, T0>& lhs, const vector<M, T1>& rhs )
 {
     /* return the arccos of ( lhs.rhs / |lhs|.|rhs| ) */
     return std::acos ( dot ( lhs, rhs ) / ( modulus ( promote_vector<M, T0, T1> ( lhs ) ) * modulus ( promote_vector<M, T1, T0> ( rhs ) ) ) );
@@ -614,10 +614,10 @@ template<unsigned M, class T0, class T1> inline glh::meta::pat_t<T0, T1> glh::ma
  *
  * raise a vector to a power
  */
-template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::pow ( const vector<M, T>& lhs, const T& rhs )
+template<unsigned M, class T0, class T1> inline glh::math::vector<M, std::common_type_t<T0, T1>> glh::math::pow ( const vector<M, T0>& lhs, const T1& rhs )
 {
     /* create new vector */
-    vector<M, T> result;
+    vector<M, std::common_type_t<T0, T1>> result;
 
     /* raise each component to the same power */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = std::pow ( lhs.at ( i ), rhs );
@@ -625,10 +625,10 @@ template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::pow ( co
     /* return the result */
     return result;
 }
-template<unsigned M, class T> inline glh::math::vector<M, T> glh::math::pow ( const vector<M, T>& lhs, const vector<M, T>& rhs )
+template<unsigned M, class T0, class T1> inline glh::math::vector<M, std::common_type_t<T0, T1>> glh::math::pow ( const vector<M, T0>& lhs, const vector<M, T1>& rhs )
 {
     /* create new vector */
-    vector<M, T> result;
+    vector<M, std::common_type_t<T0, T1>> result;
 
     /* raise each component to the corresponding powers of rhs */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = std::pow ( lhs.at ( i ), rhs.at ( i ) );
@@ -700,10 +700,10 @@ template<unsigned M, class T0, class T1> inline bool operator!= ( const glh::mat
  * vector + vector
  * vector += vector
  */
-template<unsigned M, class T0, class T1> inline glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator+ ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs )
+template<unsigned M, class T0, class T1> inline glh::math::vector<M, std::common_type_t<T0, T1>> operator+ ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M, glh::meta::pat_t<T0, T1>> result;
+    glh::math::vector<M, std::common_type_t<T0, T1>> result;
 
     /* iterate for each value in result */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) + rhs.at ( i );
@@ -724,10 +724,10 @@ template<unsigned M, class T0, class T1> inline glh::math::vector<M, T0>& operat
  * vector - vector
  * vector -= vector
  */
-template<unsigned M, class T0, class T1> inline glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator- ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs )
+template<unsigned M, class T0, class T1> inline glh::math::vector<M, std::common_type_t<T0, T1>> operator- ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M, glh::meta::pat_t<T0, T1>> result;
+    glh::math::vector<M, std::common_type_t<T0, T1>> result;
 
     /* iterate for each value in result */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) - rhs.at ( i );
@@ -753,10 +753,10 @@ template<unsigned M, class T0, class T1> inline glh::math::vector<M, T0>& operat
  * NOTE: vector multiplication finds the component wise product
  *       use the cross_product and dot_product functions for other multiplication types
  */
-template<unsigned M, class T0, class T1> inline glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs )
+template<unsigned M, class T0, class T1> inline glh::math::vector<M, std::common_type_t<T0, T1>> operator* ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M, glh::meta::pat_t<T0, T1>> result;
+    glh::math::vector<M, std::common_type_t<T0, T1>> result;
 
     /* iterate for each value in result */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) * rhs.at ( i );
@@ -764,10 +764,10 @@ template<unsigned M, class T0, class T1> inline glh::math::vector<M, glh::meta::
     /* return the new vector */
     return result;
 }
-template<unsigned M, class T0, class T1> inline glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator* ( const glh::math::vector<M, T0>& lhs, const T1& rhs )
+template<unsigned M, class T0, class T1> inline glh::math::vector<M, std::common_type_t<T0, T1>> operator* ( const glh::math::vector<M, T0>& lhs, const T1& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M, glh::meta::pat_t<T0, T1>> result;
+    glh::math::vector<M, std::common_type_t<T0, T1>> result;
 
     /* iterate for each value in result */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) * rhs;
@@ -775,7 +775,7 @@ template<unsigned M, class T0, class T1> inline glh::math::vector<M, glh::meta::
     /* return the new vector */
     return result;
 }
-template<unsigned M, class T0, class T1> inline glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator* ( const T0& lhs, const glh::math::vector<M, T1>& rhs )
+template<unsigned M, class T0, class T1> inline glh::math::vector<M, std::common_type_t<T0, T1>> operator* ( const T0& lhs, const glh::math::vector<M, T1>& rhs )
 {
     /* equivalent to vector * scalar */
     return rhs * lhs;
@@ -802,10 +802,10 @@ template<unsigned M, class T0, class T1> inline glh::math::vector<M, T0>& operat
  * 
  * NOTE: vector division finds the component wise dividend
  */
-template<unsigned M, class T0, class T1> inline glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator/ ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs )
+template<unsigned M, class T0, class T1> inline glh::math::vector<M, std::common_type_t<T0, T1>> operator/ ( const glh::math::vector<M, T0>& lhs, const glh::math::vector<M, T1>& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M, glh::meta::pat_t<T0, T1>> result;
+    glh::math::vector<M, std::common_type_t<T0, T1>> result;
 
     /* iterate for each value in result */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) / rhs.at ( i );
@@ -813,10 +813,10 @@ template<unsigned M, class T0, class T1> inline glh::math::vector<M, glh::meta::
     /* return the new vector */
     return result;
 }
-template<unsigned M, class T0, class T1> inline glh::math::vector<M, glh::meta::pat_t<T0, T1>> operator/ ( const glh::math::vector<M, T0>& lhs, const T1& rhs )
+template<unsigned M, class T0, class T1> inline glh::math::vector<M, std::common_type_t<T0, T1>> operator/ ( const glh::math::vector<M, T0>& lhs, const T1& rhs )
 {
     /* create the new vector */
-    glh::math::vector<M, glh::meta::pat_t<T0, T1>> result;
+    glh::math::vector<M, std::common_type_t<T0, T1>> result;
 
     /* iterate for each value in result */
     for ( unsigned i = 0; i < M; ++i ) result.at ( i ) = lhs.at ( i ) / rhs;

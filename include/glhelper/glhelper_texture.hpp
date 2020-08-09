@@ -18,7 +18,6 @@
  * CLASS GLH::CORE::IMAGE
  * 
  * imports a 2d image from an external file
- * the format will always be 4 channel RGBA, each component an unsigned byte
  * 
  * 
  * 
@@ -90,11 +89,18 @@
 /* include glhelper_core.hpp */
 #include <glhelper/glhelper_core.hpp>
 
-/* include math */
-#include <glhelper/glhelper_math.hpp>
+/* include glhelper_buffer.hpp */
+#include <glhelper/glhelper_buffer.hpp>
+
+/* include glhelper_vector.hpp */
+#include <glhelper/glhelper_vector.hpp>
 
 /* indlude stb_image.h without implementation */
 #include <stb/stb_image.h>
+
+/* indlude stb_image_write.h without implementation */
+#include <stb/stb_image_write.h>
+
 
 
 
@@ -118,6 +124,25 @@ namespace glh
          */
         class texture_base;
 
+        /* class texture_multisample_base : texture_base
+         *
+         * base class for multisample textures
+         * causes certain option-setting methods to throw
+         */
+        class texture_multisample_base;
+
+        /* class texture1d : texture_base
+         *
+         * represents a 1D texture
+         */
+        class texture1d;
+
+        /* class buffer_texture : texture_base
+         *
+         * wraps a buffer object in a 1D texture
+         */
+        class buffer_texture;
+
         /* class texture2d : texture_base
          *
          * represents a 2D texture
@@ -130,7 +155,7 @@ namespace glh
          */
         class texture2d_array;
 
-        /* class texture2d_multisample : texture_base
+        /* class texture2d_multisample : texture_multisample_base
          *
          * represents a multisample 2d texture
          */
@@ -147,7 +172,6 @@ namespace glh
          * represents a cubemap array texture
          */
         class cubemap_array;
-
     }
 
     namespace exception
@@ -159,6 +183,36 @@ namespace glh
         class texture_exception;
     }
 }
+
+
+
+/* TEXTURE_EXCEPTION DEFINITION */
+
+/* class texture_exception : exception
+ *
+ * for exceptions related to textures
+ */
+class glh::exception::texture_exception : public exception
+{
+public:
+
+    /* full constructor
+     *
+     * __what: description of the exception
+     */
+    explicit texture_exception ( const std::string& __what )
+        : exception { __what }
+    {}
+
+    /* default zero-parameter constructor
+     *
+     * construct texture_exception with no descrption
+     */
+    texture_exception () = default;
+
+    /* default everything else and inherits what () function */
+
+};
 
 
 
@@ -177,9 +231,10 @@ public:
      * construct from path to import
      * 
      * _path: the path to the image
+     * _channels: the number of channels to force the image to have
      * _v_flip: flag as to whether the image should be vertically flipped
      */
-    explicit image ( const std::string& _path, const bool _v_flip = false );
+    explicit image ( const std::string& _path, const unsigned _channels = 4, const bool _v_flip = false );
 
     /* zero-parameter constructor */
     image ();
@@ -209,18 +264,6 @@ public:
 
 
 
-    /* resize
-     *
-     * resize the image using linear interpolation
-     * 
-     * new_width/height: the new width and height of the image
-     * 
-     * return: the new interpolated image
-     */
-    void resize ( const unsigned new_width, const unsigned new_height );
-
-
-
     /* get_ptr
      *
      * get a pointer to the image data
@@ -234,13 +277,19 @@ public:
      */
     const std::string& get_path () const { return path; }
 
-    /* get_width/height/channels
+    /* get_channels
+     *
+     * gets the number of channels of the image
+     */
+    unsigned get_channels () const { return channels; }
+
+    /* get_width/height/orig_channels
      *
      * get the width/height/no. of channels of the image
      */
     unsigned get_width () const { return width; }
     unsigned get_height () const { return height; }
-    unsigned get_channels () const { return channels; }
+    unsigned get_orig_channels () const { return orig_channels; }
 
     /* is_vertically_flipped
      *
@@ -260,6 +309,12 @@ public:
      */
     double get_aspect () const { return static_cast<double> ( width ) / height; }
 
+    /* is_definitely_opaque
+     *
+     * returns definitely_opaque
+     */
+    bool is_definitely_opaque () const { return definitely_opaque; }
+
 
 
 private:
@@ -267,13 +322,19 @@ private:
     /* path to the image */
     std::string path;
 
+    /* the forced number of channels */
+    unsigned channels;
+
     /* width, height and original number of channels of the image */
     int width;
     int height;
-    int channels;
+    int orig_channels;
 
     /* whether the image has been vertically flipped */
     bool v_flip;
+
+    /* whether the image is completely opaque */
+    bool definitely_opaque;
 
     /* the type of image_data */
     using image_data_type = std::unique_ptr<void, std::function<void ( void * )>>;
@@ -353,39 +414,54 @@ public:
 
 
 
+    /* get_tex_image
+     *
+     * extract the data in a texture
+     * 
+     * level: the mipmap level to sample
+     * format/type: the format and type to recieve the texture in
+     * buffsize: the size of the buffer to dump the texture in
+     * buff: pointer to the buffer to recieve the texture
+     */
+    void get_tex_image ( const unsigned level, const GLenum format, const GLenum type, const unsigned buffsize, void * buff ) const;
+
+
+
     /* set_mag/min_filter
      *
      * set the texture filtering parameters of magnified/minified texture
      */
-    void set_mag_filter ( const GLenum opt );
-    void set_min_filter ( const GLenum opt );
+    virtual void set_mag_filter ( const GLenum opt );
+    virtual void set_min_filter ( const GLenum opt );
 
     /* set_(s/t/r)_wrap
      *
      * set the wrapping options for each coordinate axis, or all at once
      */
-    void set_s_wrap ( const GLenum opt );
-    void set_t_wrap ( const GLenum opt );
-    void set_r_wrap ( const GLenum opt );
-    void set_wrap ( const GLenum opt );
+    virtual void set_s_wrap ( const GLenum opt );
+    virtual void set_t_wrap ( const GLenum opt );
+    virtual void set_r_wrap ( const GLenum opt );
+    virtual void set_wrap ( const GLenum opt );
 
     /* set_border_color
      *
      * set the color of the boarder, such that the texture can be clamped to the edge with a specific color
      */
-    void set_border_color ( const math::fvec4& color );
+    virtual void set_border_color ( const math::fvec4& color );
 
     /* set_compare_mode
      *
      * set the compare mode for the texture (GL_TEXTURE_COMPARE_MODE)
      */
-    void set_compare_mode ( const GLenum opt );
+    virtual void set_compare_mode ( const GLenum opt );
 
     /* set_compare_func
      *
      * set the comparison function for the texture
      */
-    void set_compare_func ( const GLenum opt );
+    virtual void set_compare_func ( const GLenum opt );
+
+
 
     /* generate_mipmap
      *
@@ -405,6 +481,281 @@ protected:
      * the next unit to bind the texture to in the bind loop
      */
     static unsigned bind_loop_index;
+
+
+
+    /* channels_to_internal_format
+     *
+     * change a number of channels to an internal format
+     */
+    GLenum channels_to_internal_format ( const unsigned channels, const bool use_srgb = false ) const;
+
+    /* channels_to_format
+     *
+     * change a number of channels to a format format
+     */
+    GLenum channels_to_format ( const unsigned channels, const bool use_srgb = false ) const;
+
+};
+
+
+
+/* TEXTURE_MULTISAMPLE_BASE DEFINITION */
+
+/* class texture_multisample_base : texture_base
+ *
+ * base class for multisample textures
+ * causes certain option-setting methods to throw
+ */
+class glh::core::texture_multisample_base : public texture_base
+{
+public:
+
+    /* default zero-parameter constructor */
+    texture_multisample_base () = default;
+    
+    /* deleted copy constructor */
+    texture_multisample_base ( const texture_multisample_base& other ) = delete;
+
+    /* default move constructor */
+    texture_multisample_base ( texture_multisample_base&& other ) = default;
+
+    /* deleted copy constructor */
+    texture_multisample_base& operator= ( const texture_multisample_base& other ) = delete;
+
+    /* virtual default destructor */
+    virtual ~texture_multisample_base () = default;
+
+
+
+    /* set_mag/min_filter
+     * 
+     * set the texture filtering parameters of magnified/minified texture
+     */
+    virtual void set_mag_filter ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_mag_filter)" }; }
+    virtual void set_min_filter ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_min_filter)" }; }
+
+    /* set_(s/t/r)_wrap
+     *
+     * set the wrapping options for each coordinate axis, or all at once
+     */
+    virtual void set_s_wrap ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_s_wrap)" }; }
+    virtual void set_t_wrap ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_t_wrap)" }; }
+    virtual void set_r_wrap ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_r_wrap)" }; }
+    virtual void set_wrap ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_wrap)" }; }
+
+    /* set_border_color
+     *
+     * set the color of the boarder, such that the texture can be clamped to the edge with a specific color
+     */
+    virtual void set_border_color ( const math::fvec4& color )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_border_color)" }; }
+
+    /* set_compare_mode
+     *
+     * set the compare mode for the texture (GL_TEXTURE_COMPARE_MODE)
+     */
+    virtual void set_compare_mode ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_compare_mode)" }; }
+
+    /* set_compare_func
+     *
+     * set the comparison function for the texture
+     */
+    virtual void set_compare_func ( const GLenum opt )
+        { throw exception::texture_exception { "cannot set sampler state for multisample texture (set_compare_func)" }; }
+};
+
+
+
+/* TEXTURE1D DEFINITION */
+
+/* class texture1d : texture_base
+*
+* represents a 1D texture
+*/
+class glh::core::texture1d : public texture_base
+{
+public:
+
+    /* tex_image constructor
+     *
+     * see tex_image for details
+     */
+    texture1d ( const unsigned _width, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL )
+        : is_immutable { false }
+        { tex_image ( _width, _internal_format, format, type, data ); }
+
+
+    /* zero-parameter constructor */
+    texture1d ()
+        : width { 0 }
+        , internal_format { GL_NONE }
+        , is_immutable { false }
+    { bind (); }
+
+    /* deleted copy constructor */
+    texture1d ( const texture1d& other ) = delete;
+
+    /* default move copy constructor */
+    texture1d ( texture1d&& other ) = default;
+
+    /* deleted assignment operator */
+    texture1d& operator= ( const texture1d& other ) = delete;
+
+    /* default destructor */
+    ~texture1d () = default;
+
+
+
+    /* default bind/unbind the texture */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_texture_indices.at ( 0 ) == this; }
+
+
+
+    /* tex_storage
+     *
+     * set up the texture using immutable storage
+     * 
+     * _width: the width of the texture
+     * _internal_format: the internal format of the texture
+     * mipmap_levels: the number of mipmap levels to allocate (defaults to 0, which will allocate the maximum)
+     */
+    void tex_storage ( const unsigned _width, const GLenum _internal_format, const unsigned mipmap_levels = 0 );
+
+    /* tex_image
+     *
+     * set up the texture based on provided parameters
+     * 
+     * _width: the width of the texture
+     * _internal_format: the internal format of the texture
+     * format/type: the format and component type of the input data for the texture (defaults to GL_RGBA and GL_UNSIGNED_BYTE)
+     * data: the actual data to put into the texture (defaults to NULL)
+     */
+    void tex_image ( const unsigned _width, const GLenum _internal_format, const GLenum format = GL_RGBA, const GLenum type = GL_UNSIGNED_BYTE, const void * data = NULL );
+
+    /* tex_sub_image
+     *
+     * substitiute data into the texture
+     * changes are made to mipmap level 0, so remember to regenerate mipmaps if necessary
+     * 
+     * x_offset: the x offset to begin substitution
+     * _width: the width of the area to substitute
+     * format/type: the format and component type of the input data
+     * data: the data to substitute
+     */
+    void tex_sub_image ( const unsigned x_offset, const unsigned _width, const GLenum format, const GLenum type, const void * data );
+    
+
+
+    /* get_width
+     *
+     * get the width of the texture
+     */
+    const unsigned& get_width () const { return width; }
+
+    /* get_internal_format
+     *
+     * get the internal format of the texture
+     */
+    const GLenum& get_internal_format () const { return internal_format; }
+
+private:
+
+    /* width
+     *
+     * the width of the texture
+     */
+    unsigned width;
+
+    /* internal_format
+     * 
+     * the format of the data stored in the texture
+     */
+    GLenum internal_format;
+
+    /* is_immutable
+     *
+     * true if the texture has been set by tex_storage, and is now immutable
+     */
+    bool is_immutable;
+
+};
+
+
+
+/* BUFFER_TEXTURE DEFINITION */
+
+/* class buffer_texture : texture_base
+ *
+ * wraps a buffer object in a 1D texture
+ */
+class glh::core::buffer_texture : public texture_base
+{
+public:
+
+    /* zero-parameter constructor */
+    buffer_texture () 
+        : assoc_buffer { NULL }
+        , internal_format { GL_NONE }
+    { bind (); }
+
+
+
+    /* default bind/unbind the texture */
+    bool bind () const;
+    bool unbind () const;
+    bool is_bound () const { return bound_texture_indices.at ( 0 ) == this; }
+
+
+
+    /* tex_buffer
+     *
+     * associates a buffer with the texture
+     * 
+     * buff: the new buffer to associate
+     * _internal_format: the internal format of the buffer
+     */
+    void tex_buffer ( const buffer& buff, const GLenum _internal_format );
+
+
+
+    /* get_size
+     *
+     * gets the size of the texture (i.e. the buffer)
+     */
+    unsigned get_size () const { return ( assoc_buffer ? assoc_buffer->get_size () : 0 ); }
+
+    /* get_internal_format
+     *
+     * gets the internal format of the texture
+     */
+    const GLenum& get_internal_format () const { return internal_format; }
+
+    /* get_assoc_buffer
+     *
+     * get the buffer associated with the texture
+     */
+    const const_object_pointer<buffer>& get_assoc_buffer () const { return assoc_buffer; }
+
+private:
+
+    /* the currently associated buffer */
+    const_object_pointer<buffer> assoc_buffer;
+
+    /* internal_format
+     * 
+     * the format of the data stored in the texture
+     */
+    GLenum internal_format;
 
 };
 
@@ -436,7 +787,7 @@ public:
     texture2d ()
         : width { 0 }, height { 0 }
         , internal_format { GL_NONE }
-        , has_alpha_component { false }
+        , definitely_opaque { true }
         , is_immutable { false }
     { bind (); }
 
@@ -525,11 +876,11 @@ public:
      */
     const GLenum& get_internal_format () const { return internal_format; }
 
-    /* has_alpha
+    /* is_definitely_opaque
      *
-     * returns has_alpha_component
+     * returns definitely_opaque
      */
-    bool has_alpha () const { return has_alpha_component; }
+    bool is_definitely_opaque () const { return definitely_opaque; }
 
 
 
@@ -548,11 +899,11 @@ private:
      */
     GLenum internal_format;
 
-    /* has_alpha_component
+    /* definitely_opaque
      *
-     * always true, unless created from an imported image without alpha components
+     * always false, unless imported from an image which was specified as opaque
      */
-    bool has_alpha_component;
+    bool definitely_opaque;
 
     /* is_immutable
      *
@@ -710,11 +1061,11 @@ private:
 
 /* TEXTURE2D_MULTISAMPLE DEFINITION */
 
-/* class texture2d_multisample : texture_base
+/* class texture2d_multisample : texture_multisample_base
  *
  * representsb a multisample 2D texture
  */
-class glh::core::texture2d_multisample : public texture_base
+class glh::core::texture2d_multisample : public texture_multisample_base
 {
 public:
 
@@ -762,7 +1113,7 @@ public:
      * _internal_format: the internal format of the texture
      * _fixed_sample_locations: whether to use fixed sample locations (defaults to true)
      */
-    void tex_storage ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations );
+    void tex_storage ( const unsigned _width, const unsigned _height, const unsigned _samples, const GLenum _internal_format, const bool _fixed_sample_locations = GL_TRUE );
 
     /* tex_image
      *
@@ -1137,36 +1488,6 @@ private:
      * true if the texture has been set by tex_storage, and is now immutable
      */
     bool is_immutable;
-
-};
-
-
-
-/* TEXTURE_EXCEPTION DEFINITION */
-
-/* class texture_exception : exception
- *
- * for exceptions related to textures
- */
-class glh::exception::texture_exception : public exception
-{
-public:
-
-    /* full constructor
-     *
-     * __what: description of the exception
-     */
-    explicit texture_exception ( const std::string& __what )
-        : exception { __what }
-    {}
-
-    /* default zero-parameter constructor
-     *
-     * construct texture_exception with no descrption
-     */
-    texture_exception () = default;
-
-    /* default everything else and inherits what () function */
 
 };
 
