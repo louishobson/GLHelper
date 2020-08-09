@@ -55,6 +55,25 @@ glh::core::shader::shader ( const GLenum type, std::initializer_list<std::string
     /* generate shader */
     id = glCreateShader ( type );
 
+    /* include files */
+    include_files ( paths );
+}
+
+/* destructor */
+glh::core::shader::~shader ()
+{
+    /* destroy shader */
+    glDeleteShader ( id );
+}
+
+
+
+/* include_files
+ *
+ * add multiple files to the source
+ */
+void glh::core::shader::include_files ( std::initializer_list<std::string> paths )
+{
     /* loop through paths */
     for ( const auto& path: paths )
     {
@@ -72,13 +91,14 @@ glh::core::shader::shader ( const GLenum type, std::initializer_list<std::string
     }
 }
 
-
-
-/* destructor */
-glh::core::shader::~shader ()
+/* include_source
+ *
+ * add source code directly
+ */
+void glh::core::shader::include_source ( const std::string& source_to_include )
 {
-    /* destroy shader */
-    glDeleteShader ( id );
+    /* append the source */
+    source.append ( source_to_include );
 }
 
 
@@ -660,7 +680,7 @@ void glh::core::program::compile_and_link ()
  * 
  * return: location of the uniform
  */
-GLint glh::core::program::get_uniform_location ( const std::string& name ) const
+int glh::core::program::get_uniform_location ( const std::string& name ) const
 {
     /* try to find the uniform location from the map */
     auto it = uniform_locations.find ( name );
@@ -670,7 +690,7 @@ GLint glh::core::program::get_uniform_location ( const std::string& name ) const
     else
     {
         /* try to get location */
-        const GLint location = glGetUniformLocation ( id, name.c_str () );
+        const int location = glGetUniformLocation ( id, name.c_str () );
         
         /* don't throw, as uniforms not in the default block have a location < 0
          * all uniforms have an index: that can be used to tell if a uniform exists
@@ -694,7 +714,7 @@ GLint glh::core::program::get_uniform_location ( const std::string& name ) const
  * 
  * return: the index of the uniform 
  */
-GLuint glh::core::program::get_uniform_index ( const std::string& name ) const
+unsigned glh::core::program::get_uniform_index ( const std::string& name ) const
 {
     /* try to find the uniform index from the map */
     auto it = uniform_indices.find ( name );
@@ -704,7 +724,7 @@ GLuint glh::core::program::get_uniform_index ( const std::string& name ) const
     else
     {
         /* try to get index */
-        GLuint index;
+        unsigned index;
         const char * name_ptr = name.c_str ();
         glGetUniformIndices ( id, 1, &name_ptr, &index );
 
@@ -725,7 +745,7 @@ GLuint glh::core::program::get_uniform_index ( const std::string& name ) const
  * 
  * name: the name of the uniform block
  */
-GLuint glh::core::program::get_uniform_block_index ( const std::string& name ) const
+unsigned glh::core::program::get_uniform_block_index ( const std::string& name ) const
 {
     /* try to find the uniform block index from the map */
     auto it = uniform_block_indices.find ( name );
@@ -735,7 +755,7 @@ GLuint glh::core::program::get_uniform_block_index ( const std::string& name ) c
     else
     {
         /* try to get index */
-        GLuint index = glGetUniformBlockIndex ( id, name.c_str () );
+        unsigned index = glGetUniformBlockIndex ( id, name.c_str () );
 
         /* if -1, throw */
         if ( index == GL_INVALID_INDEX ) throw exception::uniform_exception { "failed to get index of uniform block with name " + name };
@@ -755,14 +775,14 @@ GLuint glh::core::program::get_uniform_block_index ( const std::string& name ) c
  * index/name: the index/name of the uniform
  * target: the target piece of information
  */
-GLint glh::core::program::get_active_uniform_iv ( const GLuint index, const GLenum target ) const
+int glh::core::program::get_active_uniform_iv ( const unsigned index, const GLenum target ) const
 {
     /* get information and return */
-    GLint param = 0;
+    int param = 0;
     glGetActiveUniformsiv ( id, 1, &index, target, &param );
     return param;
 }
-GLint glh::core::program::get_active_uniform_iv ( const std::string& name, const GLenum target ) const
+int glh::core::program::get_active_uniform_iv ( const std::string& name, const GLenum target ) const
 {
     /* get index and call overload */
     return get_active_uniform_iv ( get_uniform_index ( name ), target );
@@ -775,14 +795,14 @@ GLint glh::core::program::get_active_uniform_iv ( const std::string& name, const
  * index/name: the index/name of the uniform block
  * target: the target piece of information
  */
-GLint glh::core::program::get_active_uniform_block_iv ( const GLuint index, const GLenum target ) const
+int glh::core::program::get_active_uniform_block_iv ( const unsigned index, const GLenum target ) const
 {
     /* get information and return */
-    GLint param = 0;
+    int param = 0;
     glGetActiveUniformBlockiv ( id, index, target, &param );
     return param;
 }
-GLint glh::core::program::get_active_uniform_block_iv ( const std::string& name, const GLenum target ) const
+int glh::core::program::get_active_uniform_block_iv ( const std::string& name, const GLenum target ) const
 {
     /* get index and call overload */
     return get_active_uniform_block_iv ( get_uniform_block_index ( name ), target );
@@ -797,7 +817,7 @@ GLint glh::core::program::get_active_uniform_block_iv ( const std::string& name,
  * block_index/name: the index/name of the uniform block
  * bp_index: the index of the bind point
  */
-bool glh::core::program::set_uniform_block_binding ( const GLuint block_index, const GLuint bp_index ) const
+bool glh::core::program::set_uniform_block_binding ( const unsigned block_index, const unsigned bp_index ) const
 {
     /* resize vector if necessary */
     if ( uniform_block_bindings.size () <= block_index ) uniform_block_bindings.resize ( block_index + 1, -1 );
@@ -814,7 +834,7 @@ bool glh::core::program::set_uniform_block_binding ( const GLuint block_index, c
     /* return true */
     return true;
 }
-bool glh::core::program::set_uniform_block_binding ( const std::string& block_name, const GLuint bp_index ) const
+bool glh::core::program::set_uniform_block_binding ( const std::string& block_name, const unsigned bp_index ) const
 {
     /* get index and call overload */
     return set_uniform_block_binding ( get_uniform_block_index ( block_name ), bp_index );
@@ -827,13 +847,13 @@ bool glh::core::program::set_uniform_block_binding ( const std::string& block_na
  * 
  * block_index/name: the index/name of the block to get the bind point of
  */
-GLint glh::core::program::get_uniform_block_binding ( const GLuint block_index ) const
+int glh::core::program::get_uniform_block_binding ( const unsigned block_index ) const
 {
     /* simply return the value in uniform_block_bindings */
     if ( uniform_block_bindings.size () > block_index ) return uniform_block_bindings.at ( block_index );
     else return -1;
 }
-GLint glh::core::program::get_uniform_block_binding ( const std::string& block_name ) const
+int glh::core::program::get_uniform_block_binding ( const std::string& block_name ) const
 {
     /* get index and call overload */
     return get_uniform_block_binding ( get_uniform_block_index ( block_name ) );

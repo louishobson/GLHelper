@@ -328,6 +328,20 @@ public:
     virtual ~shader ();
 
 
+ 
+    /* include_files
+     *
+     * add multiple files to the source
+     */
+    void include_files ( std::initializer_list<std::string> paths );
+
+    /* include_source
+     *
+     * add source code directly
+     */
+    void include_source ( const std::string& source_to_include );
+
+
 
     /* compile
      * 
@@ -1177,7 +1191,7 @@ public:
      * 
      * name: the name of the uniform
      */
-    GLint get_uniform_location ( const std::string& name ) const;
+    int get_uniform_location ( const std::string& name ) const;
 
     /* get_uniform_index
      *
@@ -1185,7 +1199,7 @@ public:
      * 
      * name: the name of the uniform
      */
-    GLuint get_uniform_index ( const std::string& name ) const;
+    unsigned get_uniform_index ( const std::string& name ) const;
 
     /* get_uniform_block_index
      *
@@ -1193,7 +1207,7 @@ public:
      * 
      * name: the name of the uniform block
      */
-    GLuint get_uniform_block_index ( const std::string& name ) const;
+    unsigned get_uniform_block_index ( const std::string& name ) const;
 
 
 
@@ -1204,8 +1218,8 @@ public:
      * index/name: the index/name of the uniform
      * target: the target piece of information
      */
-    GLint get_active_uniform_iv ( const GLuint index, const GLenum target ) const;
-    GLint get_active_uniform_iv ( const std::string& name, const GLenum target ) const;
+    int get_active_uniform_iv ( const unsigned index, const GLenum target ) const;
+    int get_active_uniform_iv ( const std::string& name, const GLenum target ) const;
 
     /* get_active_uniform_block_iv
      *
@@ -1214,8 +1228,8 @@ public:
      * index/name: the index/name of the uniform block
      * target: the target piece of information
      */
-    GLint get_active_uniform_block_iv ( const GLuint index, const GLenum target ) const;
-    GLint get_active_uniform_block_iv ( const std::string& name, const GLenum target ) const;
+    int get_active_uniform_block_iv ( const unsigned index, const GLenum target ) const;
+    int get_active_uniform_block_iv ( const std::string& name, const GLenum target ) const;
 
     /* set_uniform_block_binding
      *
@@ -1226,8 +1240,8 @@ public:
      * 
      * returns true if a change to the binding occured
      */
-    bool set_uniform_block_binding ( const GLuint block_index, const GLuint bp_index ) const;
-    bool set_uniform_block_binding ( const std::string& block_name, const GLuint bp_index ) const;
+    bool set_uniform_block_binding ( const unsigned block_index, const unsigned bp_index ) const;
+    bool set_uniform_block_binding ( const std::string& block_name, const unsigned bp_index ) const;
 
     /* get_uniform_block_binding
      *
@@ -1236,8 +1250,8 @@ public:
      * 
      * block_index/name: the index/name of the block to get the bind point of
      */
-    GLint get_uniform_block_binding ( const GLuint block_index ) const;
-    GLint get_uniform_block_binding ( const std::string& block_name ) const;
+    int get_uniform_block_binding ( const unsigned block_index ) const;
+    int get_uniform_block_binding ( const std::string& block_name ) const;
 
 
 
