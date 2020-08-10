@@ -28,5 +28,7 @@ uniform material_struct material;
 void main ()
 {
     /* set the depth */
-    gl_FragDepth = ( material.definitely_opaque || ( material.opacity >= 1.0 && !evaluate_stack_transparency ( material.diffuse_stack, gs_out.texcoords, 0.99 ) ) ? gs_out.depth : 1.0 );
+    gl_FragDepth = ( material.definitely_opaque || 
+        ( material.opacity > 0.99 && material.diffuse_stack.stack_size > 0 && material.diffuse_stack.base_color.w > 0.99 && texture ( material.diffuse_stack.textures, vec3 ( gs_out.texcoords [ material.diffuse_stack.levels [ 0 ].uvwsrc ], 0 ) ).w > 0.99 ) 
+        ? gs_out.depth : 1.0 );
 }
