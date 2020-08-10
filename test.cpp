@@ -614,7 +614,7 @@ int main ()
         const double fraction_bloom = std::chrono::duration<double> { timestamp_bloom - timestamp_transparent_render } / overall_time;
 
         /* output the fractions as percentages every 10th frame */
-        if ( frame % 5 == 0 ) \
+        //if ( frame % 5 == 0 ) \
         std::cout << "% window properties  : " << fraction_window_properties * 100.0 << std::endl \
                   << "% movement           : " << fraction_movement * 100.0 << std::endl \
                   << "% shadow maps        : " << fraction_shadow_maps * 100.0 << std::endl \
@@ -625,7 +625,7 @@ int main ()
                   << "\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A";
         
         /* print framerate every 10th frame */
-        //if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
+        if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
 
 
 
