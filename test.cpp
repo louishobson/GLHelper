@@ -177,7 +177,8 @@ int main ()
         glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
         glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
         glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
-        glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS,
+        glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS |
+        0,
         island_matrix
     };
 
@@ -195,7 +196,8 @@ int main ()
         glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
         glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
         glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
-        glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS,
+        glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS |
+        0,
         box_matrix
     };
 
@@ -519,8 +521,9 @@ int main ()
 
         /* set up renderer */
         glh::core::renderer::enable_blend ();
-        glh::core::renderer::blend_func ( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
         glh::core::renderer::blend_equation ( GL_FUNC_ADD );
+        glh::core::renderer::blend_func ( 0, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+        glh::core::renderer::blend_func ( 1, GL_ONE, GL_ONE );
         glh::core::renderer::enable_depth_test ();
         glh::core::renderer::set_depth_mask ( GL_FALSE );
         glh::core::renderer::enable_face_culling ();
