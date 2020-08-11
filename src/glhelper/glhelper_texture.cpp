@@ -140,6 +140,54 @@ void glh::core::image::vertical_flip ()
 
 
 
+/* to_internal_format
+ *
+ * creates an opengl internal format for the image
+ */
+GLenum glh::core::image::to_internal_format ( const bool use_srgb ) const
+{
+    /* return format */
+    if ( use_srgb )
+    {
+        if ( channels == 3 ) return GL_SRGB8; else
+        if ( channels == 4 ) return GL_SRGB8_ALPHA8;
+    } else
+    {
+        if ( channels == 1 ) return GL_R8; else
+        if ( channels == 2 ) return GL_RG8; else
+        if ( channels == 3 ) return GL_RGB8; else
+        if ( channels == 4 ) return GL_RGBA8;
+    }
+
+    /* throw, since invalid channel or channel-srgb combination */
+    throw exception::texture_exception { "invalid channel or srgb-channel combination" };
+}
+
+/* to_format
+*
+* creates an opengl format for the image
+*/
+GLenum glh::core::image::to_format ( const bool use_srgb ) const
+{
+    /* return format */
+    if ( use_srgb )
+    {
+        if ( channels == 3 ) return GL_SRGB; else
+        if ( channels == 4 ) return GL_SRGB_ALPHA;
+    } else
+    {
+        if ( channels == 1 ) return GL_RED; else
+        if ( channels == 2 ) return GL_RG; else
+        if ( channels == 3 ) return GL_RGB; else
+        if ( channels == 4 ) return GL_RGBA;
+    }
+
+    /* throw, since invalid channel or channel-srgb combination */
+    throw exception::texture_exception { "invalid channel or srgb-channel combination" };
+}
+
+
+
 /* TEXTURE_BASE IMPLEMENTATION */
 
 /* full constructor
@@ -156,7 +204,7 @@ glh::core::texture_base::texture_base ()
 glh::core::texture_base::~texture_base ()
 {
     /* destroy texture */
-    glDeleteTextures ( 1, &id );
+    if ( id ) glDeleteTextures ( 1, &id );
 }
 
 
@@ -337,54 +385,6 @@ void glh::core::texture_base::generate_mipmap ()
 {
     /* generate mipmap */
     glGenerateTextureMipmap ( id );
-}
-
-
-
-/* channels_to_internal_format
- *
- * change a number of channels to an internal format
- */
-GLenum glh::core::texture_base::channels_to_internal_format ( const unsigned channels, const bool use_srgb ) const
-{
-    /* return format */
-    if ( use_srgb )
-    {
-        if ( channels == 3 ) return GL_SRGB8; else
-        if ( channels == 4 ) return GL_SRGB8_ALPHA8;
-    } else
-    {
-        if ( channels == 1 ) return GL_R8; else
-        if ( channels == 2 ) return GL_RG8; else
-        if ( channels == 3 ) return GL_RGB8; else
-        if ( channels == 4 ) return GL_RGBA8;
-    }
-
-    /* throw, since invalid channel or channel-srgb combination */
-    throw exception::texture_exception { "invalid channel or srgb-channel combination" };
-}
-
-/* channels_to_format
- *
- * change a number of channels to a format format
- */
-GLenum glh::core::texture_base::channels_to_format ( const unsigned channels, const bool use_srgb ) const
-{
-    /* return format */
-    if ( use_srgb )
-    {
-        if ( channels == 3 ) return GL_SRGB; else
-        if ( channels == 4 ) return GL_SRGB_ALPHA;
-    } else
-    {
-        if ( channels == 1 ) return GL_RED; else
-        if ( channels == 2 ) return GL_RG; else
-        if ( channels == 3 ) return GL_RGB; else
-        if ( channels == 4 ) return GL_RGBA;
-    }
-
-    /* throw, since invalid channel or channel-srgb combination */
-    throw exception::texture_exception { "invalid channel or srgb-channel combination" };
 }
 
 
@@ -615,12 +615,12 @@ void glh::core::texture2d::tex_image ( const image& _image, const bool use_srgb 
 
     /* set the paraameters */
     width = _image.get_width (); height = _image.get_height ();
-    internal_format = channels_to_internal_format ( _image.get_channels (), use_srgb );
+    internal_format = _image.to_internal_format ( use_srgb );
     definitely_opaque = _image.is_definitely_opaque ();
 
     /* call glTexImage2D */
     bind ();
-    glTexImage2D ( GL_TEXTURE_2D, 0, internal_format, width, height, 0, channels_to_format ( _image.get_channels () ), GL_UNSIGNED_BYTE, _image.get_ptr () );
+    glTexImage2D ( GL_TEXTURE_2D, 0, internal_format, width, height, 0, _image.to_format (), GL_UNSIGNED_BYTE, _image.get_ptr () );
 }
 
 /* tex_sub_image
@@ -664,7 +664,7 @@ void glh::core::texture2d::tex_sub_image ( const unsigned x_offset, const unsign
 
     /* call glTesSubImage2D */
     bind ();
-    glTexSubImage2D ( GL_TEXTURE_2D, 0, x_offset, y_offset, _image.get_width (), _image.get_height (), channels_to_format ( _image.get_channels () ), GL_UNSIGNED_BYTE, _image.get_ptr () );
+    glTexSubImage2D ( GL_TEXTURE_2D, 0, x_offset, y_offset, _image.get_width (), _image.get_height (), _image.to_format (), GL_UNSIGNED_BYTE, _image.get_ptr () );
 }
 
 
@@ -763,11 +763,11 @@ void glh::core::texture2d_array::tex_image ( std::initializer_list<image> images
         width = images.begin ()->get_width ();
         height = images.begin ()->get_height ();
         depth = images.size ();
-        internal_format = channels_to_internal_format ( images.begin ()->get_channels (), use_srgb );
-        format = channels_to_format ( images.begin ()->get_channels () ); 
+        internal_format = images.begin ()->to_internal_format ( use_srgb );
+        format = images.begin ()->to_format ();
 
         /* assert that all of the images are the same size and have the same format */
-        for ( const image& _image: images ) if ( _image.get_width () != width || _image.get_height () != height || channels_to_internal_format ( _image.get_channels (), use_srgb ) != internal_format )
+        for ( const image& _image: images ) if ( _image.get_width () != width || _image.get_height () != height || _image.to_internal_format ( use_srgb ) != internal_format )
             throw exception::texture_exception { "attempted to call tex_image on texture2d_array without all the images supplied being of the same dimensions or formats" };
     }
 
@@ -813,15 +813,62 @@ void glh::core::texture2d_array::tex_sub_image ( const unsigned x_offset, const 
     /* check offsets and dimensions */
     if ( z_offset + images.size () > depth )
         throw exception::texture_exception { "attempted to call tex_sub_image on texture2d_array with offsets and dimensions which are out of range" };
-    for ( const image& _image: images ) if ( x_offset + _image.get_width () > width || y_offset + _image.get_width () > height )
+    for ( const image& _image: images ) if ( x_offset + _image.get_width () > width || y_offset + _image.get_height () > height )
         throw exception::texture_exception { "attempted to call tex_sub_image on texture2d_array with offsets and dimensions which are out of range" };
 
     /* substitute the image data */
     bind ();
     auto images_it = images.begin ();
     for ( unsigned i = 0; i < images.size (); ++i, ++images_it )
-        glTexSubImage3D ( GL_TEXTURE_2D_ARRAY, 0, x_offset, y_offset, z_offset + i, images_it->get_width (), images_it->get_width (), 1, channels_to_format ( images_it->get_channels () ), GL_UNSIGNED_BYTE, images_it->get_ptr () );
+        glTexSubImage3D ( GL_TEXTURE_2D_ARRAY, 0, x_offset, y_offset, z_offset + i, images_it->get_width (), images_it->get_height (), 1, images_it->to_format (), GL_UNSIGNED_BYTE, images_it->get_ptr () );
 }
+
+
+
+/* copy_image_sub_data
+ *
+ * substitute data into the texture from another texture
+ * changes are made to and from mipmap level 0, so remember to regenerate mipmaps if necessary
+ * 
+ * EITHER: texture2d_array substitution
+ * 
+ * read_tex: the texture to read from
+ * src_x/y/z_offset: the x y and z offsets to read from
+ * dst_x/y/z_offset: the x y and z offsets to write to
+ * _width/_height/_depth: the width height and depth to copy
+ * 
+ * OR: texture2d substitution
+ * 
+ * read_tex: the texture to read from
+ * srcx/y: the x and y offsets to read from 
+ * dstx/y/z: the x y and z offsets to write to
+ * _width/_height: the width and height to copy
+ */
+void glh::core::texture2d_array::copy_image_sub_data ( const texture2d_array& read_tex, const unsigned src_x_offset, const unsigned src_y_offset, const unsigned src_z_offset, const unsigned dst_x_offset, 
+                                                       const unsigned dst_y_offset, const unsigned dst_z_offset, const unsigned _width, const unsigned _height, const unsigned _depth )
+{
+    /* check offsets and dimensions */
+    if ( src_x_offset + _width > read_tex.get_width () || src_y_offset + _height > read_tex.get_height () || src_z_offset + _depth > read_tex.get_depth () )
+        throw exception::texture_exception { "attempted to call copy_image_sub_data on texture2d_array (copying from texture2d_array) with offsets and dimensions which are out of range" };
+    if ( dst_x_offset + _width > width || dst_x_offset + _height > height || dst_x_offset + _depth > depth )
+        throw exception::texture_exception { "attempted to call copy_image_sub_data on texture2d_array (copying from texture2d_array) with offsets and dimensions which are out of range" };
+
+    /* copy data */
+    glCopyImageSubData ( read_tex.internal_id (), GL_TEXTURE_2D_ARRAY, 0, src_x_offset, src_y_offset, src_z_offset, id, GL_TEXTURE_2D_ARRAY, 0, dst_x_offset, dst_y_offset, dst_z_offset, _width, _height, _depth );   
+}
+void glh::core::texture2d_array::copy_image_sub_data ( const texture2d& read_tex, const unsigned src_x_offset, const unsigned src_y_offset, const unsigned dst_x_offset, 
+                                                       const unsigned dst_y_offset, const unsigned dst_z_offset, const unsigned _width, const unsigned _height )
+{
+    /* check offsets and dimensions */
+    if ( src_x_offset + _width > read_tex.get_width () || src_y_offset + _height > read_tex.get_height () )
+        throw exception::texture_exception { "attempted to call copy_image_sub_data on texture2d_array (copying from texture2d) with offsets and dimensions which are out of range" };
+    if ( dst_x_offset + _width > width || dst_x_offset + _height > height || dst_x_offset + 1 > depth )
+        throw exception::texture_exception { "attempted to call copy_image_sub_data on texture2d_array (copying from texture2d) with offsets and dimensions which are out of range" };
+
+    /* copy data */
+    glCopyImageSubData ( read_tex.internal_id (), GL_TEXTURE_2D, 0, src_x_offset, src_y_offset, 0, id, GL_TEXTURE_2D_ARRAY, 0, dst_x_offset, dst_y_offset, dst_z_offset, _width, _height, 1 );   
+}
+
 
 
 
@@ -989,12 +1036,12 @@ void glh::core::cubemap::tex_image ( const image& _image, const bool use_srgb )
 
     /* set the paraameters */
     width = _image.get_width (); height = _image.get_height ();
-    internal_format = channels_to_internal_format ( _image.get_channels (), use_srgb );
+    internal_format = _image.to_internal_format ( use_srgb );
 
     /* call glTexImage2D on each face */
     bind ();
     for ( unsigned i = 0; i < 6; ++i )
-        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, channels_to_format ( _image.get_channels () ), GL_UNSIGNED_BYTE, _image.get_ptr () );
+        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, _image.to_format (), GL_UNSIGNED_BYTE, _image.get_ptr () );
 }
 void glh::core::cubemap::tex_image ( std::initializer_list<image> images, const bool use_srgb )
 {
@@ -1007,17 +1054,17 @@ void glh::core::cubemap::tex_image ( std::initializer_list<image> images, const 
     /* set the width, height and internal format to that of the first image */
     width = images.begin ()->get_width ();
     height = images.begin ()->get_width ();
-    internal_format = channels_to_internal_format ( images.begin ()->get_channels (), use_srgb );
+    internal_format = images.begin ()->to_internal_format ( use_srgb );
 
     /* assert that the sizes and formats of the images are all the same */
-    for ( const image& _image: images ) if ( _image.get_width () != width || _image.get_height () != height || channels_to_internal_format ( _image.get_channels (), use_srgb ) != internal_format )
+    for ( const image& _image: images ) if ( _image.get_width () != width || _image.get_height () != height || _image.to_internal_format ( use_srgb ) != internal_format )
         throw exception::texture_exception { "attempted to call tex_image on cubemap without all the images supplied being of the same dimensions or formats" };
 
     /* call glTexImage2D on each face */
     bind ();
     auto images_it = images.begin ();
     for ( unsigned i = 0; i < 6; ++i, ++images_it )
-        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, channels_to_format ( images.begin ()->get_channels () ), GL_UNSIGNED_BYTE, images_it->get_ptr () );
+        glTexImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internal_format, width, height, 0, images.begin ()->to_format (), GL_UNSIGNED_BYTE, images_it->get_ptr () );
 }
 
 /* tex_sub_image
@@ -1086,7 +1133,7 @@ void glh::core::cubemap::tex_sub_image ( const unsigned x_offset, const unsigned
     /* substitute data on each face */
     bind ();
     for ( unsigned i = 0; i < 6; ++i )
-        glTexSubImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, x_offset, y_offset, _image.get_width (), _image.get_height (), channels_to_format ( _image.get_channels () ), GL_UNSIGNED_BYTE, _image.get_ptr () );
+        glTexSubImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, x_offset, y_offset, _image.get_width (), _image.get_height (), _image.to_format (), GL_UNSIGNED_BYTE, _image.get_ptr () );
 }
 void glh::core::cubemap::tex_sub_image ( const unsigned face, const unsigned x_offset, const unsigned y_offset, const image& _image )
 {
@@ -1096,7 +1143,7 @@ void glh::core::cubemap::tex_sub_image ( const unsigned face, const unsigned x_o
 
     /* substitute data on the face supplied */
     bind ();
-    glTexSubImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, x_offset, y_offset, _image.get_width (), _image.get_height (), channels_to_format ( _image.get_channels () ), GL_UNSIGNED_BYTE, _image.get_ptr () );
+    glTexSubImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, x_offset, y_offset, _image.get_width (), _image.get_height (), _image.to_format (), GL_UNSIGNED_BYTE, _image.get_ptr () );
 }
 void glh::core::cubemap::tex_sub_image ( const unsigned x_offset, const unsigned y_offset, std::initializer_list<image> images )
 {
@@ -1111,7 +1158,7 @@ void glh::core::cubemap::tex_sub_image ( const unsigned x_offset, const unsigned
     bind ();
     auto images_it = images.begin ();
     for ( unsigned i = 0; i < 6; ++i, ++images_it )
-        glTexSubImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, x_offset, y_offset, images_it->get_width (), images_it->get_height (), channels_to_format ( images_it->get_channels () ), GL_UNSIGNED_BYTE, images_it->get_ptr () );
+        glTexSubImage2D ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, x_offset, y_offset, images_it->get_width (), images_it->get_height (), images_it->to_format (), GL_UNSIGNED_BYTE, images_it->get_ptr () );
 }
 
 
@@ -1219,11 +1266,11 @@ void glh::core::cubemap_array::tex_image ( std::initializer_list<image> images, 
         width = images.begin ()->get_width ();
         height = images.begin ()->get_height ();
         depth = images.size ();
-        internal_format = channels_to_internal_format ( images.begin ()->get_channels (), use_srgb );
-        format = channels_to_format ( images.begin ()->get_channels () );
+        internal_format = images.begin ()->to_internal_format ( use_srgb );
+        format = images.begin ()->to_format ();
 
         /* assert that all of the images are the same size and of the same format */
-        for ( const image& _image: images ) if ( _image.get_width () != width || _image.get_height () != height || channels_to_internal_format ( _image.get_channels (), use_srgb ) != internal_format )
+        for ( const image& _image: images ) if ( _image.get_width () != width || _image.get_height () != height || _image.to_internal_format ( use_srgb ) != internal_format )
             throw exception::texture_exception { "attempted to call tex_image on texture2d_array without all the images supplied being of the same dimensions or format" };
     }
 
@@ -1267,12 +1314,12 @@ void glh::core::cubemap_array::tex_sub_image ( const unsigned x_offset, const un
     /* check offsets and dimensions */
     if ( z_offset + images.size () > depth )
         throw exception::texture_exception { "attempted to call tex_sub_image on texture2d_array with offsets and dimensions which are out of range" };
-    for ( const image& _image: images ) if ( x_offset + _image.get_width () > width || y_offset + _image.get_width () > height )
+    for ( const image& _image: images ) if ( x_offset + _image.get_width () > width || y_offset + _image.get_height () > height )
         throw exception::texture_exception { "attempted to call tex_sub_image on texture2d_array with offsets and dimensions which are out of range" };
 
     /* substitute the image data */
     bind ();
     auto images_it = images.begin ();
     for ( unsigned i = 0; i < images.size (); ++i, ++images_it )
-        glTexSubImage3D ( GL_TEXTURE_CUBE_MAP_ARRAY, 0, x_offset, y_offset, z_offset + i, images_it->get_width (), images_it->get_width (), 1, channels_to_format ( images_it->get_channels () ), GL_UNSIGNED_BYTE, images_it->get_ptr () );
+        glTexSubImage3D ( GL_TEXTURE_CUBE_MAP_ARRAY, 0, x_offset, y_offset, z_offset + i, images_it->get_width (), images_it->get_height (), 1, images_it->to_format (), GL_UNSIGNED_BYTE, images_it->get_ptr () );
 }
