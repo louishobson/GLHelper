@@ -54,7 +54,7 @@ struct material_struct
 
 /* FUNCTIONS */
 
-/* evaluate_stack_macro_swizzle
+/* evaluate_stack_swizzle_macro
  *
  * evaluate multiple stacked textures with a specific swizzle mask
  *
@@ -69,7 +69,7 @@ struct material_struct
  *
  * void evaluate_stack_macro ( out vec[1-4] stack_color, texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ], MACRO swizzle_mask )
  */
- #define evaluate_stack_macro_swizzle( stack_color, stack, texcoords, swizzle_mask ) \
+ #define evaluate_stack_swizzle_macro( stack_color, stack, texcoords, swizzle_mask ) \
 { \
     /* set the output color to the base color of the stack */ \
     stack_color = stack.base_color.swizzle_mask; \
@@ -77,11 +77,7 @@ struct material_struct
     /* loop through the stack */ \
     for ( int i = 0; i < stack.stack_size; ++i ) \
     { \
-        /* add to the stack through the appropriate operation 
-         * the expression 'texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength'
-         * is equal to the sampled value from the current texture
-         * for case 4, this is stored into a temporary variable, since the equation requires its use more than once
-         */ \
+        /* add to the stack through the appropriate operation */ \
         switch ( stack.levels [ i ].blend_operation ) \
         { \
             case 0: stack_color *= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ).swizzle_mask * stack.levels [ i ].blend_strength; break; \
@@ -112,12 +108,12 @@ struct material_struct
  *
  * void evaluate_stack_macro_[x/xy/xyz/xyzw/w] ( out vec[1-4] stack_color, texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ] )
  */
-#define evaluate_stack_macro_x( stack_color, stack, texcoords )    evaluate_stack_macro_swizzle ( stack_color, stack, texcoords, x )
-#define evaluate_stack_macro_xy( stack_color, stack, texcoords )   evaluate_stack_macro_swizzle ( stack_color, stack, texcoords, xy )
-#define evaluate_stack_macro_xyz( stack_color, stack, texcoords )  evaluate_stack_macro_swizzle ( stack_color, stack, texcoords, xyz )
-#define evaluate_stack_macro_xyzw( stack_color, stack, texcoords ) evaluate_stack_macro_swizzle ( stack_color, stack, texcoords, xyzw )
-#define evaluate_stack_macro_w( stack_color, stack, texcoords )    evaluate_stack_macro_swizzle ( stack_color, stack, texcoords, w )
-#define evaluate_stack_macro( stack_color, stack, texcoords )      evaluate_stack_macro_swizzle ( stack_color, stack, texcoords, xyzw )
+#define evaluate_stack_macro_x( stack_color, stack, texcoords )    evaluate_stack_swizzle_macro ( stack_color, stack, texcoords, x )
+#define evaluate_stack_macro_xy( stack_color, stack, texcoords )   evaluate_stack_swizzle_macro ( stack_color, stack, texcoords, xy )
+#define evaluate_stack_macro_xyz( stack_color, stack, texcoords )  evaluate_stack_swizzle_macro ( stack_color, stack, texcoords, xyz )
+#define evaluate_stack_macro_xyzw( stack_color, stack, texcoords ) evaluate_stack_swizzle_macro ( stack_color, stack, texcoords, xyzw )
+#define evaluate_stack_macro_w( stack_color, stack, texcoords )    evaluate_stack_swizzle_macro ( stack_color, stack, texcoords, w )
+#define evaluate_stack_macro( stack_color, stack, texcoords )      evaluate_stack_swizzle_macro ( stack_color, stack, texcoords, xyzw )
 
 
 
@@ -143,4 +139,3 @@ struct material_struct
     /* otherwise just return the original normal, extracted from the tbn matrix */ \
     else normal = tbn_matrix [ 2 ]; \
 }
-
