@@ -214,16 +214,16 @@ public:
 
     /* enable/disable_blend
      *
-     * enable/disable blending
+     * enable/disable blending either as a whole or for a specific render target
      */
-    static void enable_blend ();
-    static void disable_blend ();
-
-    /* blend_enabled
-     *
-     * retirn true if blending is enabled
-     */
-    static bool blend_enabled () { return blend_state; }
+    static void enable_blend ()
+    { glEnable ( GL_BLEND ); }
+    static void enable_blend ( const unsigned render_target )
+    { glEnablei ( GL_BLEND, render_target ); }
+    static void disable_blend ()
+    { glDisable ( GL_BLEND ); }
+    static void disable_blend ( const unsigned render_target )
+    { glDisablei ( GL_BLEND, render_target ); }
 
     /* blend_func
      *
@@ -234,6 +234,8 @@ public:
      */
     static void blend_func ( const GLenum sfactor, const GLenum dfactor )
     { glBlendFunc ( sfactor, dfactor ); }
+    static void blend_func ( const unsigned render_target, const GLenum sfactor, const GLenum dfactor )
+    { glBlendFunci ( render_target, sfactor, dfactor ); }
 
     /* blend_func_separate
      *
@@ -247,7 +249,9 @@ public:
      */
     static void blend_func_separate ( const GLenum srgbfact, const GLenum drgbfact, const GLenum salphafact, const GLenum dalphafact )
     { glBlendFuncSeparate ( srgbfact, drgbfact, salphafact, dalphafact ); }
-    
+    static void blend_func_separate ( const unsigned render_target, const GLenum srgbfact, const GLenum drgbfact, const GLenum salphafact, const GLenum dalphafact )
+    { glBlendFuncSeparatei ( render_target, srgbfact, drgbfact, salphafact, dalphafact ); }
+
     /* blend_equation
      *
      * set the equation to use for blending
@@ -255,6 +259,8 @@ public:
      * equ: the equation to use
      */
     static void blend_equation ( const GLenum equ ) { glBlendEquation ( equ ); }
+    static void blend_equation ( const unsigned render_target, const GLenum equ ) 
+    { glBlendEquationi ( render_target, equ ); }
 
 
 
@@ -366,13 +372,6 @@ private:
      * defaults to 0xff
      */
     static GLuint stencil_mask;
-
-    /* blend_state
-     *
-     * whether blending is enabled
-     * defaults to false
-     */
-    static bool blend_state;
 
     /* face_culling_state
      *

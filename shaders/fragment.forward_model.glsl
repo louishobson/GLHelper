@@ -1,5 +1,5 @@
 /*
- * fragment.model.glsl
+ * fragment.forward_model.glsl
  * 
  * model fragment shader
  */
@@ -21,7 +21,7 @@ in VS_OUT
 layout ( location = 0 ) out vec4 main_fragcolor;
 
 /* the emission output color */
-layout ( location = 1 ) out vec4 emission_fragcolor;
+layout ( location = 1 ) out vec3 emission_fragcolor;
 
 
 
@@ -50,29 +50,39 @@ uniform int transparent_mode;
 void main ()
 {
     /* evaluate color stacks */
-    vec4 diffuse; evaluate_stack_macro ( diffuse, material.diffuse_stack, vs_out.texcoords );
-    vec4 specular; evaluate_stack_macro ( specular, material.specular_stack, vs_out.texcoords );
+    const vec4 diffuse = evaluate_stack_xyzw ( material.diffuse_stack, vs_out.texcoords );
+    const float specular = evaluate_stack_x ( material.specular_stack, vs_out.texcoords );
 
     /* discard if opacity is less than 0.02 */
-    if ( diffuse.a * material.opacity <= 0.02 ) discard;
+    if ( diffuse.w * material.opacity < 0.02 ) discard;
 
     /* discard if opaque/transparent depending on transparent_mode */
     switch ( transparent_mode )
     {
         case 0: break;
-        case 1: if ( diffuse.a * material.opacity > 0.98 ) discard; break;
-        case 2: if ( diffuse.a * material.opacity < 0.98 ) discard; break;
+        case 1: if ( diffuse.w * material.opacity > 0.98 ) discard; break;
+        case 2: if ( diffuse.w * material.opacity < 0.98 ) discard; break;
         default: break;
     }
 
     /* evaluate normal */
-    vec3 normal; evaluate_normal_macro ( normal, material.normal_stack, vs_out.texcoords, vs_out.tbn_matrix );
+    const vec3 normal = evaluate_normal ( material.normal_stack, vs_out.texcoords, vs_out.tbn_matrix );
 
     /* main output color */
-    compute_lighting_macro ( main_fragcolor.xyz, diffuse.xyz, diffuse.xyz, specular.xyz, material.shininess, material.shininess_strength, vs_out.fragpos, camera.viewpos, normal, light_system );
-    //compute_lighting_macro ( main_fragcolor.xyz, ambient.xyz, diffuse.xyz, 0.5.xxx, 128, 0.5, vs_out.fragpos, camera.viewpos, normal, light_system );
+    main_fragcolor.xyz = compute_lighting
+    ( 
+        diffuse.xyz, 
+        diffuse.xyz, 
+        specular.xxx, 
+        material.shininess, 
+        material.shininess_strength, 
+        vs_out.fragpos, 
+        camera.viewpos, 
+        normal, 
+        light_system 
+    );
     main_fragcolor.w = diffuse.a * material.opacity;
 
     /* emission output color */
-    evaluate_stack_macro ( emission_fragcolor, material.emission_stack, vs_out.texcoords );
+    emission_fragcolor = evaluate_stack_xyz ( material.emission_stack, vs_out.texcoords );
 }

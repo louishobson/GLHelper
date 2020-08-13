@@ -11,20 +11,20 @@
 /* recieve triangles from vertex shader */
 layout ( triangles ) in;
 
-/* input normal, tangent, vcolor and texcoords */
+/* input normal, tangent, vcolor_alpha and texcoords */
 in VS_OUT
 {
-    vec4 vcolor;
+    float vcolor_alpha;
     vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ];
 } vs_out [ 3 ];
 
 /* output triangle strip */
 layout ( triangle_strip, max_vertices = 3 ) out;
 
-/* output vertex color and texcoords */
+/* output vcolor_alpha and texcoords */
 out GS_OUT
 {
-    vec4 vcolor;
+    float vcolor_alpha;
     vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ];
 } gs_out;
 
@@ -103,9 +103,9 @@ void main ()
     scale = 2.0 * clamp ( sqrt ( max_texcoords_area / length ( cross ( vec3 ( positions [ 1 ] - positions [ 0 ], 0.0 ), vec3 ( positions [ 2 ] - positions [ 0 ], 0.0 ) ) ) ), 0.1, 1.0 );
 
     /* emit vertices */
-    gl_Position = vec4 ( clamp ( positions [ 0 ] * scale - 1.0, -1.0, 1.0 ), 0.0, 1.0 ); gs_out.vcolor = vs_out [ 0 ].vcolor; gs_out.texcoords = vs_out [ 0 ].texcoords; gl_PrimitiveID = gl_PrimitiveIDIn; EmitVertex ();
-    gl_Position = vec4 ( clamp ( positions [ 1 ] * scale - 1.0, -1.0, 1.0 ), 0.0, 1.0 ); gs_out.vcolor = vs_out [ 1 ].vcolor; gs_out.texcoords = vs_out [ 1 ].texcoords; gl_PrimitiveID = gl_PrimitiveIDIn; EmitVertex ();
-    gl_Position = vec4 ( clamp ( positions [ 2 ] * scale - 1.0, -1.0, 1.0 ), 0.0, 1.0 ); gs_out.vcolor = vs_out [ 2 ].vcolor; gs_out.texcoords = vs_out [ 2 ].texcoords; gl_PrimitiveID = gl_PrimitiveIDIn; EmitVertex ();
+    gl_Position = vec4 ( clamp ( positions [ 0 ] * scale - 1.0, -1.0, 1.0 ), 0.0, 1.0 ); gs_out.vcolor_alpha = vs_out [ 0 ].vcolor_alpha; gs_out.texcoords = vs_out [ 0 ].texcoords; gl_PrimitiveID = gl_PrimitiveIDIn; EmitVertex ();
+    gl_Position = vec4 ( clamp ( positions [ 1 ] * scale - 1.0, -1.0, 1.0 ), 0.0, 1.0 ); gs_out.vcolor_alpha = vs_out [ 1 ].vcolor_alpha; gs_out.texcoords = vs_out [ 1 ].texcoords; gl_PrimitiveID = gl_PrimitiveIDIn; EmitVertex ();
+    gl_Position = vec4 ( clamp ( positions [ 2 ] * scale - 1.0, -1.0, 1.0 ), 0.0, 1.0 ); gs_out.vcolor_alpha = vs_out [ 2 ].vcolor_alpha; gs_out.texcoords = vs_out [ 2 ].texcoords; gl_PrimitiveID = gl_PrimitiveIDIn; EmitVertex ();
 
     /* end primitive */
     EndPrimitive ();

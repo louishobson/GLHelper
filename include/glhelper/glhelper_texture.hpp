@@ -317,6 +317,20 @@ public:
 
 
 
+    /* to_internal_format
+     *
+     * creates an opengl internal format for the image
+     */
+    GLenum to_internal_format ( const bool use_srgb = false ) const;
+
+    /* to_format
+     *
+     * creates an opengl format for the image
+     */
+    GLenum to_format ( const bool use_srgb = false ) const;
+
+
+
 private:
 
     /* path to the image */
@@ -481,20 +495,6 @@ protected:
      * the next unit to bind the texture to in the bind loop
      */
     static unsigned bind_loop_index;
-
-
-
-    /* channels_to_internal_format
-     *
-     * change a number of channels to an internal format
-     */
-    GLenum channels_to_internal_format ( const unsigned channels, const bool use_srgb = false ) const;
-
-    /* channels_to_format
-     *
-     * change a number of channels to a format format
-     */
-    GLenum channels_to_format ( const unsigned channels, const bool use_srgb = false ) const;
 
 };
 
@@ -1014,6 +1014,32 @@ public:
      */
     void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, const unsigned _width, const unsigned _height, const unsigned _depth, const GLenum format, const GLenum type, const void * data );
     void tex_sub_image ( const unsigned x_offset, const unsigned y_offset, const unsigned z_offset, std::initializer_list<image> images );
+
+
+
+    /* copy_image_sub_data
+     *
+     * substitute data into the texture from another texture
+     * changes are made to and from mipmap level 0, so remember to regenerate mipmaps if necessary
+     * 
+     * EITHER: texture2d_array substitution
+     * 
+     * read_tex: the texture to read from
+     * src_x/y/z_offset: the x y and z offsets to read from
+     * dst_x/y/z_offset: the x y and z offsets to write to
+     * _width/_height/_depth: the width height and depth to copy
+     * 
+     * OR: texture2d substitution
+     * 
+     * read_tex: the texture to read from
+     * srcx/y: the x and y offsets to read from 
+     * dstx/y/z: the x y and z offsets to write to
+     * _width/_height: the width and height to copy
+     */
+    void copy_image_sub_data ( const texture2d_array& read_tex, const unsigned src_x_offset, const unsigned src_y_offset, const unsigned src_z_offset, const unsigned dst_x_offset, 
+                               const unsigned dst_y_offset, const unsigned dst_z_offset, const unsigned _width, const unsigned _height, const unsigned _depth );
+    void copy_image_sub_data ( const texture2d& read_tex, const unsigned src_x_offset, const unsigned src_y_offset, const unsigned dst_x_offset, 
+                               const unsigned dst_y_offset, const unsigned dst_z_offset, const unsigned _width, const unsigned _height );
 
 
 

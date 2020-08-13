@@ -55,6 +55,8 @@
  *     texture_stack_struct ambient_stack;
  *     texture_stack_struct diffuse_stack;
  *     texture_stack_struct specular_stack;
+ *     texture_stack_struct emission_stack;
+ *     texture_stack_struct normal_stack;     
  * 
  *     int blending_mode;
  * 
@@ -67,7 +69,7 @@
  * 
  * this structure is for a material
  * 
- * *_stack: the texture stacks for ambient, diffuse and specular texture maps (see below)
+ * *_stack: the texture stacks (see below)
  * blending_mode: how to blend the computed fragment color with the previous color
  * shininess: the shininess value for the material
  * shininess_strength: a multiple for the specular contribution for a pixel's color
@@ -81,9 +83,12 @@
  * struct texture_stack_struct
  * {
  *     vec4 base_color;
+ * 
  *     int stack_size;
+ * 
  *     texture_stack_level_struct levels [];
- *     sampler2DArray sampler;
+ * 
+ *     sampler2DArray textures;
  * };
  * 
  * this structure is for a texture stack
@@ -91,7 +96,7 @@
  * stack_size: the number of levels of the stack
  * base_color: the base color of which textures in the stack are blended with
  * levels: an array of levels of the texture stack, of user-specified size (see below)
- * sampler: 2d texture array storing the textures in the stack
+ * textures: 2d texture array storing the textures in the stack
  * 
  * 
  * 
@@ -198,6 +203,9 @@
 
 /* include glhelper_sync.hpp */
 #include <glhelper/glhelper_sync.hpp>
+
+/* include glhelper_vertices.hpp */
+#include <glhelper/glhelper_vertices.hpp>
 
 
 
@@ -1106,7 +1114,12 @@ private:
      * _texture_stack: the texture stack to apply
      * stack_size/base_color/levels/textures_uni: cached stack uniforms
      */
-    void apply_texture_stack ( const texture_stack& _texture_stack, core::uniform& stack_size_uni, core::uniform& stack_base_color_uni, core::struct_array_uniform& stack_levels_uni, core::uniform& stack_textures_uni ) const;
+    void apply_texture_stack 
+    ( 
+        const texture_stack& _texture_stack, 
+        core::uniform& stack_size_uni, core::uniform& stack_base_color_uni,
+        core::struct_array_uniform& stack_levels_uni, core::uniform& stack_textures_uni 
+    ) const;
 
 };
 

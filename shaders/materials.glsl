@@ -54,87 +54,79 @@ struct material_struct
 
 /* FUNCTIONS */
 
-/* evaluate_stack_macro
+/* generate_evaluate_stack_definition
  *
- * evaluate multiple stacked texture, but in macro form
+ * defines the function evaluate_stack_[swizzle]
  *
- * stack_color: the name of an modifiable vec4 lvalue which will be used to store the result
+ * return_type: the type to return
+ * swizzle_mask: the swizzle pattern to apply to the stack color e.g. xyzw for 4 components
+ *
+ * the function that it defines is described bellow:
+ *
+ *
+ *
+ * evaluate_stack_[swizzle]
+ *
  * stack: the stack to evaluate
  * texcoords: array of texture coords for the fragment
  *
- * prototype:
- *
- * void evaluate_stack_macro ( out vec4 stack_color, texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ] )
+ * return: the final color of the stack
  */
-#define evaluate_stack_macro( stack_color, stack, texcoords ) \
+#define generate_evaluate_stack_definition( return_type, swizzle_mask ) \
+return_type evaluate_stack_ ## swizzle_mask ( const texture_stack_struct stack, const vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ] ) \
 { \
     /* set the output color to the base color of the stack */ \
-    stack_color = stack.base_color; \
+    return_type stack_color = stack.base_color.swizzle_mask; \
     \
     /* loop through the stack */ \
     for ( int i = 0; i < stack.stack_size; ++i ) \
     { \
-        /* add to the stack through the appropriate operation 
-         * the expression 'texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength'
-         * is equal to the sampled value from the current texture
-         * for case 4, this is stored into a temporary variable, since the equation requires its use more than once
-         */ \
+        /* add to the stack through the appropriate operation */ \
         switch ( stack.levels [ i ].blend_operation ) \
         { \
-            case 0: stack_color *= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength; break; \
-            case 1: stack_color += texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength; break; \
-            case 2: stack_color -= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength; break; \
-            case 3: stack_color /= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength; break; \
+            case 0: stack_color *= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ).swizzle_mask * stack.levels [ i ].blend_strength; break; \
+            case 1: stack_color += texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ).swizzle_mask * stack.levels [ i ].blend_strength; break; \
+            case 2: stack_color -= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ).swizzle_mask * stack.levels [ i ].blend_strength; break; \
+            case 3: stack_color /= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ).swizzle_mask * stack.levels [ i ].blend_strength; break; \
             case 4: \
-                const vec4 level_color = texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength; \
-                stack_color = ( stack_color + level_color ) - ( stack_color * level_color ); break; \
-            case 5: stack_color += texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength - 0.5; break; \
-            default: stack_color *= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ) * stack.levels [ i ].blend_strength; break; \
+                stack_color = ( stack_color + texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ).swizzle_mask ) \
+                            - ( stack_color * texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ).swizzle_mask ); \
+                break; \
+            case 5:  stack_color += texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ).swizzle_mask * stack.levels [ i ].blend_strength - 0.5; break; \
+            default: stack_color *= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ).swizzle_mask * stack.levels [ i ].blend_strength; break; \
         } \
     } \
+    /* return the stack color */ \
+    return stack_color; \
 }
 
 
-/* evaluate_stack_transparency
- *
- * useful for when shadow mapping
- * is much more stripped down than evaluate_stack
- *
- * stack: the stack to evaluate
- * texcoords: array of texture coords for the fragment
- * transparency_cutoff: if the transparency is less than this value, return true
- *
- * return: boolean, true if has alpha < transparency_cutoff
- *
- * prototype: bool evaluate_stack_transparency ( texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ], float transparency_cutoff )
- */
-#define evaluate_stack_transparency( stack, texcoords, transparency_cutoff ) \
-    ( stack.base_color.a < transparency_cutoff || ( stack.stack_size != 0 && texture ( stack.textures, vec3 ( texcoords [ stack.levels [ 0 ].uvwsrc ], 0 ) ).a < transparency_cutoff ) )
-    /* if base transparency < 1.0, return true
-     * if has no textures, return false
-     * if has texture, return true if alpha is less than 1.0
-     */
+
+/* define the evaluate_stack functions */
+generate_evaluate_stack_definition ( float, x )
+generate_evaluate_stack_definition ( vec2, xy )
+generate_evaluate_stack_definition ( vec3, xyz )
+generate_evaluate_stack_definition ( vec4, xyzw )
+generate_evaluate_stack_definition ( float, w )
+
+
 
 /* evaluate_normal_macro
  *
- * macro version of evaluate_normal
+ * evaluates the normal from a normal stack
  *
- * normal: a modifiable lvalue for the output normal
  * stack: the normal stack
  * texcoords: array of texture coords for the fragment
  * tbn_matrix: the TBN matrix to use to transform the normal, if map is present
  * 
  * prototype:
  *
- * void evaluate_normal_macro ( out vec3 normal, texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ], mat3 tbn_matrix )
+ * void evaluate_normal ( texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ], mat3 tbn_matrix )
  */
-#define evaluate_normal_macro( normal, stack, texcoords, tbn_matrix ) \
-{ \
+#define evaluate_normal( stack, texcoords, tbn_matrix ) \
     /* if the size of the stack is greater than zero, sample the stack, and transform the output to its vector form
      * then use the tbn matrix to transform the normal to tangent space
      */ \
-    if ( stack.stack_size > 0 ) { vec4 stack_eval_; evaluate_stack_macro ( stack_eval_, stack, texcoords ); normal = tbn_matrix * normalize ( stack_eval_.xyz * 2.0 - 1.0 ); } \
+    ( stack.stack_size > 0 ? tbn_matrix * normalize ( evaluate_stack_xyz ( stack, texcoords ) * 2.0 - 1.0 ) \
     /* otherwise just return the original normal, extracted from the tbn matrix */ \
-    else normal = tbn_matrix [ 2 ]; \
-}
-
+    : tbn_matrix [ 2 ] )

@@ -150,29 +150,6 @@ void glh::core::renderer::set_stencil_mask ( const GLuint mask )
     }
 }
 
-/* enable/disable_blend
- *
- * enable/disable blending
- */
-void glh::core::renderer::enable_blend ()
-{
-    /* enable if not already enabled */
-    if ( !blend_state )
-    {
-        glEnable ( GL_BLEND ); 
-        blend_state = true; 
-    } 
-}
-void glh::core::renderer::disable_blend ()
-{
-    /* disable if not already disabled */
-    if ( blend_state )
-    {
-        glDisable ( GL_BLEND ); 
-        blend_state = false; 
-    }
-}
-
 /* enable/disable_face_culling
  *
  * enable/disable face culling
@@ -292,9 +269,6 @@ bool glh::core::renderer::stencil_test_state { false };
 
 /* stencil mask is 0xff by default */
 GLuint glh::core::renderer::stencil_mask { 0xff };
-
-/* blending is disabled by default */
-bool glh::core::renderer::blend_state { false };
 
 /* face culling is disabled by default */
 bool glh::core::renderer::face_culling_state { false };

@@ -8,10 +8,10 @@
 
 /* INPUT AND OUTPUT */
 
-/* input vertex color and texcoords */
+/* input vcolor_alpha and texcoords */
 in GS_OUT
 {
-    vec4 vcolor;
+    float vcolor_alpha;
     vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ];
 } gs_out;
 
@@ -40,8 +40,8 @@ uniform material_struct material;
 /* main */
 void main ()
 {
-    /* sample the diffuse stack */
-    vec4 diffuse; evaluate_stack_macro ( diffuse, material.diffuse_stack, gs_out.texcoords );
+    /* sample the alpha of the diffuse stack */
+    const float diffuse_alpha = evaluate_stack_w ( material.diffuse_stack, gs_out.texcoords );
 
     /* get the bit and element offset */
     uint bit_offset = ( gl_PrimitiveID % 8 ) * 4;
@@ -49,10 +49,10 @@ void main ()
 
     /* create the output mask */
     uint output_mask = 0;
-    output_mask |= uint ( gs_out.vcolor.w >= 0.98 ) << ( bit_offset );
-    output_mask |= uint ( gs_out.vcolor.w >= 0.02 && gs_out.vcolor.w <= 0.98 ) << ( bit_offset + 1 );
-    output_mask |= uint ( diffuse.w >= 0.98 ) << ( bit_offset + 2 );
-    output_mask |= uint ( diffuse.w >= 0.02 && diffuse.w <= 0.98 ) << ( bit_offset + 3 );
+    output_mask |= uint ( gs_out.vcolor_alpha >= 0.98 ) << ( bit_offset );
+    output_mask |= uint ( gs_out.vcolor_alpha >= 0.02 && gs_out.vcolor_alpha <= 0.98 ) << ( bit_offset + 1 );
+    output_mask |= uint ( diffuse_alpha >= 0.98 ) << ( bit_offset + 2 );
+    output_mask |= uint ( diffuse_alpha >= 0.02 && diffuse_alpha <= 0.98 ) << ( bit_offset + 3 );
 
     /* set the output integer */
     atomicOr ( output_data [ element_offset ], output_mask );

@@ -185,13 +185,26 @@ bool glh::core::fbo::is_default_framebuffer_bound ()
  * attachment: which attachment the texture should be used as
  * mipmap: the mipmap level to attach (defaults to 0)
  */
-void glh::core::fbo::attach_texture ( const texture_base& texture, const GLenum attachment, const GLint mipmap )
+void glh::core::fbo::attach_texture ( const texture_base& texture, const GLenum attachment, const unsigned mipmap )
 {
     /* attach the texture */
     glNamedFramebufferTexture ( id, attachment, texture.internal_id (), mipmap );
 }
 
-
+/* attach_texture_layer
+ *
+ * add a layer of a texture as an attachment attachment
+ * 
+ * texture: the texture to attach
+ * layer: the layer to attach
+ * attachment: which attachment the texture should be used as
+ * mipmap: the mipmap level to attach (defaults to 0)
+ */
+void glh::core::fbo::attach_texture_layer ( const texture_base& texture, const unsigned layer, const GLenum attachment, const unsigned mipmap )
+{
+    /* attach the texture */
+    glNamedFramebufferTextureLayer ( id, attachment, texture.internal_id (), mipmap, layer );
+}
 
 /* attach_rbo
  *
@@ -211,6 +224,8 @@ void glh::core::fbo::attach_rbo ( const rbo& _rbo, const GLenum attachment )
     /* unbind rbo */
     if ( binding_change ) _rbo.unbind ();
 }
+
+
 
 /* is_complete
  *
@@ -262,22 +277,39 @@ void glh::core::fbo::set_default_dimensions ( const unsigned width, const unsign
 
 
 
-/* blit_copy
+/* blit_copy 
  *
- * copy a region FROM THIS FBO INTO ANOTHER FBO
+ * copy a region FROM ANOTHER FBO INTO THIS FBO
  * 
  * other: the other fbo to copy from
- * srcx0, srcy0, srcx1, srcy1: the x and y positions in this fbo to read from
- * dstx0, dsty0, dstx1, dsty1: the x and y positions in the other fbo to write to
+ * srcx0, srcy0, srcx1, srcy1: the x and y positions in the other fbo to read from
+ * dstx0, dsty0, dstx1, dsty1: the x and y positions in this fbo to write to
  * copy_mask: mask for which buffers to copy
  * filter: the interpolation settings for any stretches applied
  */
-void glh::core::fbo::blit_copy ( fbo& other, const unsigned srcx0, const unsigned srcy0, const unsigned srcx1, const unsigned srcy1, 
-                                 const unsigned dstx0, const unsigned dsty0, const unsigned dstx1, const unsigned dsty1, const GLbitfield copy_mask, const GLenum filter ) const
+void glh::core::fbo::blit_copy ( const fbo& other, const unsigned srcx0, const unsigned srcy0, const unsigned srcx1, const unsigned srcy1, 
+                                 const unsigned dstx0, const unsigned dsty0, const unsigned dstx1, const unsigned dsty1, const GLbitfield copy_mask, const GLenum filter )
 {
     /* copy data */
-    glBlitNamedFramebuffer ( id, other.internal_id (), srcx0, srcy0, srcx1, srcy1, dstx0, dsty0, dstx1, dsty1, copy_mask, filter );
+    glBlitNamedFramebuffer ( other.internal_id (), id, srcx0, srcy0, srcx1, srcy1, dstx0, dsty0, dstx1, dsty1, copy_mask, filter );
 }
+
+/* blit_copy_from_default
+ *
+ * copy a region FROM THE DEFAULT FBO INTO THIS FBO
+ * 
+ * srcx0, srcy0, srcx1, srcy1: the x and y positions in the default fbo to read from
+ * dstx0, dsty0, dstx1, dsty1: the x and y positions in this fbo to write to
+ * copy_mask: mask for which buffers to copy
+ * filter: the interpolation settings for any stretches applied
+ */
+void glh::core::fbo::blit_copy_from_default ( const unsigned srcx0, const unsigned srcy0, const unsigned srcx1, const unsigned srcy1, 
+                                            const unsigned dstx0, const unsigned dsty0, const unsigned dstx1, const unsigned dsty1, const GLbitfield copy_mask, const GLenum filter )
+{
+    /* copy data */
+    glBlitNamedFramebuffer ( 0, id, srcx0, srcy0, srcx1, srcy1, dstx0, dsty0, dstx1, dsty1, copy_mask, filter );
+}
+
 
 /* blit_copy_to_default
  *
