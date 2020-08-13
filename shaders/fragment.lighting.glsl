@@ -50,9 +50,8 @@ void main ()
     const vec4 albedospec = texture ( gbuffer_albedospec, vs_out.texcoords );
 
     /* calculate lighting */
-    compute_lighting_macro 
+    fragcolor = compute_lighting
     ( 
-        fragcolor, 
         albedospec.xyz,
         albedospec.xyz,
         albedospec.www,

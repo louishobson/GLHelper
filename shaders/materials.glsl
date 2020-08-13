@@ -54,25 +54,29 @@ struct material_struct
 
 /* FUNCTIONS */
 
-/* evaluate_stack_swizzle_macro
+/* generate_evaluate_stack_definition
  *
- * evaluate multiple stacked textures with a specific swizzle mask
+ * defines the function evaluate_stack_[swizzle]
  *
- * stack_color: the name of a modifiable vector lvalue which will be used to store the result
+ * return_type: the type to return
+ * swizzle_mask: the swizzle pattern to apply to the stack color e.g. xyzw for 4 components
+ *
+ * the function that it defines is described bellow:
+ *
+ *
+ *
+ * evaluate_stack_[swizzle]
+ *
  * stack: the stack to evaluate
  * texcoords: array of texture coords for the fragment
- * swizzle: the swizzle pattern to apply to the stack color e.g. xyzw for 4 components
  *
- * the number of components of stack_color should be the same as the components returned by the swizzle mask supplied
- *
- * prototype:
- *
- * void evaluate_stack_macro ( out vec[1-4] stack_color, texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ], MACRO swizzle_mask )
+ * return: the final color of the stack
  */
- #define evaluate_stack_swizzle_macro( stack_color, stack, texcoords, swizzle_mask ) \
+#define generate_evaluate_stack_definition( return_type, swizzle_mask ) \
+return_type evaluate_stack_ ## swizzle_mask ( const texture_stack_struct stack, const vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ] ) \
 { \
     /* set the output color to the base color of the stack */ \
-    stack_color = stack.base_color.swizzle_mask; \
+    return_type stack_color = stack.base_color.swizzle_mask; \
     \
     /* loop through the stack */ \
     for ( int i = 0; i < stack.stack_size; ++i ) \
@@ -92,50 +96,37 @@ struct material_struct
             default: stack_color *= texture ( stack.textures, vec3 ( texcoords [ stack.levels [ i ].uvwsrc ], i ) ).swizzle_mask * stack.levels [ i ].blend_strength; break; \
         } \
     } \
+    /* return the stack color */ \
+    return stack_color; \
 }
 
-/* evaluate_stack_macro_[x/xy/xyz/xyzw/w]
- *
- * evaluate multiple stacked texture with the number of components supplied
- *
- * stack_color: the name of an modifiable vec4 lvalue which will be used to store the result
- * stack: the stack to evaluate
- * texcoords: array of texture coords for the fragment
- *
- * the number of components of stack_color should be the same as the components returned by the swizzle mask in the macro name
- *
- * prototype:
- *
- * void evaluate_stack_macro_[x/xy/xyz/xyzw/w] ( out vec[1-4] stack_color, texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ] )
- */
-#define evaluate_stack_macro_x( stack_color, stack, texcoords )    evaluate_stack_swizzle_macro ( stack_color, stack, texcoords, x )
-#define evaluate_stack_macro_xy( stack_color, stack, texcoords )   evaluate_stack_swizzle_macro ( stack_color, stack, texcoords, xy )
-#define evaluate_stack_macro_xyz( stack_color, stack, texcoords )  evaluate_stack_swizzle_macro ( stack_color, stack, texcoords, xyz )
-#define evaluate_stack_macro_xyzw( stack_color, stack, texcoords ) evaluate_stack_swizzle_macro ( stack_color, stack, texcoords, xyzw )
-#define evaluate_stack_macro_w( stack_color, stack, texcoords )    evaluate_stack_swizzle_macro ( stack_color, stack, texcoords, w )
-#define evaluate_stack_macro( stack_color, stack, texcoords )      evaluate_stack_swizzle_macro ( stack_color, stack, texcoords, xyzw )
+
+
+/* define the evaluate_stack functions */
+generate_evaluate_stack_definition ( float, x )
+generate_evaluate_stack_definition ( vec2, xy )
+generate_evaluate_stack_definition ( vec3, xyz )
+generate_evaluate_stack_definition ( vec4, xyzw )
+generate_evaluate_stack_definition ( float, w )
 
 
 
 /* evaluate_normal_macro
  *
- * macro version of evaluate_normal
+ * evaluates the normal from a normal stack
  *
- * normal: a modifiable lvalue for the output normal
  * stack: the normal stack
  * texcoords: array of texture coords for the fragment
  * tbn_matrix: the TBN matrix to use to transform the normal, if map is present
  * 
  * prototype:
  *
- * void evaluate_normal_macro ( out vec3 normal, texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ], mat3 tbn_matrix )
+ * void evaluate_normal ( texture_stack_struct stack, vec2 texcoords [ MAX_TEXTURE_STACK_SIZE ], mat3 tbn_matrix )
  */
-#define evaluate_normal_macro( normal, stack, texcoords, tbn_matrix ) \
-{ \
+#define evaluate_normal( stack, texcoords, tbn_matrix ) \
     /* if the size of the stack is greater than zero, sample the stack, and transform the output to its vector form
      * then use the tbn matrix to transform the normal to tangent space
      */ \
-    if ( stack.stack_size > 0 ) { evaluate_stack_macro_xyz ( normal, stack, texcoords ); normal = tbn_matrix * normalize ( normal * 2.0 - 1.0 ); } \
+    ( stack.stack_size > 0 ? tbn_matrix * normalize ( evaluate_stack_xyz ( stack, texcoords ) * 2.0 - 1.0 ) \
     /* otherwise just return the original normal, extracted from the tbn matrix */ \
-    else normal = tbn_matrix [ 2 ]; \
-}
+    : tbn_matrix [ 2 ] )

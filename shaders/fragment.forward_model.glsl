@@ -50,8 +50,8 @@ uniform int transparent_mode;
 void main ()
 {
     /* evaluate color stacks */
-    vec4 diffuse; evaluate_stack_macro ( diffuse, material.diffuse_stack, vs_out.texcoords );
-    float specular; evaluate_stack_macro_x ( specular, material.specular_stack, vs_out.texcoords );
+    const vec4 diffuse = evaluate_stack_xyzw ( material.diffuse_stack, vs_out.texcoords );
+    const float specular = evaluate_stack_x ( material.specular_stack, vs_out.texcoords );
 
     /* discard if opacity is less than 0.02 */
     if ( diffuse.w * material.opacity < 0.02 ) discard;
@@ -66,12 +66,11 @@ void main ()
     }
 
     /* evaluate normal */
-    vec3 normal; evaluate_normal_macro ( normal, material.normal_stack, vs_out.texcoords, vs_out.tbn_matrix );
+    const vec3 normal = evaluate_normal ( material.normal_stack, vs_out.texcoords, vs_out.tbn_matrix );
 
     /* main output color */
-    compute_lighting_macro 
+    main_fragcolor.xyz = compute_lighting
     ( 
-        main_fragcolor.xyz, 
         diffuse.xyz, 
         diffuse.xyz, 
         specular.xxx, 
@@ -85,5 +84,5 @@ void main ()
     main_fragcolor.w = diffuse.a * material.opacity;
 
     /* emission output color */
-    evaluate_stack_macro_xyz ( emission_fragcolor, material.emission_stack, vs_out.texcoords );
+    emission_fragcolor = evaluate_stack_xyz ( material.emission_stack, vs_out.texcoords );
 }

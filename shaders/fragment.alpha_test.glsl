@@ -41,7 +41,7 @@ uniform material_struct material;
 void main ()
 {
     /* sample the alpha of the diffuse stack */
-    float diffuse_alpha; evaluate_stack_macro_w ( diffuse_alpha, material.diffuse_stack, gs_out.texcoords );
+    const float diffuse_alpha = evaluate_stack_w ( material.diffuse_stack, gs_out.texcoords );
 
     /* get the bit and element offset */
     uint bit_offset = ( gl_PrimitiveID % 8 ) * 4;

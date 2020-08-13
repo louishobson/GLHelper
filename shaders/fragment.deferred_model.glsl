@@ -53,11 +53,11 @@ void main ()
     output_positionshininess = vec4 ( vs_out.fragpos, material.shininess );
 
     /* set output_normal */
-    evaluate_normal_macro ( output_normalsstrength.xyz, material.normal_stack, vs_out.texcoords, vs_out.tbn_matrix );
+    output_normalsstrength.xyz = evaluate_normal ( material.normal_stack, vs_out.texcoords, vs_out.tbn_matrix );
     output_normalsstrength.w = material.shininess_strength;
 
     /* set albedo part of output_albedospec */
-    evaluate_stack_macro ( output_albedospec, material.diffuse_stack, vs_out.texcoords );
+    output_albedospec = evaluate_stack_xyzw ( material.diffuse_stack, vs_out.texcoords );
 
     /* discard if opacity is less than 0.02 */
     if ( output_albedospec.w * material.opacity < 0.02 ) discard;
@@ -72,9 +72,9 @@ void main ()
     }
 
     /* set specular part of output_albedospec */
-    evaluate_stack_macro_x ( output_albedospec.w, material.specular_stack, vs_out.texcoords );
+    output_albedospec.w = evaluate_stack_x ( material.specular_stack, vs_out.texcoords );
 
     /* set output_emission */
-    evaluate_stack_macro_xyz ( output_emission, material.emission_stack, vs_out.texcoords );
+    output_emission = evaluate_stack_xyz ( material.emission_stack, vs_out.texcoords );
 }
 
