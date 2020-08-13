@@ -100,6 +100,11 @@ int main ()
     glh::core::program bloom_program { simple_vshader, bloom_fshader };
     bloom_program.compile_and_link ();
 
+    /* create fxaa shader program */
+    glh::core::fshader fxaa_fshader { "shaders/fragment.fxaa.glsl" };
+    glh::core::program fxaa_program { simple_vshader, fxaa_fshader };
+    fxaa_program.compile_and_link ();
+
     /* extract uniforms out of forward model program */
     auto& forward_model_camera_uni = forward_model_program.get_struct_uniform ( "camera" );
     auto& forward_model_light_system_uni = forward_model_program.get_struct_uniform ( "light_system" );
@@ -124,9 +129,14 @@ int main ()
 
     /* extract uniforms out of bloom program */
     auto& bloom_texture_uni = bloom_program.get_uniform ( "bloom_texture" );
-    auto& bloom_bloom_mode_uni = bloom_program.get_uniform ( "bloom_mode" );
+    auto& bloom_mode_uni = bloom_program.get_uniform ( "bloom_mode" );
     auto& bloom_function_uni = bloom_program.get_struct_uniform ( "bloom_function" );
     auto& bloom_radius_uni = bloom_program.get_uniform ( "bloom_radius" );
+
+    /* extract uniforms out of fxaa program */
+    auto& fxaa_texture_uni = fxaa_program.get_uniform ( "fxaa_texture" );
+    auto& fxaa_contrast_constant_threshold_uni = fxaa_program.get_uniform ( "contrast_constant_threshold" );
+    auto& fxaa_contrast_relative_threshold_uni = fxaa_program.get_uniform ( "contrast_relative_threshold" );
 
 
 
@@ -304,16 +314,20 @@ int main ()
 
 
 
-    /* create final color rbo and framebuffer */
-    glh::core::rbo final_color_rbo { 1920, 1080, GL_RGBA8 };
+    /* create final color texture */
+    glh::core::texture2d final_color_texture { 1920, 1080, GL_RGBA8 };
+    final_color_texture.set_min_filter ( GL_NEAREST ); final_color_texture.set_mag_filter ( GL_NEAREST );
+    final_color_texture.set_wrap ( GL_CLAMP_TO_EDGE );
+
+    /* create the final color framebuffer */
     glh::core::fbo final_color_fbo;
-    final_color_fbo.attach_rbo ( final_color_rbo, GL_COLOR_ATTACHMENT0 );
+    final_color_fbo.attach_texture ( final_color_texture, GL_COLOR_ATTACHMENT0 );
     
 
 
     /* create transparent fbo */
     glh::core::fbo transparent_fbo;
-    transparent_fbo.attach_rbo ( final_color_rbo, GL_COLOR_ATTACHMENT0 );
+    transparent_fbo.attach_texture ( final_color_texture, GL_COLOR_ATTACHMENT0 );
     transparent_fbo.attach_texture ( bloom_texture_beta, GL_COLOR_ATTACHMENT1 );
     transparent_fbo.attach_rbo ( depth_rbo, GL_DEPTH_ATTACHMENT );
     transparent_fbo.draw_buffers ( GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 );
@@ -490,6 +504,9 @@ int main ()
         camera.apply ( lighting_camera_uni );
         light_system.apply ( lighting_light_system_uni );
 
+        /* set final color texture to use nearest filtering */
+        final_color_texture.set_min_filter ( GL_NEAREST ); final_color_texture.set_mag_filter ( GL_NEAREST );
+
         /* set up renderer */
         glh::core::renderer::disable_blend ();
         glh::core::renderer::disable_depth_test ();
@@ -561,7 +578,7 @@ int main ()
             /* bind alpha fbo, set remaining uniforms and render */
             bloom_fbo_alpha.bind ();
             bloom_texture_uni.set_int ( bloom_texture_beta.bind_loop () );
-            bloom_bloom_mode_uni.set_int ( 0 );
+            bloom_mode_uni.set_int ( 0 );
             glh::core::renderer::draw_arrays ( GL_TRIANGLE_STRIP, 0, 4 );
 
             /* if not the final iteration, render to beta */
@@ -570,7 +587,7 @@ int main ()
                 /* bind alpha fbo, set remaining uniforms and render */
                 bloom_fbo_beta.bind ();
                 bloom_texture_uni.set_int ( bloom_texture_alpha.bind_loop () );
-                bloom_bloom_mode_uni.set_int ( 1 );
+                bloom_mode_uni.set_int ( 1 );
                 glh::core::renderer::draw_arrays ( GL_TRIANGLE_STRIP, 0, 4 );
             } else
             /* else blend to final color framebuffer */
@@ -585,27 +602,56 @@ int main ()
 
                 /* render into the default framebuffer */
                 bloom_texture_uni.set_int ( bloom_texture_alpha.bind_loop () );
-                bloom_bloom_mode_uni.set_int ( 1 );
+                bloom_mode_uni.set_int ( 1 );
                 glh::core::renderer::draw_arrays ( GL_TRIANGLE_STRIP, 0, 4 );
             }
         }
-        quad_vao.unbind ();
 
         /* set timestamp */
         const auto timestamp_bloom = std::chrono::system_clock::now ();
 
 
 
-        /* BLIT FINAL COLOR INTO DEFAULT FRAMEBUFFER */
+        /* APPLY FXAA */
+
+        /* bind the default framebuffer */
         window.bind_framebuffer ();
-        final_color_fbo.blit_copy_to_default ( 0, 0, 1920, 1080, 0, 0, 1920, 1080, GL_COLOR_BUFFER_BIT, GL_NEAREST );
+
+        /* use the fxaa program */
+        fxaa_program.use ();
+
+        /* set uniforms */
+        fxaa_texture_uni.set_int ( final_color_texture.bind_loop () );
+        //fxaa_contrast_constant_threshold_uni.set_float ( 0.0312 );
+        fxaa_contrast_constant_threshold_uni.set_float ( 0.01 );
+        //fxaa_contrast_relative_threshold_uni.set_float ( 0.063 );
+        fxaa_contrast_relative_threshold_uni.set_float ( 0.02 );
+
+        /* set final color texture to use linear interpolation */
+        final_color_texture.set_min_filter ( GL_LINEAR ); final_color_texture.set_mag_filter ( GL_LINEAR );
+
+        /* set up renderer */
+        glh::core::renderer::disable_blend ();
+
+        /* render */
+        glh::core::renderer::draw_arrays ( GL_TRIANGLE_STRIP, 0, 4 );
+        quad_vao.unbind ();
+
+        /* set timestamp */
+        const auto timestamp_fxaa = std::chrono::system_clock::now ();
+
+
+
+        /* BLIT FINAL COLOR INTO DEFAULT FRAMEBUFFER */
+        //window.bind_framebuffer ();
+        //final_color_fbo.blit_copy_to_default ( 0, 0, 1920, 1080, 0, 0, 1920, 1080, GL_COLOR_BUFFER_BIT, GL_NEAREST );
 
         
 
         /* OUTPUT TIMESTAMP INFO */
 
         /* get overall time */
-        const std::chrono::duration<double> overall_time = timestamp_bloom - timestamp_start;
+        const std::chrono::duration<double> overall_time = timestamp_fxaa - timestamp_start;
         
         /* get individual sections as fractions */
         const double fraction_window_properties = std::chrono::duration<double> { timestamp_window_properties - timestamp_start } / overall_time;
@@ -615,6 +661,7 @@ int main ()
         const double fraction_lighting_pass = std::chrono::duration<double> { timestamp_lighting_pass - timestamp_gbuffer_render } / overall_time;
         const double fraction_transparent_render = std::chrono::duration<double> { timestamp_transparent_render - timestamp_lighting_pass } / overall_time;
         const double fraction_bloom = std::chrono::duration<double> { timestamp_bloom - timestamp_transparent_render } / overall_time;
+        const double fraction_fxaa = std::chrono::duration<double> { timestamp_fxaa - timestamp_bloom } / overall_time;
 
         /* output the fractions as percentages every 10th frame */
         //if ( frame % 5 == 0 ) \
@@ -625,7 +672,8 @@ int main ()
                   << "% lighting pass      : " << fraction_lighting_pass * 100.0 << std::endl \
                   << "% transparent render : " << fraction_transparent_render * 100.0 << std::endl \
                   << "% bloom              : " << fraction_bloom * 100.0 << std::endl \
-                  << "\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A";
+                  << "% fxaa               : " << fraction_fxaa * 100.0 << std::endl \
+                  << "\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A\x1b[A";
         
         /* print framerate every 10th frame */
         if ( frame % 10 == 0 ) std::cout << "FPS: " << std::to_string ( 1.0 / timeinfo.delta ) << '\r' << std::flush;
