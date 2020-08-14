@@ -116,7 +116,7 @@ struct neighborhood_info_struct
  *
  * prototype: float sample_luminance ( sampler2D color_texture, const vec2 texcoords )
  */
-#define sample_luminance( color_texture, texcoords ) ( compute_luminance ( texture ( color_texture, texcoords ).xyz ) )
+#define sample_luminance( color_texture, texcoords ) ( compute_luminance ( textureLod ( color_texture, texcoords, 0.0 ).xyz ) )
 
 /* sample_luminance_offset
  *
@@ -130,7 +130,7 @@ struct neighborhood_info_struct
  *
  * prototype: float sample_luminance ( sampler2D color_texture, const vec2 texcoords, const ivec2 offset )
  */
-#define sample_luminance_offset( color_texture, texcoords, offset ) ( compute_luminance ( textureOffset ( color_texture, texcoords, offset ).xyz ) )
+#define sample_luminance_offset( color_texture, texcoords, offset ) ( compute_luminance ( textureLodOffset ( color_texture, texcoords, 0.0, offset ).xyz ) )
 
 
 

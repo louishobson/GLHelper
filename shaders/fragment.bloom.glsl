@@ -52,7 +52,7 @@ void main ()
     vec2 texoffset = 1.0 / textureSize ( bloom_texture, 0 );
 
     /* set fragcolor to the color of this texel multiplied the weight given by bloom_function */
-    fragcolor = texture ( bloom_texture, vs_out.texcoords ).xyz * sample_function ( bloom_function, 0.0 ).x; 
+    fragcolor = textureLod ( bloom_texture, vs_out.texcoords, 0.0 ).xyz * sample_function ( bloom_function, 0.0 ).x; 
 
     /* switch between bloom modes */
     if ( bloom_mode == 0 )
@@ -61,11 +61,11 @@ void main ()
         {
             /* assume the bloom function is not symmetrical */
             /*
-            fragcolor += texture ( bloom_texture, vs_out.texcoords + vec2 ( i * texoffset.x, 0.0 ) ).xyz * sample_function ( bloom_function,  i ).x
-                       + texture ( bloom_texture, vs_out.texcoords - vec2 ( i * texoffset.y, 0.0 ) ).xyz * sample_function ( bloom_function, -i ).x;
+            fragcolor += textureLod ( bloom_texture, vs_out.texcoords + vec2 ( i * texoffset.x, 0.0 ), 0.0 ).xyz * sample_function ( bloom_function,  i ).x
+                       + textureLod ( bloom_texture, vs_out.texcoords - vec2 ( i * texoffset.y, 0.0 ), 0.0 ).xyz * sample_function ( bloom_function, -i ).x;
             */
             /* assume the bloom function is symmetrical */
-            fragcolor += ( texture ( bloom_texture, vs_out.texcoords + vec2 ( i * texoffset.x, 0.0 ) ).xyz + texture ( bloom_texture, vs_out.texcoords - vec2 ( i * texoffset.y, 0.0 ) ).xyz )
+            fragcolor += ( textureLod ( bloom_texture, vs_out.texcoords + vec2 ( i * texoffset.x, 0.0 ), 0.0 ).xyz + textureLod ( bloom_texture, vs_out.texcoords - vec2 ( i * texoffset.y, 0.0 ), 0.0 ).xyz )
                        * sample_function ( bloom_function, i ).x;
         }
     } else
@@ -74,11 +74,11 @@ void main ()
         {
             /* assume the bloom function is not symmetrical */
             /*
-            fragcolor += texture ( bloom_texture, vs_out.texcoords + vec2 ( 0.0, i * texoffset.x ) ).xyz * sample_function ( bloom_function,  i ).x
-                       + texture ( bloom_texture, vs_out.texcoords - vec2 ( 0.0, i * texoffset.y ) ).xyz * sample_function ( bloom_function, -i ).x;
+            fragcolor += textureLod ( bloom_texture, vs_out.texcoords + vec2 ( 0.0, i * texoffset.x ) ).xyz * sample_function ( bloom_function,  i ).x
+                       + textureLod ( bloom_texture, vs_out.texcoords - vec2 ( 0.0, i * texoffset.y ) ).xyz * sample_function ( bloom_function, -i ).x;
              */
             /* assume the bloom function is symmetrical */
-            fragcolor += ( texture ( bloom_texture, vs_out.texcoords + vec2 ( 0.0, i * texoffset.x ) ).xyz + texture ( bloom_texture, vs_out.texcoords - vec2 ( 0.0, i * texoffset.y ) ).xyz )
+            fragcolor += ( textureLod ( bloom_texture, vs_out.texcoords + vec2 ( 0.0, i * texoffset.x ), 0.0 ).xyz + textureLod ( bloom_texture, vs_out.texcoords - vec2 ( 0.0, i * texoffset.y ), 0.0 ).xyz )
                        * sample_function ( bloom_function, i ).x;
         }
     }

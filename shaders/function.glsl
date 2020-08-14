@@ -63,4 +63,4 @@ struct function_struct_3D
  * the texture function always produces a vec4, so remember to swizzle it if necessary
  */
 #define sample_function( func, params ) \
-    ( texture ( func.outputs, params * func.domain_multiplier + func.domain_translation ) )
+    ( textureLod ( func.outputs, params * func.domain_multiplier + func.domain_translation, 0.0 ) )

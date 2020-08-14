@@ -45,9 +45,9 @@ uniform camera_struct camera;
 void main ()
 {
     /* sample from gbuffer */
-    const vec4 positionshininess = texture ( gbuffer_positionshininess, vs_out.texcoords );
-    const vec4 normalsstrength = texture ( gbuffer_normalsstrength, vs_out.texcoords );
-    const vec4 albedospec = texture ( gbuffer_albedospec, vs_out.texcoords );
+    const vec4 positionshininess = textureLod ( gbuffer_positionshininess, vs_out.texcoords, 0.0 );
+    const vec4 normalsstrength = textureLod ( gbuffer_normalsstrength, vs_out.texcoords, 0.0 );
+    const vec4 albedospec = textureLod ( gbuffer_albedospec, vs_out.texcoords, 0.0 );
 
     /* calculate lighting */
     fragcolor = compute_lighting
