@@ -179,8 +179,8 @@ void main ()
     /* compute if is horizontal */
     nb_info.is_horizontal =
     (
-        dot ( abs ( vec3 ( nb_info.neighbors.y + nb_info.neighbors.w - 2 * nb_info.centre, nb_info.dneighbors.x + nb_info.dneighbors.w - 2 * nb_info.neighbors.x, nb_info.dneighbors.y + nb_info.dneighbors.z - 2 * nb_info.neighbors.z ) ), vec3 ( 2.0, 1.0, 1.0 ) ) >=
-        dot ( abs ( vec3 ( nb_info.neighbors.x + nb_info.neighbors.z - 2 * nb_info.centre, nb_info.dneighbors.x + nb_info.dneighbors.y - 2 * nb_info.neighbors.y, nb_info.dneighbors.w + nb_info.dneighbors.z - 2 * nb_info.neighbors.w ) ), vec3 ( 2.0, 1.0, 1.0 ) )
+        dot ( abs ( vec3 ( nb_info.dneighbors.x + nb_info.dneighbors.w - 2 * nb_info.neighbors.x, nb_info.neighbors.y + nb_info.neighbors.w - 2 * nb_info.centre, nb_info.dneighbors.y + nb_info.dneighbors.z - 2 * nb_info.neighbors.z ) ), vec3 ( 1.0, 2.0, 1.0 ) ) >=
+        dot ( abs ( vec3 ( nb_info.dneighbors.x + nb_info.dneighbors.y - 2 * nb_info.neighbors.y, nb_info.neighbors.x + nb_info.neighbors.z - 2 * nb_info.centre, nb_info.dneighbors.w + nb_info.dneighbors.z - 2 * nb_info.neighbors.w ) ), vec3 ( 1.0, 2.0, 1.0 ) )
     );
 
     /* get the texel size */
@@ -242,7 +242,7 @@ void main ()
         if ( !end_of_edge.y )
         {
             end_position.y = edge_sample_positions [ i ];
-            end_luminance.y = sample_luminance ( fxaa_texture, -edge_sample_positions [ i ] * nb_info.step_along + nb_info.edge_texcoords );
+            end_luminance.y = sample_luminance ( fxaa_texture, edge_sample_positions [ i ] * -nb_info.step_along + nb_info.edge_texcoords );
             end_luminance_delta.y = end_luminance.y - nb_info.edge_luminance;
             end_of_edge.y = abs ( end_luminance_delta.y ) >= nb_info.gradient_threshold;
         } 
