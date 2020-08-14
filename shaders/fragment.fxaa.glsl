@@ -14,13 +14,13 @@
  *
  * the number of samples left and right of the centre texel to sample
  */
-#define NUM_EDGE_SAMPLES 16
+#define NUM_EDGE_SAMPLES 20
 
 /* EDGE_SAMPLE_POSITIONS
  *
  * the positions of edge samples
  */
-#define EDGE_SAMPLE_POSITIONS 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 18, 20, 24, 28, 36
+#define EDGE_SAMPLE_POSITIONS 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 24.0, 28.0, 32.0, 40.0
 
 
 
@@ -47,7 +47,7 @@ uniform float contrast_constant_threshold;
 uniform float contrast_relative_threshold;
 
 /* an array of edge sampl positions */
-uniform int edge_sample_positions [ NUM_EDGE_SAMPLES + 1 ] = { EDGE_SAMPLE_POSITIONS };
+uniform float edge_sample_positions [ NUM_EDGE_SAMPLES + 1 ] = { EDGE_SAMPLE_POSITIONS };
 
 
 
@@ -227,7 +227,7 @@ void main ()
 
     /* loop over the edge to find the ends */
     bvec2 end_of_edge = bvec2 ( false );
-    ivec2 end_position = ivec2 ( 0 );
+    vec2 end_position = vec2 ( 0.0 );
     vec2 end_luminance = vec2 ( nb_info.edge_luminance );
     vec2 end_luminance_delta = vec2 ( 0.0 );
     for ( int i = 0; i < NUM_EDGE_SAMPLES; ++i )
@@ -256,7 +256,7 @@ void main ()
     if ( ( end_position.x < end_position.y ? sign ( end_luminance_delta.x ) : sign ( end_luminance_delta.y ) ) == sign ( nb_info.centre - nb_info.edge_luminance ) ) return;
 
     /* get the blend factor */
-    const float blend_factor = max ( nb_info.pixel_blend_factor, 0.5 - float ( min ( end_position.x, end_position.y ) ) / ( end_position.x + end_position.y - 1 ) );
+    const float blend_factor = max ( nb_info.pixel_blend_factor, 0.5 - min ( end_position.x, end_position.y ) / ( end_position.x + end_position.y - 1.0 ) );
 
     /* set fragcolor */
     fragcolor = texture ( fxaa_texture, vs_out.texcoords + nb_info.step_across * blend_factor ).xyz;
