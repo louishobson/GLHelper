@@ -40,7 +40,7 @@ uniform camera_struct camera;
  * 1: only transparent
  * 2: only opaque
  */
-uniform int transparent_mode;
+//uniform int transparent_mode;
 
 
 
@@ -54,9 +54,10 @@ void main ()
     const float specular = evaluate_stack_x ( material.specular_stack, vs_out.texcoords );
 
     /* discard if opacity is less than 0.02 */
-    if ( diffuse.w * material.opacity < 0.02 ) discard;
+    //if ( diffuse.w * material.opacity < 0.02 ) discard;
 
     /* discard if opaque/transparent depending on transparent_mode */
+    /*
     switch ( transparent_mode )
     {
         case 0: break;
@@ -64,6 +65,7 @@ void main ()
         case 2: if ( diffuse.w * material.opacity < 0.98 ) discard; break;
         default: break;
     }
+    */
 
     /* evaluate normal */
     const vec3 normal = evaluate_normal ( material.normal_stack, vs_out.texcoords, vs_out.tbn_matrix );

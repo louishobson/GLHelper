@@ -167,10 +167,10 @@ void main ()
     );
 
     /* set the contrast */
-    nb_info.contrast = ( ( minmax_luminance.y - minmax_luminance.x ) < max ( contrast_constant_threshold, minmax_luminance.y * contrast_relative_threshold ) ? 0 : ( minmax_luminance.y - minmax_luminance.x ) );
+    nb_info.contrast = minmax_luminance.y - minmax_luminance.x;
 
-    /* return if contrast is 0 */
-    if ( nb_info.contrast == 0.0 ) return;
+    /* return if contrast is below threshold */
+    if ( nb_info.contrast < max ( contrast_constant_threshold, minmax_luminance.y * contrast_relative_threshold ) ) return;
 
     /* set the pixel blend factor */
     nb_info.pixel_blend_factor = smoothstep ( 0.0, 1.0, clamp ( abs ( ( dot ( nb_info.neighbors, vec4 ( 2.0 ) ) + dot ( nb_info.dneighbors, vec4 ( 1.0 ) ) ) / 12.0 - nb_info.centre ) / nb_info.contrast, 0.0, 1.0 ) );
@@ -226,34 +226,32 @@ void main ()
     nb_info.edge_texcoords = vs_out.texcoords + nb_info.step_across * 0.5;
 
     /* loop over the edge to find the ends */
-    bvec2 end_of_edge = bvec2 ( false );
+    bvec2 not_end_of_edge = bvec2 ( true );
     vec2 end_position = vec2 ( 0.0 );
-    vec2 end_luminance = vec2 ( nb_info.edge_luminance );
     vec2 end_luminance_delta = vec2 ( 0.0 );
     for ( int i = 0; i < NUM_EDGE_SAMPLES; ++i )
     {
-        if ( !end_of_edge.x )
+        if ( not_end_of_edge.x ) 
         {
             end_position.x = edge_sample_positions [ i ];
-            end_luminance.x = sample_luminance ( fxaa_texture, edge_sample_positions [ i ] * nb_info.step_along + nb_info.edge_texcoords );
-            end_luminance_delta.x = end_luminance.x - nb_info.edge_luminance;
-            end_of_edge.x = abs ( end_luminance_delta.x ) >= nb_info.gradient_threshold;
+            end_luminance_delta.x = sample_luminance ( fxaa_texture,  edge_sample_positions [ i ] * nb_info.step_along + nb_info.edge_texcoords ) - nb_info.edge_luminance;
+            not_end_of_edge.x = abs ( end_luminance_delta.x ) < nb_info.gradient_threshold;
         }
-        if ( !end_of_edge.y )
+        
+        if ( not_end_of_edge.y ) 
         {
             end_position.y = edge_sample_positions [ i ];
-            end_luminance.y = sample_luminance ( fxaa_texture, edge_sample_positions [ i ] * -nb_info.step_along + nb_info.edge_texcoords );
-            end_luminance_delta.y = end_luminance.y - nb_info.edge_luminance;
-            end_of_edge.y = abs ( end_luminance_delta.y ) >= nb_info.gradient_threshold;
-        } 
+            end_luminance_delta.y = sample_luminance ( fxaa_texture, -edge_sample_positions [ i ] * nb_info.step_along + nb_info.edge_texcoords ) - nb_info.edge_luminance;
+            not_end_of_edge.y = abs ( end_luminance_delta.y ) < nb_info.gradient_threshold;
+        }
     }
 
-    /* if has not reached edge, guess where edge is */
-    end_position.x = ( end_of_edge.x ? end_position.x : edge_sample_positions [ NUM_EDGE_SAMPLES ] );
-    end_position.y = ( end_of_edge.y ? end_position.y : edge_sample_positions [ NUM_EDGE_SAMPLES ] );
-
     /* don't blend in the wrong direction */
-    if ( ( end_position.x < end_position.y ? sign ( end_luminance_delta.x ) : sign ( end_luminance_delta.y ) ) == sign ( nb_info.centre - nb_info.edge_luminance ) ) return;
+    if ( sign ( end_position.x < end_position.y ? end_luminance_delta.x : end_luminance_delta.y ) == sign ( nb_info.centre - nb_info.edge_luminance ) ) return;
+
+    /* if has not reached edge, guess where edge is */
+    end_position.x = ( not_end_of_edge.x ? edge_sample_positions [ NUM_EDGE_SAMPLES ] : end_position.x );
+    end_position.y = ( not_end_of_edge.y ? edge_sample_positions [ NUM_EDGE_SAMPLES ] : end_position.y );
 
     /* get the blend factor */
     const float blend_factor = max ( nb_info.pixel_blend_factor, 0.5 - min ( end_position.x, end_position.y ) / ( end_position.x + end_position.y - 1.0 ) );
