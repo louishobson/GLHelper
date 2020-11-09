@@ -425,6 +425,7 @@ template<unsigned M, unsigned N, class T> inline glh::math::matrix<M, N, T>::mat
 {
     /* check the size of the list */
     if ( init_list.size () != M * N ) throw exception::matrix_exception { "matrix initializer list is invalid" };
+    
     /* set the values */
     unsigned i = 0;
     for ( const T& v: init_list ) 
