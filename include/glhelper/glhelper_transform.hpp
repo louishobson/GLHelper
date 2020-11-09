@@ -116,6 +116,13 @@ namespace glh
          */
         template<unsigned M, unsigned N, class T> vector<M, T> column_vector ( const matrix<M, N, T>& _matrix, const unsigned index );
 
+        /* vector_matrix
+         *
+         * create a matrix from a set of column vectors
+         */
+        template<unsigned M, class T0, class T1, class... Ts> matrix<M, 2 + sizeof...( Ts ), std::common_type_t<T0, T1, Ts...>> vector_matrix ( const vector<M, T0>& vec0,  const vector<M, T1>& vec1, const vector<M, Ts>&... vecs ); 
+        template<unsigned M, class T> matrix<M, 1, T> vector_matrix ( const vector<M, T>& vec ); 
+
         /* stretch
          *
          * stretch along one axis
@@ -436,6 +443,35 @@ template<unsigned M, unsigned N, class T> inline glh::math::vector<M, T> glh::ma
 
     /* return column vector */
     return result;
+}
+
+/* vector_matrix
+ *
+ * create a matrix from a set of column vectors
+ */
+template<unsigned M, class T0, class T1, class... Ts> inline glh::math::matrix<M, 2 + sizeof...( Ts ), std::common_type_t<T0, T1, Ts...>> glh::math::vector_matrix ( const vector<M, T0>& vec0,  const vector<M, T1>& vec1, const vector<M, Ts>&... vecs )
+{
+    /* recursively call to create initial matrix */
+    const auto init_matrix = vector_matrix ( vec1, vecs... );
+
+    /* create the return matrix */
+    matrix<M, 2 + sizeof...( Ts ), std::common_type_t<T0, T1, Ts...> rt;
+
+    /* populate the return matrix */
+    for ( unsigned i = 0; i < M; ++i ) for ( unsigned j = 0; j < 2 + sizeof...( Ts ); ++j )
+    {
+        rt.at ( i, j ) = ( j == 0 ? vec0.at ( i ) : init_matrix.at ( i, j - 1 ) );
+    }
+
+    /* return the matrix */
+    return rt;
+}
+template<unsigned M, class T> inline glh::math::matrix<M, 1, T> glh::math::vector_matrix ( const vector<M, T>& vec )
+{
+    /* simply return a matrix containing the vector */
+    matrix<M, 1, T> rt;
+    for ( unsigned i = 0; i < M; ++i ) rt.at ( i, 0 ) = vec.at ( i );
+    return rt;
 }
 
 /* stretch
