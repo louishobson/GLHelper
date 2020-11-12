@@ -127,7 +127,7 @@ namespace glh
  *
  * if T is an object, value is true, else is false
  */
-template<class T> struct glh::meta::is_object : public std::is_base_of<glh::core::object, T> {};
+template<class T> struct glh::meta::is_object : std::is_base_of<glh::core::object, T> {};
 
 
 
@@ -349,6 +349,10 @@ public:
 
     /* default copy constructor */
     object_pointer ( const object_pointer<T>& other ) = default;
+
+    /* implicitly cast to const version */
+    operator const_object_pointer<T> () const
+        { return const_object_pointer<T> { get () }; }
 
     /* assignment from object */
     object_pointer& operator= ( T& obj );
