@@ -44,7 +44,13 @@ MessageCallback( GLenum source,
  *
  * defines which model is rendered
  */
-#define MODEL_SWITCH island
+#define MODEL_SWITCH hammer
+
+/* RESOLUTION
+ *
+ * The resolution of the screen
+ */
+#define RESOLUTION 2560, 1440
 
 
 
@@ -69,15 +75,14 @@ int main ()
     /* SET UP PROGRAMS */
 
     /* create forward model shader program */
-    glh::core::vshader forward_model_vshader { "shaders/materials.glsl", "shaders/camera.glsl", "shaders/vertex.model.glsl" };
+    glh::core::vshader model_vshader { "shaders/materials.glsl", "shaders/camera.glsl", "shaders/vertex.model.glsl" };
     glh::core::fshader forward_model_fshader { "shaders/materials.glsl", "shaders/camera.glsl", "shaders/lighting.glsl", "shaders/fragment.forward_model.glsl"  };
-    glh::core::program forward_model_program { forward_model_vshader, forward_model_fshader };
+    glh::core::program forward_model_program { model_vshader, forward_model_fshader };
     forward_model_program.compile_and_link ();
 
     /* create deferred model shader program */
-    glh::core::vshader deferred_model_vshader { "shaders/materials.glsl", "shaders/camera.glsl", "shaders/vertex.model.glsl" };
     glh::core::fshader deferred_model_fshader { "shaders/materials.glsl", "shaders/fragment.deferred_model.glsl" };
-    glh::core::program deferred_model_program { deferred_model_vshader, deferred_model_fshader };
+    glh::core::program deferred_model_program { model_vshader, deferred_model_fshader };
     deferred_model_program.compile_and_link ();
 
     /* create shadow shader program */
@@ -109,7 +114,7 @@ int main ()
     auto& forward_model_camera_uni = forward_model_program.get_struct_uniform ( "camera" );
     auto& forward_model_light_system_uni = forward_model_program.get_struct_uniform ( "light_system" );
     auto& forward_model_material_uni = forward_model_program.get_struct_uniform ( "material" );
-    auto& forward_model_transparent_mode_uni = forward_model_program.get_uniform ( "transparent_mode" );
+    //auto& forward_model_transparent_mode_uni = forward_model_program.get_uniform ( "transparent_mode" );
 
     /* extract uniforms out of deferred model program */
     auto& deferred_model_camera_uni = deferred_model_program.get_struct_uniform ( "camera" );
@@ -174,32 +179,70 @@ int main ()
     /* IMPORT MODELS */
 
     /* import island model */
-    const glh::math::mat4 island_matrix =
-    glh::math::enlarge3d
-    (
-        glh::math::identity<4, double> (),
-        0.1
-    );
-    glh::model::model island { "assets/island", "scene.gltf", 
-        glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
-        glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
-        glh::model::import_flags::GLH_FLIP_V_TEXTURES |
-        glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
-        glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
-        glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
-        glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS |
-        0,
-        island_matrix
-    };
+    //const glh::math::mat4 island_matrix =
+    //glh::math::enlarge3d
+    //(
+    //    glh::math::identity<4, double> (),
+    //    0.1
+    //);
+    //glh::model::model island { "assets/island", "scene.gltf", 
+    //    glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
+    //    glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
+    //    glh::model::import_flags::GLH_FLIP_V_TEXTURES |
+    //    glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
+    //    glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
+    //    glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
+    //    glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS |
+    //    0,
+    //    island_matrix
+    //};
 
     /* import box model */
-    const glh::math::mat4 box_matrix =
+    //const glh::math::mat4 box_matrix =
+    //glh::math::enlarge3d
+    //(
+    //    glh::math::identity<4, double> (),
+    //    5.0
+    //);
+    //glh::model::model box { "assets/box", "scene.gltf", 
+    //    glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
+    //    glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
+    //    glh::model::import_flags::GLH_FLIP_V_TEXTURES |
+    //    glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
+    //    glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
+    //    glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
+    //    glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS |
+    //    0,
+    //    box_matrix
+    //};
+
+    ///* import fireplace model */
+    //const glh::math::mat4 fireplace_matrix =
+    //glh::math::enlarge3d
+    //(
+    //    glh::math::identity<4, double> (),
+    //    0.05
+    //);
+    //glh::model::model fireplace { "assets/fireplace", "scene.gltf", 
+    //    glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
+    //    glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
+    //    glh::model::import_flags::GLH_FLIP_V_TEXTURES |
+    //    glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
+    //    glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
+    //    glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
+    //    glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS |
+    //    0,
+    //    fireplace_matrix
+    //};
+
+    /* import hammer model */
+    const glh::math::mat4 hammer_matrix =
     glh::math::enlarge3d
     (
         glh::math::identity<4, double> (),
-        15.0
+        10.
     );
-    glh::model::model box { "assets/box", "scene.gltf", 
+    glh::model::model hammer { "assets/hammer", "scene.gltf", 
         glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
         glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
         glh::model::import_flags::GLH_FLIP_V_TEXTURES |
@@ -208,7 +251,7 @@ int main ()
         glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
         glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS |
         0,
-        box_matrix
+        hammer_matrix
     };
 
 
@@ -263,8 +306,8 @@ int main ()
     /* create bloom textures (the other fbos depend on the bloom textures) */
     glh::core::texture2d bloom_texture_alpha;
     glh::core::texture2d bloom_texture_beta;
-    bloom_texture_alpha.tex_storage ( 1920, 1080, GL_RGBA8, 1 );
-    bloom_texture_beta.tex_storage ( 1920, 1080, GL_RGBA8, 1 );
+    bloom_texture_alpha.tex_storage ( RESOLUTION, GL_RGBA8, 1 );
+    bloom_texture_beta.tex_storage ( RESOLUTION, GL_RGBA8, 1 );
     bloom_texture_alpha.set_min_filter ( GL_NEAREST ); bloom_texture_alpha.set_mag_filter ( GL_NEAREST );
     bloom_texture_beta.set_min_filter ( GL_NEAREST ); bloom_texture_beta.set_mag_filter ( GL_NEAREST );
     bloom_texture_alpha.set_wrap ( GL_CLAMP_TO_EDGE );
@@ -279,7 +322,7 @@ int main ()
 
 
     /* create the depth rbo (the fbos below depend on this) */
-    glh::core::rbo depth_rbo { 1920, 1080, GL_DEPTH_COMPONENT };
+    glh::core::rbo depth_rbo { RESOLUTION, GL_DEPTH_COMPONENT };
 
 
 
@@ -289,9 +332,9 @@ int main ()
     glh::core::texture2d gbuffer_albedospec;
 
     /* set up gbuffer texture storage */
-    gbuffer_positionshininess.tex_storage ( 1920, 1080, GL_RGBA32F, 1 ); 
-    gbuffer_normalsstrength.tex_storage ( 1920, 1080, GL_RGBA32F, 1 );
-    gbuffer_albedospec.tex_storage ( 1920, 1080, GL_RGBA8, 1 );
+    gbuffer_positionshininess.tex_storage ( RESOLUTION, GL_RGBA32F, 1 ); 
+    gbuffer_normalsstrength.tex_storage ( RESOLUTION, GL_RGBA32F, 1 );
+    gbuffer_albedospec.tex_storage ( RESOLUTION, GL_RGBA8, 1 );
 
     /* set up filter options */
     gbuffer_positionshininess.set_min_filter ( GL_NEAREST ); gbuffer_positionshininess.set_mag_filter ( GL_NEAREST );
@@ -315,7 +358,7 @@ int main ()
 
 
     /* create final color texture */
-    glh::core::texture2d final_color_texture { 1920, 1080, GL_RGBA8 };
+    glh::core::texture2d final_color_texture { RESOLUTION, GL_RGBA8 };
     final_color_texture.set_min_filter ( GL_NEAREST ); final_color_texture.set_mag_filter ( GL_NEAREST );
     final_color_texture.set_wrap ( GL_CLAMP_TO_EDGE );
 
@@ -477,8 +520,9 @@ int main ()
         glh::core::renderer::set_depth_mask ( GL_TRUE );
         glh::core::renderer::enable_face_culling ();
         glh::core::renderer::set_cull_face ( GL_BACK );
-        glh::core::renderer::viewport ( 0, 0, 1920, 1080 );  
+        glh::core::renderer::viewport ( 0, 0, RESOLUTION );  
         glh::core::renderer::clear ( GL_DEPTH_BUFFER_BIT );
+        glh::core::renderer::clear ( GL_COLOR_BUFFER_BIT );
         
         /* render */
         MODEL_SWITCH.cache_material_uniforms ( deferred_model_material_uni );
@@ -511,7 +555,7 @@ int main ()
         glh::core::renderer::disable_blend ();
         glh::core::renderer::disable_depth_test ();
         glh::core::renderer::disable_face_culling ();
-        glh::core::renderer::viewport ( 0, 0, 1920, 1080 );  
+        glh::core::renderer::viewport ( 0, 0, RESOLUTION );
 
         /* render */
         quad_vao.bind ();
@@ -534,7 +578,7 @@ int main ()
         /* apply many uniforms */
         camera.apply ( forward_model_camera_uni );
         light_system.apply ( forward_model_light_system_uni );
-        forward_model_transparent_mode_uni.set_int ( 1 );
+        //forward_model_transparent_mode_uni.set_int ( 1 );
 
         /* set up renderer */
         glh::core::renderer::enable_blend ();
@@ -545,7 +589,7 @@ int main ()
         glh::core::renderer::set_depth_mask ( GL_FALSE );
         glh::core::renderer::enable_face_culling ();
         glh::core::renderer::set_cull_face ( GL_BACK );
-        glh::core::renderer::viewport ( 0, 0, 1920, 1080 );
+        glh::core::renderer::viewport ( 0, 0, RESOLUTION );
 
         /* render */
         MODEL_SWITCH.cache_material_uniforms ( forward_model_material_uni );
@@ -569,7 +613,7 @@ int main ()
         glh::core::renderer::disable_blend ();
         glh::core::renderer::disable_depth_test ();
         glh::core::renderer::disable_face_culling ();
-        glh::core::renderer::viewport ( 0, 0, 1920, 1080 );
+        glh::core::renderer::viewport ( 0, 0, RESOLUTION );
 
         /* bloom loop */
         quad_vao.bind ();
@@ -644,7 +688,7 @@ int main ()
 
         /* BLIT FINAL COLOR INTO DEFAULT FRAMEBUFFER */
         //window.bind_framebuffer ();
-        //final_color_fbo.blit_copy_to_default ( 0, 0, 1920, 1080, 0, 0, 1920, 1080, GL_COLOR_BUFFER_BIT, GL_NEAREST );
+        //final_color_fbo.blit_copy_to_default ( 0, 0, RESOLUTION, 0, 0, RESOLUTION, GL_COLOR_BUFFER_BIT, GL_NEAREST );
 
         
 
