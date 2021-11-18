@@ -455,7 +455,7 @@ template<unsigned M, class T0, class T1, class... Ts> inline glh::math::matrix<M
     const auto init_matrix = vector_matrix ( vec1, vecs... );
 
     /* create the return matrix */
-    matrix<M, 2 + sizeof...( Ts ), std::common_type_t<T0, T1, Ts...> rt;
+    matrix<M, 2 + sizeof...( Ts ), std::common_type_t<T0, T1, Ts...>> rt;
 
     /* populate the return matrix */
     for ( unsigned i = 0; i < M; ++i ) for ( unsigned j = 0; j < 2 + sizeof...( Ts ); ++j )
