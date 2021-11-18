@@ -681,10 +681,10 @@ template<unsigned M, class T> inline std::enable_if_t<M == 1, glh::math::matrix<
  */
 template<unsigned M, class T> inline glh::math::matrix<M, M, T> glh::math::pow ( const matrix<M, M, T>& lhs, const int rhs )
 {
-    /* produce new base based on sign of exp */
-    matrix<M, M, T> base { ( exp >= 0 ? lhs : inverse ( lhs ) ) };
+    /* produce new base based on sign of rhs */
+    matrix<M, M, T> base { ( rhs >= 0 ? lhs : inverse ( lhs ) ) };
 
-    /* make exp positive */
+    /* make rhs positive */
     unsigned exp = std::abs ( rhs );
 
     /* produce result matrix
