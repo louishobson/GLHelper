@@ -44,7 +44,7 @@ MessageCallback( GLenum source,
  *
  * defines which model is rendered
  */
-#define MODEL_SWITCH hammer
+#define MODEL_SWITCH island
 
 /* RESOLUTION
  *
@@ -179,23 +179,23 @@ int main ()
     /* IMPORT MODELS */
 
     /* import island model */
-    //const glh::math::mat4 island_matrix =
-    //glh::math::enlarge3d
-    //(
-    //    glh::math::identity<4, double> (),
-    //    0.1
-    //);
-    //glh::model::model island { "assets/island", "scene.gltf", 
-    //    glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
-    //    glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
-    //    glh::model::import_flags::GLH_FLIP_V_TEXTURES |
-    //    glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
-    //    glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
-    //    glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
-    //    glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS |
-    //    0,
-    //    island_matrix
-    //};
+    const glh::math::mat4 island_matrix =
+    glh::math::enlarge3d
+    (
+        glh::math::identity<4, double> (),
+        0.1
+    );
+    glh::model::model island { "assets/island", "scene.gltf", 
+        glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
+        glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
+        glh::model::import_flags::GLH_FLIP_V_TEXTURES |
+        glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
+        glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
+        glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
+        glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS |
+        0,
+        island_matrix
+    };
 
     /* import box model */
     //const glh::math::mat4 box_matrix =
@@ -236,23 +236,42 @@ int main ()
     //};
 
     /* import hammer model */
-    const glh::math::mat4 hammer_matrix =
-    glh::math::enlarge3d
-    (
-        glh::math::identity<4, double> (),
-        10.
-    );
-    glh::model::model hammer { "assets/hammer", "scene.gltf", 
-        glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
-        glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
-        glh::model::import_flags::GLH_FLIP_V_TEXTURES |
-        glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
-        glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
-        glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
-        glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS |
-        0,
-        hammer_matrix
-    };
+    //const glh::math::mat4 hammer_matrix =
+    //glh::math::enlarge3d
+    //(
+    //    glh::math::identity<4, double> (),
+    //    10.
+    //);
+    //glh::model::model hammer { "assets/hammer", "scene.gltf",
+    //    glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
+    //    glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
+    //    glh::model::import_flags::GLH_FLIP_V_TEXTURES |
+    //    glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
+    //    glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
+    //    glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
+    //    glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS |
+    //    0,
+    //    hammer_matrix
+    //};
+
+    /* import microwave model */
+    //const glh::math::mat4 microwave_matrix =
+    //glh::math::enlarge3d
+    //(
+    //    glh::math::identity<4, double> (),
+    //    10.
+    //);
+    //glh::model::model microwave { "assets/microwave", "scene.gltf",
+    //    glh::model::import_flags::GLH_CONFIGURE_REGIONS_ACCURATE |
+    //    glh::model::import_flags::GLH_CONFIGURE_ONLY_ROOT_NODE_REGION |
+    //    glh::model::import_flags::GLH_FLIP_V_TEXTURES |
+    //    glh::model::import_flags::GLH_PRETRANSFORM_VERTICES |
+    //    glh::model::import_flags::GLH_SPLIT_MESHES_BY_ALPHA_VALUES |
+    //    glh::model::import_flags::GLH_IGNORE_VCOLOR_WHEN_ALPHA_TESTING |
+    //    glh::model::import_flags::GLH_CONFIGURE_GLOBAL_VERTEX_ARRAYS |
+    //    0,
+    //    microwave_matrix
+    //};
 
 
 
@@ -265,12 +284,12 @@ int main ()
     light_system.add_dirlight
     (
         glh::math::vec3 { 1.0, -0.5, 0.0 },
-        glh::math::vec3 { 0.8 },
-        glh::math::vec3 { 1.0 }, 
-        glh::math::vec3 { 1.0 },
+        glh::math::vec3 { 0.2 },
+        glh::math::vec3 { 0.5 },
+        glh::math::vec3 { 0.5 },
         MODEL_SWITCH.model_region (),
         false, true, 0.007, //0.035
-        16, 0.001
+        24, 2. / light_system.get_shadow_map_width ()
     );
 
     /* add point light */
@@ -278,12 +297,12 @@ int main ()
     (
         glh::math::vec3 ( 30, 40, 20 ), 1.0, 0.007, 0.0002,
         //glh::math::vec3 ( 20, 0, 20 ), 1.0, 0.0, 0.0,
-        glh::math::vec3 { 0.1 },
-        glh::math::vec3 { 1.0 }, 
-        glh::math::vec3 { 1.0 },
+        glh::math::vec3 { 0.0 },
+        glh::math::vec3 { 0.2 },
+        glh::math::vec3 { 1.5 },
         MODEL_SWITCH.model_region (),
         true, true, 0.003,
-        16, 2.0 / 4096.0
+        24, 2. / light_system.get_shadow_map_width ()
     );
 
     /* add spotlights */
@@ -295,8 +314,8 @@ int main ()
         glh::math::vec3 { 1.0 }, 
         glh::math::vec3 { 1.0 },
         MODEL_SWITCH.model_region (),
-        false, true, 0.003,
-        16, 2.0 / 4096.0
+        true, true, 0.003,
+        24, 2. / light_system.get_shadow_map_width ()
     );
 
 
