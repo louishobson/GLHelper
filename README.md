@@ -27,13 +27,14 @@ make clean
 ## Features:
 
 - Integrated shadow mapping, including dual paraboloid shadow mapping for point lights.
-- Soft shadow edges using PCF (percentage-closer filtering)
+- Soft shadow edges using PCF (percentage-closer filtering).
 - 'Bloom' is applied to surfaces with emission maps (using gaussian filtering).
 - Supports bump (normal) maps for surfaces.
 - Uses a compute shader to preprocess translucent faces of meshes.
-  - Opaque meshes can use deferred rendering (using G-buffer).
-  - Translucent meshes can then be forward-rendered at a later stage, after having rendered the opaque geometry. 
+  - Opaque meshes can use deferred rendering (using a G-buffer).
+  - Translucent meshes can then be forward-rendered at a later stage, on top of the previously rendered opaque geometry. 
 - Uses my own implementation of FXAA (Fast Approximate Antialiasing).
+- Uses my own template library for matrix and vector manipulation.
 
 ## Screenshots:
 
